@@ -41,7 +41,6 @@
 
   <!-- Right Side (Register Form) -->
   <div class="w-full md:w-1/2 bg-white flex flex-col p-8 rounded-t-lg md:rounded-l-lg overflow-y-auto fade-slide-up">
-    <!-- Scrollable Container -->
     <div class="flex flex-col items-center w-full min-h-full">
       
       <!-- Logo -->
@@ -89,15 +88,17 @@
         </div>
 
         <!-- Row 4: Password -->
-        <div class="mb-4">
+        <div class="mb-4 relative">
           <label for="password" class="block text-gray-700 mb-1">Password:</label>
-          <input type="password" name="password" placeholder="Password" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+          <input type="password" name="password" id="password" placeholder="Password" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+          <button type="button" onclick="togglePasswordVisibility('password', this)" class="absolute right-3 top-9 text-sm text-[#BD6F22]">Show</button>
         </div>
 
         <!-- Row 5: Confirm Password -->
-        <div class="mb-4">
+        <div class="mb-4 relative">
           <label for="password_confirmation" class="block text-gray-700 mb-1">Re-type Password:</label>
-          <input type="password" name="password_confirmation" placeholder="Re-type Password" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+          <input type="password" name="password_confirmation" id="password_confirmation" placeholder="Re-type Password" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+          <button type="button" onclick="togglePasswordVisibility('password_confirmation', this)" class="absolute right-3 top-9 text-sm text-[#BD6F22]">Show</button>
         </div>
 
         <!-- Checkbox Terms and Privacy -->
@@ -122,6 +123,32 @@
   </div>
 
 </div>
+
+<!-- Script Section -->
+<script>
+  // Restrict birthdate input to users 18+
+  document.addEventListener("DOMContentLoaded", function () {
+    const birthdateInput = document.getElementById("birthdate");
+    const today = new Date();
+    const year = today.getFullYear() - 18;
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const maxDate = `${year}-${month}-${day}`;
+    birthdateInput.max = maxDate;
+  });
+
+  // Toggle password visibility with Show/Hide text
+  function togglePasswordVisibility(id, btn) {
+    const input = document.getElementById(id);
+    if (input.type === "password") {
+      input.type = "text";
+      btn.textContent = "Hide";
+    } else {
+      input.type = "password";
+      btn.textContent = "Show";
+    }
+  }
+</script>
 
 </body>
 </html>
