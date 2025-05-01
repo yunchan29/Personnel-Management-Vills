@@ -19,3 +19,15 @@ Route::get('/register', [RegisterController::class, 'showRegistrationForm'])
 
 // Route to handle registration submission
 Route::post('/register', [RegisterController::class, 'register']);
+
+
+// Route for layout 
+Route::get('/layouts/applicantHome', function () {
+    return view('layouts.applicantHome');
+})->name('applicantHome');
+
+
+Route::get('components/applicant/dashboard', function () {
+    return view('applicant.dashboard');
+});
+
