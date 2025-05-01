@@ -14,7 +14,8 @@
     <x-applicant.navbar />
 
     <div class="flex" x-data="{ open: true }">
-        <x-applicant.sidebar />
+    <x-applicant.sidebar :currentRoute="Route::currentRouteName()" />
+
         <main class="flex-1 p-6">
             <div class="bg-white rounded-lg shadow-lg p-6 h-full">
             
