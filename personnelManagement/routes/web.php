@@ -27,7 +27,7 @@ Route::get('/layouts/applicantHome', function () {
 })->name('applicantHome');
 
 
-Route::get('components/applicant/dashboard', function () {
+Route::get('applicant/dashboard', function () {
     return view('applicant.dashboard');
 });
 
