@@ -47,7 +47,8 @@
       <a href="/"><img src="/images/villsLogo2.png" alt="Logo" class="w-auto h-16 mb-6"></a>
 
       <!-- Register Text -->
-      <h1 class="text-2xl md:text-3xl font-bold text-center mb-6 text-[#BD6F22]">Create Account</h1>
+      <h1 class="text-2xl md:text-3xl font-bold text-center mb-2 text-[#BD6F22]">Create Account</h1>
+      
 
       <form method="POST" action="{{ route('register') }}" class="w-full max-w-sm">
         @csrf
@@ -55,29 +56,29 @@
         <!-- Row 1: First Name and Last Name -->
         <div class="flex space-x-2 mb-4">
           <div class="w-1/2">
-            <label for="first_name" class="block text-gray-700 mb-1">First Name:</label>
+            <label for="first_name" class="block text-gray-700 mb-1">First Name <span class="text-red-500">*</span></label>
             <input type="text" name="first_name" placeholder="First Name" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
           </div>
           <div class="w-1/2">
-            <label for="last_name" class="block text-gray-700 mb-1">Last Name:</label>
+            <label for="last_name" class="block text-gray-700 mb-1">Last Name <span class="text-red-500">*</span></label>
             <input type="text" name="last_name" placeholder="Last Name" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
           </div>
         </div>
 
         <!-- Row 2: Email Address -->
         <div class="mb-4">
-          <label for="email" class="block text-gray-700 mb-1">Email Address:</label>
+          <label for="email" class="block text-gray-700 mb-1">Email Address <span class="text-red-500">*</span></label>
           <input type="email" name="email" placeholder="Email Address" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
         </div>
 
         <!-- Row 3: Birthdate and Gender -->
         <div class="flex space-x-2 mb-4">
           <div class="w-1/2">
-            <label for="birthdate" class="block text-gray-700 mb-1">Birthdate:</label>
+            <label for="birthdate" class="block text-gray-700 mb-1">Birthdate <span class="text-red-500">*</span></label>
             <input type="date" name="birthdate" id="birthdate" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
           </div>
           <div class="w-1/2">
-            <label for="gender" class="block text-gray-700 mb-1">Gender:</label>
+            <label for="gender" class="block text-gray-700 mb-1">Gender <span class="text-red-500">*</span></label>
             <select name="gender" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
               <option value="" disabled selected>Gender</option>
               <option value="male">Male</option>
@@ -89,14 +90,14 @@
 
         <!-- Row 4: Password -->
         <div class="mb-4 relative">
-          <label for="password" class="block text-gray-700 mb-1">Password:</label>
+          <label for="password" class="block text-gray-700 mb-1">Password <span class="text-red-500">*</span></label>
           <input type="password" name="password" id="password" placeholder="Password" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
           <button type="button" onclick="togglePasswordVisibility('password', this)" class="absolute right-3 top-9 text-sm text-[#BD6F22]">Show</button>
         </div>
 
         <!-- Row 5: Confirm Password -->
         <div class="mb-4 relative">
-          <label for="password_confirmation" class="block text-gray-700 mb-1">Re-type Password:</label>
+          <label for="password_confirmation" class="block text-gray-700 mb-1">Re-type Password <span class="text-red-500">*</span></label>
           <input type="password" name="password_confirmation" id="password_confirmation" placeholder="Re-type Password" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
           <button type="button" onclick="togglePasswordVisibility('password_confirmation', this)" class="absolute right-3 top-9 text-sm text-[#BD6F22]">Show</button>
         </div>
@@ -108,6 +109,7 @@
             By signing up, you agree to our
             <a href="#" class="text-[#BD6F22] hover:underline">Terms of Use</a> and
             <a href="#" class="text-[#BD6F22] hover:underline">Privacy Policy</a>.
+            <span class="text-red-500">*</span>
           </label>
         </div>
 

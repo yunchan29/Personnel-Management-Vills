@@ -2,7 +2,11 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\LoginController;
 
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [LoginController::class, 'login']);
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 
 // Route for homepage (welcome page)
@@ -46,3 +50,24 @@ Route::prefix('applicant')->name('applicant.')->group(function () {
         return view('applicant.settings');
     })->name('settings');
 });
+
+
+Route::get('/forgot-password', function () {
+    return 'Password reset page coming soon...';
+})->name('password.request');
+
+
+// Admin dashboard route
+Route::get('/admin/dashboard', function () {
+    return view('admin.dashboard');
+})->name('admin.dashboard')->middleware('auth');
+
+// Applicant dashboard route
+Route::get('/applicant/dashboard', function () {
+    return view('applicant.dashboard');
+})->name('applicant.dashboard')->middleware('auth');
+
+// Home route (for fallback)
+Route::get('/home', function () {
+    return view('home'); // Ensure this view exists or redirect elsewhere
+})->name('home')->middleware('auth');

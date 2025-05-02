@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -33,6 +32,7 @@ class RegisterController extends Controller
                 ->withInput();
         }
 
+        // Add the 'role' field here, defaulting to 'applicant'
         $user = User::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
@@ -40,10 +40,19 @@ class RegisterController extends Controller
             'birthdate' => $request->birthdate,
             'gender' => $request->gender,
             'password' => Hash::make($request->password),
+            'role' => 'applicant', // Automatically assigning the 'applicant' role
         ]);
 
         auth()->login($user);
-        return redirect('/');
 
+        // Redirect based on the user role
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        } elseif ($user->role === 'applicant') {
+            return redirect()->route('applicant.dashboard');
+        }
+
+        // Fallback if no specific role match
+        return redirect('/');
     }
 }
