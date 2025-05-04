@@ -1,4 +1,4 @@
-<nav class="bg-[#BD9168] shadow-md px-6 py-2 flex justify-between items-center">
+<nav class="sticky top-0 z-50 bg-[#BD9168] shadow-md px-6 py-2 flex justify-between items-center">
     <div class="flex items-center space-x-1">
         <a href="/"><img src="/images/villsLogoOnly.png" class="h-12 w-auto"></a>
         <a href="/"><img src="/images/villsName.png" class="h-12 w-auto"></a>
