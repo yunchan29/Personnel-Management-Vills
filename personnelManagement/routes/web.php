@@ -28,6 +28,13 @@ Route::get('/layouts/applicantHome', function () {
     return view('layouts.applicantHome');
 })->name('applicantHome');
 
+// Route for layout preview (optional)
+Route::get('/layouts/employeeHome', function () {
+    return view('layouts.employeeHome');
+})->name('employeeHome');
+
+
+
 // ✅ Applicant-related routes with names for sidebar matching
 Route::prefix('applicant')->name('applicant.')->group(function () {
     Route::get('/dashboard', function () {
@@ -50,6 +57,35 @@ Route::prefix('applicant')->name('applicant.')->group(function () {
         return view('applicant.settings');
     })->name('settings');
 });
+
+// ✅ Applicant-related routes with names for sidebar matching
+Route::prefix('employee')->name('employee.')->group(function () {
+    Route::get('/dashboard', function () {
+        return view('employee.dashboard');
+    })->name('dashboard');
+
+    Route::get('/profile', function () {
+        return view('employee.profile');
+    })->name('profile');
+
+    Route::get('/application', function () {
+        return view('employee.application');
+    })->name('application');
+
+    Route::get('/files', function () {
+        return view('employee.files');
+    })->name('files');
+
+    Route::get('/leaveForm', function () {
+        return view('employee.leaveForm');
+    })->name('leaveForm');
+
+
+    Route::get('/settings', function () {
+        return view('employee.settings');
+    })->name('settings');
+});
+
 
 
 Route::get('/forgot-password', function () {
