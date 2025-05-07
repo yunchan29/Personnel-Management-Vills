@@ -8,11 +8,17 @@ use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
+    /**
+     * Show the login form.
+     */
     public function showLoginForm()
     {
         return view('auth.login'); // or 'login' if your blade file is directly in resources/views
     }
 
+    /**
+     * Handle login request.
+     */
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -29,9 +35,12 @@ class LoginController extends Controller
             if ($user->role === 'admin') {
                 return redirect()->route('admin.dashboard');
             } elseif ($user->role === 'applicant') {
-                return redirect()->route('applicant.dashboard');
+                return redirect()->route('applicant.dashboard'); // ✅ fixed here
+            } elseif ($user->role === 'employee') {
+                return redirect()->route('employee.dashboard');
             }
 
+            // Fallback redirection
             return redirect()->intended('/home');
         }
 
@@ -40,6 +49,9 @@ class LoginController extends Controller
         ])->onlyInput('email');
     }
 
+    /**
+     * Handle logout request.
+     */
     public function logout(Request $request)
     {
         Auth::logout();

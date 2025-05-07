@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -18,11 +18,24 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'first_name',
+        'middle_name',
         'last_name',
+        'suffix',
         'email',
         'password',
         'birthdate',
-        'gender',
+        'birth_place',
+        'age',
+        'sex',
+        'civil_status',
+        'religion',
+        'nationality',
+        'mobile_number',
+        'full_address',
+        'province',
+        'city',
+        'barangay',
+        'uuid',
     ];
 
     /**
@@ -36,9 +49,9 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
     protected function casts(): array
     {
@@ -49,10 +62,28 @@ class User extends Authenticatable
     }
 
     /**
-     * Optional: Get the full name as an accessor.
+     * Auto-generate a UUID when creating a new user.
+     */
+    protected static function booted()
+    {
+        static::creating(function ($user) {
+            $user->uuid = (string) Str::uuid();
+        });
+    }
+
+    /**
+     * Get the user's full name.
      */
     public function getFullNameAttribute(): string
     {
         return "{$this->first_name} {$this->last_name}";
+    }
+
+    /**
+     * Use UUID for route model binding.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
     }
 }

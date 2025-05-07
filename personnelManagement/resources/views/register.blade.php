@@ -33,7 +33,7 @@
       <h1 class="text-2xl md:text-4xl font-alata mb-6 leading-relaxed">
         Welcome Back! Ready to land your next opportunity?
       </h1>
-      <a href="/login" class="inline-block text-white bg-[#BD6F22] px-6 py-2 rounded-lg font-bold hover:bg-[#a35718] transition">
+      <a href="{{ route('login') }}" class="inline-block text-white bg-[#BD6F22] px-6 py-2 rounded-lg font-bold hover:bg-[#a35718] transition">
         Login
       </a>
     </div>
