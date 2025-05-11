@@ -20,7 +20,7 @@ class RegisterController extends Controller
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'birthdate' => ['required', 'date'],
+            'birth_date' => ['required', 'date'],
             'gender' => ['required', 'string'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'terms' => ['accepted'],
@@ -37,7 +37,7 @@ class RegisterController extends Controller
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'email' => $request->email,
-            'birthdate' => $request->birthdate,
+            'birth_date' => $request->birthdate,
             'gender' => $request->gender,
             'password' => Hash::make($request->password),
             'role' => 'applicant', // Automatically assigning the 'applicant' role

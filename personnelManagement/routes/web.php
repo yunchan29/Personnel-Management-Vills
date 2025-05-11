@@ -26,7 +26,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Route for layout previews (optional)
+// Layout previews (optional)
 Route::get('/layouts/applicantHome', function () {
     return view('layouts.applicantHome');
 })->name('applicantHome');
@@ -43,7 +43,7 @@ Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(functi
 
     Route::get('/profile', [UserController::class, 'show'])->name('profile');
     Route::get('/profile/edit', [UserController::class, 'edit'])->name('profile.edit');
-    Route::put('/profile/{user}', [UserController::class, 'update'])->name('profile.update');
+    Route::put('/profile', [UserController::class, 'update'])->name('profile.update');
 
     Route::get('/application', function () {
         return view('applicant.application');
@@ -92,7 +92,7 @@ Route::get('/admin/dashboard', function () {
 
 // General home route (auth protected)
 Route::get('/home', function () {
-    return view('home'); // Make sure resources/views/home.blade.php exists
+    return view('home'); // Ensure this view exists
 })->name('home')->middleware('auth');
 
 // Password reset placeholder

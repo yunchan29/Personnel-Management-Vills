@@ -74,8 +74,8 @@
         <!-- Row 3: Birthdate and Gender -->
         <div class="flex space-x-2 mb-4">
           <div class="w-1/2">
-            <label for="birthdate" class="block text-gray-700 mb-1">Birthdate <span class="text-red-500">*</span></label>
-            <input type="date" name="birthdate" id="birthdate" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+            <label for="birth_date" class="block text-gray-700 mb-1">Birthdate <span class="text-red-500">*</span></label>
+            <input type="date" name="birth_date" id="birth_date" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
           </div>
           <div class="w-1/2">
             <label for="gender" class="block text-gray-700 mb-1">Gender <span class="text-red-500">*</span></label>
@@ -130,7 +130,7 @@
 <script>
   // Restrict birthdate input to users 18+
   document.addEventListener("DOMContentLoaded", function () {
-    const birthdateInput = document.getElementById("birthdate");
+    const birthdateInput = document.getElementById("birth_date");
     const today = new Date();
     const year = today.getFullYear() - 18;
     const month = String(today.getMonth() + 1).padStart(2, '0');

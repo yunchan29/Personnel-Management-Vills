@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-
 use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
@@ -34,7 +33,11 @@ class UserController extends Controller
     {
         $user = auth()->user();
 
-        $request->validate([
+        if (!$user) {
+            return redirect()->back()->with('error', 'Unauthorized: No authenticated user.');
+        }
+
+        $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
@@ -59,34 +62,67 @@ class UserController extends Controller
             'barangay' => 'nullable|string|max:100',
         ]);
 
+        $data = $request->except('profile_picture');
+
         if ($request->hasFile('profile_picture')) {
-            $file = $request->file('profile_picture');
-            $path = $file->store('profile_pictures', 'public'); // stored in storage/app/public/profile_pictures
-            $user->profile_picture = $path;
+            $path = $request->file('profile_picture')->store('profile_pictures', 'public');
+            $data['profile_picture'] = $path;
         }
 
-        $user->update([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'middle_name' => $request->middle_name,
-            'suffix' => $request->suffix,
-            'gender' => $request->gender,
-            'birth_date' => $request->birth_date,
-            'birth_place' => $request->birth_place,
-            'age' => $request->age,
-            'civil_status' => $request->civil_status,
-            'religion' => $request->religion,
-            'nationality' => $request->nationality,
-            'email' => $request->email,
-            'mobile_number' => $request->mobile_number,
-            'full_address' => $request->full_address,
-            'province' => $request->province,
-            'city' => $request->city,
-            'barangay' => $request->barangay,
+        // Log data for debugging
+        Log::info('Updating user profile', [
+            'user_id' => $user->id,
+            'data' => $data
         ]);
-        
-        $user->save();
+
+        $user->update($data);
 
         return redirect()->route('applicant.profile')->with('success', 'Profile updated successfully!');
+    }
+
+    /**
+     * Show the profile of an employee user.
+     */
+    public function showEmployee()
+    {
+        $user = auth()->user();
+        return view('employee.profile', compact('user'));
+    }
+
+    /**
+     * Show the edit form for an employee profile.
+     */
+    public function editEmployee()
+    {
+        $user = auth()->user();
+        return view('employee.edit', compact('user'));
+    }
+
+    /**
+     * Update the employee user's profile.
+     */
+    public function updateEmployee(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return redirect()->back()->with('error', 'Unauthorized: No authenticated user.');
+        }
+
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            // Additional validations if needed
+        ]);
+
+        Log::info('Updating employee profile', [
+            'user_id' => $user->id,
+            'data' => $validated
+        ]);
+
+        $user->update($validated);
+
+        return redirect()->route('employee.profile')->with('success', 'Profile updated successfully!');
     }
 }
