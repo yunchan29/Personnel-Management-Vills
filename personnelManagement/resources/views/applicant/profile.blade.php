@@ -1,6 +1,9 @@
 @extends('layouts.applicantHome')
 
 @section('content')
+<form action="{{ route('applicant.profile.update', auth()->user()->id) }}" method="POST" enctype="multipart/form-data">
+     @csrf
+    @method('PUT')
 
 <div class="flex flex-col md:flex-row gap-6">
     <!-- Profile Picture -->
@@ -18,10 +21,7 @@
 
     <!-- Profile Form -->
     <div class="flex-1">
-        <form action="{{ route('applicant.profile.update', $user->id) }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            @method('PUT')
-
+        
             <!-- Personal Information -->
             <h2 class="text-lg font-semibold mb-2" style="color: #BD6F22;">Personal Information</h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -43,7 +43,7 @@
                 </div>
                 <div>
                     <label class="block text-sm text-gray-700">Birth Date</label>
-                    <input type="date" name="birthdate" value="{{ old('birthdate', $user->birthdate) }}" class="w-full border border-gray-300 rounded-md shadow-sm">
+                    <input type="date" name="birth_date" value="{{ old('birth_date', $user->birth_date) }}" class="w-full border border-gray-300 rounded-md shadow-sm">
                 </div>
                 <div>
                     <label class="block text-sm text-gray-700">Birth Place</label>
@@ -54,8 +54,8 @@
                     <input type="number" name="age" value="{{ old('age', $user->age) }}" class="w-full border border-gray-300 rounded-md shadow-sm">
                 </div>
                 <div>
-                    <label class="block text-sm text-gray-700">Sex</label>
-                    <input type="text" name="sex" value="{{ old('sex', $user->sex) }}" class="w-full border border-gray-300 rounded-md shadow-sm">
+                    <label class="block text-sm text-gray-700">Gender</label>
+                    <input type="text" name="gender" value="{{ old('gender', $user->gender) }}" class="w-full border border-gray-300 rounded-md shadow-sm">
                 </div>
                 <div>
                     <label class="block text-sm text-gray-700">Civil Status</label>

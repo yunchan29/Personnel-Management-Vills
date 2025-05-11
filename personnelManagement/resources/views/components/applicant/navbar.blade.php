@@ -10,7 +10,7 @@
             <x-slot name="trigger">
                 <button class="flex items-center text-sm rounded-full focus:outline-none">
                     <img class="h-10 w-10 rounded-full object-cover border-2 border-white"
-                         src="{{ Auth::user()->profile_photo_url }}"
+                         src="{{ Auth::user()->profile_picture_url }}"
                          alt="{{ Auth::user()->name }}"
                          onerror="this.onerror=null; this.src='/images/defaultAvatar.png';">
                 </button>

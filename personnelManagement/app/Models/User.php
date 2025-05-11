@@ -18,19 +18,25 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'first_name',
-        'middle_name',
         'last_name',
+        'middle_name',
         'suffix',
-        'email',
-        'password',
-        'birthdate',
+        'gender',
+
+        'birth_date',
         'birth_place',
         'age',
-        'sex',
+
         'civil_status',
         'religion',
         'nationality',
+
+        'email',
+        'password',
         'mobile_number',
+        'profile_picture',
+        'email_verified_at',
+
         'full_address',
         'province',
         'city',
@@ -85,5 +91,15 @@ class User extends Authenticatable
     public function getRouteKeyName(): string
     {
         return 'uuid';
+    }
+
+    /**
+     * Get the user's profile picture URL.
+     */
+    public function getProfilePictureUrlAttribute(): string
+    {
+        return $this->profile_picture
+            ? asset('storage/' . $this->profile_picture)
+            : asset('images/default-profile.png');
     }
 }

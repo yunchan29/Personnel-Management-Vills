@@ -43,7 +43,7 @@ Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(functi
 
     Route::get('/profile', [UserController::class, 'show'])->name('profile');
     Route::get('/profile/edit', [UserController::class, 'edit'])->name('profile.edit');
-    Route::put('/profile', [UserController::class, 'update'])->name('profile.update');
+    Route::put('/profile/{user}', [UserController::class, 'update'])->name('profile.update');
 
     Route::get('/application', function () {
         return view('applicant.application');
