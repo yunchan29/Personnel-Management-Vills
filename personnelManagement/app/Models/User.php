@@ -102,4 +102,25 @@ class User extends Authenticatable
             ? asset('storage/' . $this->profile_picture)
             : asset('images/default.png');
     }
+
+
+    /**
+ * Determine if the user's profile is complete.
+ */
+public function getIsProfileCompleteAttribute(): bool
+{
+    return $this->first_name &&
+           $this->last_name &&
+           $this->gender &&
+           $this->birth_date &&
+           $this->civil_status &&
+           $this->nationality &&
+           $this->mobile_number &&
+           $this->full_address &&
+           $this->province &&
+           $this->city &&
+           $this->barangay &&
+           $this->profile_picture;
+}
+
 }
