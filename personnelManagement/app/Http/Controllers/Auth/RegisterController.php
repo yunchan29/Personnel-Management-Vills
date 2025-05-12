@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
+use Carbon\Carbon; // for date calculations
 
 class RegisterController extends Controller
 {
@@ -32,27 +33,30 @@ class RegisterController extends Controller
                 ->withInput();
         }
 
-        // Add the 'role' field here, defaulting to 'applicant'
+        // Calculate age from birth_date
+        $birthDate = Carbon::parse($request->birth_date);
+        $age = $birthDate->age;
+
+        // Create user with calculated age and default 'applicant' role
         $user = User::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'email' => $request->email,
-            'birth_date' => $request->birthdate,
+            'birth_date' => $request->birth_date,
+            'age' => $age,
             'gender' => $request->gender,
             'password' => Hash::make($request->password),
-            'role' => 'applicant', // Automatically assigning the 'applicant' role
+            'role' => 'applicant',
         ]);
 
         auth()->login($user);
 
-        // Redirect based on the user role
         if ($user->role === 'admin') {
             return redirect()->route('admin.dashboard');
         } elseif ($user->role === 'applicant') {
             return redirect()->route('applicant.dashboard');
         }
 
-        // Fallback if no specific role match
         return redirect('/login');
     }
 }
