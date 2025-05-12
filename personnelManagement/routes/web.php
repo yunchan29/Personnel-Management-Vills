@@ -5,6 +5,14 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\UserController;
 use App\Models\User;
+use App\Http\Controllers\LeaveController;
+
+Route::post('/leave/store', [LeaveController::class, 'store'])->name('leave.store');
+
+Route::middleware(['auth'])->group(function () {
+    Route::post('/leave/store', [LeaveController::class, 'store'])->name('leave.store');
+});
+
 
 /*
 |--------------------------------------------------------------------------
@@ -84,6 +92,34 @@ Route::prefix('employee')->name('employee.')->middleware('auth')->group(function
         return view('employee.settings');
     })->name('settings');
 });
+
+// ✅ HRadmin-related routes with auth middleware
+Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function () {
+    Route::get('/dashboard', function () {
+        return view('hrAdmin.dashboard');
+    })->name('dashboard');
+
+    Route::get('/profile', [UserController::class, 'showHrAdmin'])->name('profile');
+    Route::get('/profile/edit', [UserController::class, 'editHrAdmin'])->name('profile.edit');
+    Route::put('/profile', [UserController::class, 'updateHrAdmin'])->name('profile.update');
+
+    Route::get('/application', function () {
+        return view('hrAdmin.application');
+    })->name('application');
+
+    Route::get('/files', function () {
+        return view('hrAdmin.files');
+    })->name('files');
+
+    Route::get('/leaveForm', function () {
+        return view('hrAdmin.leaveForm');
+    })->name('leaveForm');
+
+    Route::get('/settings', function () {
+        return view('hrAdmin.settings');
+    })->name('settings');
+});
+
 
 // Admin dashboard (auth protected)
 Route::get('/admin/dashboard', function () {

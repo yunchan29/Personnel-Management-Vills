@@ -94,6 +94,16 @@
             </template>
         </div>
 
+        <!-- License Summary -->
+        <div class="mt-6">
+            <h4 class="text-md font-semibold text-[#BD6F22] mb-2">Summary of License / Certification Names</h4>
+            <ul class="list-disc list-inside text-sm text-gray-800" x-show="licenses.length > 0">
+                <template x-for="(license, index) in licenses" :key="index">
+                    <li x-text="license.name || 'Unnamed License/Certification #' + (index + 1)"></li>
+                </template>
+            </ul>
+        </div>
+
         <!-- Add Button -->
         <button type="button"
             @click="addLicense()"

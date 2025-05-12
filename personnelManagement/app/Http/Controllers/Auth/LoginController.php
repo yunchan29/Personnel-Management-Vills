@@ -32,8 +32,8 @@ class LoginController extends Controller
             $user = Auth::user();
 
             // Role-based redirection
-            if ($user->role === 'admin') {
-                return redirect()->route('admin.dashboard');
+            if ($user->role === 'hrAdmin') {
+                return redirect()->route('hrAdmin.dashboard');
             } elseif ($user->role === 'applicant') {
                 return redirect()->route('applicant.dashboard'); // ✅ fixed here
             } elseif ($user->role === 'employee') {

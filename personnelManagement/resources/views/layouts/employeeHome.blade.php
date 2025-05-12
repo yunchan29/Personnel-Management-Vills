@@ -8,6 +8,9 @@
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Alata&display=swap" rel="stylesheet">
     <style>.font-alata { font-family: 'Alata', sans-serif; }</style>
+    <!-- Litepicker CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css">
+
 </head>
 <body class="bg-gray-100 font-alata min-h-screen">
 
@@ -24,5 +27,24 @@
         </main>
     </div>
 
+    <!-- Litepicker JS -->
+<script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js"></script>
+
+<script>
+    document.addEventListener("alpine:init", () => {
+        Alpine.data('leaveForm', () => ({
+            open: false,
+            init() {
+                new Litepicker({
+                    element: this.$refs.dateRange,
+                    singleMode: false,
+                    format: 'MM/DD/YYYY',
+                    numberOfMonths: 2,
+                    numberOfColumns: 2
+                });
+            }
+        }));
+    });
+</script>
 </body>
 </html>
