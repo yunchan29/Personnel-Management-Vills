@@ -53,6 +53,6 @@ class RegisterController extends Controller
         }
 
         // Fallback if no specific role match
-        return redirect('/');
+        return redirect('/login');
     }
 }

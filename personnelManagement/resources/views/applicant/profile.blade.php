@@ -24,29 +24,66 @@
             <!-- Personal Information -->
             <h2 class="text-lg font-semibold mb-2" style="color: #BD6F22;">Personal Information</h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                @foreach ([
-                    'first_name' => 'First Name',
-                    'middle_name' => 'Middle Name',
-                    'last_name' => 'Last Name',
-                    'suffix' => 'Suffix',
-                    'birth_date' => 'Birth Date',
-                    'birth_place' => 'Birth Place',
-                    'age' => 'Age',
-                    'gender' => 'Gender',
-                    'civil_status' => 'Civil Status',
-                    'religion' => 'Religion',
-                    'nationality' => 'Nationality'
-                ] as $field => $label)
+            @foreach ([
+    'first_name' => 'First Name',
+    'middle_name' => 'Middle Name',
+    'last_name' => 'Last Name',
+    'suffix' => 'Suffix',
+    'birth_date' => 'Birth Date',
+    'birth_place' => 'Birth Place',
+    'age' => 'Age'
+] as $field => $label)
+    <div>
+        <label class="block text-sm text-gray-700">{{ $label }}</label>
+        <input 
+            type="{{ $field === 'birth_date' ? 'date' : ($field === 'age' ? 'number' : 'text') }}"
+            name="{{ $field }}" 
+            value="{{ old($field, $field === 'birth_date' ? \Carbon\Carbon::parse($user->$field)->format('Y-m-d') : $user->$field) }}"
+            class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
+        >
+    </div>
+@endforeach
+
+<!-- Gender Dropdown -->
+<div>
+    <label class="block text-sm text-gray-700">Gender</label>
+    <select name="gender" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
+        @foreach (['Male', 'Female', 'Other'] as $gender)
+            <option value="{{ $gender }}" {{ old('gender', $user->gender) === $gender ? 'selected' : '' }}>{{ $gender }}</option>
+        @endforeach
+    </select>
+</div>
+
+<!-- Civil Status Dropdown -->
+<div>
+    <label class="block text-sm text-gray-700">Civil Status</label>
+    <select name="civil_status" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
+        @foreach (['Single', 'Married', 'Divorced', 'Widowed', 'Separated'] as $status)
+            <option value="{{ $status }}" {{ old('civil_status', $user->civil_status) === $status ? 'selected' : '' }}>{{ $status }}</option>
+        @endforeach
+    </select>
+</div>
+
+
+                <!-- Religion -->
                 <div>
-                    <label class="block text-sm text-gray-700">{{ $label }}</label>
+                    <label class="block text-sm text-gray-700">Religion</label>
                     <input 
-                        type="{{ $field === 'birth_date' ? 'date' : ($field === 'age' ? 'number' : 'text') }}"
-                        name="{{ $field }}" 
-                        value="{{ old($field, $field === 'birth_date' ? \Carbon\Carbon::parse($user->$field)->format('Y-m-d') : $user->$field) }}"
+                        type="text" 
+                        name="religion" 
+                        value="{{ old('religion', $user->religion) }}" 
                         class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
                     >
                 </div>
-                @endforeach
+
+                <!-- Nationality -->
+                <div>
+                    <label class="block text-sm text-gray-700">Nationality</label>
+                    <select name="nationality" id="nationality" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
+                        <option selected value="{{ old('nationality', $user->nationality) }}">{{ old('nationality', $user->nationality) }}</option>
+                        <!-- Other options will be dynamically loaded -->
+                    </select>
+                </div>
             </div>
 
             <!-- Contacts -->
@@ -90,8 +127,10 @@
     </div>
 </form>
 
-<!-- Image Preview Script -->
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    // Image Preview
     function previewFile(input) {
         const file = input.files[0];
         if (file) {
@@ -102,5 +141,58 @@
             reader.readAsDataURL(file);
         }
     }
+
+    // Load countries using REST Countries API
+    fetch("https://restcountries.com/v3.1/all")
+        .then(res => res.json())
+        .then(data => {
+            const select = document.getElementById("nationality");
+            const sortedCountries = data.sort((a, b) => a.name.common.localeCompare(b.name.common));
+
+            sortedCountries.forEach(country => {
+                const option = document.createElement("option");
+                option.value = country.name.common;
+                option.textContent = country.name.common;
+                select.appendChild(option);
+            });
+
+            // Pre-select current nationality if exists
+            const current = "{{ old('nationality', $user->nationality) }}";
+            if (current) {
+                select.value = current;
+            }
+        });
+
+     document.addEventListener('DOMContentLoaded', function () {
+        // Intercept form submission with SweetAlert2 confirmation
+        document.querySelector('form').addEventListener('submit', function (e) {
+            e.preventDefault(); // Stop normal submission
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "Do you want to save your changes?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#BD6F22',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, save it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submit(); // Submit the form if confirmed
+                }
+            });
+        });
+    });
+
+    // SweetAlert2 on success
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: 'Profile Updated',
+            text: '{{ session("success") }}',
+            confirmButtonColor: '#BD6F22'
+        });
+    @endif
 </script>
+
 @endsection

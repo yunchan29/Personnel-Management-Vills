@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 class UserController extends Controller
 {
     /**
-     * Show the profile of the authenticated user.
+     * Show the profile of the authenticated applicant user.
      */
     public function show()
     {
@@ -18,7 +18,7 @@ class UserController extends Controller
     }
 
     /**
-     * Show the edit form for the authenticated user's profile.
+     * Show the edit form for the authenticated applicant user's profile.
      */
     public function edit()
     {
@@ -27,7 +27,7 @@ class UserController extends Controller
     }
 
     /**
-     * Update the authenticated user's profile.
+     * Update the authenticated applicant user's profile.
      */
     public function update(Request $request)
     {
@@ -39,27 +39,23 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
+            'last_name' => 'required|string|max:255',
             'suffix' => 'nullable|string|max:10',
-            'gender' => 'nullable|string|max:10',
-
             'birth_date' => 'required|date',
             'birth_place' => 'nullable|string|max:255',
             'age' => 'nullable|integer',
-
+            'gender' => 'nullable|string|max:10',
             'civil_status' => 'nullable|string|max:50',
             'religion' => 'nullable|string|max:100',
             'nationality' => 'nullable|string|max:100',
-
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
             'mobile_number' => 'nullable|string|max:15',
-            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-
             'full_address' => 'nullable|string|max:255',
             'province' => 'nullable|string|max:100',
             'city' => 'nullable|string|max:100',
             'barangay' => 'nullable|string|max:100',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $data = $request->except('profile_picture');
@@ -69,10 +65,9 @@ class UserController extends Controller
             $data['profile_picture'] = $path;
         }
 
-        // Log data for debugging
-        Log::info('Updating user profile', [
+        Log::info('Updating applicant profile', [
             'user_id' => $user->id,
-            'data' => $data
+            'data' => $data,
         ]);
 
         $user->update($data);
@@ -90,7 +85,7 @@ class UserController extends Controller
     }
 
     /**
-     * Show the edit form for an employee profile.
+     * Show the edit form for an employee user's profile.
      */
     public function editEmployee()
     {
@@ -99,7 +94,7 @@ class UserController extends Controller
     }
 
     /**
-     * Update the employee user's profile.
+     * Update the authenticated employee user's profile.
      */
     public function updateEmployee(Request $request)
     {
@@ -111,17 +106,38 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
             'last_name' => 'required|string|max:255',
+            'suffix' => 'nullable|string|max:10',
+            'birth_date' => 'required|date',
+            'birth_place' => 'nullable|string|max:255',
+            'age' => 'nullable|integer',
+            'gender' => 'nullable|string|max:10',
+            'civil_status' => 'nullable|string|max:50',
+            'religion' => 'nullable|string|max:100',
+            'nationality' => 'nullable|string|max:100',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
-            // Additional validations if needed
+            'mobile_number' => 'nullable|string|max:15',
+            'full_address' => 'nullable|string|max:255',
+            'province' => 'nullable|string|max:100',
+            'city' => 'nullable|string|max:100',
+            'barangay' => 'nullable|string|max:100',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        $data = $request->except('profile_picture');
+
+        if ($request->hasFile('profile_picture')) {
+            $path = $request->file('profile_picture')->store('profile_pictures', 'public');
+            $data['profile_picture'] = $path;
+        }
 
         Log::info('Updating employee profile', [
             'user_id' => $user->id,
-            'data' => $validated
+            'data' => $data,
         ]);
 
-        $user->update($validated);
+        $user->update($data);
 
         return redirect()->route('employee.profile')->with('success', 'Profile updated successfully!');
     }
