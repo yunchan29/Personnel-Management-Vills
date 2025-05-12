@@ -151,8 +151,10 @@
 
             sortedCountries.forEach(country => {
                 const option = document.createElement("option");
-                option.value = country.name.common;
-                option.textContent = country.name.common;
+                const demonym = country.demonyms?.eng?.m || country.name.common;
+option.value = demonym;
+option.textContent = demonym;
+
                 select.appendChild(option);
             });
 
