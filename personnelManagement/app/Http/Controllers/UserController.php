@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+
 
 class UserController extends Controller
 {
@@ -140,5 +143,43 @@ class UserController extends Controller
         $user->update($data);
 
         return redirect()->route('employee.profile')->with('success', 'Profile updated successfully!');
+    }
+
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'new_password' => 'required|confirmed|min:8',
+        ]);
+
+        $user = Auth::user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'Incorrect current password.']);
+        }
+
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return back()->with('success', 'Password changed successfully.');
+    }
+
+    public function deleteAccount(Request $request)
+    {
+        $request->validate([
+            'delete_password' => 'required',
+        ]);
+
+        $user = Auth::user();
+
+        if (!Hash::check($request->delete_password, $user->password)) {
+            return back()->withErrors(['delete_password' => 'Incorrect password.']);
+        }
+
+        Auth::logout();
+
+        $user->delete();
+
+        return redirect('/')->with('success', 'Your account has been deleted.');
     }
 }

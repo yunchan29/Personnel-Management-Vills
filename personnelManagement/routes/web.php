@@ -104,3 +104,8 @@ Route::get('/forgot-password', function () {
 Route::fallback(function () {
     return response()->view('errors.404', [], 404);
 });
+
+Route::middleware(['auth'])->group(function () {
+    Route::post('/user/change-password', [UserController::class, 'changePassword'])->name('user.changePassword');
+    Route::delete('/user/delete-account', [UserController::class, 'deleteAccount'])->name('user.deleteAccount');
+});
