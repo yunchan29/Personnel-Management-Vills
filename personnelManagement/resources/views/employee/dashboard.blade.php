@@ -2,9 +2,11 @@
 
 @section('content')
     <section class="w-full">
-        <div class="bg-[#BD9168] w-full h-16 flex items-center justify-center">
-            <h2 class="text-white text-3xl font-bold">Home</h2>
-        </div>
+         <!-- Greeting -->
+  <h1 class="text-xl font-semibold mb-4" style="color: #BD6F22;">
+  Welcome back, {{ Auth::user()->first_name }}!
+</h1>
+<hr>
 
        
     </section>

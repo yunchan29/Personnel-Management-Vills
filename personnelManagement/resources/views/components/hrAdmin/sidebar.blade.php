@@ -12,9 +12,10 @@
         @php
             $items = [
                 ['img' => 'home.png', 'label' => 'Home', 'route' => 'hrAdmin.dashboard'],
-                ['img' => 'user.png', 'label' => 'Profile', 'route' => 'hrAdmin.profile'],
-                ['img' => 'application.png', 'label' => 'My Application', 'route' => 'hrAdmin.application'],
-                ['img' => 'folder.png', 'label' => '201 Files', 'route' => 'hrAdmin.files'],
+                ['img' => 'search.png', 'label' => 'Job Posting', 'route' => 'hrAdmin.jobPosting'],
+                ['img' => 'application.png', 'label' => 'Applications', 'route' => 'hrAdmin.application'],
+                
+                ['img' => 'leaveForm.png', 'label' => 'Leave Forms', 'route' => 'hrAdmin.leaveForm'],
                 ['img' => 'settings.png', 'label' => 'Settings', 'route' => 'hrAdmin.settings'],
             ];
         @endphp

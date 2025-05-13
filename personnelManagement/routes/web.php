@@ -107,6 +107,11 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
         return view('hrAdmin.application');
     })->name('application');
 
+       Route::get('/jobPosting', function () {
+        return view('hrAdmin.jobPosting');
+    })->name('jobPosting');
+
+
     Route::get('/files', function () {
         return view('hrAdmin.files');
     })->name('files');

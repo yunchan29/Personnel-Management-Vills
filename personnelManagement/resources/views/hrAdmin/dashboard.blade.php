@@ -4,7 +4,11 @@
 <section class="bg-white font-sans text-gray-800 p-6 min-h-screen">
 
   <!-- Greeting -->
-  <h1 class="text-xl font-semibold mb-4" style="color: #BD6F22;">Welcome back!</h1>
+  <h1 class="text-xl font-semibold mb-4" style="color: #BD6F22;">
+  Welcome back, {{ Auth::user()->first_name }}!
+</h1>
+<hr>
+
 
   <!-- Stat Cards (Centered) -->
   <div class="flex justify-center mb-6">
