@@ -6,7 +6,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\UserController;
 use App\Models\User;
 use App\Http\Controllers\LeaveController;
-
+use App\Http\Controllers\JobController; 
 Route::post('/leave/store', [LeaveController::class, 'store'])->name('leave.store');
 
 Route::middleware(['auth'])->group(function () {
@@ -93,6 +93,8 @@ Route::prefix('employee')->name('employee.')->middleware('auth')->group(function
     })->name('settings');
 });
 
+
+
 // ✅ HRadmin-related routes with auth middleware
 Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
@@ -107,10 +109,12 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
         return view('hrAdmin.application');
     })->name('application');
 
-       Route::get('/jobPosting', function () {
+    Route::get('/jobPosting', function () {
         return view('hrAdmin.jobPosting');
     })->name('jobPosting');
 
+    // ✅ Job posting form submit route
+    Route::post('/jobPosting/store', [JobController::class, 'store'])->name('jobPosting.store');
 
     Route::get('/files', function () {
         return view('hrAdmin.files');
