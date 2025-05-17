@@ -112,81 +112,90 @@
         <div class="p-6 bg-white animate-fadeIn delay-200">
             <!-- Search Bar -->
             <div class="flex items-center gap-4 mb-6">
-                <label for="search" class="text-lg font-medium text-gray-700">Search Position</label>
-                <input 
-                    type="text" 
-                    id="search" 
-                    placeholder="Enter job title..." 
-                    class="border border-gray-300 rounded-lg px-4 py-2 w-full max-w-md focus:outline-none focus:ring-2 focus:ring-[#BD9168]"
-                />
-                <button class="bg-[#BD9168] text-white px-4 py-2 rounded-lg hover:bg-[#a37653] flex items-center">
-                    <!-- Search Icon from Heroicons -->
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z" />
-                    </svg>
-                    Search
-                </button>
+               <form method="GET" action="{{ route('welcome') }}" class="flex items-center gap-4 mb-6">
+    <label for="search" class="text-lg font-medium text-gray-700">Search Position</label>
+    <input 
+        type="text" 
+        name="search"
+        id="search" 
+        placeholder="Enter job title..." 
+        class="border border-gray-300 rounded-lg px-4 py-2 w-full max-w-md focus:outline-none focus:ring-2 focus:ring-[#BD9168]"
+        value="{{ request('search') }}"
+    />
+    <button type="submit" class="bg-[#BD9168] text-white px-4 py-2 rounded-lg hover:bg-[#a37653] flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z" />
+        </svg>
+        Search
+    </button>
+</form>
+
             </div>
 
             <!-- Job cards will go here next -->
             <div class="p-6 bg-white">
                 <!-- Cards Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <!-- Job Card 1 -->
-                    @for ($i = 1; $i <= 4; $i++)
-                        <div class="flex items-start p-6 border rounded-lg shadow-sm bg-white gap-6 transform hover:scale-105 transition duration-300">
-                            <!-- Left Side -->
-                            <div class="flex flex-col items-start gap-4">
-                                <div class="text-gray-500 text-sm">
-                                    <p>Last Posted: <span class="font-medium">3 days ago</span></p>
-                                    <p>Apply until: <span class="font-medium">June 20, 2025</span></p>
-                                </div>
-                                <button class="bg-[#BD9168] text-white px-6 py-2 rounded-md hover:bg-[#a37653] flex items-center gap-2">
-                                    <!-- Apply Now Icon -->
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                    </svg>
-                                    Apply Now
-                                </button>
-                            </div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    @forelse($jobs as $job)
+        <div class="flex items-start p-6 border rounded-lg shadow-sm bg-white gap-6 transform hover:scale-105 transition duration-300">
+            <!-- Left Side -->
+            <div class="flex flex-col items-start gap-4">
+                <div class="text-gray-500 text-sm">
+                    <p>Last Posted: <span class="font-medium">{{ $job->created_at->diffForHumans() }}</span></p>
+                    <p>Apply until: <span class="font-medium">{{ \Carbon\Carbon::parse($job->apply_until)->format('F d, Y') }}</span></p>
+                </div>
+                <a href="{{ route('job.show', $job->id) }}" class="bg-[#BD9168] text-white px-6 py-2 rounded-md hover:bg-[#a37653] flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                    Apply Now
+                </a>
+            </div>
 
-                            <!-- Right Side -->
-                            <div class="flex flex-col gap-2">
-                                <h3 class="text-[#BD9168] text-2xl font-bold">Production Operator</h3>
-                                <p class="text-black font-semibold">Yazaki - Torres Manufacturing, Inc.</p>
+            <!-- Right Side -->
+            <div class="flex flex-col gap-2">
+                <h3 class="text-[#BD9168] text-2xl font-bold">{{ $job->job_title }}</h3>
+                <p class="text-black font-semibold">{{ $job->company_name }}</p>
 
-                                <div class="flex items-start gap-2 mt-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#BD9168] mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 01-8 0M12 14a8 8 0 00-8 8h16a8 8 0 00-8-8z" />
-                                    </svg>
+                <div class="flex items-start gap-2 mt-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#BD9168] mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 01-8 0M12 14a8 8 0 00-8 8h16a8 8 0 00-8-8z" />
+                    </svg>
+                    <div>
+                        <p class="font-semibold">Qualifications:</p>
+                     @if (!empty($job->qualifications) && is_array($job->qualifications))
+    <ul class="list-disc list-inside text-black">
+        @foreach ($job->qualifications as $qual)
+            <li>{{ $qual }}</li>
+        @endforeach
+    </ul>
+@else
+    <p>No qualifications listed.</p>
+@endif
 
-                                    <div>
-                                        <p class="font-semibold">Qualification :</p>
-                                        <ul class="list-disc list-inside text-black">
-                                            <li>18 years above</li>
-                                            <li>With or without experience</li>
-                                        </ul>
-                                    </div>
-                                </div>
 
-                                <div class="flex items-center gap-2 mt-4 text-black">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#BD9168]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 12.414m0 0L9.172 8.172m4.242 4.242A4 4 0 1116.657 7.343a4 4 0 01-4.243 4.243z" />
-                                    </svg>
-                                    <p>Makiling, Calamba City, Laguna</p>
-                                </div>
-                            </div>
-                        </div>
-                    @endfor
+                    </div>
                 </div>
 
-                <!-- Pagination -->
-                <div class="flex justify-end items-center gap-2">
-                    <button class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Previous</button>
-                    <button class="px-3 py-1 bg-[#BD9168] text-white rounded">1</button>
-                    <button class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">2</button>
-                    <button class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Next</button>
+                <div class="flex items-center gap-2 mt-4 text-black">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#BD9168]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 12.414m0 0L9.172 8.172m4.242 4.242A4 4 0 1116.657 7.343a4 4 0 01-4.243 4.243z" />
+                    </svg>
+                    <p>{{ $job->location }}</p>
                 </div>
+            </div>
+        </div>
+    @empty
+        <p class="text-gray-500">No job listings available right now.</p>
+    @endforelse
+</div>
+
+
+                          <!-- Pagination -->
+<div class="mt-6">
+   {{ $jobs->links('vendor.pagination.tailwind') }}
+
+</div>
             </div>
         </div>
     </section>
@@ -199,7 +208,7 @@
         </div>
 
         <p class="text-center max-w-xl text-sm mb-6">
-            Vills Manpower Recruitment Agency is a POEA-accredited agency in the Philippines providing recruitment assistance and workforce development.
+            Vills Manpower Recruitment Agency is a...........
         </p>
 
         <div class="border-t border-white w-3/4 mb-6"></div>
@@ -221,6 +230,46 @@
             menu.classList.toggle('hidden');
         });
     </script>
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50 hidden">
+    <div class="flex items-center space-x-4">
+        <svg class="animate-spin h-8 w-8 text-[#BD9168]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+        <span class="text-[#BD9168] font-semibold text-lg">Loading...</span>
+    </div>
+</div>
+<script>
+    const loadingOverlay = document.getElementById('loading-overlay');
+
+    // Show loader on form submit
+    const searchForm = document.querySelector('form[action="{{ route('welcome') }}"]');
+    if (searchForm) {
+        searchForm.addEventListener('submit', function () {
+            loadingOverlay.classList.remove('hidden');
+        });
+    }
+
+    // Show loader on pagination clicks
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.pagination a').forEach(function (el) {
+            el.addEventListener('click', function () {
+                loadingOverlay.classList.remove('hidden');
+            });
+        });
+    });
+
+    // Optional: show loader on Apply Now button clicks
+    document.querySelectorAll('a[href^="/job/"]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            loadingOverlay.classList.remove('hidden');
+        });
+    });
+</script>
+
+
 
 </body>
 </html>

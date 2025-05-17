@@ -8,6 +8,14 @@ use App\Models\User;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\JobController; 
 use App\Http\Controllers\ApplicantJobController;
+use App\Http\Controllers\LandingPageController;
+
+
+Route::get('/jobs/{id}', [JobController::class, 'show'])->name('job.show');
+
+Route::get('/', [LandingPageController::class, 'index']);
+
+
 Route::post('/leave/store', [LeaveController::class, 'store'])->name('leave.store');
 
 Route::middleware(['auth'])->group(function () {
@@ -30,10 +38,6 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
 
-// Route for homepage (welcome page)
-Route::get('/', function () {
-    return view('welcome');
-});
 
 // Layout previews (optional)
 Route::get('/layouts/applicantHome', function () {
@@ -43,6 +47,9 @@ Route::get('/layouts/applicantHome', function () {
 Route::get('/layouts/employeeHome', function () {
     return view('layouts.employeeHome');
 })->name('employeeHome');
+
+Route::get('/', [LandingPageController::class, 'index'])->name('welcome');
+
 
 // ✅ Applicant-related routes with auth middleware
 Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(function () {

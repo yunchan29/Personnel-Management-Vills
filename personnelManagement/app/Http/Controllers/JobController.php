@@ -44,4 +44,10 @@ class JobController extends Controller
         $jobs = Job::latest()->get(); // Get all jobs, newest first
         return view('hrAdmin.jobPosting', compact('jobs'));
     }
+    public function show($id)
+{
+    $job = Job::findOrFail($id);
+    return view('jobs.show', compact('job'));
+}
+
 }
