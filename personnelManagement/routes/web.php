@@ -7,6 +7,7 @@ use App\Http\Controllers\UserController;
 use App\Models\User;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\JobController; 
+use App\Http\Controllers\ApplicantJobController;
 Route::post('/leave/store', [LeaveController::class, 'store'])->name('leave.store');
 
 Route::middleware(['auth'])->group(function () {
@@ -154,3 +155,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/user/change-password', [UserController::class, 'changePassword'])->name('user.changePassword');
     Route::delete('/user/delete-account', [UserController::class, 'deleteAccount'])->name('user.deleteAccount');
 });
+
+Route::get('/hr-admin/job-posting', [JobController::class, 'index'])->name('hrAdmin.jobPosting');
+Route::post('/hr-admin/job-posting', [JobController::class, 'store'])->name('hrAdmin.jobPosting.store');
+
+Route::get('/applicant/dashboard', [ApplicantJobController::class, 'dashboard'])->name('applicant.dashboard');

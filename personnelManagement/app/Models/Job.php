@@ -17,4 +17,9 @@ class Job extends Model
         'qualifications',
         'additional_info',
     ];
+
+    protected $casts = [
+        'qualifications' => 'array',
+        'additional_info' => 'array',
+    ];
 }

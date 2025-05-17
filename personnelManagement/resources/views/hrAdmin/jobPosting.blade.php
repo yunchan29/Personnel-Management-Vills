@@ -22,7 +22,6 @@
                     <label for="location" class="block font-medium mb-1">Location</label>
                     <input type="text" name="location" id="location" class="w-full border border-gray-300 rounded-md p-2">
                 </div>
-
                 <div class="flex gap-4">
                     <div class="flex-1">
                         <label for="vacancies" class="block font-medium mb-1">Number of Vacancies</label>
@@ -54,4 +53,21 @@
         </form>
     </div>
 </section>
+
 @endsection
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+@if(session('success'))
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        Swal.fire({
+            title: 'Success!',
+            text: '{{ session('success') }}',
+            icon: 'success',
+            confirmButtonColor: '#BD6F22'
+        });
+    });
+</script>
+@endif

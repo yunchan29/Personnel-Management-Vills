@@ -1,13 +1,3 @@
-@props([
-    'title',
-    'company',
-    'location',
-    'lastPosted',
-    'deadline',
-    'qualifications' => [],
-    'additionalQualifications' => [],
-    'benefits' => [],
-])
 
 <div 
     x-data="{ showDetails: false }" 
@@ -16,7 +6,7 @@
     <!-- Top Row -->
     <div class="flex justify-between items-start gap-4 flex-wrap">
         <!-- Date Info -->
-        <div class="text-sm text-gray-500">
+        <div class="text-sm text-gray-500" x-show="!showDetails">
             <p>Last Posted: {{ $lastPosted }}</p>
             <p>Apply until: {{ $deadline }}</p>
         </div>
@@ -27,27 +17,38 @@
             <p class="text-gray-800 font-semibold">{{ $company }}</p>
 
             <!-- Basic Qualifications -->
-            <div class="flex items-start mt-2 gap-2">
+            <div class="flex items-start mt-2 gap-2" x-show="!showDetails">
                 <img src="/images/briefcaseblack.png" class="w-5 h-5 mt-1" alt="Qualification">
                 <ul class="text-sm text-gray-700 list-disc list-inside">
-                    @foreach ($qualifications as $item)
+                    @php
+                        $limitedQualifications = collect($qualifications)->take(3);
+                    @endphp
+
+                    @foreach ($limitedQualifications as $item)
                         <li>{{ $item }}</li>
                     @endforeach
                 </ul>
             </div>
 
             <!-- Location -->
-            <div class="flex items-center mt-2 text-gray-700">
+            <div class="flex items-center mt-2 text-gray-700" x-show="!showDetails">
                 <img src="/images/location.png" class="w-5 h-5 mr-1" alt="Location">
                 <p>{{ $location }}</p>
             </div>
         </div>
 
-        <!-- Apply Button (top-right, visible only when expanded) -->
-        <div x-show="showDetails" x-transition>
+        <!-- Apply Button and Date Info (expanded) -->
+        <div x-show="showDetails" x-transition class="flex items-center gap-4 text-sm text-gray-500 self-end">
+            <!-- Apply Button -->
             <button class="bg-[#BD6F22] hover:bg-[#a75d1c] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition">
                 <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply"> Apply Now
-            </button>
+            </button>    
+
+            <!-- Date Info -->
+            <div>
+                <p>Last Posted: {{ $lastPosted }}</p>
+                <p>Apply until: {{ $deadline }}</p>
+            </div>
         </div>
     </div>
 
@@ -77,31 +78,55 @@
         x-transition:enter="transition-all ease-out duration-300"
         x-transition:enter-start="opacity-0 max-h-0"
         x-transition:enter-end="opacity-100 max-h-screen"
-        x-transition:leave="transition-all ease-in duration-200"
+        x-transition:leave="transition-all ease-in duration-300"
         x-transition:leave-start="opacity-100 max-h-screen"
         x-transition:leave-end="opacity-0 max-h-0"
         class="overflow-hidden text-gray-800 space-y-3 text-sm"
     >
-        @if (!empty($additionalQualifications))
-            <div>
-                <p class="font-semibold">Additional Qualifications:</p>
+        @if (!empty($qualifications))
+        <div>
+              <div class="flex items-start space-x-2">
+                <img src="/images/briefcaseblack.png" class="w-5 h-5 mt-1" alt="Qualification">
+                <p class="font-semibold">All Qualifications:</p>
+        </div>
                 <ul class="list-disc list-inside">
-                    @foreach ($additionalQualifications as $item)
+                    
+                    @foreach ($qualifications as $item)
+                    
                         <li>{{ $item }}</li>
                     @endforeach
                 </ul>
             </div>
         @endif
 
-        @if (!empty($benefits))
-            <div>
-                <p class="font-semibold">Benefits:</p>
-                <ul class="list-disc list-inside">
-                    @foreach ($benefits as $benefit)
-                        <li>{{ $benefit }}</li>
-                    @endforeach
-                </ul>
-            </div>
+        <!-- Location (repeated in expanded) -->
+        <div class="flex items-center mt-2 text-gray-700">
+            <img src="/images/location.png" class="w-5 h-5 mr-1" alt="Location">
+            <p>{{ $location }}</p>
+        </div>
+        
+        <!-- Additional Info -->
+         @if(!empty($addinfo) && is_array($addinfo))
+            <ul>
+                @foreach($addinfo as $info)
+                    <li>{{ $info }}</li>
+                @endforeach
+            </ul>
+        @else
+            <p>No additional info available.</p>
         @endif
+
     </div>
+
 </div>
+
+<script>
+    console.log("Debug Info:");
+    console.log("Title:", @json($title));
+    console.log("Company:", @json($company));
+    console.log("Location:", @json($location));
+    console.log("Last Posted:", @json($lastPosted));
+    console.log("Deadline:", @json($deadline));
+    console.log("Qualifications:", @json($qualifications));
+    console.log("Additional Info:", @json($addinfo));
+</script>
