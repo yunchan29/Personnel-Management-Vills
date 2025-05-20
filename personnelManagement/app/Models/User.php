@@ -7,6 +7,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
+use App\Models\Resume;
+
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
@@ -122,5 +124,10 @@ public function getIsProfileCompleteAttribute(): bool
            $this->barangay &&
            $this->profile_picture;
 }
+
+public function resume()
+    {
+        return $this->hasOne(Resume::class);
+    }
 
 }

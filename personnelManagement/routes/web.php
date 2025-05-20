@@ -10,17 +10,18 @@ use App\Http\Controllers\JobController;
 use App\Http\Controllers\ApplicantJobController;
 use App\Http\Controllers\LandingPageController;
 
+use App\Http\Controllers\ResumeController;
 
 Route::get('/jobs/{id}', [JobController::class, 'show'])->name('job.show');
 
 Route::get('/', [LandingPageController::class, 'index']);
 
 
-Route::post('/leave/store', [LeaveController::class, 'store'])->name('leave.store');
+/*Route::post('/leave/store', [LeaveController::class, 'store'])->name('leave.store');
 
 Route::middleware(['auth'])->group(function () {
     Route::post('/leave/store', [LeaveController::class, 'store'])->name('leave.store');
-});
+});*/
 
 
 /*
@@ -61,10 +62,6 @@ Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(functi
     Route::get('/profile/edit', [UserController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [UserController::class, 'update'])->name('profile.update');
 
-    Route::get('/application', function () {
-        return view('applicant.application');
-    })->name('application');
-
     Route::get('/files', function () {
         return view('applicant.files');
     })->name('files');
@@ -72,6 +69,18 @@ Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(functi
     Route::get('/settings', function () {
         return view('applicant.settings');
     })->name('settings');
+
+         Route::get('/application', [ResumeController::class, 'show'])
+              ->name('application');
+
+         // POST   → applicant.application.store
+         Route::post('/application', [ResumeController::class, 'store'])
+              ->name('application.store');
+
+         // DELETE → applicant.application.destroy
+         Route::delete('/application', [ResumeController::class, 'destroy'])
+              ->name('application.destroy');
+
 });
 
 // ✅ Employee-related routes with auth middleware
