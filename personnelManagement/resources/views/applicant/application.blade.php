@@ -64,14 +64,15 @@
 
             <!-- Delete Resume Button -->
             <form
-                action="{{ route('applicant.application.destroy') }}"
+                id="deleteForm"
+                action="{{ route('employee.application.destroy') }}"
                 method="POST"
-                onsubmit="return confirm('Delete your existing resume?')"
             >
                 @csrf
                 @method('DELETE')
                 <button
-                    type="submit"
+                    type="button"
+                    id="deleteResumeBtn"
                     class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
                 >
                     Delete Resume
@@ -87,11 +88,50 @@
             <p class="text-sm text-gray-700 mb-2">Yazaki - Torres Manufacturing, Inc.</p>
             <a href="#" class="inline-block bg-[#BD6F22] text-white text-sm px-4 py-2 rounded hover:bg-[#a75e1c] transition">View Resume</a>
             <p class="text-xs text-gray-500 mt-2">Applied on: April 20, 2025</p>
-            </div>
+        </div>
         <div>
             <span class="inline-block bg-[#DD6161] text-white text-sm px-4 py-2 rounded">To Review</span>
         </div>
     </div>
-
 </div>
+
+<!-- SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Delete Resume with SweetAlert -->
+<script>
+document.getElementById('deleteResumeBtn')?.addEventListener('click', function (e) {
+    e.preventDefault();
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Delete your existing resume?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('deleteForm').submit();
+        }
+        // No else needed – no action = no stuck loading screen
+    });
+});
+</script>
+
+<!-- Show SweetAlert after redirect (optional) -->
+@if(session('success'))
+<script>
+    Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: '{{ session('success') }}',
+        timer: 2500,
+        showConfirmButton: false
+    });
+</script>
+@endif
+
 @endsection

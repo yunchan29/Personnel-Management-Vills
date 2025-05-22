@@ -9,7 +9,7 @@ use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\JobController; 
 use App\Http\Controllers\ApplicantJobController;
 use App\Http\Controllers\LandingPageController;
-
+use App\Http\Controllers\File201Controller;
 use App\Http\Controllers\ResumeController;
 
 Route::get('/jobs/{id}', [JobController::class, 'show'])->name('job.show');
@@ -64,6 +64,7 @@ Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(functi
 
     Route::get('/files', function () {
         return view('applicant.files');
+
     })->name('files');
 
     Route::get('/settings', function () {
@@ -93,11 +94,19 @@ Route::prefix('employee')->name('employee.')->middleware('auth')->group(function
     Route::get('/profile/edit', [UserController::class, 'editEmployee'])->name('profile.edit');
     Route::put('/profile', [UserController::class, 'updateEmployee'])->name('profile.update');
 
-    Route::get('/application', function () {
-        return view('employee.application');
-    })->name('application');
+   Route::get('/application', [ResumeController::class, 'show'])
+              ->name('application');
+
+         // POST   → applicant.application.store
+         Route::post('/application', [ResumeController::class, 'store'])
+              ->name('application.store');
+
+         // DELETE → applicant.application.destroy
+         Route::delete('/application', [ResumeController::class, 'destroy'])
+              ->name('application.destroy');
 
     Route::get('/files', function () {
+        
         return view('employee.files');
     })->name('files');
 
@@ -176,3 +185,11 @@ Route::get('/hr-admin/job-posting', [JobController::class, 'index'])->name('hrAd
 Route::post('/hr-admin/job-posting', [JobController::class, 'store'])->name('hrAdmin.jobPosting.store');
 
 Route::get('/applicant/dashboard', [ApplicantJobController::class, 'dashboard'])->name('applicant.dashboard');
+
+
+
+Route::post('/file201', [File201Controller::class, 'store'])->name('file201.store');
+
+Route::get('/file201/form', [File201Controller::class, 'form'])->name('file201.form');
+
+

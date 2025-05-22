@@ -130,4 +130,10 @@ public function resume()
         return $this->hasOne(Resume::class);
     }
 
+    public function file201()
+{
+    return $this->hasOne(File201::class);
+}
+
+
 }
