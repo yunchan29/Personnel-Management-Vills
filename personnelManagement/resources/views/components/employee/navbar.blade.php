@@ -17,7 +17,19 @@
             </x-slot>
 
             <x-slot name="content">
-                <x-dropdown-link href="/profile">Profile</x-dropdown-link>
+                {{-- Dynamically route to correct profile based on role --}}
+                @php
+                    $role = Auth::user()->role; // assuming 'role' is a column like 'applicant', 'employee', 'hrAdmin'
+                    $profileRoutes = [
+                        'applicant' => route('applicant.profile'),
+                        'employee' => route('employee.profile'),
+                        'hrAdmin' => route('hrAdmin.profile'),
+                    ];
+                @endphp
+
+                <x-dropdown-link href="{{ $profileRoutes[$role] ?? '#' }}">
+                    Profile
+                </x-dropdown-link>
                 <form method="POST" action="/logout">
                     @csrf
                     <x-dropdown-link href="/logout" onclick="event.preventDefault(); this.closest('form').submit();">
