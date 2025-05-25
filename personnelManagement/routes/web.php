@@ -11,17 +11,18 @@ use App\Http\Controllers\ApplicantJobController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\File201Controller;
 use App\Http\Controllers\ResumeController;
+use App\Http\Controllers\LeaveFormController;
 
 Route::get('/jobs/{id}', [JobController::class, 'show'])->name('job.show');
 
 Route::get('/', [LandingPageController::class, 'index']);
 
 
-/*Route::post('/leave/store', [LeaveController::class, 'store'])->name('leave.store');
+Route::post('/leave/store', [LeaveController::class, 'store'])->name('leave.store');
 
 Route::middleware(['auth'])->group(function () {
     Route::post('/leave/store', [LeaveController::class, 'store'])->name('leave.store');
-});*/
+});
 
 
 /*
@@ -94,29 +95,23 @@ Route::prefix('employee')->name('employee.')->middleware('auth')->group(function
     Route::get('/profile/edit', [UserController::class, 'editEmployee'])->name('profile.edit');
     Route::put('/profile', [UserController::class, 'updateEmployee'])->name('profile.update');
 
-   Route::get('/application', [ResumeController::class, 'show'])
-              ->name('application');
+    Route::get('/application', [ResumeController::class, 'show'])->name('application');
 
-         // POST   → applicant.application.store
-         Route::post('/application', [ResumeController::class, 'store'])
-              ->name('application.store');
+    // POST   → applicant.application.store
+    Route::post('/application', [ResumeController::class, 'store'])->name('application.store');
 
-         // DELETE → applicant.application.destroy
-         Route::delete('/application', [ResumeController::class, 'destroy'])
-              ->name('application.destroy');
+    // DELETE → applicant.application.destroy
+    Route::delete('/application', [ResumeController::class, 'destroy'])->name('application.destroy');
 
-    Route::get('/files', function () {
-        
-        return view('employee.files');
-    })->name('files');
+    Route::get('/files', function () {return view('employee.files');})->name('files');
 
-    Route::get('/leaveForm', function () {
-        return view('employee.leaveForm');
-    })->name('leaveForm');
+    Route::get('/settings', function () {return view('employee.settings');})->name('settings');
 
-    Route::get('/settings', function () {
-        return view('employee.settings');
-    })->name('settings');
+    // ✅ Leave Form Routes
+    Route::get('/leave-forms', [LeaveFormController::class, 'index'])->name('leaveForm'); // or employee.leaveForm
+
+    Route::post('/leave-forms', [LeaveFormController::class, 'store'])->name('leaveForms.store');
+    Route::delete('/leave-forms/{id}', [LeaveFormController::class, 'destroy'])->name('leaveForms.destroy');
 });
 
 
