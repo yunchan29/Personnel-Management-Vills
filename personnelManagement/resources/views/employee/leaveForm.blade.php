@@ -202,6 +202,7 @@
         document.querySelectorAll('.delete-form').forEach(form => {
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
+                window.allowSubmit = false; // Prevent loading overlay
                 Swal.fire({
                     icon: 'warning',
                     title: 'Delete this leave request?',

@@ -57,12 +57,16 @@
             }));
         });
 
-        // Loading screen script
+        // Make overlay logic conditional
+        window.allowSubmit = true; // default to true for non-confirm forms
+
         const loadingOverlay = document.getElementById('loading-overlay');
 
         document.querySelectorAll('form').forEach(form => {
             form.addEventListener('submit', () => {
-                loadingOverlay.classList.remove('hidden');
+                if (window.allowSubmit) {
+                    loadingOverlay.classList.remove('hidden');
+                }
             });
         });
 
@@ -77,6 +81,5 @@
             }
         });
     </script>
-
 </body>
 </html>
