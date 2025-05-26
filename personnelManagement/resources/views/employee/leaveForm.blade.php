@@ -1,14 +1,14 @@
 @extends('layouts.employeeHome')
 
 @section('content')
-<!-- Litepicker CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <section class="p-6" x-data="leaveForm" x-init="init()">
     <h2 class="text-xl font-semibold text-[#BD6F22] mb-2">Leave Form</h2>
     <hr class="border-t border-gray-300 mb-6">
 
-    <!-- Display Existing Leave Requests -->
     @if($leaveForms->isEmpty())
         <div class="flex flex-col items-center justify-center h-64">
             <p class="text-center text-gray-800 mb-4">No leave requests submitted yet.</p>
@@ -29,39 +29,36 @@
             </button>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full border rounded-lg text-sm">
-                <thead class="bg-[#BD6F22] text-white">
-                    <tr>
-                        <th class="p-2 text-left">Type</th>
-                        <th class="p-2 text-left">Date Range</th>
-                        <th class="p-2 text-left">About</th>
-                        <th class="p-2 text-left">File</th>
-                        <th class="p-2 text-left">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($leaveForms as $form)
-                    <tr class="border-b">
-                        <td class="p-2">{{ $form->leave_type }}</td>
-                        <td class="p-2">{{ $form->date_range }}</td>
-                        <td class="p-2">{{ $form->about ?? '—' }}</td>
-                        <td class="p-2">
-                            <a href="{{ asset('storage/' . $form->file_path) }}" target="_blank" class="text-blue-600 underline">
-                                View File
+        <div class="flex flex-col gap-4">
+            @foreach($leaveForms as $form)
+                <div class="bg-white border rounded-lg shadow px-6 py-4 w-full relative">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-[#BD6F22] font-semibold text-lg mb-1">{{ $form->leave_type }}</h3>
+                            <p class="text-gray-800 text-md font-medium">{{ $form->date_range }}</p>
+                            <p class="text-sm text-gray-700 mt-1">{{ $form->email }}</p>
+                        </div>
+                        <div class="text-right text-sm text-gray-500">
+                            Submitted: {{ \Carbon\Carbon::parse($form->created_at)->format('F d, Y') }}
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex justify-between items-center">
+                        <form action="{{ route('employee.leaveForms.destroy', $form->id) }}" method="POST" class="delete-form">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-red-600 hover:underline text-sm delete-btn">Delete</button>
+                        </form>
+
+                        <div class="flex items-center gap-4">
+                            <a href="{{ asset('storage/' . $form->file_path) }}" target="_blank" class="text-blue-600 text-xl hover:text-blue-800" title="Open file in new tab">
+                                <i class="fas fa-arrow-up-right-from-square"></i>
                             </a>
-                        </td>
-                        <td class="p-2">
-                            <form action="{{ route('employee.leaveForms.destroy', $form->id) }}" method="POST" onsubmit="return confirm('Delete this leave request?');">
-                                @csrf
-                                @method('DELETE')
-                                <button class="text-red-600 hover:underline" type="submit">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                            <span class="bg-red-500 text-white text-xs px-3 py-1 rounded-full">To Review</span>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
         </div>
     @endif
 
@@ -73,7 +70,7 @@
         <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl relative" @click.outside="open = false">
             <h3 class="text-lg font-semibold text-[#BD6F22] mb-4">Leave Request</h3>
 
-            <form action="{{ route('employee.leaveForms.store') }}" method="POST" enctype="multipart/form-data">
+            <form id="leaveForm" action="{{ route('employee.leaveForms.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <!-- Leave Type -->
@@ -118,7 +115,7 @@
                                     <span class="block text-gray-700" x-text="fileName || 'Choose PDF file…'"></span>
                                     <span class="text-xs text-gray-500" x-show="fileSize" x-text="fileSize"></span>
                                 </div>
-                                <span class="text-gray-500 ml-2">📎</span>
+                                <span class="text-gray-500 ml-2"><i class="fas fa-paperclip"></i></span>
                             </label>
                         </div>
                     </div>
@@ -151,7 +148,6 @@
     </div>
 </section>
 
-<!-- Litepicker JS -->
 <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js"></script>
 <script>
     document.addEventListener("alpine:init", () => {
@@ -165,8 +161,73 @@
                     numberOfMonths: 2,
                     numberOfColumns: 2
                 });
+
+                // Submit confirmation with file size validation
+                const leaveForm = document.getElementById('leaveForm');
+                leaveForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const fileInput = document.getElementById('attachment');
+                    const file = fileInput.files[0];
+
+                    if (file && file.size > 2 * 1024 * 1024) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'File too large',
+                            text: 'The attachment must not exceed 2MB.',
+                            confirmButtonColor: '#BD6F22'
+                        });
+                        return;
+                    }
+
+                    Swal.fire({
+                        icon: 'question',
+                        title: 'Submit Leave Request?',
+                        text: 'Are you sure you want to submit this leave form?',
+                        showCancelButton: true,
+                        confirmButtonColor: '#BD6F22',
+                        cancelButtonColor: '#aaa',
+                        confirmButtonText: 'Yes, Submit'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            leaveForm.submit();
+                        }
+                    });
+                });
             }
         }));
     });
+
+    // 🔥 Delete confirmation - moved outside Alpine
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.delete-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Delete this leave request?',
+                    text: 'This action cannot be undone.',
+                    showCancelButton: true,
+                    confirmButtonColor: '#BD6F22',
+                    cancelButtonColor: '#aaa',
+                    confirmButtonText: 'Yes, Delete'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    });
 </script>
+@if(session('success'))
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: '{{ session('success') }}',
+            timer: 2500,
+            showConfirmButton: false
+        });
+    </script>
+@endif
 @endsection
