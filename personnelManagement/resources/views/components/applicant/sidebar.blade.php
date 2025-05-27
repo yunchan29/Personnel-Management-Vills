@@ -1,6 +1,8 @@
 @props(['currentRoute'])
 
-<aside x-data="{ open: true }" :class="open ? 'w-40' : 'w-16'" class="bg-white shadow-md h-screen transition-all duration-300">
+<aside x-data="{ open: true }" :class="open ? 'w-40' : 'w-16'" class="sticky top-0 bg-white shadow-md h-screen transition-all duration-300">
+
+
     <div class="flex justify-end p-2">
         <button @click="open = !open" class="text-[#8B4513] focus:outline-none">
             <svg :class="open ? 'rotate-180' : ''" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
