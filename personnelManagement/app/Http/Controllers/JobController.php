@@ -50,4 +50,11 @@ class JobController extends Controller
     return view('jobs.show', compact('job'));
 }
 
+public function edit($id)
+{
+    $job = Job::findOrFail($id);
+    return view('hrAdmin.jobPostingEdit', compact('job'));
+}
+
+
 }

@@ -15,6 +15,9 @@ use App\Http\Controllers\LeaveFormController;
 
 Route::get('/jobs/{id}', [JobController::class, 'show'])->name('job.show');
 
+Route::get('/hrAdmin/job-posting/{id}', [JobController::class, 'show'])
+     ->name('hrAdmin.jobPosting.show');
+
 Route::get('/', [LandingPageController::class, 'index']);
 
 
@@ -181,6 +184,7 @@ Route::post('/hr-admin/job-posting', [JobController::class, 'store'])->name('hrA
 
 Route::get('/applicant/dashboard', [ApplicantJobController::class, 'dashboard'])->name('applicant.dashboard');
 
+Route::get('/job-posting/{id}/edit', [JobController::class, 'edit'])->name('hrAdmin.jobPosting.edit');
 
 
 Route::post('/file201', [File201Controller::class, 'store'])->name('file201.store');
