@@ -56,5 +56,13 @@ public function edit($id)
     return view('hrAdmin.jobPostingEdit', compact('job'));
 }
 
+public function applications()
+{
+    $jobs = Job::withCount('applicants')->latest()->get(); // Retrieves all jobs and counts applicants
+    return view('hrAdmin.application', compact('jobs'));   // Matches your Blade file name
+}
+
+
+
 
 }

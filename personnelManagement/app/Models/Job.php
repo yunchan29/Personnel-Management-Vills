@@ -22,4 +22,10 @@ class Job extends Model
         'qualifications' => 'array',
         'additional_info' => 'array',
     ];
+
+    public function applicants()
+{
+    return $this->hasMany(Resume::class);
+}
+
 }

@@ -13,6 +13,8 @@ use App\Http\Controllers\File201Controller;
 use App\Http\Controllers\ResumeController;
 use App\Http\Controllers\LeaveFormController;
 
+
+
 Route::get('/jobs/{id}', [JobController::class, 'show'])->name('job.show');
 
 Route::get('/hrAdmin/job-posting/{id}', [JobController::class, 'show'])
@@ -129,9 +131,10 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
     Route::get('/profile/edit', [UserController::class, 'editHrAdmin'])->name('profile.edit');
     Route::put('/profile', [UserController::class, 'updateHrAdmin'])->name('profile.update');
 
-    Route::get('/application', function () {
-        return view('hrAdmin.application');
-    })->name('application');
+   Route::get('/application', [JobController::class, 'applications'])->name('application');
+      Route::get('/viewApplication', [JobController::class, 'viewApplications'])->name('viewApplication');
+        Route::get('/viewApplicants', [JobController::class, 'viewApplicants'])->name('viewApplicants');
+
 
     Route::get('/jobPosting', function () {
         return view('hrAdmin.jobPosting');
