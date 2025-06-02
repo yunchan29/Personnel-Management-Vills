@@ -75,7 +75,7 @@
         <div class="flex space-x-2 mb-4">
           <div class="w-1/2">
             <label for="birth_date" class="block text-gray-700 mb-1">Birthdate <span class="text-red-500">*</span></label>
-            <input type="date" name="birth_date" id="birth_date" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+            <input type="text" name="birth_date" id="birth_date" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
           </div>
           <div class="w-1/2">
             <label for="gender" class="block text-gray-700 mb-1">Gender <span class="text-red-500">*</span></label>
@@ -125,6 +125,8 @@
   </div>
 
 </div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <!-- Script Section -->
 <script>
@@ -152,5 +154,11 @@
   }
 </script>
 
+<script>
+  flatpickr("#birth_date", {
+  dateFormat: "m/d/Y", // MM/DD/YYYY
+  maxDate: new Date(new Date().setFullYear(new Date().getFullYear() - 18)) // 18+ limit
+});
+</script>
 </body>
 </html>
