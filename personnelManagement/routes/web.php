@@ -15,6 +15,15 @@ use App\Http\Controllers\LeaveFormController;
 
 
 
+Route::get('/my-applications', [ApplicantJobController::class, 'myApplications'])
+    ->name('applicant.application')
+    ->middleware('auth');
+
+
+
+Route::post('/apply/{job}', [ApplicantJobController::class, 'apply'])->name('jobs.apply');
+
+
 Route::get('/jobs/{id}', [JobController::class, 'show'])->name('job.show');
 
 Route::get('/hrAdmin/job-posting/{id}', [JobController::class, 'show'])

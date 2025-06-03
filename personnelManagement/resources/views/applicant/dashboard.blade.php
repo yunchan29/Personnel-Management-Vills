@@ -23,16 +23,17 @@
 
         <div class="flex flex-col gap-6">
             @forelse($jobs as $job)
-                <x-applicant.job-card 
-                    :title="$job->job_title"
-                    :company="$job->company_name"
-                    :location="$job->location"
-                    :qualifications="$job->qualifications" 
-                    :addinfo="$job->additional_info"
-                    :lastPosted="$job->created_at->diffForHumans()"
-                    :deadline="\Carbon\Carbon::parse($job->apply_until)->format('F d, Y')"
-                    
-                />
+               <x-applicant.job-card 
+    :jobId="$job->id"
+    :title="$job->job_title"
+    :company="$job->company_name"
+    :location="$job->location"
+    :qualifications="$job->qualifications" 
+    :addinfo="$job->additional_info"
+    :lastPosted="$job->created_at->diffForHumans()"
+    :deadline="\Carbon\Carbon::parse($job->apply_until)->format('F d, Y')"
+/>
+
             @empty
                 <p class="text-gray-500">No job openings available at the moment.</p>
             @endforelse

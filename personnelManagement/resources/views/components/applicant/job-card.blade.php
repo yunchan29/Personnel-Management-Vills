@@ -40,9 +40,31 @@
         <!-- Apply Button and Date Info (expanded) -->
         <div x-show="showDetails" x-transition class="flex items-center gap-4 text-sm text-gray-500 self-end">
             <!-- Apply Button -->
-            <button class="bg-[#BD6F22] hover:bg-[#a75d1c] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition">
-                <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply"> Apply Now
-            </button>    
+         <div x-data>
+    <button 
+        @click.prevent="fetch('{{ route('jobs.apply', $jobId) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            },
+        }).then(response => {
+            if (response.ok) {
+                alert('Application submitted successfully.');
+            } else {
+                alert('Failed to apply. Please try again.');
+            }
+        }).catch(error => {
+            console.error(error);
+            alert('An error occurred.');
+        })"
+        class="bg-[#BD6F22] hover:bg-[#a75d1c] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
+    >
+        <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply"> Apply Now
+    </button>
+</div>
+
+
 
             <!-- Date Info -->
             <div>
@@ -58,9 +80,31 @@
         x-transition 
         class="absolute left-6 top-1/2 -translate-y-1/2"
     >
-        <button class="bg-[#BD6F22] hover:bg-[#a75d1c] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition">
-            <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply"> Apply Now
-        </button>
+      <div x-data>
+    <button 
+        @click.prevent="fetch('{{ route('jobs.apply', $jobId) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            },
+        }).then(response => {
+            if (response.ok) {
+                alert('Application submitted successfully.');
+            } else {
+                alert('Failed to apply. Please try again.');
+            }
+        }).catch(error => {
+            console.error(error);
+            alert('An error occurred.');
+        })"
+        class="bg-[#BD6F22] hover:bg-[#a75d1c] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
+    >
+        <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply"> Apply Now
+    </button>
+</div>
+
+
     </div>
 
     <!-- See More Link -->

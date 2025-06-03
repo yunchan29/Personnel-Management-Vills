@@ -27,7 +27,7 @@
 
             <label class="w-full md:flex-1">
                 <span class="block mb-1 text-sm text-gray-700">
-                    {{ $resume ? 'Replace your resume (PDF only)' : 'Please upload your resume (PDF only)' }}
+                    {{ optional($resume ?? null)->resume ? 'Replace your resume (PDF only)' : 'Please upload your resume (PDF only)' }}
                 </span>
                 <input
                     type="file"
@@ -46,12 +46,12 @@
                 class="px-6 py-2 text-white rounded"
                 style="background-color: #BD6F22;"
             >
-                {{ $resume ? 'Replace' : 'Upload' }}
+                {{ optional($resume ?? null)->resume ? 'Replace' : 'Upload' }}
             </button>
         </form>
     </div>
 
-    @if($resume)
+    @if(isset($resume) && $resume->resume)
         <div class="mb-6 flex items-center gap-4">
             <!-- Show Resume Button -->
             <a
@@ -65,7 +65,7 @@
             <!-- Delete Resume Button -->
             <form
                 id="deleteForm"
-                action="{{ route('employee.application.destroy') }}"
+                action="{{ route('applicant.application.destroy') }}"
                 method="POST"
             >
                 @csrf
@@ -81,18 +81,36 @@
         </div>
     @endif
 
-    <!-- Application Card (placeholder) -->
-    <div class="border border-gray-300 rounded-md shadow-md p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-            <h3 class="text-md font-semibold" style="color: #BD6F22;">Production Operator</h3>
-            <p class="text-sm text-gray-700 mb-2">Yazaki - Torres Manufacturing, Inc.</p>
-            <a href="#" class="inline-block bg-[#BD6F22] text-white text-sm px-4 py-2 rounded hover:bg-[#a75e1c] transition">View Resume</a>
-            <p class="text-xs text-gray-500 mt-2">Applied on: April 20, 2025</p>
+    @forelse($applications ?? [] as $application)
+        <div class="border border-gray-300 rounded-md shadow-md p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <div>
+                <h3 class="text-md font-semibold" style="color: #BD6F22;">
+                    {{ $application->job->title ?? 'No job title' }}
+                </h3>
+                <p class="text-sm text-gray-700 mb-2">
+                    {{ $application->job->company_name ?? 'No company' }}
+                </p>
+
+                @if(isset($resume) && $resume->resume)
+                    <a href="{{ asset('storage/' . $resume->resume) }}" target="_blank"
+                       class="inline-block bg-[#BD6F22] text-white text-sm px-4 py-2 rounded hover:bg-[#a75e1c] transition">
+                        View Resume
+                    </a>
+                @endif
+
+                <p class="text-xs text-gray-500 mt-2">
+                    Applied on: {{ optional($application->created_at)->format('F d, Y') ?? 'N/A' }}
+                </p>
+            </div>
+            <div>
+                <span class="inline-block bg-[#DD6161] text-white text-sm px-4 py-2 rounded">
+                    To Review
+                </span>
+            </div>
         </div>
-        <div>
-            <span class="inline-block bg-[#DD6161] text-white text-sm px-4 py-2 rounded">To Review</span>
-        </div>
-    </div>
+    @empty
+        <p class="text-sm text-gray-600 mt-6">You haven’t applied to any jobs yet.</p>
+    @endforelse
 </div>
 
 <!-- SweetAlert2 CDN -->
@@ -116,12 +134,11 @@ document.getElementById('deleteResumeBtn')?.addEventListener('click', function (
         if (result.isConfirmed) {
             document.getElementById('deleteForm').submit();
         }
-        // No else needed – no action = no stuck loading screen
     });
 });
 </script>
 
-<!-- Show SweetAlert after redirect (optional) -->
+<!-- Show SweetAlert after redirect -->
 @if(session('success'))
 <script>
     Swal.fire({
@@ -133,5 +150,4 @@ document.getElementById('deleteResumeBtn')?.addEventListener('click', function (
     });
 </script>
 @endif
-
 @endsection

@@ -4,20 +4,74 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Job;
+use App\Models\Application;
 
 class ApplicantJobController extends Controller
 {
-    // If this is for the dashboard/home view
+    /**
+     * Show applicant dashboard with latest job listings.
+     */
     public function dashboard()
     {
-        $jobs = Job::latest()->get(); // or ->paginate(10) if you want pagination
+        $jobs = Job::latest()->get(); // You can change to ->paginate(10) if needed
         return view('applicant.dashboard', compact('jobs'));
     }
 
-    // Existing jobs page view
+    /**
+     * Show all available jobs.
+     */
     public function index()
     {
-        $jobs = Job::latest()->get(); // Can be reused for a separate full list view
+        $jobs = Job::latest()->get();
         return view('applicant.jobs', compact('jobs'));
     }
+
+    /**
+     * Apply to a specific job.
+     */
+    public function apply(Request $request, $job_id)
+    {
+        $user = auth()->user();
+
+        $existing = Application::where('user_id', $user->id)
+            ->where('job_id', $job_id)
+            ->first();
+
+        if ($existing) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'You have already applied for this job.'], 409);
+            }
+
+            return redirect()->back()->with('error', 'You have already applied for this job.');
+        }
+
+        Application::create([
+            'user_id' => $user->id,
+            'job_id' => $job_id,
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Your application was submitted successfully.']);
+        }
+
+        return redirect()->back()->with('success', 'Your application was submitted successfully.');
+    }
+
+    /**
+     * Show all jobs the applicant has applied to.
+     */
+    public function myApplications()
+{
+    $user = auth()->user();
+
+    $applications = Application::with('job')
+        ->where('user_id', $user->id)
+        ->latest()
+        ->get();
+
+    $resume = $user->resume ?? null;
+
+    return view('applicant.application', compact('applications', 'resume'));
+}
+
 }
