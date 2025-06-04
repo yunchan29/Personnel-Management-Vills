@@ -5,14 +5,12 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\UserController;
 use App\Models\User;
-use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\JobController; 
 use App\Http\Controllers\ApplicantJobController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\File201Controller;
 use App\Http\Controllers\ResumeController;
 use App\Http\Controllers\LeaveFormController;
-
 
 
 Route::get('/my-applications', [ApplicantJobController::class, 'myApplications'])
@@ -30,14 +28,6 @@ Route::get('/hrAdmin/job-posting/{id}', [JobController::class, 'show'])
      ->name('hrAdmin.jobPosting.show');
 
 Route::get('/', [LandingPageController::class, 'index']);
-
-
-Route::post('/leave/store', [LeaveController::class, 'store'])->name('leave.store');
-
-Route::middleware(['auth'])->group(function () {
-    Route::post('/leave/store', [LeaveController::class, 'store'])->name('leave.store');
-});
-
 
 /*
 |--------------------------------------------------------------------------
@@ -66,7 +56,6 @@ Route::get('/layouts/employeeHome', function () {
 
 Route::get('/', [LandingPageController::class, 'index'])->name('welcome');
 
-
 // ✅ Applicant-related routes with auth middleware
 Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
@@ -76,11 +65,6 @@ Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(functi
     Route::get('/profile', [UserController::class, 'show'])->name('profile');
     Route::get('/profile/edit', [UserController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [UserController::class, 'update'])->name('profile.update');
-
-    Route::get('/files', function () {
-        return view('applicant.files');
-
-    })->name('files');
 
     Route::get('/settings', function () {
         return view('applicant.settings');
@@ -96,6 +80,10 @@ Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(functi
          // DELETE → applicant.application.destroy
          Route::delete('/application', [ResumeController::class, 'destroy'])
               ->name('application.destroy');
+
+        // Government IDs and Licenses (File 201) routes
+        Route::post('/files', [File201Controller::class, 'store'])->name('files.store');
+        Route::get('/files', [File201Controller::class, 'form'])->name('files');
 
 });
 
@@ -127,8 +115,6 @@ Route::prefix('employee')->name('employee.')->middleware('auth')->group(function
     Route::post('/leave-forms', [LeaveFormController::class, 'store'])->name('leaveForms.store');
     Route::delete('/leave-forms/{id}', [LeaveFormController::class, 'destroy'])->name('leaveForms.destroy');
 });
-
-
 
 // ✅ HRadmin-related routes with auth middleware
 Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function () {
@@ -199,10 +185,8 @@ Route::get('/applicant/dashboard', [ApplicantJobController::class, 'dashboard'])
 Route::get('/job-posting/{id}/edit', [JobController::class, 'edit'])->name('hrAdmin.jobPosting.edit');
 
 
-Route::post('/file201', [File201Controller::class, 'store'])->name('file201.store');
-
-Route::get('/file201/form', [File201Controller::class, 'form'])->name('file201.form');
 
 
 
 //hello
+//hi

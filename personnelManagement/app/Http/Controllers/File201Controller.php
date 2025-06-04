@@ -13,7 +13,7 @@ class File201Controller extends Controller
     public function form()
     {
         $file201 = File201::where('user_id', auth()->id())->first();
-        return view('file201.form', compact('file201'));
+        return view('applicant.files', compact('file201'));
     }
 
     /**

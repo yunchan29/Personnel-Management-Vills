@@ -16,8 +16,15 @@
     </script>
 @endif
 
-<form method="POST" action="{{ route('file201.store') }}" x-data="licenseForm()" x-init="loadLicenses">
+@php
+    $licensesData = old('licenses', optional($file201)->licenses ?: []);
+@endphp
+
+<form method="POST" action="{{ route('applicant.files.store') }}"
+      x-data="licenseForm({{ Js::from($licensesData) }})"
+      x-init="initLicenses()">
     @csrf
+
     <h2 class="text-xl font-semibold text-[#BD6F22] mb-4">My 201 files</h2>
 
     <div class="border-t border-gray-300 pt-4">
@@ -160,70 +167,34 @@
 
 <!-- Alpine Component -->
 <script>
-    function licenseForm() {
-        return {
-            licenses: [],
-            selectedTab: 0,
+function licenseForm(initialLicenses = []) {
+    return {
+        licenses: [],
+        selectedTab: 0,
 
-            loadLicenses() {
-                const saved = localStorage.getItem('licensesData');
-                this.licenses = saved ? JSON.parse(saved) : [{ name: '', number: '', date: '' }];
-            },
+        initLicenses() {
+            console.log("Initializing licenses:", initialLicenses); // Debug
+            this.licenses = initialLicenses.length > 0
+                ? initialLicenses
+                : [{ name: '', number: '', date: '' }];
+        },
 
-            saveLicenses() {
-                localStorage.setItem('licensesData', JSON.stringify(this.licenses));
-            },
+        addLicense() {
+            this.licenses.push({ name: '', number: '', date: '' });
+            this.selectedTab = this.licenses.length - 1;
+        },
 
-            updateField() {
-                this.saveLicenses();
-            },
-
-            addLicense() {
-                this.licenses.push({ name: '', number: '', date: '' });
+        removeLicense(index) {
+            this.licenses.splice(index, 1);
+            if (this.selectedTab >= this.licenses.length) {
                 this.selectedTab = this.licenses.length - 1;
-                this.saveLicenses();
-            },
-
-            removeLicense(index) {
-                this.licenses.splice(index, 1);
-                if (this.selectedTab >= this.licenses.length) this.selectedTab = this.licenses.length - 1;
-                this.saveLicenses();
             }
-        }
+        },
+
+        updateField() {}
     }
-</script>
+}
 
-<!-- Validation -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    document.querySelector('form').addEventListener('submit', function (e) {
-        const sss = document.querySelector('input[name="sss_number"]').value.trim();
-        const philhealth = document.querySelector('input[name="philhealth_number"]').value.trim();
-        const pagibig = document.querySelector('input[name="pagibig_number"]').value.trim();
-        const tin = document.querySelector('input[name="tin_id_number"]').value.trim();
-
-        const isDigits = /^\d+$/;
-
-        if (!isDigits.test(sss) || sss.length !== 9) {
-            e.preventDefault();
-            return Swal.fire('Invalid SSS Number', 'SSS number must be exactly 9 digits.', 'error');
-        }
-
-        if (!isDigits.test(philhealth) || philhealth.length !== 12) {
-            e.preventDefault();
-            return Swal.fire('Invalid PhilHealth Number', 'PhilHealth number must be exactly 12 digits.', 'error');
-        }
-
-        if (!isDigits.test(pagibig) || pagibig.length !== 12) {
-            e.preventDefault();
-            return Swal.fire('Invalid Pag-IBIG Number', 'Pag-IBIG number must be exactly 12 digits.', 'error');
-        }
-
-        if (!isDigits.test(tin) || tin.length < 9 || tin.length > 12) {
-            e.preventDefault();
-            return Swal.fire('Invalid TIN', 'TIN must be between 9 and 12 digits.', 'error');
-        }
-    });
 </script>
 
 @endsection
