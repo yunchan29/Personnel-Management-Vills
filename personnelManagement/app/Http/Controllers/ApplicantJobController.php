@@ -14,7 +14,9 @@ class ApplicantJobController extends Controller
     public function dashboard()
     {
         $jobs = Job::latest()->get(); // You can change to ->paginate(10) if needed
-        return view('applicant.dashboard', compact('jobs'));
+        $resume = auth()->user()->resume ?? null;
+
+        return view('applicant.dashboard', compact('jobs', 'resume'));
     }
 
     /**
@@ -33,6 +35,16 @@ class ApplicantJobController extends Controller
     {
         $user = auth()->user();
 
+        // ✅ Resume check
+        if (!$user->resume || !$user->resume->resume) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'You must upload a resume before applying.'], 422);
+            }
+
+            return redirect()->back()->with('error', 'You must upload a resume before applying.');
+        }
+
+        // ✅ Prevent duplicate application
         $existing = Application::where('user_id', $user->id)
             ->where('job_id', $job_id)
             ->first();
@@ -45,6 +57,7 @@ class ApplicantJobController extends Controller
             return redirect()->back()->with('error', 'You have already applied for this job.');
         }
 
+        // ✅ Create application
         Application::create([
             'user_id' => $user->id,
             'job_id' => $job_id,
@@ -61,17 +74,16 @@ class ApplicantJobController extends Controller
      * Show all jobs the applicant has applied to.
      */
     public function myApplications()
-{
-    $user = auth()->user();
+    {
+        $user = auth()->user();
 
-    $applications = Application::with('job')
-        ->where('user_id', $user->id)
-        ->latest()
-        ->get();
+        $applications = Application::with('job')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->get();
 
-    $resume = $user->resume ?? null;
+        $resume = $user->resume ?? null;
 
-    return view('applicant.application', compact('applications', 'resume'));
-}
-
+        return view('applicant.application', compact('applications', 'resume'));
+    }
 }

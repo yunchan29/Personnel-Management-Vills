@@ -1,3 +1,4 @@
+@props(['jobId', 'title', 'company', 'location', 'qualifications', 'addinfo', 'lastPosted', 'deadline', 'hasResume'])
 
 <div 
     x-data="{ showDetails: false }" 
@@ -20,10 +21,7 @@
             <div class="flex items-start mt-2 gap-2" x-show="!showDetails">
                 <img src="/images/briefcaseblack.png" class="w-5 h-5 mt-1" alt="Qualification">
                 <ul class="text-sm text-gray-700 list-disc list-inside">
-                    @php
-                        $limitedQualifications = collect($qualifications)->take(3);
-                    @endphp
-
+                    @php $limitedQualifications = collect($qualifications)->take(3); @endphp
                     @foreach ($limitedQualifications as $item)
                         <li>{{ $item }}</li>
                     @endforeach
@@ -37,34 +35,41 @@
             </div>
         </div>
 
-        <!-- Apply Button and Date Info (expanded) -->
+        <!-- Apply Button and Date Info (expanded view) -->
         <div x-show="showDetails" x-transition class="flex items-center gap-4 text-sm text-gray-500 self-end">
             <!-- Apply Button -->
-         <div x-data>
-    <button 
-        @click.prevent="fetch('{{ route('jobs.apply', $jobId) }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            },
-        }).then(response => {
-            if (response.ok) {
-                alert('Application submitted successfully.');
-            } else {
-                alert('Failed to apply. Please try again.');
-            }
-        }).catch(error => {
-            console.error(error);
-            alert('An error occurred.');
-        })"
-        class="bg-[#BD6F22] hover:bg-[#a75d1c] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
-    >
-        <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply"> Apply Now
-    </button>
-</div>
-
-
+            <div x-data>
+                @if ($hasResume)
+                    <button 
+                        @click.prevent="fetch('{{ route('jobs.apply', $jobId) }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            },
+                        }).then(response => {
+                            if (response.ok) {
+                                alert('Application submitted successfully.');
+                            } else {
+                                alert('Failed to apply. Please try again.');
+                            }
+                        }).catch(error => {
+                            console.error(error);
+                            alert('An error occurred.');
+                        })"
+                        class="bg-[#BD6F22] hover:bg-[#a75d1c] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
+                    >
+                        <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply"> Apply Now
+                    </button>
+                @else
+                    <button 
+                        @click="window.location.href = '{{ route('applicant.application') }}'"
+                        class="bg-gray-400 text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
+                    >
+                        <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply"> Upload Resume
+                    </button>
+                @endif
+            </div>
 
             <!-- Date Info -->
             <div>
@@ -74,40 +79,47 @@
         </div>
     </div>
 
-    <!-- Apply Button (collapsed view, vertically centered on left) -->
+    <!-- Apply Button (collapsed view) -->
     <div 
         x-show="!showDetails" 
         x-transition 
         class="absolute left-6 top-1/2 -translate-y-1/2"
     >
-      <div x-data>
-    <button 
-        @click.prevent="fetch('{{ route('jobs.apply', $jobId) }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            },
-        }).then(response => {
-            if (response.ok) {
-                alert('Application submitted successfully.');
-            } else {
-                alert('Failed to apply. Please try again.');
-            }
-        }).catch(error => {
-            console.error(error);
-            alert('An error occurred.');
-        })"
-        class="bg-[#BD6F22] hover:bg-[#a75d1c] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
-    >
-        <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply"> Apply Now
-    </button>
-</div>
-
-
+        <div x-data>
+            @if ($hasResume)
+                <button 
+                    @click.prevent="fetch('{{ route('jobs.apply', $jobId) }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        },
+                    }).then(response => {
+                        if (response.ok) {
+                            alert('Application submitted successfully.');
+                        } else {
+                            alert('Failed to apply. Please try again.');
+                        }
+                    }).catch(error => {
+                        console.error(error);
+                        alert('An error occurred.');
+                    })"
+                    class="bg-[#BD6F22] hover:bg-[#a75d1c] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
+                >
+                    <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply"> Apply Now
+                </button>
+            @else
+                <button 
+                    @click="window.location.href = '{{ route('applicant.application') }}'"
+                    class="bg-gray-400 text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
+                >
+                    <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply"> Upload Resume
+                </button>
+            @endif
+        </div>
     </div>
 
-    <!-- See More Link -->
+    <!-- See More Toggle -->
     <div class="text-center">
         <button 
             @click="showDetails = !showDetails" 
@@ -129,28 +141,24 @@
     >
         @if (!empty($qualifications))
         <div>
-              <div class="flex items-start space-x-2">
+            <div class="flex items-start space-x-2">
                 <img src="/images/briefcaseblack.png" class="w-5 h-5 mt-1" alt="Qualification">
                 <p class="font-semibold">All Qualifications:</p>
-        </div>
-                <ul class="list-disc list-inside">
-                    
-                    @foreach ($qualifications as $item)
-                    
-                        <li>{{ $item }}</li>
-                    @endforeach
-                </ul>
             </div>
+            <ul class="list-disc list-inside">
+                @foreach ($qualifications as $item)
+                    <li>{{ $item }}</li>
+                @endforeach
+            </ul>
+        </div>
         @endif
 
-        <!-- Location (repeated in expanded) -->
         <div class="flex items-center mt-2 text-gray-700">
             <img src="/images/location.png" class="w-5 h-5 mr-1" alt="Location">
             <p>{{ $location }}</p>
         </div>
-        
-        <!-- Additional Info -->
-         @if(!empty($addinfo) && is_array($addinfo))
+
+        @if(!empty($addinfo) && is_array($addinfo))
             <ul>
                 @foreach($addinfo as $info)
                     <li>{{ $info }}</li>
@@ -159,18 +167,5 @@
         @else
             <p>No additional info available.</p>
         @endif
-
     </div>
-
 </div>
-
-<script>
-    console.log("Debug Info:");
-    console.log("Title:", @json($title));
-    console.log("Company:", @json($company));
-    console.log("Location:", @json($location));
-    console.log("Last Posted:", @json($lastPosted));
-    console.log("Deadline:", @json($deadline));
-    console.log("Qualifications:", @json($qualifications));
-    console.log("Additional Info:", @json($addinfo));
-</script>
