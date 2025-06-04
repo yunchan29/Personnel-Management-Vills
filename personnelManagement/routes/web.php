@@ -83,7 +83,7 @@ Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(functi
 
         // Government IDs and Licenses (File 201) routes
         Route::post('/files', [File201Controller::class, 'store'])->name('files.store');
-        Route::get('/files', [File201Controller::class, 'form'])->name('files');
+        Route::get('/files', [File201Controller::class, 'show'])->name('files');
 
 });
 
@@ -114,6 +114,10 @@ Route::prefix('employee')->name('employee.')->middleware('auth')->group(function
 
     Route::post('/leave-forms', [LeaveFormController::class, 'store'])->name('leaveForms.store');
     Route::delete('/leave-forms/{id}', [LeaveFormController::class, 'destroy'])->name('leaveForms.destroy');
+
+    // Government IDs and Licenses (File 201) routes
+    Route::post('/files', [File201Controller::class, 'store'])->name('files.store');
+    Route::get('/files', [File201Controller::class, 'show'])->name('files');
 });
 
 // ✅ HRadmin-related routes with auth middleware

@@ -10,11 +10,17 @@ class File201Controller extends Controller
     /**
      * Display the 201 form.
      */
-    public function form()
-    {
-        $file201 = File201::where('user_id', auth()->id())->first();
-        return view('applicant.files', compact('file201'));
-    }
+public function show()
+{
+    $file201 = auth()->user()->file201;
+
+    // Check if user is an applicant or employee
+    $view = auth()->user()->role === 'employee'
+        ? 'employee.files'
+        : 'applicant.files';
+
+    return view($view, compact('file201'));
+}
 
     /**
      * Store or update the 201 file.

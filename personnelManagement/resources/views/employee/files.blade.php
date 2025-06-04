@@ -1,7 +1,29 @@
 @extends('layouts.employeeHome')
 
 @section('content')
-<section x-data="licenseForm()" x-init="loadLicenses">
+
+@if(session('success'))
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: '{{ session('success') }}',
+                confirmButtonColor: '#BD6F22'
+            });
+        });
+    </script>
+@endif
+
+@php
+    $licensesData = old('licenses', optional($file201)->licenses ?: []);
+@endphp
+
+<form method="POST" action="{{ route('applicant.files.store') }}"
+      x-data="licenseForm({{ Js::from($licensesData) }})"
+      x-init="initLicenses()">
+    @csrf
 
     <h2 class="text-xl font-semibold text-[#BD6F22] mb-4">My 201 files</h2>
 
@@ -11,19 +33,43 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">SSS number:</label>
-                <input type="text" name="sss_number" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+                <input type="text" name="sss_number"
+                    value="{{ old('sss_number', $file201->sss_number ?? '') }}"
+                    maxlength="9"
+                    pattern="\d{9}"
+                    inputmode="numeric"
+                    oninput="this.value = this.value.replace(/\D/g, '').slice(0,9);"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Philhealth number:</label>
-                <input type="text" name="philhealth_number" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+                <input type="text" name="philhealth_number"
+                    value="{{ old('philhealth_number', $file201->philhealth_number ?? '') }}"
+                    maxlength="12"
+                    pattern="\d{12}"
+                    inputmode="numeric"
+                    oninput="this.value = this.value.replace(/\D/g, '').slice(0,12);"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Pag-Ibig number:</label>
-                <input type="text" name="pagibig_number" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+                <input type="text" name="pagibig_number"
+                    value="{{ old('pagibig_number', $file201->pagibig_number ?? '') }}"
+                    maxlength="12"
+                    pattern="\d{12}"
+                    inputmode="numeric"
+                    oninput="this.value = this.value.replace(/\D/g, '').slice(0,12);"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Tin ID number:</label>
-                <input type="text" name="tin_id_number" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+                <input type="text" name="tin_id_number"
+                    value="{{ old('tin_id_number', $file201->tin_id_number ?? '') }}"
+                    maxlength="12"
+                    pattern="\d{9,12}"
+                    inputmode="numeric"
+                    oninput="this.value = this.value.replace(/\D/g, '').slice(0,12);"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
             </div>
         </div>
 
@@ -33,8 +79,7 @@
         <!-- Tab Navigation -->
         <div class="flex flex-wrap gap-2 mb-4">
             <template x-for="(license, index) in licenses" :key="index">
-                <button
-                    type="button"
+                <button type="button"
                     @click="selectedTab = index"
                     :class="selectedTab === index ? 'bg-[#BD6F22] text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'"
                     class="px-4 py-2 rounded-md text-sm font-medium transition">
@@ -110,40 +155,44 @@
             class="mt-6 bg-[#BD6F22] hover:bg-[#a75f1c] text-white font-semibold px-4 py-2 rounded-md transition">
             Add New
         </button>
+
+        <!-- Save Button -->
+        <div class="mt-4">
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-md transition">
+                Save
+            </button>
+        </div>
     </div>
-</section>
+</form>
 
+<!-- Alpine Component -->
 <script>
-    function licenseForm() {
-        return {
-            licenses: [],
-            selectedTab: 0,
+function licenseForm(initialLicenses = []) {
+    return {
+        licenses: [],
+        selectedTab: 0,
 
-            loadLicenses() {
-                const saved = localStorage.getItem('licensesData');
-                this.licenses = saved ? JSON.parse(saved) : [{ name: '', number: '', date: '' }];
-            },
+        initLicenses() {
+            console.log("Initializing licenses:", initialLicenses); // Debug
+            this.licenses = initialLicenses.length > 0
+                ? initialLicenses
+                : [{ name: '', number: '', date: '' }];
+        },
 
-            saveLicenses() {
-                localStorage.setItem('licensesData', JSON.stringify(this.licenses));
-            },
+        addLicense() {
+            this.licenses.push({ name: '', number: '', date: '' });
+            this.selectedTab = this.licenses.length - 1;
+        },
 
-            updateField() {
-                this.saveLicenses();
-            },
-
-            addLicense() {
-                this.licenses.push({ name: '', number: '', date: '' });
+        removeLicense(index) {
+            this.licenses.splice(index, 1);
+            if (this.selectedTab >= this.licenses.length) {
                 this.selectedTab = this.licenses.length - 1;
-                this.saveLicenses();
-            },
-
-            removeLicense(index) {
-                this.licenses.splice(index, 1);
-                if (this.selectedTab >= this.licenses.length) this.selectedTab = this.licenses.length - 1;
-                this.saveLicenses();
             }
-        }
+        },
+
+        updateField() {}
     }
+}
 </script>
 @endsection
