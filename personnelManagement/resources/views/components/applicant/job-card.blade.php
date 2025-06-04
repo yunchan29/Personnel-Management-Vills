@@ -66,7 +66,7 @@
                         @click="window.location.href = '{{ route('applicant.application') }}'"
                         class="bg-gray-400 text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
                     >
-                        <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply"> Upload Resume
+                        <img src="/images/leaveForm.png" class="w-4 h-4" alt="Apply"> Upload Resume
                     </button>
                 @endif
             </div>
@@ -111,9 +111,9 @@
             @else
                 <button 
                     @click="window.location.href = '{{ route('applicant.application') }}'"
-                    class="bg-gray-400 text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
+                    class="bg-[#BD6F22] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
                 >
-                    <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply"> Upload Resume
+                    <img src="/images/leaveForm.png" class="w-4 h-4" alt="Apply"> Upload Resume
                 </button>
             @endif
         </div>
