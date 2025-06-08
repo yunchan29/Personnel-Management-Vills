@@ -81,7 +81,7 @@
         </div>
     @endif
 
-    @forelse($applications ?? [] as $application)
+<!--    @forelse($applications ?? [] as $application)
         <div class="border border-gray-300 rounded-md shadow-md p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
             <div>
                 <h3 class="text-md font-semibold" style="color: #BD6F22;">
@@ -111,6 +111,21 @@
     @empty
         <p class="text-sm text-gray-600 mt-6">You haven’t applied to any jobs yet.</p>
     @endforelse
+
+        <!-- Application Card (placeholder) -->
+    <div class="border border-gray-300 rounded-md shadow-md p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h3 class="text-md font-semibold" style="color: #BD6F22;">Production Operator</h3>
+            <p class="text-sm text-gray-700 mb-2">Yazaki - Torres Manufacturing, Inc.</p>
+            <a href="#" class="inline-block bg-[#BD6F22] text-white text-sm px-4 py-2 rounded hover:bg-[#a75e1c] transition">View Resume</a>
+            <p class="text-xs text-gray-500 mt-2">Applied on: April 20, 2025</p>
+        </div>
+        <div>
+            <span class="inline-block bg-[#DD6161] text-white text-sm px-4 py-2 rounded">To Review</span>
+        </div>
+    </div>
+</div>
+
 </div>
 
 <!-- SweetAlert2 CDN -->
