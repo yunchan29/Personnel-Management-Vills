@@ -28,4 +28,10 @@ class Job extends Model
     return $this->hasMany(Resume::class);
 }
 
+public function job()
+{
+    return $this->belongsTo(Job::class);
+}
+
+
 }

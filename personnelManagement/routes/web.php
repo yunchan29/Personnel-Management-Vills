@@ -18,8 +18,9 @@ Route::get('/my-applications', [ApplicantJobController::class, 'myApplications']
     ->middleware('auth');
 
 
-
-Route::post('/apply/{job}', [ApplicantJobController::class, 'apply'])->name('jobs.apply');
+Route::post('/apply/{job}', [ApplicantJobController::class, 'apply'])
+    ->name('jobs.apply')
+    ->middleware('auth');
 
 
 Route::get('/jobs/{id}', [JobController::class, 'show'])->name('job.show');
