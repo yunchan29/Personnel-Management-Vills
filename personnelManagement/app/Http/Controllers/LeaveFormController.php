@@ -11,7 +11,16 @@ class LeaveFormController extends Controller
 {
     public function index()
     {
-        $leaveForms = LeaveForm::where('user_id', Auth::id())->get();
+        $user = Auth::user();
+
+        if ($user->role === 'hrAdmin') {
+        // HR Admin can view all leave forms
+        $leaveForms = LeaveForm::with('user')->latest()->get();
+        return view('hradmin.leaveForm', compact('leaveForms'));
+        }
+
+        // Regular employee view
+        $leaveForms = LeaveForm::where('user_id', $user->id)->latest()->get();
         return view('employee.leaveForm', compact('leaveForms'));
     }
 

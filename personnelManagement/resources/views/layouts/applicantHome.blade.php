@@ -9,7 +9,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Alata&display=swap" rel="stylesheet">
-    <style>.font-alata { font-family: 'Alata', sans-serif; }</style>
+    <style>
+        .font-alata { font-family: 'Alata', sans-serif; }
+        [x-cloak] { display: none !important; }
+    </style>
 </head>
 <body class="bg-gray-100 font-alata min-h-screen">
 

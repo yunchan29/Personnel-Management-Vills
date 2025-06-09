@@ -16,7 +16,7 @@ return new class extends Migration
 
         $table->foreignId('user_id')->constrained()->onDelete('cascade');
         $table->foreignId('job_id')->constrained()->onDelete('cascade');
-        $table->foreignId('resume_id')->nullable()->constrained()->onDelete('set null');
+        $table->string('resume_snapshot')->nullable(); // Path to the resume snapshot
 
         $table->json('licenses')->nullable(); // Array of license paths or data
 

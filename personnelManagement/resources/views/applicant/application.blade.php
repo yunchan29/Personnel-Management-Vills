@@ -97,10 +97,10 @@
                     Applied on: {{ optional($application->created_at)->format('F d, Y') ?? 'N/A' }}
                 </p>
 
-                @if(isset($resume) && $resume->resume)
+                @if($application->resume_snapshot)
                     <div class="flex items-center gap-2 mt-2">
                         <!-- View Resume Button -->
-                        <a href="{{ asset('storage/' . $resume->resume) }}" target="_blank"
+                        <a href="{{ $application->resume_snapshot_url }}" target="_blank"
                         class="inline-block bg-[#BD6F22] text-white text-sm px-4 py-2 rounded hover:bg-[#a75e1c] transition">
                             View Resume
                         </a>

@@ -108,16 +108,15 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
     Route::get('/job-posting', [JobController::class, 'index'])->name('jobPosting');
     Route::post('/jobPosting/store', [JobController::class, 'store'])->name('jobPosting.store');
     Route::get('/job-posting/{id}/edit', [JobController::class, 'edit'])->name('jobPosting.edit');
-
-    // Di ko pa yan nalalabelan
-    Route::get('/jobs/{id}', [JobController::class, 'show'])->name('job.show');
-    Route::get('/hrAdmin/job-posting/{id}', [JobController::class, 'show'])->name('hrAdmin.jobPosting.show');
+    Route::get('/job-posting/{id}', [JobController::class, 'show'])->name('jobPosting.show');
 
     // Government IDs and Licenses (File 201) routes (Pre-made)
     Route::get('/files', function () {return view('hrAdmin.files');})->name('files');
 
     // Leave Form routes (Pre-made)
-    Route::get('/leaveForm', function () {return view('hrAdmin.leaveForm');})->name('leaveForm');
+    Route::get('/leave-forms', [LeaveFormController::class, 'index'])->name('leaveForm'); 
+    Route::post('/leave-forms', [LeaveFormController::class, 'store'])->name('leaveForms.store');
+    Route::delete('/leave-forms/{id}', [LeaveFormController::class, 'destroy'])->name('leaveForms.destroy');
 
     // Change password route
     Route::get('/settings', function () {return view('hrAdmin.settings');})->name('settings');});

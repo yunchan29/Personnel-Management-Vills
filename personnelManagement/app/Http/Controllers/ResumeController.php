@@ -108,8 +108,18 @@ class ResumeController extends Controller
     public function deleteApplication($id)
     {
         $application = Application::where('user_id', auth()->id())->findOrFail($id);
+
+        // Delete the resume snapshot file if it exists
+        if ($application->resume_snapshot && \Storage::exists($application->resume_snapshot)) {
+            \Storage::delete($application->resume_snapshot);
+        }
+
+        // Delete the application
         $application->delete();
 
         return back()->with('success', 'Application deleted successfully.');
     }
+
+
+    
 }

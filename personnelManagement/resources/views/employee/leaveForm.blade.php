@@ -65,6 +65,7 @@
     <!-- Modal -->
     <div 
         x-show="open" 
+        x-cloak 
         class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
     >
         <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl relative" @click.outside="open = false">

@@ -3,7 +3,7 @@
         {{ $trigger }}
     </div>
 
-    <div x-show="open" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl z-20">
+    <div x-show="open"  x-cloak class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl z-20">
         {{ $content }}
     </div>
 </div>

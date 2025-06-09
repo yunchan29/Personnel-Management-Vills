@@ -52,12 +52,23 @@ class ApplicantJobController extends Controller
 
             return redirect()->back()->with('error', 'You have already applied for this job.');
         }
+        
+        $resumePath = $user->resume->resume; // e.g., 'resumes/filename.pdf'
+        $resumeSnapshotPath = null;
+
+        if ($resumePath && \Storage::disk('public')->exists($resumePath)) {
+            $extension = pathinfo($resumePath, PATHINFO_EXTENSION);
+            $snapshotFilename = 'resume_snapshots/' . uniqid('resume_') . '.' . $extension;
+
+            \Storage::disk('public')->copy($resumePath, $snapshotFilename);
+            $resumeSnapshotPath = $snapshotFilename;
+        }
 
         // ✅ Create application with initial status = 'Pending'
         Application::create([
             'user_id' => $user->id,
             'job_id' => $job->id,
-            'resume_id' => $user->resume->id ?? null,
+            'resume_snapshot' => $resumeSnapshotPath,
             'licenses' => $file201->licenses ?? [],
             'sss_number' => $file201->sss_number,
             'philhealth_number' => $file201->philhealth_number,

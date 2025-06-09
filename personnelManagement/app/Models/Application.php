@@ -10,7 +10,7 @@ class Application extends Model
     protected $fillable = [
         'user_id',
         'job_id',
-        'resume_id',
+        'resume_snapshot',
         'licenses',
         'sss_number',
         'philhealth_number',
@@ -38,8 +38,8 @@ class Application extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function resume()
+    public function getResumeSnapshotUrlAttribute()
     {
-        return $this->belongsTo(Resume::class);
-    }
+        return $this->resume_snapshot ? \Storage::url($this->resume_snapshot) : null;
+}
 }
