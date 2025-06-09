@@ -81,10 +81,6 @@
         </div>
     @endif
 
-    <pre>
-    Applications Count: {{ $applications->count() }}
-</pre>
-
     @forelse($applications ?? [] as $application)
         <div class="border border-gray-300 rounded-md shadow-md p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
             <div>

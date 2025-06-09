@@ -16,10 +16,16 @@ class Application extends Model
         'philhealth_number',
         'tin_id_number',
         'pagibig_number',
+        'status',
+        'interview_schedule',
+        'remarks',
+        'reviewed_at',
     ];
 
     protected $casts = [
-        'licenses' => 'array', // Automatically handle JSON <-> array
+        'licenses' => 'array',
+        'interview_schedule' => 'datetime',
+        'reviewed_at' => 'datetime',
     ];
 
     public function job()

@@ -1,10 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Models\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Resume;
+
 
 class ResumeController extends Controller
 {
@@ -74,5 +75,22 @@ class ResumeController extends Controller
         return redirect()
             ->route('applicant.application')
             ->with('success', 'Resume deleted successfully!');
+    }
+
+    /**
+     * Show the applied jobs of the applicant.
+     */
+    public function index()
+    {
+        $user = auth()->user();
+
+        $jobs = Job::latest()->get();
+
+        // Get all job IDs the user has applied to
+        $appliedJobIds = Application::where('user_id', $user->id)
+            ->pluck('job_id')
+            ->toArray();
+
+        return view('applicant.jobs', compact('jobs', 'appliedJobIds'));
     }
 }

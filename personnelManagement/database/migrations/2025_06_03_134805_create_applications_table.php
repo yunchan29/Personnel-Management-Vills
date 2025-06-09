@@ -26,6 +26,14 @@ return new class extends Migration
         $table->string('tin_id_number')->nullable();
         $table->string('pagibig_number')->nullable();
 
+        // ✅ Application tracking fields
+        $table->enum('status', ['Pending', 'Under Review', 'Shortlisted', 'Interview Scheduled', 'Rejected', 'Hired'])
+              ->default('Pending');
+
+        $table->dateTime('interview_schedule')->nullable();
+        $table->text('remarks')->nullable();
+        $table->dateTime('reviewed_at')->nullable();
+
         $table->timestamps();
     });
 }

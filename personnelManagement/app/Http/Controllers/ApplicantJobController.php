@@ -5,27 +5,29 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Job;
 use App\Models\Application;
+use Illuminate\Support\Facades\Log;
 
 class ApplicantJobController extends Controller
 {
     /* Show applicant dashboard with latest job listings.*/
     public function dashboard()
     {
-        $jobs = Job::latest()->get(); // You can change to ->paginate(10) if needed
-        $resume = auth()->user()->resume ?? null;
+        $user = auth()->user();
 
-        return view('applicant.dashboard', compact('jobs', 'resume'));
-    }
-
-    /* Show all available jobs.*/
-    public function index()
-    {
         $jobs = Job::latest()->get();
-        return view('applicant.jobs', compact('jobs'));
+        $resume = $user->resume ?? null;
+
+        // Get all job IDs the user has applied to
+        $appliedJobIds = Application::where('user_id', $user->id)
+            ->pluck('job_id')
+            ->toArray();
+
+        return view('applicant.dashboard', compact('jobs', 'resume', 'appliedJobIds'));
     }
+
 
     /* Apply to a specific job.*/
-    public function apply(Request $request, $job_id)
+    public function apply(Request $request, Job $job)
     {
         $user = auth()->user();
         $file201 = $user->file201;
@@ -41,7 +43,7 @@ class ApplicantJobController extends Controller
 
         // ✅ Prevent duplicate application
         $existing = Application::where('user_id', $user->id)
-            ->where('job_id', $job_id)
+            ->where('job_id', $job->id)
             ->first();
 
         if ($existing) {
@@ -52,16 +54,17 @@ class ApplicantJobController extends Controller
             return redirect()->back()->with('error', 'You have already applied for this job.');
         }
 
-        // ✅ Create application with data from File201
+        // ✅ Create application with initial status = 'Pending'
         Application::create([
             'user_id' => $user->id,
-            'job_id' => $job_id,
+            'job_id' => $job->id,
             'resume_id' => $user->resume->id ?? null,
             'licenses' => $file201->licenses ?? [],
             'sss_number' => $file201->sss_number,
             'philhealth_number' => $file201->philhealth_number,
             'tin_id_number' => $file201->tin_id_number,
             'pagibig_number' => $file201->pagibig_number,
+            'status' => 'Pending', // ✅ status tracking
         ]);
 
         if ($request->expectsJson()) {
@@ -71,17 +74,19 @@ class ApplicantJobController extends Controller
         return redirect()->back()->with('success', 'Your application was submitted successfully.');
     }
 
-
-
     /*Show all jobs the applicant has applied to.*/
     public function myApplications()
     {
         $user = auth()->user();
 
-        $applications = \App\Models\Application::with('job')
+        $applications = Application::with('job')
             ->where('user_id', $user->id)
             ->latest()
             ->get();
+
+        // ← dump here:
+        dd('this method is being hit');
+        dd($applications);
 
         $resume = $user->resume ?? null;
 
