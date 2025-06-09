@@ -14,7 +14,7 @@ use App\Http\Controllers\LeaveFormController;
 
 
 Route::get('/my-applications', [ApplicantJobController::class, 'myApplications'])
-    ->name('applicant.application')
+    ->name('applicant.applications')
     ->middleware('auth');
 
 

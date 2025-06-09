@@ -13,8 +13,19 @@ return new class extends Migration
 {
     Schema::create('applications', function (Blueprint $table) {
         $table->id();
+
         $table->foreignId('user_id')->constrained()->onDelete('cascade');
         $table->foreignId('job_id')->constrained()->onDelete('cascade');
+        $table->foreignId('resume_id')->nullable()->constrained()->onDelete('set null');
+
+        $table->json('licenses')->nullable(); // Array of license paths or data
+
+        // Government ID numbers (stored as strings to preserve leading zeroes)
+        $table->string('sss_number')->nullable();
+        $table->string('philhealth_number')->nullable();
+        $table->string('tin_id_number')->nullable();
+        $table->string('pagibig_number')->nullable();
+
         $table->timestamps();
     });
 }

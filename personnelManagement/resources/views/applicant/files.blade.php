@@ -194,7 +194,6 @@ function licenseForm(initialLicenses = []) {
         updateField() {}
     }
 }
-
 </script>
 
 @endsection

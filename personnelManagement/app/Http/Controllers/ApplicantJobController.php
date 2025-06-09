@@ -8,9 +8,7 @@ use App\Models\Application;
 
 class ApplicantJobController extends Controller
 {
-    /**
-     * Show applicant dashboard with latest job listings.
-     */
+    /* Show applicant dashboard with latest job listings.*/
     public function dashboard()
     {
         $jobs = Job::latest()->get(); // You can change to ->paginate(10) if needed
@@ -19,21 +17,18 @@ class ApplicantJobController extends Controller
         return view('applicant.dashboard', compact('jobs', 'resume'));
     }
 
-    /**
-     * Show all available jobs.
-     */
+    /* Show all available jobs.*/
     public function index()
     {
         $jobs = Job::latest()->get();
         return view('applicant.jobs', compact('jobs'));
     }
 
-    /**
-     * Apply to a specific job.
-     */
+    /* Apply to a specific job.*/
     public function apply(Request $request, $job_id)
     {
         $user = auth()->user();
+        $file201 = $user->file201;
 
         // ✅ Resume check
         if (!$user->resume || !$user->resume->resume) {
@@ -57,10 +52,16 @@ class ApplicantJobController extends Controller
             return redirect()->back()->with('error', 'You have already applied for this job.');
         }
 
-        // ✅ Create application
+        // ✅ Create application with data from File201
         Application::create([
             'user_id' => $user->id,
             'job_id' => $job_id,
+            'resume_id' => $user->resume->id ?? null,
+            'licenses' => $file201->licenses ?? [],
+            'sss_number' => $file201->sss_number,
+            'philhealth_number' => $file201->philhealth_number,
+            'tin_id_number' => $file201->tin_id_number,
+            'pagibig_number' => $file201->pagibig_number,
         ]);
 
         if ($request->expectsJson()) {
@@ -70,20 +71,20 @@ class ApplicantJobController extends Controller
         return redirect()->back()->with('success', 'Your application was submitted successfully.');
     }
 
-    /**
-     * Show all jobs the applicant has applied to.
-     */
+
+
+    /*Show all jobs the applicant has applied to.*/
     public function myApplications()
     {
         $user = auth()->user();
 
-        $applications = Application::with('job')
+        $applications = \App\Models\Application::with('job')
             ->where('user_id', $user->id)
             ->latest()
             ->get();
 
         $resume = $user->resume ?? null;
 
-        return view('applicant.application', compact('applications', 'resume'));
+        return view('applicant.applications', compact('applications', 'resume'));
     }
 }
