@@ -5,7 +5,8 @@
     <!-- Section Title -->
     <h2 class="text-xl font-semibold mb-4" style="color: #BD6F22;">My Applications</h2>
 
-    <!-- Resume Upload Notice -->
+    <!-- Resume Upload Notice (only if no resume) -->
+    @if(empty($resume) || !$resume->resume)
     <div class="border border-gray-300 rounded-md shadow-sm p-4 mb-6">
         <div class="flex items-start gap-2 mb-4">
             <span class="text-xl">⚠️</span>
@@ -27,7 +28,7 @@
 
             <label class="w-full md:flex-1">
                 <span class="block mb-1 text-sm text-gray-700">
-                    {{ optional($resume ?? null)->resume ? 'Replace your resume (PDF only)' : 'Please upload your resume (PDF only)' }}
+                    Please upload your resume (PDF only)
                 </span>
                 <input
                     type="file"
@@ -46,72 +47,93 @@
                 class="px-6 py-2 text-white rounded"
                 style="background-color: #BD6F22;"
             >
-                {{ optional($resume ?? null)->resume ? 'Replace' : 'Upload' }}
+                Upload
             </button>
         </form>
     </div>
-
-    @if(isset($resume) && $resume->resume)
-        <div class="mb-6 flex items-center gap-4">
-            <!-- Show Resume Button -->
-            <a
-                href="{{ asset('storage/' . $resume->resume) }}"
-                target="_blank"
-                class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-            >
-                Show Resume
-            </a>
-
-            <!-- Delete Resume Button -->
-            <form
-                id="deleteForm"
-                action="{{ route('applicant.application.destroy') }}"
-                method="POST"
-            >
-                @csrf
-                @method('DELETE')
-                <button
-                    type="button"
-                    id="deleteResumeBtn"
-                    class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
-                >
-                    Delete Resume
-                </button>
-            </form>
-        </div>
     @endif
 
+    <!-- Resume Actions (if resume exists) -->
+    @if(isset($resume) && $resume->resume)
+    <div class="mb-6 flex items-center gap-4">
+        <a
+            href="{{ asset('storage/' . $resume->resume) }}"
+            target="_blank"
+            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+        >
+            Show Resume
+        </a>
+
+        <form
+            id="deleteForm"
+            action="{{ route('applicant.application.destroy') }}"
+            method="POST"
+        >
+            @csrf
+            @method('DELETE')
+            <button
+                type="button"
+                id="deleteResumeBtn"
+                class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+            >
+                Delete Resume
+            </button>
+        </form>
+    </div>
+    @endif
+
+    <!-- Application Cards -->
     @forelse($applications ?? [] as $application)
         <div class="border border-gray-300 rounded-md shadow-md p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
             <div>
                 <h3 class="text-md font-semibold" style="color: #BD6F22;">
-                    {{ $application->job->title ?? 'No job title' }}
+                    {{ $application->job->job_title ?? 'No job title' }}
                 </h3>
                 <p class="text-sm text-gray-700 mb-2">
                     {{ $application->job->company_name ?? 'No company' }}
                 </p>
 
-                @if(isset($resume) && $resume->resume)
-                    <a href="{{ asset('storage/' . $resume->resume) }}" target="_blank"
-                       class="inline-block bg-[#BD6F22] text-white text-sm px-4 py-2 rounded hover:bg-[#a75e1c] transition">
-                        View Resume
-                    </a>
-                @endif
-
                 <p class="text-xs text-gray-500 mt-2">
                     Applied on: {{ optional($application->created_at)->format('F d, Y') ?? 'N/A' }}
                 </p>
+
+                @if(isset($resume) && $resume->resume)
+                    <div class="flex items-center gap-2 mt-2">
+                        <!-- View Resume Button -->
+                        <a href="{{ asset('storage/' . $resume->resume) }}" target="_blank"
+                        class="inline-block bg-[#BD6F22] text-white text-sm px-4 py-2 rounded hover:bg-[#a75e1c] transition">
+                            View Resume
+                        </a>
+
+                        <!-- Delete Application Button with Trash Icon -->
+                        <form action="{{ route('applicant.application.delete', $application->id) }}" method="POST"
+                            onsubmit="return confirm('Are you sure you want to delete this application?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-red-500 hover:text-red-700 transition" title="Delete Application">
+                                <!-- Trash Icon -->
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 
+                                        00-1-1h-4a1 1 0 00-1 1v3m5 0H6"/>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                @endif
+
             </div>
-            <div>
-                <span class="inline-block bg-[#DD6161] text-white text-sm px-4 py-2 rounded">
-                    To Review
-                </span>
+
+            <div class="flex flex-col items-end gap-2">
+                <p class="text-sm text-gray-700">
+                    Status: {{ ucfirst($application->status ?? 'Pending') }}
+                </p>
             </div>
         </div>
     @empty
         <p class="text-sm text-gray-600 mt-6">You haven’t applied to any jobs yet.</p>
     @endforelse
-    </div>
 </div>
 
 <!-- SweetAlert2 CDN -->

@@ -25,7 +25,6 @@ class ApplicantJobController extends Controller
         return view('applicant.dashboard', compact('jobs', 'resume', 'appliedJobIds'));
     }
 
-
     /* Apply to a specific job.*/
     public function apply(Request $request, Job $job)
     {

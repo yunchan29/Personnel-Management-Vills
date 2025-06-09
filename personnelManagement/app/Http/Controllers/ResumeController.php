@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -10,19 +11,22 @@ use App\Models\Resume;
 class ResumeController extends Controller
 {
     /**
-     * Show the resume upload page.
+     * Show the resume and myapplication page.
      */
- public function show()
-{
-    $resume = auth()->user()->resume;
+    public function show()
+    {
+        $user = auth()->user();
 
-    // Check if user is an applicant or employee
-    $view = auth()->user()->role === 'employee'
-        ? 'employee.application'
-        : 'applicant.application';
+        $resume = $this->getResume($user->id);
+        $applications = $this->getApplications($user->id);
 
-    return view($view, compact('resume'));
-}
+        $view = $user->role === 'employee'
+            ? 'employee.application'
+            : 'applicant.application';
+
+        return view($view, compact('resume', 'applications'));
+    }
+
 
     /**
      * Store or update the resume file.
@@ -78,19 +82,34 @@ class ResumeController extends Controller
     }
 
     /**
-     * Show the applied jobs of the applicant.
+     * SFetch resume of the applicant.
      */
-    public function index()
+
+    protected function getResume($userId)
     {
-        $user = auth()->user();
+        return \App\Models\User::findOrFail($userId)->resume;
+    }
 
-        $jobs = Job::latest()->get();
+    /**
+     * Fetch applications of the applicant.
+     */
+        protected function getApplications($userId)
+    {
+        return Application::with('job')
+            ->where('user_id', $userId)
+            ->latest()
+            ->get();
+    }
 
-        // Get all job IDs the user has applied to
-        $appliedJobIds = Application::where('user_id', $user->id)
-            ->pluck('job_id')
-            ->toArray();
+    /**
+     * Delete a specific application.
+     */
 
-        return view('applicant.jobs', compact('jobs', 'appliedJobIds'));
+    public function deleteApplication($id)
+    {
+        $application = Application::where('user_id', auth()->id())->findOrFail($id);
+        $application->delete();
+
+        return back()->with('success', 'Application deleted successfully.');
     }
 }

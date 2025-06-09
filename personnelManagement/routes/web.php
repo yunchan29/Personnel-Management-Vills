@@ -45,10 +45,12 @@ Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(functi
     // Edit password
     Route::get('/settings', function () {return view('applicant.settings');})->name('settings');
 
-    // Resume routes (Upload and delete)
+    // Resume and My Application routes(Upload and delete)
     Route::get('/application', [ResumeController::class, 'show'])->name('application');
     Route::post('/application', [ResumeController::class, 'store'])->name('application.store');
     Route::delete('/application', [ResumeController::class, 'destroy'])->name('application.destroy');
+    Route::delete('/application/{id}/delete', [ResumeController::class, 'deleteApplication'])
+    ->name('application.delete');
 
     // Applicant Government IDs and Licenses (File 201) routes
     Route::post('/files', [File201Controller::class, 'store'])->name('files.store');
