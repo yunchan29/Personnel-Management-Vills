@@ -1,7 +1,69 @@
-@props(['jobId', 'title', 'company', 'location', 'qualifications', 'addinfo', 'lastPosted', 'deadline', 'hasResume'])
+@props([
+    'jobId',
+    'title',
+    'company',
+    'location',
+    'qualifications',
+    'addinfo',
+    'lastPosted',
+    'deadline',
+    'hasResume',
+    'hasApplied' => false
+])
 
 <div 
-    x-data="{ showDetails: false }" 
+    x-data="{
+        showDetails: false,
+        hasApplied: {{ $hasApplied ? 'true' : 'false' }},
+        apply() {
+            if (this.hasApplied) return; // Prevent duplicate application
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'Do you want to apply for this job?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#BD6F22',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, apply!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('{{ route('jobs.apply', $jobId) }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        },
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            Swal.fire(
+                                'Applied!',
+                                'Your application has been submitted.',
+                                'success'
+                            ).then(() => {
+                                this.hasApplied = true; // Update button state without reload
+                            });
+                        } else {
+                            Swal.fire(
+                                'Failed!',
+                                'Failed to apply. Please try again.',
+                                'error'
+                            );
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        Swal.fire(
+                            'Error!',
+                            'An error occurred.',
+                            'error'
+                        );
+                    });
+                }
+            });
+        },
+    }" 
     class="w-full border rounded-lg shadow-sm p-6 bg-white space-y-4 transition-all duration-300 relative"
 >
     <!-- Top Row -->
@@ -41,25 +103,13 @@
             <div x-data>
                 @if ($hasResume)
                     <button 
-                        @click.prevent="fetch('{{ route('jobs.apply', $jobId) }}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            },
-                        }).then(response => {
-                            if (response.ok) {
-                                alert('Application submitted successfully.');
-                            } else {
-                                alert('Failed to apply. Please try again.');
-                            }
-                        }).catch(error => {
-                            console.error(error);
-                            alert('An error occurred.');
-                        })"
-                        class="bg-[#BD6F22] hover:bg-[#a75d1c] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
+                        :disabled="hasApplied"
+                        @click.prevent="apply()"
+                        :class="hasApplied ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#BD6F22] hover:bg-[#a75d1c]'"
+                        class="text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
                     >
-                        <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply"> Apply Now
+                        <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply" x-show="!hasApplied">
+                        <span x-text="hasApplied ? 'Applied' : 'Apply Now'"></span>
                     </button>
                 @else
                     <button 
@@ -88,25 +138,13 @@
         <div x-data>
             @if ($hasResume)
                 <button 
-                    @click.prevent="fetch('{{ route('jobs.apply', $jobId) }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        },
-                    }).then(response => {
-                        if (response.ok) {
-                            alert('Application submitted successfully.');
-                        } else {
-                            alert('Failed to apply. Please try again.');
-                        }
-                    }).catch(error => {
-                        console.error(error);
-                        alert('An error occurred.');
-                    })"
-                    class="bg-[#BD6F22] hover:bg-[#a75d1c] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
+                    :disabled="hasApplied"
+                    @click.prevent="apply()"
+                    :class="hasApplied ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#BD6F22] hover:bg-[#a75d1c]'"
+                    class="text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
                 >
-                    <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply"> Apply Now
+                    <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply" x-show="!hasApplied">
+                    <span x-text="hasApplied ? 'Applied' : 'Apply Now'"></span>
                 </button>
             @else
                 <button 
