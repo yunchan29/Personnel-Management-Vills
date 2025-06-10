@@ -37,9 +37,7 @@ class JobController extends Controller
 
     public function index()
     {
-       
-       $jobs = Job::withCount('applicants')->get(); // This adds 'applicants_count' to each job
-
+        $jobs = Job::withCount('applicants')->get(); // Adds 'applicants_count' to each job
         return view('hrAdmin.jobPosting', compact('jobs'));
     }
 
@@ -57,15 +55,14 @@ class JobController extends Controller
 
     public function viewApplicants($id)
     {
-        $job = Job::findOrFail($id);
-        $applicants = $job->applicants; // Make sure this relationship exists in your Job model
+        $job = Job::with('applicants')->findOrFail($id); // Load applicants with the job
+        $applicants = $job->applicants;
         return view('hrAdmin.viewApplicants', compact('job', 'applicants'));
     }
 
-    // ✅ This method was missing and caused the error
     public function applications()
     {
-        $jobs = Job::with('applicants')->get(); // If applicants relationship exists
+        $jobs = Job::withCount('applicants')->get(); // Adds 'applicants_count' for application.blade.php
         return view('hrAdmin.application', compact('jobs'));
     }
 }
