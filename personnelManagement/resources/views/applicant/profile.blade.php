@@ -76,14 +76,17 @@
                     >
                 </div>
 
-                <!-- Nationality -->
-                <div>
-                    <label class="block text-sm text-gray-700">Nationality</label>
-                    <select name="nationality" id="nationality" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
-                        <option selected value="{{ old('nationality', $user->nationality) }}">{{ old('nationality', $user->nationality) }}</option>
-                        <!-- Other options will be dynamically loaded -->
-                    </select>
-                </div>
+               <!-- Nationality -->
+<div>
+    <label for="nationality" class="block text-sm text-gray-700">Nationality</label>
+    <input 
+        type="text" 
+        name="nationality" 
+        id="nationality" 
+        value="{{ old('nationality', $user->nationality) }}"
+        class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
+    >
+</div>
             </div>
 
             <!-- Contacts -->
