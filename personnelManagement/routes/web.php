@@ -104,9 +104,12 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
     Route::put('/profile', [UserController::class, 'updateHrAdmin'])->name('profile.update');
 
     // Application (Pre-made)
-    Route::get('/application', [JobController::class, 'applications'])->name('application');
+   Route::get('/application', [JobController::class, 'applications'])->name('application');
+
     Route::get('/viewApplication', [JobController::class, 'viewApplications'])->name('viewApplication');
-    Route::get('/viewApplicants', [JobController::class, 'viewApplicants'])->name('viewApplicants');
+Route::get('/viewApplicants/{id}', [JobController::class, 'viewApplicants'])->name('viewApplicants');
+
+
 
     // Job posting routes
     Route::get('/job-posting', [JobController::class, 'index'])->name('jobPosting');

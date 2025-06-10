@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Job; // Make sure to import your Job model
+use App\Models\Job;
 
 class JobController extends Controller
 {
@@ -19,50 +19,53 @@ class JobController extends Controller
             'additional_info' => 'nullable|string',
         ]);
 
-        // Convert qualifications string to array
+        // Convert qualifications to array
         if (!empty($validated['qualifications'])) {
             $qualArray = array_filter(array_map('trim', explode("\n", $validated['qualifications'])));
             $validated['qualifications'] = $qualArray;
         }
 
-        // Convert a 
         if (!empty($validated['additional_info'])) {
             $additionalInfoArray = array_filter(array_map('trim', explode("\n", $validated['additional_info'])));
             $validated['additional_info'] = $additionalInfoArray;
         }
 
-
         Job::create($validated);
 
-        // Redirect back to the job posting page with success message
         return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job posted successfully!');
     }
 
-    // This will show the job posting form and also display all posted jobs
     public function index()
     {
-        $jobs = Job::latest()->get(); // Get all jobs, newest first
+       
+       $jobs = Job::withCount('applicants')->get(); // This adds 'applicants_count' to each job
+
         return view('hrAdmin.jobPosting', compact('jobs'));
     }
+
     public function show($id)
-{
-    $job = Job::findOrFail($id);
-    return view('jobs.show', compact('job'));
-}
+    {
+        $job = Job::findOrFail($id);
+        return view('jobs.show', compact('job'));
+    }
 
-public function edit($id)
-{
-    $job = Job::findOrFail($id);
-    return view('hrAdmin.jobPostingEdit', compact('job'));
-}
+    public function edit($id)
+    {
+        $job = Job::findOrFail($id);
+        return view('hrAdmin.jobPostingEdit', compact('job'));
+    }
 
-public function applications()
-{
-    $jobs = Job::withCount('applicants')->latest()->get(); // Retrieves all jobs and counts applicants
-    return view('hrAdmin.application', compact('jobs'));   // Matches your Blade file name
-}
+    public function viewApplicants($id)
+    {
+        $job = Job::findOrFail($id);
+        $applicants = $job->applicants; // Make sure this relationship exists in your Job model
+        return view('hrAdmin.viewApplicants', compact('job', 'applicants'));
+    }
 
-
-
-
+    // ✅ This method was missing and caused the error
+    public function applications()
+    {
+        $jobs = Job::with('applicants')->get(); // If applicants relationship exists
+        return view('hrAdmin.application', compact('jobs'));
+    }
 }
