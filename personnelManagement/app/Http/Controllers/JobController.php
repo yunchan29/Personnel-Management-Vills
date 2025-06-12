@@ -37,7 +37,7 @@ class JobController extends Controller
 
     public function index()
     {
-        $jobs = Job::withCount('applicants')->get(); // Adds 'applicants_count' to each job
+        $jobs = Job::withCount('applications')->get();
         return view('hrAdmin.jobPosting', compact('jobs'));
     }
 
@@ -50,19 +50,19 @@ class JobController extends Controller
     public function edit($id)
     {
         $job = Job::findOrFail($id);
-        return view('hrAdmin.jobPostingEdit', compact('job'));
+        return view('jobPostingEdit', compact('job'));
     }
 
     public function viewApplicants($id)
     {
-        $job = Job::with('applicants')->findOrFail($id); // Load applicants with the job
+        $job = Job::with('applications')->findOrFail($id); // Load applicants with the job
         $applicants = $job->applicants;
         return view('hrAdmin.viewApplicants', compact('job', 'applicants'));
     }
 
     public function applications()
     {
-        $jobs = Job::withCount('applicants')->get(); // Adds 'applicants_count' for application.blade.php
+        $jobs = Job::withCount('applications')->get(); // Adds 'applicants_count' for application.blade.php
         return view('hrAdmin.application', compact('jobs'));
     }
 }

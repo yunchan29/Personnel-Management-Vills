@@ -82,7 +82,7 @@
                     <a href="{{ route('hrAdmin.viewApplicants', $job->id) }}" class="text-[#BD9168] hover:underline flex items-center gap-1">
                         View Applicants
                         <span class="bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5">
-                            {{ $job->applicants_count }}
+                            {{ $job->applications_count }}
                         </span>
                     </a>
                 </div>

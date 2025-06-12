@@ -27,10 +27,6 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-
-//Temporary
-Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
-
 // Registration routes
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
@@ -104,10 +100,10 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
     Route::put('/profile', [UserController::class, 'updateHrAdmin'])->name('profile.update');
 
     // Application (Pre-made)
-   Route::get('/application', [JobController::class, 'applications'])->name('application');
+    Route::get('/application', [JobController::class, 'applications'])->name('application');
 
     Route::get('/viewApplication', [JobController::class, 'viewApplications'])->name('viewApplication');
-Route::get('/viewApplicants/{id}', [JobController::class, 'viewApplicants'])->name('viewApplicants');
+    Route::get('/viewApplicants/{id}', [JobController::class, 'viewApplicants'])->name('viewApplicants');
 
 
 

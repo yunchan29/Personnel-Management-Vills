@@ -23,9 +23,9 @@ class Job extends Model
         'additional_info' => 'array',
     ];
 
-    public function applicants()
+public function applications()
 {
-    return $this->hasMany(Resume::class);
+    return $this->hasMany(Application::class, 'job_id');
 }
 
 public function job()
