@@ -12,9 +12,8 @@ use App\Http\Controllers\File201Controller;
 use App\Http\Controllers\ResumeController;
 use App\Http\Controllers\LeaveFormController;
 use App\Http\Controllers\EmployeeController;
-use App\Http\Controllers\LocationController;
-//temporary ulit HAHAHAHH sorry
 
+//temporary ulit HAHAHAHH sorry
 Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
 
 // Landing page route
