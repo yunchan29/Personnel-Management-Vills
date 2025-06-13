@@ -11,7 +11,7 @@ use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\File201Controller;
 use App\Http\Controllers\ResumeController;
 use App\Http\Controllers\LeaveFormController;
-
+use App\Http\Controllers\EmployeeController;
 //temporary ulit HAHAHAHH sorry
 
 Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
@@ -131,6 +131,9 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
 
     // Change password route
     Route::get('/settings', function () {return view('hrAdmin.settings');})->name('settings');});
+    
+Route::get('/employees', [EmployeeController::class, 'index'])
+    ->name('hrAdmin.employees');
 
 
 // Fallback route for undefined pages
