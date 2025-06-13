@@ -70,24 +70,39 @@ document.addEventListener('DOMContentLoaded', function () {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json', // important for Laravel to always return JSON
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
                         body: JSON.stringify({})
                     })
-                    .then(response => {
+                    .then(async response => {
+                        let data = {};
+
+                        try {
+                            data = await response.clone().json(); // clone for safe fallback if non-JSON
+                        } catch (e) {
+                            // fallback if not JSON
+                            data.message = 'Unexpected response. Please try again.';
+                        }
+
                         if (response.ok) {
                             Swal.fire(
                                 'Applied!',
-                                'You have successfully applied for this job.',
+                                data.message || 'You have successfully applied for this job.',
                                 'success'
                             );
                             btn.disabled = true;
                             btn.textContent = 'Applied';
                             btn.classList.add('opacity-50', 'cursor-not-allowed');
                         } else {
-                            throw new Error('Failed to apply. Try again later.');
+                            Swal.fire(
+                                'Application Failed',
+                                data.message || `Something went wrong (Error ${response.status})`,
+                                'error'
+                            );
                         }
                     })
+
                     .catch(error => {
                         Swal.fire('Error', error.message, 'error');
                     });

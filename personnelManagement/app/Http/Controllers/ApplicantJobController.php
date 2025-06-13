@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Job;
 use App\Models\Application;
 use Illuminate\Support\Facades\Log;
+use App\Models\User;
 
 class ApplicantJobController extends Controller
 {
@@ -29,31 +30,47 @@ class ApplicantJobController extends Controller
     public function apply(Request $request, Job $job)
     {
         $user = auth()->user();
-        $file201 = $user->file201; // Can be null now
+        $file201 = $user->file201;
 
-        // ✅ Resume check
-        if (!$user->resume || !$user->resume->resume) {
-            if ($request->expectsJson()) {
-                return response()->json(['message' => 'You must upload a resume before applying.'], 422);
+        // Check required fields
+        $requiredFields = [
+            'first_name', 'last_name', 'gender', 'birth_date',
+            'email', 'mobile_number', 'full_address', 'city', 'province'
+        ];
+
+        $missingFields = [];
+        foreach ($requiredFields as $field) {
+            if (empty($user->{$field})) {
+                $missingFields[] = $field;
             }
-
-            return redirect()->back()->with('error', 'You must upload a resume before applying.');
         }
 
-        // ✅ Prevent duplicate application
+        if (!empty($missingFields)) {
+            return response()->json([
+                'message' => 'Please complete your profile before applying. Missing: ' . implode(', ', $missingFields)
+            ], 422);
+        }
+
+        // Check resume
+        if (!$user->resume || !$user->resume->resume) {
+            return response()->json([
+                'message' => 'You must upload a resume before applying.'
+            ], 422);
+        }
+
+        // Check for existing application
         $existing = Application::where('user_id', $user->id)
             ->where('job_id', $job->id)
             ->first();
 
         if ($existing) {
-            if ($request->expectsJson()) {
-                return response()->json(['message' => 'You have already applied for this job.'], 409);
-            }
-
-            return redirect()->back()->with('error', 'You have already applied for this job.');
+            return response()->json([
+                'message' => 'You have already applied for this job.'
+            ], 409);
         }
 
-        $resumePath = $user->resume->resume; // e.g., 'resumes/filename.pdf'
+        // Snapshot resume
+        $resumePath = $user->resume->resume;
         $resumeSnapshotPath = null;
 
         if ($resumePath && \Storage::disk('public')->exists($resumePath)) {
@@ -64,7 +81,7 @@ class ApplicantJobController extends Controller
             $resumeSnapshotPath = $snapshotFilename;
         }
 
-        // ✅ Create application with optional file201 fields
+        // Create application
         Application::create([
             'user_id' => $user->id,
             'job_id' => $job->id,
@@ -77,12 +94,12 @@ class ApplicantJobController extends Controller
             'status' => 'Pending',
         ]);
 
-        if ($request->expectsJson()) {
-            return response()->json(['message' => 'Your application was submitted successfully.']);
-        }
-
-        return redirect()->back()->with('success', 'Your application was submitted successfully.');
+        return response()->json([
+            'message' => 'Your application was submitted successfully.'
+        ], 200);
     }
+
+
 
     /* Show all jobs the applicant has applied to. */
     public function myApplications()
