@@ -3,15 +3,7 @@
 @section('content')
 <section class="w-full">
     {{-- Show banner only if profile is incomplete --}}
-    @if (!auth()->user()->is_profile_complete)
-        <div class="bg-[#BD9168] text-white p-6 text-center">
-            <h2 class="text-xl mb-2 tracking-wide">Profile Incomplete</h2>
-            <p class="text-sm mb-4">Just one more thing! Finish your profile so you can start applying to jobs and get matched faster.</p>
-            <a href="{{ route('applicant.profile') }}" class="inline-block bg-white text-[#BD9168] px-6 py-2 rounded-full hover:bg-gray-100 transition">
-                Update Profile
-            </a>
-        </div>
-    @endif
+<input type="hidden" id="isProfileIncomplete" value="{{ auth()->user()->is_profile_complete ? '0' : '1' }}">
 
     <div class="p-6 bg-white">
         <h2 class="text-xl font-semibold text-[#BD6F22] mb-4">Home</h2>
@@ -50,6 +42,24 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    // Check if profile is incomplete
+    const isProfileIncomplete = document.getElementById('isProfileIncomplete').value === '1';
+    if (isProfileIncomplete) {
+        Swal.fire({
+            title: 'Complete Your Profile',
+            text: "Please complete your profile to apply for jobs.",
+            icon: 'warning',
+            confirmButtonColor: '#BD6F22',
+            confirmButtonText: 'Go to Profile',
+            allowOutsideClick: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "{{ route('applicant.profile') }}";
+            }
+        });
+    }
+    
     // SweetAlert2 Apply Functionality
     document.querySelectorAll('button.apply-btn').forEach(button => {
         button.addEventListener('click', function () {
