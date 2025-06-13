@@ -21,27 +21,27 @@
             <button class="bg-[#BD9168] text-white px-4 py-2 rounded-lg">Search</button>
         </div>
 
-        <div class="flex flex-col gap-6">
-            @forelse($jobs as $job)
-           
-    <x-applicant.job-card 
-        :jobId="$job->id"
-        :title="$job->job_title"
-        :company="$job->company_name"
-        :location="$job->location"
-        :qualifications="$job->qualifications"
-        :addinfo="$job->additional_info"
-        :lastPosted="$job->created_at->diffForHumans()"
-        :deadline="\Carbon\Carbon::parse($job->apply_until)->format('F d, Y')"
-        :hasResume="!is_null($resume) && !empty($resume->resume)"
-        :hasApplied="in_array($job->id, $appliedJobIds)"
-    />
-
-
-            @empty
-                <p class="text-gray-500">No job openings available at the moment.</p>
-            @endforelse
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    @forelse($jobs as $job)
+        <div class="p-4 rounded-lg shadow-md">
+            <x-applicant.job-card 
+                :jobId="$job->id"
+                :title="$job->job_title"
+                :company="$job->company_name"
+                :location="$job->location"
+                :qualifications="$job->qualifications"
+                :addinfo="$job->additional_info"
+                :lastPosted="$job->created_at->diffForHumans()"
+                :deadline="\Carbon\Carbon::parse($job->apply_until)->format('F d, Y')"
+                :hasResume="!is_null($resume) && !empty($resume->resume)"
+                :hasApplied="in_array($job->id, $appliedJobIds)"
+            />
         </div>
+    @empty
+        <p class="text-gray-500">No job openings available at the moment.</p>
+    @endforelse
+</div>
+
     </div>
 </section>
 

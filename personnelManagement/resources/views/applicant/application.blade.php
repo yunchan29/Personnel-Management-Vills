@@ -53,7 +53,7 @@
     </div>
     @endif
 
-    <!-- Resume Actions (if resume exists) -->
+    <!-- Resume Actions -->
     @if(isset($resume) && $resume->resume)
     <div class="mb-6 flex items-center gap-4">
         <a
@@ -64,11 +64,7 @@
             Show Resume
         </a>
 
-        <form
-            id="deleteForm"
-            action="{{ route('applicant.application.destroy') }}"
-            method="POST"
-        >
+        <form id="deleteForm" action="{{ route('applicant.application.destroy') }}" method="POST">
             @csrf
             @method('DELETE')
             <button
@@ -82,55 +78,52 @@
     </div>
     @endif
 
-    <!-- Application Cards -->
+    <!-- Applications -->
     @forelse($applications ?? [] as $application)
-        <div class="border border-gray-300 rounded-md shadow-md p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-            <div>
-                <h3 class="text-md font-semibold" style="color: #BD6F22;">
-                    {{ $application->job->job_title ?? 'No job title' }}
-                </h3>
-                <p class="text-sm text-gray-700 mb-2">
-                    {{ $application->job->company_name ?? 'No company' }}
-                </p>
+    <div class="border border-gray-300 rounded-lg shadow-md p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 bg-white">
+        <div class="flex flex-col">
+            <h3 class="text-md font-semibold text-[#BD6F22]">
+                {{ $application->job->job_title ?? 'No job title' }}
+            </h3>
+            <p class="text-sm text-black font-medium">
+                {{ $application->job->company_name ?? 'No company' }}
+            </p>
 
-                <p class="text-xs text-gray-500 mt-2">
-                    Applied on: {{ optional($application->created_at)->format('F d, Y') ?? 'N/A' }}
-                </p>
-
-                @if($application->resume_snapshot)
-                    <div class="flex items-center gap-2 mt-2">
-                        <!-- View Resume Button -->
-                        <a href="{{ $application->resume_snapshot_url }}" target="_blank"
-                        class="inline-block bg-[#BD6F22] text-white text-sm px-4 py-2 rounded hover:bg-[#a75e1c] transition">
-                            View Resume
-                        </a>
-
-                        <!-- Delete Application Button with Trash Icon -->
-                        <form action="{{ route('applicant.application.delete', $application->id) }}" method="POST"
-                            onsubmit="return confirm('Are you sure you want to delete this application?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="text-red-500 hover:text-red-700 transition" title="Delete Application">
-                                <!-- Trash Icon -->
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 
-                                        00-1-1h-4a1 1 0 00-1 1v3m5 0H6"/>
-                                </svg>
-                            </button>
-                        </form>
-                    </div>
-                @endif
-
+            @if($application->resume_snapshot)
+            <div class="mt-4">
+                <a href="{{ $application->resume_snapshot_url }}" target="_blank"
+                    class="inline-block bg-[#BD6F22] text-white text-sm px-4 py-2 rounded hover:bg-[#a75e1c] transition">
+                    View Resume
+                </a>
             </div>
+            @endif
 
-            <div class="flex flex-col items-end gap-2">
-                <p class="text-sm text-gray-700">
-                    Status: {{ ucfirst($application->status ?? 'Pending') }}
-                </p>
-            </div>
+            <p class="text-xs text-gray-500 mt-2">
+                Applied on: {{ optional($application->created_at)->format('F d, Y') ?? 'N/A' }}
+            </p>
         </div>
+
+        <div class="flex flex-col items-end gap-2">
+            <span class="inline-block text-white text-sm px-4 py-2 rounded" style="background-color: #DD6161;">
+                {{ ucfirst($application->status ?? 'To Review') }}
+            </span>
+
+            <!-- Optional: Delete button -->
+            <form action="{{ route('applicant.application.delete', $application->id) }}" method="POST"
+                onsubmit="return confirm('Are you sure you want to delete this application?');">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="text-red-500 hover:text-red-700 transition mt-2" title="Delete Application">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 
+                            00-1-1h-4a1 1 0 00-1 1v3m5 0H6"/>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
     @empty
         <p class="text-sm text-gray-600 mt-6">You haven’t applied to any jobs yet.</p>
     @endforelse

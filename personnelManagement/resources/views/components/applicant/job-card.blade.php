@@ -18,14 +18,14 @@
         apply() {
             if (this.hasApplied) return; // Prevent duplicate application
 
-            Swal.fire({
-                title: 'Are you sure?',
-                text: 'Do you want to apply for this job?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#BD6F22',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, apply!'
+            Swal.fire({ 
+                title: 'Are you sure?', 
+                text: 'Do you want to apply for this job?', 
+                icon: 'question', 
+                showCancelButton: true, 
+                confirmButtonColor: '#BD6F22', 
+                cancelButtonColor: '#d33', 
+                confirmButtonText: 'Yes, apply!' 
             }).then((result) => {
                 if (result.isConfirmed) {
                     fetch('{{ route('jobs.apply', $jobId) }}', {
@@ -37,28 +37,15 @@
                     })
                     .then(response => {
                         if (response.ok) {
-                            Swal.fire(
-                                'Applied!',
-                                'Your application has been submitted.',
-                                'success'
-                            ).then(() => {
-                                this.hasApplied = true; // Update button state without reload
-                            });
+                            Swal.fire('Applied!', 'Your application has been submitted.', 'success')
+                                .then(() => { this.hasApplied = true; });
                         } else {
-                            Swal.fire(
-                                'Failed!',
-                                'Failed to apply. Please try again.',
-                                'error'
-                            );
+                            Swal.fire('Failed!', 'Failed to apply. Please try again.', 'error');
                         }
                     })
                     .catch(error => {
                         console.error(error);
-                        Swal.fire(
-                            'Error!',
-                            'An error occurred.',
-                            'error'
-                        );
+                        Swal.fire('Error!', 'An error occurred.', 'error');
                     });
                 }
             });
@@ -113,10 +100,11 @@
                     </button>
                 @else
                     <button 
-                        @click="window.location.href = '{{ route('applicant.application') }}'"
+                        @click="window.location.href = '{{ route('applicant.application') }}'" 
                         class="bg-gray-400 text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
                     >
-                        <img src="/images/leaveForm.png" class="w-4 h-4" alt="Apply"> Upload Resume
+                        <img src="/images/leaveForm.png" class="w-4 h-4" alt="Apply">
+                        Upload Resume
                     </button>
                 @endif
             </div>
@@ -148,22 +136,22 @@
                 </button>
             @else
                 <button 
-                    @click="window.location.href = '{{ route('applicant.application') }}'"
+                    @click="window.location.href = '{{ route('applicant.application') }}'" 
                     class="bg-[#BD6F22] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
                 >
-                    <img src="/images/leaveForm.png" class="w-4 h-4" alt="Apply"> Upload Resume
+                    <img src="/images/leaveForm.png" class="w-4 h-4" alt="Apply">
+                    Upload Resume
                 </button>
             @endif
         </div>
     </div>
 
-    <!-- See More Toggle -->
-    <div class="text-center">
+    <!-- See More/See Less -->
+    <div class="text-center" x-show="!showDetails">
         <button 
             @click="showDetails = !showDetails" 
             class="text-[#BD6F22] hover:text-[#a75d1c] text-sm font-semibold underline transition"
-            x-text="showDetails ? 'See Less' : 'See More'"
-        ></button>
+        >See More</button>
     </div>
 
     <!-- Expandable Section -->
@@ -175,7 +163,7 @@
         x-transition:leave="transition-all ease-in duration-300"
         x-transition:leave-start="opacity-100 max-h-screen"
         x-transition:leave-end="opacity-0 max-h-0"
-        class="overflow-hidden text-gray-800 space-y-3 text-sm"
+        class="overflow-hidden text-gray-800 space-y-3 text-sm mt-4"
     >
         @if (!empty($qualifications))
         <div>
@@ -205,5 +193,13 @@
         @else
             <p>No additional info available.</p>
         @endif
+
+        <!-- See Less button at bottom -->
+        <div class="text-center mt-4">
+            <button 
+                @click="showDetails = !showDetails" 
+                class="text-[#BD6F22] hover:text-[#a75d1c] text-sm font-semibold underline transition"
+            >See Less</button>
+        </div>
     </div>
 </div>
