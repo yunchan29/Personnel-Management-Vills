@@ -7,34 +7,7 @@
 </h2>
 <hr>
 
-<section class="w-full bg-[#BD9168] text-white p-7 rounded-xl mb-6">
-    @php
-        $steps = ['Application Submitted', 'Under Review', 'Interview Scheduled', 'Hired/Rejected', 'Training Start', 'Training End', 'Performance Eval'];
-    @endphp
-
-    <div class="flex items-start justify-between max-w-6xl mx-auto relative">
-        @foreach ($steps as $index => $step)
-            <div class="flex flex-col items-center text-center flex-1 relative px-1">
-                
-                <!-- Step circle -->
-                <div class="w-5 h-5 bg-white rounded-full z-10"></div>
-
-                <!-- Connector line (to the next step, only if not the last step) -->
-                @if ($index < count($steps) - 1)
-                    <div class="absolute top-2.5 left-1/2 h-0.5 bg-white z-0" style="width: 100%; transform: translateX(0);"></div>
-                @endif
-
-                <!-- Step label -->
-                <div class="mt-3 text-xs leading-tight max-w-[80px] break-words">
-                    {{ $step }}
-                </div>
-            </div>
-        @endforeach
-    </div>
-</section>
-
-
-
+<input type="hidden" id="isProfileIncomplete" value="{{ auth()->user()->is_profile_complete ? '0' : '1' }}">
 
 <!-- Main Section -->
 <section class="bg-white font-sans text-gray-800 p-6 min-h-screen">
@@ -127,6 +100,7 @@
     }
 </style>
 
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <!-- Calendar Script -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -169,6 +143,23 @@
 
         html += '</div></div>';
         calendar.innerHTML = html;
+
+        // Profile incomplete check
+        const isProfileIncomplete = document.getElementById('isProfileIncomplete').value === '1';
+        if (isProfileIncomplete) {
+            Swal.fire({
+                title: 'Complete Your Profile',
+                text: "Please complete your profile to apply for jobs.",
+                icon: 'warning',
+                confirmButtonColor: '#BD6F22',
+                confirmButtonText: 'Go to Profile',
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "{{ route('employee.profile') }}";
+                }
+            });
+        }
     });
 </script>
 @endsection
