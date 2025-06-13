@@ -2,7 +2,7 @@
 
 @section('content')
 <section class="p-6 max-w-6xl mx-auto">
-    <h2 class="text-xl font-semibold text-[#BD9168] mb-2">Applications</h2>
+    <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">Applications</h1>
     <hr class="border-t border-gray-300 mb-6">
 
     {{-- Tab Navigation --}}

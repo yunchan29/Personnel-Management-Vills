@@ -4,7 +4,7 @@
 <div class="max-w-7xl mx-auto p-6">
 
     <!-- Section Title -->
-    <h2 class="text-xl font-semibold mb-4" style="color: #BD6F22;">My Applications</h2>
+    <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">My Applications</h1>
 
     <!-- Resume Upload Notice (only if no resume) -->
     @if(empty($resume) || !$resume->resume)

@@ -2,7 +2,7 @@
 @section('content')
 <section>
     <div class="p-6 bg-white rounded-lg shadow">
-  <h2 class="text-xl font-semibold text-[#BD6F22] mb-4">Applications</h2>
+  <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">Applications</h1>
   <div class="flex space-x-6 border-b border-gray-300 text-sm font-semibold text-gray-600 pb-2 mb-4">
    
     <button>Job Postings</button>

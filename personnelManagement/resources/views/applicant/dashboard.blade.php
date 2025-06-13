@@ -6,7 +6,7 @@
 <input type="hidden" id="isProfileIncomplete" value="{{ auth()->user()->is_profile_complete ? '0' : '1' }}">
 
     <div class="p-6 bg-white">
-        <h2 class="text-xl font-semibold text-[#BD6F22] mb-4">Home</h2>
+        <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">Home</h1>
 
         <div class="flex gap-4 mb-6">
             <input type="text" placeholder="Search..." class="border px-4 py-2 rounded-lg w-full">

@@ -2,7 +2,7 @@
 
 @section('content')
 <section class="p-6 max-w-5xl mx-auto">
-    <h2 class="text-xl font-semibold text-[#BD6F22] mb-2">Job Posting</h2>
+    <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">Job Posting</h1>
     <hr class="border-t border-gray-300 mb-6">
 
     {{-- Add Job Advertisement Button --}}

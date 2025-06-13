@@ -2,9 +2,9 @@
 
 @section('content')
 <!-- Greeting -->
-<h2 class="text-xl font-semibold mb-4" style="color: #BD6F22;">
+<h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">
     Welcome back, {{ Auth::user()->first_name }}!
-</h2>
+</h1>
 <hr>
 
 <input type="hidden" id="isProfileIncomplete" value="{{ auth()->user()->is_profile_complete ? '0' : '1' }}">

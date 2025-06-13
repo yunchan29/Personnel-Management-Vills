@@ -104,7 +104,7 @@
 </div>
 </div>
 
-            <!-- Contacts -->
+    <!-- Contacts -->
             <h2 class="text-lg font-semibold mt-6 mb-2" style="color: #BD6F22;">Contacts</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>

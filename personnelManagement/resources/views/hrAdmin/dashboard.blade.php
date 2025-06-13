@@ -4,7 +4,7 @@
 <section class="bg-white font-sans text-gray-800 p-6 min-h-screen">
 
   <!-- Greeting -->
-  <h1 class="text-xl font-semibold mb-4" style="color: #BD6F22;">
+  <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">
   Welcome back, {{ Auth::user()->first_name }}!
 </h1>
 <hr>

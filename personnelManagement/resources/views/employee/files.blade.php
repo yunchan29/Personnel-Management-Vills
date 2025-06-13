@@ -25,7 +25,7 @@
       x-init="initLicenses()">
     @csrf
 
-    <h2 class="text-xl font-semibold text-[#BD6F22] mb-4">My 201 files</h2>
+    <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">My 201 files</h1>
 
     <div class="border-t border-gray-300 pt-4">
         <!-- Government Documents -->

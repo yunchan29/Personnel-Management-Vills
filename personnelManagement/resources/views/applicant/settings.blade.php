@@ -2,7 +2,7 @@
 
 @section('content')
 <section>
-    <h2 class="text-xl font-semibold text-[#BD6F22] mb-4">Settings</h2>
+    <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">Settings</h1>
 
     <!-- Change Password -->
     <div class="border-t border-gray-300 pt-4 mb-6">
