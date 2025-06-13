@@ -83,6 +83,7 @@
     @endif
 
     <!-- Application Cards -->
+
     @forelse($applications ?? [] as $application)
         <div class="border border-gray-300 rounded-md shadow-md p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
             <div>
@@ -134,6 +135,8 @@
     @empty
         <p class="text-sm text-gray-600 mt-6">You haven’t applied to any jobs yet.</p>
     @endforelse
+
+    
 </div>
 
 <!-- SweetAlert2 CDN -->
