@@ -2,9 +2,9 @@
 
 @section('content')
 <section class="p-6">
-    <h2 class="text-2xl font-semibold text-[#BD6F22] mb-6">
+    <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">
         <i class="fas fa-cog mr-2"></i>Settings
-    </h2>
+    </h1>
 
     <div class="bg-gray-50 p-6 rounded-md shadow-md max-w-md">
         <h3 class="text-lg font-semibold text-[#BD6F22] mb-4">
