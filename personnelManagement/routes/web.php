@@ -34,6 +34,11 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
 
+
+// Temporary route for testing
+Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
+
+
 // ✅ Applicant-related routes with auth middleware
 Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(function () {
 

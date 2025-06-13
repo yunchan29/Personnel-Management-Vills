@@ -42,17 +42,13 @@ class ResumeController extends Controller
         $path = $file->store('resumes', 'public');
 
         if ($user->resume) {
-            // Delete old file
             Storage::disk('public')->delete($user->resume->resume);
-
-            // Update existing record with new path
             $user->resume->update([
-                'resume' => $path
+                'resume' => $path,
             ]);
         } else {
-            // First time upload
             $user->resume()->create([
-                'resume' => $path
+                'resume' => $path,
             ]);
         }
 
@@ -82,7 +78,7 @@ class ResumeController extends Controller
     }
 
     /**
-     * SFetch resume of the applicant.
+     * Fetch resume of the applicant.
      */
 
     protected function getResume($userId)
@@ -119,7 +115,4 @@ class ResumeController extends Controller
 
         return back()->with('success', 'Application deleted successfully.');
     }
-
-
-    
 }
