@@ -20,29 +20,44 @@
         </div>
 
         <!-- Profile Form -->
-        <div class="flex-1">
-            <!-- Personal Information -->
-            <h2 class="text-lg font-semibold mb-2" style="color: #BD6F22;">Personal Information</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            @foreach ([
-    'first_name' => 'First Name',
-    'middle_name' => 'Middle Name',
-    'last_name' => 'Last Name',
-    'suffix' => 'Suffix',
-    'birth_date' => 'Birth Date',
-    'birth_place' => 'Birth Place',
-    'age' => 'Age'
-] as $field => $label)
-    <div>
-        <label class="block text-sm text-gray-700">{{ $label }}</label>
-        <input 
-            type="{{ $field === 'birth_date' ? 'date' : ($field === 'age' ? 'number' : 'text') }}"
-            name="{{ $field }}" 
-            value="{{ old($field, $field === 'birth_date' ? \Carbon\Carbon::parse($user->$field)->format('Y-m-d') : $user->$field) }}"
-            class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
-        >
-    </div>
-@endforeach
+<div class="flex-1">
+    <!-- Personal Information -->
+    <h2 class="text-lg font-semibold mb-2" style="color: #BD6F22;">Personal Information</h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        @foreach ([
+            'first_name' => 'First Name',
+            'middle_name' => 'Middle Name',
+            'last_name' => 'Last Name',
+            'suffix' => 'Suffix',
+            'birth_date' => 'Birth Date',
+            'birth_place' => 'Birth Place',
+            'age' => 'Age'
+        ] as $field => $label)
+            <div>
+                <label class="block text-sm text-gray-700">{{ $label }}</label>
+
+                @if ($field === 'suffix')
+                    <select 
+                        name="suffix"
+                        class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
+                    >
+                        <option value="">-- Select Suffix --</option>
+                        @foreach (['Jr.', 'Sr.', 'II', 'III', 'IV', 'V'] as $suffix)
+                            <option value="{{ $suffix }}" {{ old('suffix', $user->suffix) === $suffix ? 'selected' : '' }}>
+                                {{ $suffix }}
+                            </option>
+                        @endforeach
+                    </select>
+                @else
+                    <input 
+                        type="{{ $field === 'birth_date' ? 'date' : ($field === 'age' ? 'number' : 'text') }}"
+                        name="{{ $field }}" 
+                        value="{{ old($field, $field === 'birth_date' ? \Carbon\Carbon::parse($user->$field)->format('Y-m-d') : $user->$field) }}"
+                        class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
+                    >
+                @endif
+            </div>
+        @endforeach
 
 <!-- Gender Dropdown -->
 <div>
@@ -79,15 +94,15 @@
                <!-- Nationality -->
 <div>
     <label for="nationality" class="block text-sm text-gray-700">Nationality</label>
-    <input 
-        type="text" 
-        name="nationality" 
-        id="nationality" 
-        value="{{ old('nationality', $user->nationality) }}"
-        class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
-    >
+<select 
+    name="nationality" 
+    id="nationality"
+    class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
+>
+    <option value="">-- Select Nationality --</option>
+</select>
 </div>
-            </div>
+</div>
 
             <!-- Contacts -->
             <h2 class="text-lg font-semibold mt-6 mb-2" style="color: #BD6F22;">Contacts</h2>
@@ -108,18 +123,33 @@
                 <label class="block text-sm text-gray-700">Full Address</label>
                 <input type="text" name="full_address" value="{{ old('full_address', $user->full_address) }}" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
             </div>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Province -->
                 <div>
                     <label class="block text-sm text-gray-700">Province</label>
-                    <input type="text" name="province" value="{{ old('province', $user->province) }}" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
+                    <select id="province" name="province" required class="w-full border rounded px-3 py-2">
+                        <option value="">-- Select Province --</option>
+                        {{-- Options will be loaded via JS --}}
+                    </select>
                 </div>
+
+                <!-- City/Municipality -->
                 <div>
                     <label class="block text-sm text-gray-700">City / Municipality</label>
-                    <input type="text" name="city" value="{{ old('city', $user->city) }}" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
+                    <select id="city" name="city" required class="w-full border rounded px-3 py-2" disabled>
+                        <option value="">-- Select City --</option>
+                        {{-- Options will be loaded via JS --}}
+                    </select>
                 </div>
+
+                <!-- Barangay -->
                 <div>
                     <label class="block text-sm text-gray-700">Barangay</label>
-                    <input type="text" name="barangay" value="{{ old('barangay', $user->barangay) }}" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
+                    <select id="barangay" name="barangay" required class="w-full border rounded px-3 py-2" disabled>
+                        <option value="">-- Select Barangay --</option>
+                        {{-- Options will be loaded via JS --}}
+                    </select>
                 </div>
             </div>
 
@@ -146,18 +176,26 @@
     }
 
     // Load countries using REST Countries API
-    fetch("https://restcountries.com/v3.1/all")
-        .then(res => res.json())
+    fetch("https://restcountries.com/v3.1/all?fields=name,demonyms")
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return res.json();
+        })
         .then(data => {
+            if (!Array.isArray(data)) {
+                throw new Error('Invalid response format');
+            }
+
             const select = document.getElementById("nationality");
             const sortedCountries = data.sort((a, b) => a.name.common.localeCompare(b.name.common));
 
             sortedCountries.forEach(country => {
                 const option = document.createElement("option");
                 const demonym = country.demonyms?.eng?.m || country.name.common;
-option.value = demonym;
-option.textContent = demonym;
-
+                option.value = demonym;
+                option.textContent = demonym;
                 select.appendChild(option);
             });
 
@@ -166,6 +204,9 @@ option.textContent = demonym;
             if (current) {
                 select.value = current;
             }
+        })
+        .catch(error => {
+            console.error("Error loading countries:", error);
         });
 
      document.addEventListener('DOMContentLoaded', function () {
@@ -187,6 +228,83 @@ option.textContent = demonym;
                 }
             });
         });
+    });
+
+    // Load provinces, cities, and barangays using PSGC API
+    const provinceSelect = document.getElementById('province');
+    const citySelect = document.getElementById('city');
+    const barangaySelect = document.getElementById('barangay');
+
+    const oldProvince = @json(old('province', $user->province));
+    const oldCity = @json(old('city', $user->city));
+    const oldBarangay = @json(old('barangay', $user->barangay));
+
+    // Load provinces
+    fetch('https://psgc.gitlab.io/api/provinces/')
+        .then(res => res.json())
+        .then(data => {
+            data.forEach(province => {
+                const option = new Option(province.name, province.code);
+                provinceSelect.add(option);
+            });
+
+            if (oldProvince) {
+                provinceSelect.value = oldProvince;
+                provinceSelect.dispatchEvent(new Event('change'));
+            }
+        });
+
+    // On province change → load cities and municipalities
+    provinceSelect.addEventListener('change', () => {
+        const provCode = provinceSelect.value;
+        citySelect.innerHTML = '<option value="">-- Select City --</option>';
+        barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
+        citySelect.disabled = true;
+        barangaySelect.disabled = true;
+
+        if (!provCode) return;
+
+        // Combine cities and municipalities
+        Promise.all([
+            fetch(`https://psgc.gitlab.io/api/provinces/${provCode}/cities/`).then(res => res.json()),
+            fetch(`https://psgc.gitlab.io/api/provinces/${provCode}/municipalities/`).then(res => res.json())
+        ])
+        .then(([cities, municipalities]) => {
+            const combined = [...cities, ...municipalities];
+            combined.forEach(loc => {
+                const option = new Option(loc.name, loc.code);
+                citySelect.add(option);
+            });
+            citySelect.disabled = false;
+
+            if (oldCity) {
+                citySelect.value = oldCity;
+                citySelect.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+
+    // On city/municipality change → load barangays
+    citySelect.addEventListener('change', () => {
+        const cityCode = citySelect.value;
+        barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
+        barangaySelect.disabled = true;
+
+        if (!cityCode) return;
+
+        fetch(`https://psgc.gitlab.io/api/cities-municipalities/${cityCode}/barangays/`)
+            .then(res => res.json())
+            .then(barangays => {
+                barangays.forEach(brgy => {
+                    const option = new Option(brgy.name, brgy.name);
+                    barangaySelect.add(option);
+                });
+                barangaySelect.disabled = false;
+
+                if (oldBarangay) {
+                    barangaySelect.value = oldBarangay;
+                }
+            });
     });
 
     // SweetAlert2 on success
