@@ -22,7 +22,7 @@
         <!-- Profile Form -->
         <div class="flex-1">
             <!-- Personal Information -->
-            <h2 class="text-lg font-semibold mb-2" style="color: #BD6F22;">Personal Information</h2>
+            <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">Personal Information</h1>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 @foreach ([
                     'first_name' => 'First Name',
