@@ -8,34 +8,36 @@
             <!-- Personal Info -->
             <h2 class="text-lg font-semibold mb-2" style="color: #BD6F22;">Personal Information</h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                @foreach ([
-                    'first_name' => 'First Name',
-                    'middle_name' => 'Middle Name',
-                    'last_name' => 'Last Name',
-                    'suffix' => 'Suffix',
-                    'birth_date' => 'Birth Date',
-                    'birth_place' => 'Birth Place',
-                    'age' => 'Age'
-                ] as $field => $label)
-                    <div>
-                        <label class="block text-sm text-gray-700">{{ $label }}</label>
-                        @if ($field === 'suffix')
-                            <select name="suffix" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
-                                <option value="">-- Select Suffix --</option>
-                                @foreach (['Jr.', 'Sr.', 'II', 'III', 'IV', 'V'] as $suffix)
-                                    <option value="{{ $suffix }}" {{ old('suffix', $user->suffix) === $suffix ? 'selected' : '' }}>{{ $suffix }}</option>
-                                @endforeach
-                            </select>
-                        @else
-                            <input 
-                                type="{{ $field === 'birth_date' ? 'date' : ($field === 'age' ? 'number' : 'text') }}"
-                                name="{{ $field }}" 
-                                value="{{ old($field, $field === 'birth_date' ? \Carbon\Carbon::parse($user->$field)->format('Y-m-d') : $user->$field) }}"
-                                class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
-                            >
-                        @endif
-                    </div>
+               @foreach ([
+    'first_name' => 'First Name',
+    'middle_name' => 'Middle Name',
+    'last_name' => 'Last Name',
+    'suffix' => 'Suffix',
+    'birth_date' => 'Birth Date',
+    'birth_place' => 'Birth Place',
+    'age' => 'Age'
+] as $field => $label)
+    <div>
+        <label class="block text-sm text-gray-700">{{ $label }}</label>
+        @if ($field === 'suffix')
+            <select name="suffix" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
+                <option value="">-- Select Suffix --</option>
+                @foreach (['Jr.', 'Sr.', 'II', 'III', 'IV', 'V'] as $suffix)
+                    <option value="{{ $suffix }}" {{ old('suffix', $user->suffix) === $suffix ? 'selected' : '' }}>{{ $suffix }}</option>
                 @endforeach
+            </select>
+        @else
+            <input 
+                type="{{ $field === 'birth_date' ? 'date' : ($field === 'age' ? 'number' : 'text') }}"
+                name="{{ $field }}" 
+                value="{{ old($field, $field === 'birth_date' ? \Carbon\Carbon::parse($user->$field)->format('Y-m-d') : $user->$field) }}"
+                class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 {{ in_array($field, ['first_name', 'last_name']) ? 'bg-gray-100 cursor-not-allowed' : '' }}"
+                {{ in_array($field, ['first_name', 'last_name']) ? 'readonly' : '' }}
+            >
+        @endif
+    </div>
+@endforeach
+
 
                 <!-- Gender -->
                 <div>
@@ -79,7 +81,13 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm text-gray-700">Email</label>
-                    <input type="email" name="email" value="{{ old('email', $user->email) }}" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
+                    <input 
+    type="email" 
+    name="email" 
+    value="{{ old('email', $user->email) }}" 
+    class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-gray-100 cursor-not-allowed" 
+    readonly>
+
                 </div>
                 <div>
                     <label class="block text-sm text-gray-700">Mobile Number</label>
@@ -150,46 +158,57 @@
 <!-- Auto-Fill Full Address Script -->
 <script>
     function updateFullAddress() {
-        const street = document.querySelector('[name="street_details"]').value.trim();
-        const postal = document.querySelector('[name="postal_code"]').value.trim();
+        const street = document.querySelector('[name="street_details"]')?.value.trim() || '';
+        const postal = document.querySelector('[name="postal_code"]')?.value.trim() || '';
 
-        const provinceSelect = document.querySelector('#province');
-        const province = provinceSelect && provinceSelect.value !== ''
-            ? provinceSelect.options[provinceSelect.selectedIndex].text
-            : '';
+        const getSelectedText = (selectId) => {
+            const select = document.getElementById(selectId);
+            if (select && !select.disabled && select.value !== '') {
+                const selectedOption = select.options[select.selectedIndex];
+                return selectedOption?.text?.trim() || '';
+            }
+            return '';
+        };
 
-        const citySelect = document.querySelector('#city');
-        const city = citySelect && citySelect.value !== ''
-            ? citySelect.options[citySelect.selectedIndex].text
-            : '';
+        const province = getSelectedText('province');
+        const city = getSelectedText('city');
+        const barangay = getSelectedText('barangay');
 
-        const barangaySelect = document.querySelector('#barangay');
-        const barangay = barangaySelect && barangaySelect.value !== ''
-            ? barangaySelect.options[barangaySelect.selectedIndex].text
-            : '';
-
-        const addressParts = [street, barangay, city, province].filter(part => part !== '');
+        const addressParts = [street, barangay, city, province].filter(Boolean);
         let fullAddress = addressParts.join(', ');
 
         if (postal) fullAddress += ` ${postal}`;
 
-        document.getElementById('full_address').value = fullAddress;
+        const fullAddressInput = document.getElementById('full_address');
+        if (fullAddressInput) {
+            fullAddressInput.value = fullAddress;
+        }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        // Input field listeners
-        ['street_details', 'postal_code'].forEach(name => {
+        const fields = ['street_details', 'postal_code'];
+        const selects = ['province', 'city', 'barangay'];
+
+        // Attach input event listeners
+        fields.forEach(name => {
             const el = document.querySelector(`[name="${name}"]`);
             if (el) el.addEventListener('input', updateFullAddress);
         });
 
-        // Select dropdown listeners
-        ['province', 'city', 'barangay'].forEach(id => {
+        // Attach change event listeners for dropdowns
+        selects.forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.addEventListener('change', updateFullAddress);
+            if (el) {
+                el.addEventListener('change', updateFullAddress);
+
+                // Optional: Enable the select if a value is already set
+                if (el.value !== '') {
+                    el.disabled = false;
+                }
+            }
         });
 
-        // Initial fill on load
-        updateFullAddress();
+        // Delay initial fill to ensure options are rendered
+        setTimeout(updateFullAddress, 200);
     });
 </script>
