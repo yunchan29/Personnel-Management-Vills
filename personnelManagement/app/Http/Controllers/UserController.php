@@ -59,6 +59,8 @@ class UserController extends Controller
             'city' => 'nullable|string|max:100',
             'barangay' => 'nullable|string|max:100',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'street_details' => 'nullable|string|max:255',
+        'postal_code' => 'nullable|string|max:20',
         ]);
 
         $data = $request->except('profile_picture');
@@ -126,6 +128,8 @@ class UserController extends Controller
             'city' => 'nullable|string|max:100',
             'barangay' => 'nullable|string|max:100',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'street_details' => 'nullable|string|max:255',
+        'postal_code' => 'nullable|string|max:20',
         ]);
 
         $data = $request->except('profile_picture');
@@ -230,6 +234,8 @@ class UserController extends Controller
             'city' => 'nullable|string|max:100',
             'barangay' => 'nullable|string|max:100',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'street_details' => 'nullable|string|max:255',
+        'postal_code' => 'nullable|string|max:20',
         ]);
 
         $data = $request->except('profile_picture');
