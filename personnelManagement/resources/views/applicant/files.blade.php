@@ -32,44 +32,51 @@
         <h3 class="text-lg font-semibold text-[#BD6F22] mb-3">Government Documents</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">SSS number:</label>
-                <input type="text" name="sss_number"
+                <label for="sss_number" class="block text-sm font-medium text-gray-700 mb-1">SSS number:</label>
+                <input id="sss_number" type="text" name="sss_number"
                     value="{{ old('sss_number', $file201->sss_number ?? '') }}"
                     maxlength="9"
                     pattern="\d{9}"
                     inputmode="numeric"
                     oninput="this.value = this.value.replace(/\D/g, '').slice(0,9);"
                     class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+                @error('sss_number') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
             </div>
+
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Philhealth number:</label>
-                <input type="text" name="philhealth_number"
+                <label for="philhealth_number" class="block text-sm font-medium text-gray-700 mb-1">Philhealth number:</label>
+                <input id="philhealth_number" type="text" name="philhealth_number"
                     value="{{ old('philhealth_number', $file201->philhealth_number ?? '') }}"
                     maxlength="12"
                     pattern="\d{12}"
                     inputmode="numeric"
                     oninput="this.value = this.value.replace(/\D/g, '').slice(0,12);"
                     class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+                @error('philhealth_number') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
             </div>
+
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Pag-Ibig number:</label>
-                <input type="text" name="pagibig_number"
+                <label for="pagibig_number" class="block text-sm font-medium text-gray-700 mb-1">Pag-Ibig number:</label>
+                <input id="pagibig_number" type="text" name="pagibig_number"
                     value="{{ old('pagibig_number', $file201->pagibig_number ?? '') }}"
                     maxlength="12"
                     pattern="\d{12}"
                     inputmode="numeric"
                     oninput="this.value = this.value.replace(/\D/g, '').slice(0,12);"
                     class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+                @error('pagibig_number') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
             </div>
+
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Tin ID number:</label>
-                <input type="text" name="tin_id_number"
+                <label for="tin_id_number" class="block text-sm font-medium text-gray-700 mb-1">Tin ID number:</label>
+                <input id="tin_id_number" type="text" name="tin_id_number"
                     value="{{ old('tin_id_number', $file201->tin_id_number ?? '') }}"
                     maxlength="12"
                     pattern="\d{9,12}"
                     inputmode="numeric"
                     oninput="this.value = this.value.replace(/\D/g, '').slice(0,12);"
                     class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+                @error('tin_id_number') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
             </div>
         </div>
 
@@ -77,7 +84,7 @@
         <h3 class="text-lg font-semibold text-[#BD6F22] mb-3">Licenses / Certifications</h3>
 
         <!-- Tab Navigation -->
-        <div class="flex flex-wrap gap-2 mb-4">
+        <div class="flex overflow-x-auto gap-2 mb-4 whitespace-nowrap">
             <template x-for="(license, index) in licenses" :key="index">
                 <button type="button"
                     @click="selectedTab = index"
@@ -115,24 +122,24 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">License / Certification</label>
                         <input type="text"
                             :name="'licenses['+index+'][name]'"
-                            x-model="license.name"
-                            @input="updateField()"
+                            x-model.lazy="license.name"
+                            @input.debounce.300ms="updateField()"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">License / Certification number</label>
                         <input type="text"
                             :name="'licenses['+index+'][number]'"
-                            x-model="license.number"
-                            @input="updateField()"
+                            x-model.lazy="license.number"
+                            @input.debounce.300ms="updateField()"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Date Taken</label>
                         <input type="date"
                             :name="'licenses['+index+'][date]'"
-                            x-model="license.date"
-                            @input="updateField()"
+                            x-model.lazy="license.date"
+                            @input.debounce.300ms="updateField()"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
                     </div>
                 </div>
@@ -144,7 +151,7 @@
             <h4 class="text-md font-semibold text-[#BD6F22] mb-2">Summary of License / Certification Names</h4>
             <ul class="list-disc list-inside text-sm text-gray-800" x-show="licenses.length > 0">
                 <template x-for="(license, index) in licenses" :key="index">
-                    <li x-text="license.name || 'Unnamed License/Certification #' + (index + 1)"></li>
+                    <li x-show="license.name" x-text="license.name"></li>
                 </template>
             </ul>
         </div>
@@ -173,15 +180,20 @@ function licenseForm(initialLicenses = []) {
         selectedTab: 0,
 
         initLicenses() {
-            console.log("Initializing licenses:", initialLicenses); // Debug
-            this.licenses = initialLicenses.length > 0
-                ? initialLicenses
-                : [{ name: '', number: '', date: '' }];
+            const saved = localStorage.getItem('licensesData');
+            this.licenses = saved
+                ? JSON.parse(saved)
+                : (initialLicenses.length > 0 ? initialLicenses : [{ name: '', number: '', date: '' }]);
         },
 
         addLicense() {
+            if (this.licenses.length >= 10) {
+                alert('Maximum of 10 licenses allowed.');
+                return;
+            }
             this.licenses.push({ name: '', number: '', date: '' });
             this.selectedTab = this.licenses.length - 1;
+            this.updateField();
         },
 
         removeLicense(index) {
@@ -189,9 +201,12 @@ function licenseForm(initialLicenses = []) {
             if (this.selectedTab >= this.licenses.length) {
                 this.selectedTab = this.licenses.length - 1;
             }
+            this.updateField();
         },
 
-        updateField() {}
+        updateField() {
+            localStorage.setItem('licensesData', JSON.stringify(this.licenses));
+        }
     }
 }
 </script>
