@@ -1,0 +1,84 @@
+<div 
+    x-data="{ open: false }" 
+    x-init="window.addEventListener('open-job-modal', () => { open = true })"
+    x-show="open"
+    @keydown.escape.window="open = false"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-end md:items-center"
+    style="display: none;"
+>
+    <div 
+        x-show="open"
+        x-transition:enter="transition transform ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-y-12 scale-95"
+        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+        x-transition:leave="transition transform ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+        x-transition:leave-end="opacity-0 translate-y-12 scale-95"
+        class="bg-white w-full max-w-4xl rounded-t-2xl md:rounded-lg shadow-lg p-6 relative"
+    >
+        {{-- Close Button --}}
+        <button 
+            @click="open = false"
+            class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl"
+        >
+            ✕
+        </button>
+
+        <h3 class="text-xl font-semibold text-[#BD6F22] mb-6">Add Job</h3>
+
+        <form action="{{ route('hrAdmin.jobPosting.store') }}" method="POST">
+            @csrf
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Left Column -->
+                <div class="space-y-4">
+                    <div>
+                        <label for="job_title" class="block font-medium mb-1">Job Industry</label>
+                        <input type="text" name="job_title" id="job_title" class="w-full bg-white border border-gray-300 rounded-md p-2" required>
+                    </div>
+                    <div>
+                        <label for="company_name" class="block font-medium mb-1">Company</label>
+                        <input type="text" name="company_name" id="company_name" class="w-full bg-white border border-gray-300 rounded-md p-2" required>
+                    </div>
+                    <div>
+                        <label for="vacancies" class="block font-medium mb-1">Number of Vacancies</label>
+                        <input type="number" name="vacancies" id="vacancies" class="w-full bg-white border border-gray-300 rounded-md p-2" required>
+                    </div>
+                    <div>
+                        <label for="qualifications" class="block font-medium mb-1">Qualification</label>
+                        <textarea name="qualifications" id="qualifications" rows="5" class="w-full bg-white border border-gray-300 rounded-md p-2" required></textarea>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="space-y-4">
+                    <div>
+                        <label for="role_type" class="block font-medium mb-1">Role Type</label>
+                        <input type="text" name="role_type" id="role_type" class="w-full bg-white border border-gray-300 rounded-md p-2" required>
+                    </div>
+                    <div>
+                        <label for="location" class="block font-medium mb-1">Location</label>
+                        <input type="text" name="location" id="location" class="w-full bg-white border border-gray-300 rounded-md p-2" required>
+                    </div>
+                    <div>
+                        <label for="apply_until" class="block font-medium mb-1">Apply until</label>
+                        <input type="date" name="apply_until" id="apply_until" class="w-full bg-white border border-gray-300 rounded-md p-2" required>
+                    </div>
+                    <div>
+                        <label for="additional_info" class="block font-medium mb-1">Additional Information</label>
+                        <textarea name="additional_info" id="additional_info" rows="5" class="w-full bg-white border border-gray-300 rounded-md p-2"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-right">
+                <button type="submit" class="bg-[#BD6F22] text-white px-6 py-2 rounded-md hover:bg-[#a65e1d] transition">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
