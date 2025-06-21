@@ -3,10 +3,10 @@
     <div class="flex flex-col sm:flex-row sm:items-center w-full sm:w-auto">
         <!-- Logo Row -->
         <div class="flex items-center justify-center gap-x-3">
-            <a href="/" class="flex-shrink-0">
+            <a href="#" class="flex-shrink-0">
                 <img src="/images/villsLogoOnly.png" alt="Logo Icon" class="h-12 sm:h-14 w-auto">
             </a>
-            <a href="/" class="flex-shrink-0">
+            <a href="#" class="flex-shrink-0">
                 <img src="/images/villsName.png" alt="Logo Text" class="h-10 sm:h-12 w-auto">
             </a>
         </div>

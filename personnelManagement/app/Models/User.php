@@ -44,8 +44,8 @@ class User extends Authenticatable
         'city',
         'barangay',
         'uuid',
-          'street_details',
-    'postal_code',
+        'street_details',
+        'postal_code',
     ];
 
     /**

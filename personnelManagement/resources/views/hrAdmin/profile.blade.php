@@ -1,7 +1,7 @@
-@extends('layouts.applicantHome')
+@extends('layouts.hrAdmin')
 
 @section('content')
-<form action="{{ route('applicant.profile.update') }}" method="POST" enctype="multipart/form-data">
+<form action="{{ route('hrAdmin.profile.update') }}" method="POST" enctype="multipart/form-data">
     @csrf
     @method('PUT')
 <!-- Profile Picture + Form Row -->
@@ -43,7 +43,7 @@
 
                     <!-- Tab Content -->
                     <div id="tab-personal" class="tab-content">
-                        <x-applicant.personal-information :user="$user" />
+                        <x-employee.personal-information :user="$user" />
                     </div>
 
             <div id="tab-work" class="tab-content hidden">

@@ -1,99 +1,99 @@
 @extends('layouts.employeeHome')
 
 @section('content')
-<form id="profileForm" action="{{ route('employee.profile.update') }}" method="POST" enctype="multipart/form-data">
+<form action="{{ route('employee.profile.update') }}" method="POST" enctype="multipart/form-data">
     @csrf
     @method('PUT')
+<!-- Profile Picture + Form Row -->
+<div class="flex flex-col md:flex-row gap-6">
 
-    <div class="flex flex-col md:flex-row gap-6">
-        <!-- Profile Picture -->
+    <!-- Profile Picture -->
+    <div class="w-full md:w-auto flex justify-center md:justify-start">
         <div class="flex flex-col items-center">
             <img id="previewImage" 
                 src="{{ $user->profile_picture ? asset('storage/' . $user->profile_picture) : asset('images/default.png') }}" 
                 alt="Profile Picture" 
                 class="rounded-full w-36 h-36 object-cover border-2 border-gray-300">
-
-            <label class="mt-4 cursor-pointer text-white px-4 py-2 rounded transition" style="background-color: #BD6F22;">
-                Edit Picture
+            
+            <div class="mt-4">
+                <button type="button" onclick="document.getElementById('profile_picture').click()" class="cursor-pointer text-white px-4 py-2 rounded transition" style="background-color: #BD6F22;">
+                    Edit Picture
+                </button>
                 <input type="file" name="profile_picture" id="profile_picture" class="hidden" onchange="previewFile(this)">
-            </label>
+            </div>
+            
         </div>
+    </div>
 
-        <!-- Profile Form -->
-        <div class="flex-1">
-            <!-- Personal Information -->
-            <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">Personal Information</h1>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                @foreach ([
-                    'first_name' => 'First Name',
-                    'middle_name' => 'Middle Name',
-                    'last_name' => 'Last Name',
-                    'suffix' => 'Suffix',
-                    'birth_date' => 'Birth Date',
-                    'birth_place' => 'Birth Place',
-                    'age' => 'Age',
-                    'gender' => 'Gender',
-                    'civil_status' => 'Civil Status',
-                    'religion' => 'Religion',
-                    'nationality' => 'Nationality'
-                ] as $field => $label)
-                <div>
-                    <label class="block text-sm text-gray-700">{{ $label }}</label>
-                    <input 
-                        type="{{ $field === 'birth_date' ? 'date' : ($field === 'age' ? 'number' : 'text') }}"
-                        name="{{ $field }}" 
-                        value="{{ old($field, $field === 'birth_date' ? \Carbon\Carbon::parse($user->$field)->format('Y-m-d') : $user->$field) }}"
-                        class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
-                    >
-                </div>
-                @endforeach
+    <!-- Right Column -->
+    <div class="w-full md:flex-1 flex flex-col">
+
+        <!-- Tab Title + Buttons -->
+            <div class="flex flex-col md:flex-row justify-between items-center md:items-start mb-4 gap-2">   
+                <nav class="flex space-x-4 text-sm font-medium">
+                    <button type="button" id="tab-personal-btn" class="tab-btn text-[#BD6F22] border-b-2 border-[#BD6F22] pb-2">
+                        Personal Information
+                    </button>
+
+                    <button type="button" id="tab-work-btn" class="tab-btn text-gray-600 hover:text-[#BD6F22] pb-2">
+                        Work Experience
+                    </button>
+                </nav>
             </div>
 
-            <!-- Contacts -->
-            <h2 class="text-lg font-semibold mt-6 mb-2" style="color: #BD6F22;">Contacts</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm text-gray-700">Email</label>
-                    <input type="email" name="email" value="{{ old('email', $user->email) }}" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-700">Mobile Number</label>
-                    <input type="text" name="mobile_number" value="{{ old('mobile_number', $user->mobile_number) }}" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
-                </div>
-            </div>
+                    <!-- Tab Content -->
+                    <div id="tab-personal" class="tab-content">
+                        <x-employee.personal-information :user="$user" />
+                    </div>
 
-            <!-- Present Address -->
-            <h2 class="text-lg font-semibold mt-6 mb-2" style="color: #BD6F22;">Present Address</h2>
-            <div class="mb-4">
-                <label class="block text-sm text-gray-700">Full Address</label>
-                <input type="text" name="full_address" value="{{ old('full_address', $user->full_address) }}" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-sm text-gray-700">Province</label>
-                    <input type="text" name="province" value="{{ old('province', $user->province) }}" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
+            <div id="tab-work" class="tab-content hidden">
+                    <h2 class="text-lg font-semibold mb-4 text-[#BD6F22]">Work Experience</h2>
+                        <div class="flex flex-col items-center justify-center p-6 bg-orange-50 rounded-xl border border-dashed border-[#BD6F22] shadow-sm">
+                            <!-- Capybara with construction hat -->
+                            <img src="/images/capy.png" alt="..." class="border-4 border-dashed border-[#BD6F22] rounded-lg p-1" />
+                            <!-- Message -->
+                            <p class="text-center text-l text-gray-600 mb-1">
+                                Oops! This section is still under development.
+                            </p>
+                        </div>
                 </div>
-                <div>
-                    <label class="block text-sm text-gray-700">City / Municipality</label>
-                    <input type="text" name="city" value="{{ old('city', $user->city) }}" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-700">Barangay</label>
-                    <input type="text" name="barangay" value="{{ old('barangay', $user->barangay) }}" class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2">
-                </div>
-            </div>
-
-            <div class="mt-6 text-right">
-                <button type="button" onclick="confirmSubmit()" class="text-white px-6 py-2 rounded transition" style="background-color: #BD6F22;">Save</button>
-            </div>
-        </div>
+    </div>
+</div>
+    <!-- Submit Button -->
+    <div class="mt-6 text-right">
+        <button type="submit" class="text-white px-6 py-2 rounded transition" style="background-color: #BD6F22;">Save</button>
     </div>
 </form>
 
-<!-- SweetAlert2 & Scripts -->
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const personalBtn = document.getElementById('tab-personal-btn');
+        const workBtn = document.getElementById('tab-work-btn');
+        const personalTab = document.getElementById('tab-personal');
+        const workTab = document.getElementById('tab-work');
+
+        function activateTab(tab) {
+            if (tab === 'personal') {
+                personalTab.classList.remove('hidden');
+                workTab.classList.add('hidden');
+                personalBtn.classList.add('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
+                workBtn.classList.remove('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
+                workBtn.classList.add('text-gray-600');
+            } else {
+                personalTab.classList.add('hidden');
+                workTab.classList.remove('hidden');
+                workBtn.classList.add('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
+                personalBtn.classList.remove('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
+                personalBtn.classList.add('text-gray-600');
+            }
+        }
+
+        personalBtn.addEventListener('click', () => activateTab('personal'));
+        workBtn.addEventListener('click', () => activateTab('work'));
+    });
+
     function previewFile(input) {
         const file = input.files[0];
         if (file) {
@@ -105,38 +105,103 @@
         }
     }
 
-    function confirmSubmit() {
-        Swal.fire({
-            title: 'Confirm Update',
-            text: "Are you sure you want to save these changes?",
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#BD6F22',
-            cancelButtonColor: '#aaa',
-            confirmButtonText: 'Yes, save it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById('profileForm').submit();
+// Load Nationalities
+fetch("https://restcountries.com/v3.1/all?fields=name,demonyms")
+    .then(res => res.json())
+    .then(data => {
+        const select = document.getElementById("nationality");
+
+        const options = data.map(country => {
+            const demonym = country.demonyms?.eng?.m || country.name.common;
+            return { label: demonym, value: demonym };
+        });
+
+        // Sort alphabetically by label (case-insensitive)
+        options.sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
+
+        options.forEach(opt => {
+            select.add(new Option(opt.label, opt.value));
+        });
+
+        select.value = "{{ old('nationality', $user->nationality) }}";
+    });
+
+// PSGC Dropdowns
+const provinceSelect = document.getElementById('province');
+const citySelect = document.getElementById('city');
+const barangaySelect = document.getElementById('barangay');
+
+const oldProvince = @json(old('province', $user->province));
+const oldCity = @json(old('city', $user->city));
+const oldBarangay = @json(old('barangay', $user->barangay));
+
+fetch('https://psgc.gitlab.io/api/provinces/')
+    .then(res => res.json())
+    .then(data => {
+        data
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .forEach(province => {
+                provinceSelect.add(new Option(province.name, province.code));
+            });
+
+        if (oldProvince) {
+            provinceSelect.value = oldProvince;
+            provinceSelect.dispatchEvent(new Event('change'));
+        }
+    });
+
+provinceSelect.addEventListener('change', () => {
+    const provCode = provinceSelect.value;
+    citySelect.innerHTML = '<option value="">-- Select City --</option>';
+    barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
+    citySelect.disabled = true;
+    barangaySelect.disabled = true;
+    if (!provCode) return;
+
+    Promise.all([
+        fetch(`https://psgc.gitlab.io/api/provinces/${provCode}/cities/`).then(res => res.json()),
+        fetch(`https://psgc.gitlab.io/api/provinces/${provCode}/municipalities/`).then(res => res.json())
+    ]).then(([cities, municipalities]) => {
+        [...cities, ...municipalities]
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .forEach(loc => citySelect.add(new Option(loc.name, loc.code)));
+
+        citySelect.disabled = false;
+        if (oldCity) {
+            citySelect.value = oldCity;
+            citySelect.dispatchEvent(new Event('change'));
+        }
+    });
+});
+
+citySelect.addEventListener('change', () => {
+    const cityCode = citySelect.value;
+    barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
+    barangaySelect.disabled = true;
+    if (!cityCode) return;
+
+    fetch(`https://psgc.gitlab.io/api/cities-municipalities/${cityCode}/barangays/`)
+        .then(res => res.json())
+        .then(barangays => {
+            barangays
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .forEach(brgy => barangaySelect.add(new Option(brgy.name, brgy.name)));
+            barangaySelect.disabled = false;
+            if (oldBarangay) {
+                barangaySelect.value = oldBarangay;
             }
         });
-    }
+});
+
 
     @if(session('success'))
-    Swal.fire({
-        icon: 'success',
-        title: 'Success!',
-        text: '{{ session('success') }}',
-        confirmButtonColor: '#BD6F22'
-    });
-    @endif
-
-    @if(session('error'))
-    Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: '{{ session('error') }}',
-        confirmButtonColor: '#BD6F22'
-    });
+        Swal.fire({
+            icon: 'success',
+            title: 'Profile Updated',
+            text: '{{ session("success") }}',
+            confirmButtonColor: '#BD6F22'
+        });
     @endif
 </script>
+
 @endsection
