@@ -111,13 +111,35 @@
                 </div>
             </div>
 
-            <div class="text-right">
-                <button type="submit" 
-                    class="bg-[#BD6F22] text-white px-6 py-2 rounded-md hover:bg-[#a65e1d] transition"
-                >
-                    <span x-text="isEdit ? 'Update' : 'Save'"></span>
-                </button>
-            </div>
+           <div class="flex justify-between items-center mt-6 flex-wrap gap-3">
+    {{-- Delete Button (only in Edit mode) --}}
+    <template x-if="isEdit">
+        <form 
+            :action="`/hrAdmin/jobPosting/${job.id}`" 
+            method="POST" 
+            onsubmit="return confirm('Are you sure you want to delete this job posting?');"
+        >
+            @csrf
+            @method('DELETE')
+            <button 
+                type="submit"
+                class="px-4 py-2 w-[110px] bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm"
+            >
+                Delete
+            </button>
+        </form>
+    </template>
+
+    {{-- Update / Save Button --}}
+    <button 
+        type="submit" 
+        class="px-4 py-2 w-[110px] bg-[#BD6F22] text-white rounded-md hover:bg-[#a65e1d] transition text-sm"
+    >
+        <span x-text="isEdit ? 'Update' : 'Save'"></span>
+    </button>
+</div>
+
+
         </form>
     </div>
 </div>
