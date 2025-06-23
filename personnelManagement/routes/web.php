@@ -113,13 +113,14 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
     Route::get('/viewApplication', [JobController::class, 'viewApplications'])->name('viewApplication');
     Route::get('/viewApplicants/{id}', [JobController::class, 'viewApplicants'])->name('viewApplicants');
 
-
+    
 
     // Job posting routes
     Route::get('/job-posting', [JobController::class, 'index'])->name('jobPosting');
     Route::post('/jobPosting/store', [JobController::class, 'store'])->name('jobPosting.store');
     Route::get('/job-posting/{id}/edit', [JobController::class, 'edit'])->name('jobPosting.edit');
     Route::get('/job-posting/{id}', [JobController::class, 'show'])->name('jobPosting.show');
+    Route::delete('/jobPosting/{id}', [JobController::class, 'destroy'])->name('jobPosting.destroy');
 
     // Government IDs and Licenses (File 201) routes (Pre-made)
     Route::get('/files', function () {return view('hrAdmin.files');})->name('files');

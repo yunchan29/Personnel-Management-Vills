@@ -65,4 +65,11 @@ class JobController extends Controller
         $jobs = Job::withCount('applications')->get(); // Adds 'applicants_count' for application.blade.php
         return view('hrAdmin.application', compact('jobs'));
     }
+    public function destroy($id)
+{
+    $job = Job::findOrFail($id);
+    $job->delete();
+
+    return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job deleted successfully.');
+}
 }

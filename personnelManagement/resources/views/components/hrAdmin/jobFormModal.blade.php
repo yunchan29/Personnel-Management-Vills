@@ -1,6 +1,16 @@
 <div 
-    x-data="{ open: false }" 
-    x-init="window.addEventListener('open-job-modal', () => { open = true })"
+    x-data="{
+        open: false,
+        job: {},
+        openModal(event) {
+            this.job = event.detail || {};
+            this.open = true;
+        },
+        get isEdit() {
+            return !!this.job.id;
+        }
+    }" 
+    x-init="window.addEventListener('open-job-modal', e => openModal(e))"
     x-show="open"
     @keydown.escape.window="open = false"
     x-transition:enter="transition ease-out duration-300"
@@ -30,28 +40,45 @@
             ✕
         </button>
 
-        <h3 class="text-xl font-semibold text-[#BD6F22] mb-6">Add Job</h3>
+        <h3 class="text-xl font-semibold text-[#BD6F22] mb-6" x-text="isEdit ? 'Edit Job' : 'Add Job'"></h3>
 
-        <form action="{{ route('hrAdmin.jobPosting.store') }}" method="POST">
+        <form 
+            :action="isEdit 
+                ? `/hrAdmin/jobPosting/${job.id}` 
+                : '{{ route('hrAdmin.jobPosting.store') }}'"
+            method="POST"
+        >
             @csrf
+            <template x-if="isEdit">
+                <input type="hidden" name="_method" value="PUT">
+            </template>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <!-- Left Column -->
                 <div class="space-y-4">
                     <div>
                         <label for="job_title" class="block font-medium mb-1">Job Industry</label>
-                        <input type="text" name="job_title" id="job_title" class="w-full bg-white border border-gray-300 rounded-md p-2" required>
+                        <input type="text" name="job_title" id="job_title" 
+                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
+                            :value="job.job_title || ''" required>
                     </div>
                     <div>
                         <label for="company_name" class="block font-medium mb-1">Company</label>
-                        <input type="text" name="company_name" id="company_name" class="w-full bg-white border border-gray-300 rounded-md p-2" required>
+                        <input type="text" name="company_name" id="company_name" 
+                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
+                            :value="job.company_name || ''" required>
                     </div>
                     <div>
                         <label for="vacancies" class="block font-medium mb-1">Number of Vacancies</label>
-                        <input type="number" name="vacancies" id="vacancies" class="w-full bg-white border border-gray-300 rounded-md p-2" required>
+                        <input type="number" name="vacancies" id="vacancies" 
+                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
+                            :value="job.vacancies || ''" required>
                     </div>
                     <div>
                         <label for="qualifications" class="block font-medium mb-1">Qualification</label>
-                        <textarea name="qualifications" id="qualifications" rows="5" class="w-full bg-white border border-gray-300 rounded-md p-2" required></textarea>
+                        <textarea name="qualifications" id="qualifications" rows="5" 
+                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
+                            x-text="job.qualifications || ''" required></textarea>
                     </div>
                 </div>
 
@@ -59,25 +86,37 @@
                 <div class="space-y-4">
                     <div>
                         <label for="role_type" class="block font-medium mb-1">Role Type</label>
-                        <input type="text" name="role_type" id="role_type" class="w-full bg-white border border-gray-300 rounded-md p-2" required>
+                        <input type="text" name="role_type" id="role_type" 
+                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
+                            :value="job.role_type || ''" required>
                     </div>
                     <div>
                         <label for="location" class="block font-medium mb-1">Location</label>
-                        <input type="text" name="location" id="location" class="w-full bg-white border border-gray-300 rounded-md p-2" required>
+                        <input type="text" name="location" id="location" 
+                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
+                            :value="job.location || ''" required>
                     </div>
                     <div>
                         <label for="apply_until" class="block font-medium mb-1">Apply until</label>
-                        <input type="date" name="apply_until" id="apply_until" class="w-full bg-white border border-gray-300 rounded-md p-2" required>
+                        <input type="date" name="apply_until" id="apply_until" 
+                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
+                            :value="job.apply_until || ''" required>
                     </div>
                     <div>
                         <label for="additional_info" class="block font-medium mb-1">Additional Information</label>
-                        <textarea name="additional_info" id="additional_info" rows="5" class="w-full bg-white border border-gray-300 rounded-md p-2"></textarea>
+                        <textarea name="additional_info" id="additional_info" rows="5" 
+                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
+                            x-text="job.additional_info || ''"></textarea>
                     </div>
                 </div>
             </div>
 
             <div class="text-right">
-                <button type="submit" class="bg-[#BD6F22] text-white px-6 py-2 rounded-md hover:bg-[#a65e1d] transition">Save</button>
+                <button type="submit" 
+                    class="bg-[#BD6F22] text-white px-6 py-2 rounded-md hover:bg-[#a65e1d] transition"
+                >
+                    <span x-text="isEdit ? 'Update' : 'Save'"></span>
+                </button>
             </div>
         </form>
     </div>
