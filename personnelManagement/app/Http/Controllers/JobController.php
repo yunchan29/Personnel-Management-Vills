@@ -12,6 +12,7 @@ class JobController extends Controller
         $validated = $request->validate([
             'job_title' => 'required|string|max:255',
             'company_name' => 'required|string|max:255',
+            'role_type' => 'required|string|max:255',
             'location' => 'required|string|max:255',
             'vacancies' => 'required|integer|min:1',
             'apply_until' => 'required|date',
@@ -19,21 +20,32 @@ class JobController extends Controller
             'additional_info' => 'nullable|string',
         ]);
 
-        // Convert qualifications to array
+        $validated['role_type'] = strtoupper($validated['role_type']);
+
+        // Split lines and commas into proper array
         if (!empty($validated['qualifications'])) {
-            $qualArray = array_filter(array_map('trim', explode("\n", $validated['qualifications'])));
-            $validated['qualifications'] = $qualArray;
+            $validated['qualifications'] = collect(preg_split('/\r\n|\r|\n/', $validated['qualifications']))
+                ->flatMap(fn ($line) => explode(',', $line))
+                ->map(fn ($item) => trim($item))
+                ->filter()
+                ->values()
+                ->all();
         }
 
         if (!empty($validated['additional_info'])) {
-            $additionalInfoArray = array_filter(array_map('trim', explode("\n", $validated['additional_info'])));
-            $validated['additional_info'] = $additionalInfoArray;
+            $validated['additional_info'] = collect(preg_split('/\r\n|\r|\n/', $validated['additional_info']))
+                ->flatMap(fn ($line) => explode(',', $line))
+                ->map(fn ($item) => trim($item))
+                ->filter()
+                ->values()
+                ->all();
         }
 
         Job::create($validated);
 
         return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job posted successfully!');
     }
+
 
     public function index()
     {
@@ -51,6 +63,45 @@ class JobController extends Controller
     {
         $job = Job::findOrFail($id);
         return view('jobPostingEdit', compact('job'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'job_title' => 'required|string|max:255',
+            'company_name' => 'required|string|max:255',
+            'role_type' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'vacancies' => 'required|integer|min:1',
+            'apply_until' => 'required|date',
+            'qualifications' => 'nullable|string',
+            'additional_info' => 'nullable|string',
+        ]);
+
+        $validated['role_type'] = strtoupper($validated['role_type']);
+
+        if (!empty($validated['qualifications'])) {
+            $validated['qualifications'] = collect(preg_split('/\r\n|\r|\n/', $validated['qualifications']))
+                ->flatMap(fn ($line) => explode(',', $line))
+                ->map(fn ($item) => trim($item))
+                ->filter()
+                ->values()
+                ->all();
+        }
+
+        if (!empty($validated['additional_info'])) {
+            $validated['additional_info'] = collect(preg_split('/\r\n|\r|\n/', $validated['additional_info']))
+                ->flatMap(fn ($line) => explode(',', $line))
+                ->map(fn ($item) => trim($item))
+                ->filter()
+                ->values()
+                ->all();
+        }
+
+        $job = Job::findOrFail($id);
+        $job->update($validated);
+
+        return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job updated successfully!');
     }
 
     public function viewApplicants($id)

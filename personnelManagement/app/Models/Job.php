@@ -16,6 +16,7 @@ class Job extends Model
         'apply_until',
         'qualifications',
         'additional_info',
+        'role_type',
     ];
 
     protected $casts = [

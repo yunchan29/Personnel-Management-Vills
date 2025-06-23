@@ -119,6 +119,7 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
     Route::get('/job-posting', [JobController::class, 'index'])->name('jobPosting');
     Route::post('/jobPosting/store', [JobController::class, 'store'])->name('jobPosting.store');
     Route::get('/job-posting/{id}/edit', [JobController::class, 'edit'])->name('jobPosting.edit');
+    Route::put('jobPosting/{id}', [JobController::class, 'update'])->name('hrAdmin.jobPosting.update');
     Route::get('/job-posting/{id}', [JobController::class, 'show'])->name('jobPosting.show');
     Route::delete('/jobPosting/{id}', [JobController::class, 'destroy'])->name('jobPosting.destroy');
 

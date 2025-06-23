@@ -76,9 +76,14 @@
                     </div>
                     <div>
                         <label for="qualifications" class="block font-medium mb-1">Qualification</label>
-                        <textarea name="qualifications" id="qualifications" rows="5" 
-                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
-                            x-text="job.qualifications || ''" required></textarea>
+                        <textarea name="qualifications" id="qualifications" rows="5"
+                            class="w-full bg-white border border-gray-300 rounded-md p-2"
+                            x-text="
+                                Array.isArray(job.qualifications)
+                                    ? job.qualifications.flatMap(q => q.split(',')).join('\n')
+                                    : (job.qualifications || '')
+                            "
+                            required></textarea>
                     </div>
                 </div>
 
@@ -87,7 +92,7 @@
                     <div>
                         <label for="role_type" class="block font-medium mb-1">Role Type</label>
                         <input type="text" name="role_type" id="role_type" 
-                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
+                            class="w-full bg-white border border-gray-300 rounded-md p-2 uppercase" 
                             :value="job.role_type || ''" required>
                     </div>
                     <div>
@@ -104,9 +109,13 @@
                     </div>
                     <div>
                         <label for="additional_info" class="block font-medium mb-1">Additional Information</label>
-                        <textarea name="additional_info" id="additional_info" rows="5" 
-                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
-                            x-text="job.additional_info || ''"></textarea>
+                        <textarea name="additional_info" id="additional_info" rows="5"
+                            class="w-full bg-white border border-gray-300 rounded-md p-2"
+                            x-text="
+                                Array.isArray(job.additional_info)
+                                    ? job.additional_info.flatMap(info => info.split(',')).join('\n')
+                                    : (job.additional_info || '')
+                            "></textarea>
                     </div>
                 </div>
             </div>
