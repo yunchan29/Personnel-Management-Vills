@@ -2,7 +2,7 @@
 
 @section('content')
 <section class="p-6">
-    <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">Employees</h1>
+    <h1 class="mb-6 text-xl font-bold text-[#BD6F22]">Employees</h1>
 
     @if($employees->isEmpty())
         <p class="text-lg text-gray-600">No employees found.</p>
