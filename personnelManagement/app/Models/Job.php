@@ -8,16 +8,17 @@ class Job extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'job_title',
-        'company_name',
-        'location',
-        'vacancies',
-        'apply_until',
-        'qualifications',
-        'additional_info',
-        'role_type',
-    ];
+   protected $fillable = [
+    'job_title',
+    'company_name',
+    'job_industry',
+    'role_type',
+    'location',
+    'vacancies',
+    'apply_until',
+    'qualifications',
+    'additional_info',
+];
 
     protected $casts = [
         'qualifications' => 'array',

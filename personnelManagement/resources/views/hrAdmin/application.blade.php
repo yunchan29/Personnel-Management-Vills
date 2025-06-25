@@ -32,64 +32,15 @@
 
     </div>
 
-    {{-- Job Listings --}}
-    <div class="space-y-6">
-        @forelse($jobs as $job)
-            <div class="bg-white border rounded-md shadow-sm p-4 relative">
-                <div class="flex justify-between items-start mb-2">
-                    <div>
-                        <h4 class="text-base font-semibold text-[#BD9168]">{{ $job->job_title }}</h4>
-                        <p class="text-sm text-gray-800">{{ $job->company_name }}</p>
-                    </div>
-                    <div class="text-right text-xs text-gray-500 leading-tight">
-                        <p>Last Posted: {{ $job->created_at->diffForHumans() }}</p>
-                        <p>Apply until: {{ \Carbon\Carbon::parse($job->apply_until)->format('F d, Y') }}</p>
-                    </div>
-                </div>
+  <!--Application Job Listing-->
+  {{-- Job Listings --}}
+<div class="space-y-6">
+    @forelse($jobs as $job)
+        <x-hrAdmin.applicationJobListing :job="$job" />
+    @empty
+        <p class="text-center text-gray-500">No job applications available.</p>
+    @endforelse
+</div>
 
-                <div class="flex text-sm text-gray-600 mb-2">
-                    <div class="mr-2 mt-0.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#BD9168]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M9 17v-2a4 4 0 00-4-4H4a4 4 0 100 8h1a4 4 0 004-4zm6 0v-2a4 4 0 014-4h1a4 4 0 110 8h-1a4 4 0 01-4-4z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="font-medium">Qualification :</p>
-                        <ul class="list-disc ml-5">
-                            @foreach($job->qualifications as $line)
-                                <li>{{ $line }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="flex text-sm text-gray-600 mb-4 items-center">
-                    <div class="mr-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#BD9168]" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M17.657 16.657L13.414 12l4.243-4.243M6.343 7.343L10.586 12l-4.243 4.243"/>
-                        </svg>
-                    </div>
-                    <span>{{ $job->location }}</span>
-                </div>
-
-                <div class="flex justify-between items-center text-sm">
-                    <a href="{{ route('hrAdmin.jobPosting.show', $job->id) }}" class="text-[#BD9168] hover:underline">
-                        See More
-                    </a>
-                    <a href="{{ route('hrAdmin.viewApplicants', $job->id) }}" class="text-[#BD9168] hover:underline flex items-center gap-1">
-                        View Applicants
-                        <span class="bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5">
-                            {{ $job->applications_count }}
-                        </span>
-                    </a>
-                </div>
-            </div>
-        @empty
-            <p class="text-center text-gray-500">No job applications available.</p>
-        @endforelse
-    </div>
 </section>
 @endsection
