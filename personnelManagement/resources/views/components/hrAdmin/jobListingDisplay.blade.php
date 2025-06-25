@@ -1,5 +1,5 @@
 {{-- Job Listing Display --}}
-<div class="mt-10 grid gap-6 sm:grid-cols-1 md:grid-cols-2">
+<div class="mt-10 grid gap-6 sm:grid-cols-1 md:grid-cols-2 items-start">
     @forelse($jobs as $job)
         <div 
             x-data="{ 
@@ -38,17 +38,20 @@
             </div>
 
             {{-- Additional Info (Shown only when See More is clicked) --}}
-            <div class="flex items-start text-sm text-gray-600 mb-3" x-show="showAll && additionalInfo.length">
-                <img src="{{ asset('images/info.png') }}" alt="Info" class="w-5 h-5 mr-2 mt-1">
-                <div>
-                    <strong>Additional Info:</strong>
-                    <ul class="list-disc ml-6">
-                        <template x-for="(info, idx) in additionalInfo" :key="idx">
-                            <li x-text="info"></li>
-                        </template>
-                    </ul>
+            <template x-if="showAll && additionalInfo.length">
+                <div class="flex items-start text-sm text-gray-600 mb-3">
+                    <img src="{{ asset('images/info.png') }}" alt="Info" class="w-5 h-5 mr-2 mt-1">
+                    <div>
+                        <strong>Additional Info:</strong>
+                        <ul class="list-disc ml-6">
+                            <template x-for="(info, idx) in additionalInfo" :key="idx">
+                                <li x-text="info"></li>
+                            </template>
+                        </ul>
+                    </div>
                 </div>
-            </div>
+            </template>
+
 
             {{-- Location --}}
             <div class="flex items-center text-sm text-gray-600 mb-2">
@@ -61,7 +64,7 @@
                 <div class="flex justify-center w-full">
                     <button 
                         @click="showAll = !showAll" 
-                        class="text-[#BD6F22] text-xs hover:underline mb-2 "
+                        class="text-[#BD6F22] text-xs hover:underline mb-2"
                     >
                         <span x-text="showAll ? 'See Less' : 'See More'"></span>
                     </button>
