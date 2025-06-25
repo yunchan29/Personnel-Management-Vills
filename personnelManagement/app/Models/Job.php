@@ -35,5 +35,10 @@ public function job()
     return $this->belongsTo(Job::class);
 }
 
+public function employees()
+{
+    return $this->hasMany(User::class);
+}
+
 
 }
