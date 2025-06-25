@@ -143,6 +143,10 @@ public function applications()
     return $this->hasMany(Application::class);
 }
 
+public function job()
+{
+    return $this->belongsTo(Job::class);
+}
 
 
 }
