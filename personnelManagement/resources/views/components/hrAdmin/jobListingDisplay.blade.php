@@ -1,5 +1,8 @@
 {{-- Job Listing Display --}}
-<div class="mt-10 grid gap-6 sm:grid-cols-1 md:grid-cols-2 items-start">
+<div 
+    x-data="{ expandedId: null }" 
+    class="mt-10 grid gap-6 sm:grid-cols-1 md:grid-cols-2 items-start"
+>
     @forelse($jobs as $job)
         <div 
             x-data="{ 
@@ -7,10 +10,13 @@
                 qualifications: {{ Js::from($job->qualifications) }},
                 additionalInfo: {{ Js::from($job->additional_info ?? []) }},
                 expanded: false,
+                showAll: false,
                 init() {
                     this.$watch('expanded', value => {
                         if (value) {
                             this.$root.expandedId = this.id;
+                        } else {
+                            this.showAll = false; // Reset on collapse
                         }
                     });
                     this.$watch('$root.expandedId', value => {
@@ -49,7 +55,7 @@
                 </div>
             </div>
 
-            {{-- Additional Info (Shown only when See More is clicked) --}}
+            {{-- Additional Info --}}
             <template x-if="showAll && additionalInfo.length">
                 <div class="flex items-start text-sm text-gray-600 mb-3">
                     <img src="{{ asset('images/info.png') }}" alt="Info" class="w-5 h-5 mr-2 mt-1">
@@ -63,7 +69,6 @@
                     </div>
                 </div>
             </template>
-
 
             {{-- Role Type --}}
             <div class="flex items-start text-sm text-gray-600 mb-2" x-show="expanded">
@@ -96,16 +101,20 @@
             </div>
 
             {{-- See More / See Less --}}
-            <template x-if="qualifications.length > 3 || additionalInfo.length > 0">
-                <div class="flex justify-center w-full">
-                    <button 
-                        @click="showAll = !showAll" 
-                        class="text-[#BD6F22] text-xs hover:underline mb-2"
-                    >
-                        <span x-text="expanded ? 'See Less' : 'See More'"></span>
-                    </button>
-                </div>
-            </template>
+<template x-if="qualifications.length > 3 || additionalInfo.length > 0">
+    <div class="flex justify-center w-full">
+        <button 
+            @click="
+                if (!expanded) $root.expandedId = id;
+                showAll = !showAll;
+            " 
+            class="text-[#BD6F22] text-xs hover:underline mb-2"
+        >
+            <span x-text="showAll ? 'See Less' : 'See More'"></span>
+        </button>
+    </div>
+</template>
+
 
             {{-- Timestamps --}}
             <div class="flex justify-between items-center text-sm text-gray-500 mt-auto pt-2 border-t border-gray-200">
@@ -117,5 +126,3 @@
         <p class="text-center text-gray-500 col-span-full">No job postings available.</p>
     @endforelse
 </div>
-
-
