@@ -57,7 +57,7 @@
                 <!-- Left Column -->
                 <div class="space-y-4">
                     <div>
-                        <label for="job_title" class="block font-medium mb-1">Job Industry</label>
+                        <label for="job_title" class="block font-medium mb-1">Job Title</label>
                         <input type="text" name="job_title" id="job_title" 
                             class="w-full bg-white border border-gray-300 rounded-md p-2" 
                             :value="job.job_title || ''" required>
@@ -67,6 +67,12 @@
                         <input type="text" name="company_name" id="company_name" 
                             class="w-full bg-white border border-gray-300 rounded-md p-2" 
                             :value="job.company_name || ''" required>
+                    </div>
+                    <div>
+                        <label for="job_industry" class="block font-medium mb-1">Industry</label>
+                        <input type="text" name="job_industry" id="job_industry" 
+                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
+                            :value="job.job_industry || ''" required>
                     </div>
                     <div>
                         <label for="vacancies" class="block font-medium mb-1">Number of Vacancies</label>
@@ -91,9 +97,17 @@
                 <div class="space-y-4">
                     <div>
                         <label for="role_type" class="block font-medium mb-1">Role Type</label>
-                        <input type="text" name="role_type" id="role_type" 
-                            class="w-full bg-white border border-gray-300 rounded-md p-2 uppercase" 
-                            :value="job.role_type || ''" required>
+                       <select name="role_type" id="role_type"
+    class="w-full bg-white border border-gray-300 rounded-md p-2"
+    x-bind:value="job.role_type || ''" required>
+    <option value="">Select Role Type</option>
+    <option value="Full-Time">Full-Time</option>
+    <option value="Part-Time">Part-Time</option>
+    <option value="Contract">Contract</option>
+    <option value="Internship">Internship</option>
+    <option value="Temporary">Temporary</option>
+</select>
+
                     </div>
                     <div>
                         <label for="location" class="block font-medium mb-1">Location</label>
@@ -120,35 +134,33 @@
                 </div>
             </div>
 
-           <div class="flex justify-between items-center mt-6 flex-wrap gap-3">
-    {{-- Delete Button (only in Edit mode) --}}
-    <template x-if="isEdit">
-        <form 
-            :action="`/hrAdmin/jobPosting/${job.id}`" 
-            method="POST" 
-            onsubmit="return confirm('Are you sure you want to delete this job posting?');"
-        >
-            @csrf
-            @method('DELETE')
-            <button 
-                type="submit"
-                class="px-4 py-2 w-[110px] bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm"
-            >
-                Delete
-            </button>
-        </form>
-    </template>
+            <div class="flex justify-between items-center mt-6 flex-wrap gap-3">
+                {{-- Delete Button (only in Edit mode) --}}
+                <template x-if="isEdit">
+                    <form 
+                        :action="`/hrAdmin/jobPosting/${job.id}`" 
+                        method="POST" 
+                        onsubmit="return confirm('Are you sure you want to delete this job posting?');"
+                    >
+                        @csrf
+                        @method('DELETE')
+                        <button 
+                            type="submit"
+                            class="px-4 py-2 w-[110px] bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm"
+                        >
+                            Delete
+                        </button>
+                    </form>
+                </template>
 
-    {{-- Update / Save Button --}}
-    <button 
-        type="submit" 
-        class="px-4 py-2 w-[110px] bg-[#BD6F22] text-white rounded-md hover:bg-[#a65e1d] transition text-sm"
-    >
-        <span x-text="isEdit ? 'Update' : 'Save'"></span>
-    </button>
-</div>
-
-
+                {{-- Update / Save Button --}}
+                <button 
+                    type="submit" 
+                    class="px-4 py-2 w-[110px] bg-[#BD6F22] text-white rounded-md hover:bg-[#a65e1d] transition text-sm"
+                >
+                    <span x-text="isEdit ? 'Update' : 'Save'"></span>
+                </button>
+            </div>
         </form>
     </div>
 </div>
