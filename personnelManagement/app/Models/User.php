@@ -143,6 +143,9 @@ public function applications()
     return $this->hasMany(Application::class);
 }
 
-
+public function workExperiences()
+{
+    return $this->hasMany(WorkExperience::class);
+}
 
 }

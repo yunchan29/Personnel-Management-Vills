@@ -42,32 +42,35 @@ Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
 // ✅ Applicant-related routes with auth middleware
 Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(function () {
 
-    // =Dashboard route
+    // Dashboard
     Route::get('dashboard', [ApplicantJobController::class, 'dashboard'])->name('dashboard');
 
-    // Profile routes to edit and update user profile
+    // Profile
     Route::get('/profile', [UserController::class, 'show'])->name('profile');
     Route::get('/profile/edit', [UserController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [UserController::class, 'update'])->name('profile.update');
 
-    // Edit password
-    Route::get('/settings', function () {return view('applicant.settings');})->name('settings');
+    // Settings
+    Route::get('/settings', fn () => view('applicant.settings'))->name('settings');
 
-    // Resume and My Application routes(Upload and delete)
+    // Resume and Applications
     Route::get('/application', [ResumeController::class, 'show'])->name('application');
     Route::post('/application', [ResumeController::class, 'store'])->name('application.store');
     Route::delete('/application', [ResumeController::class, 'destroy'])->name('application.destroy');
-    Route::delete('/application/{id}/delete', [ResumeController::class, 'deleteApplication'])
-    ->name('application.delete');
+    Route::delete('/application/{id}/delete', [ResumeController::class, 'deleteApplication'])->name('application.delete');
 
-    // Applicant Government IDs and Licenses (File 201) routes
+    // Government IDs and Licenses (File 201)
     Route::post('/files', [File201Controller::class, 'store'])->name('files.store');
     Route::get('/files', [File201Controller::class, 'show'])->name('files');
 
-    // Application routes for applicants
+    // Applications listing
     Route::get('/my-applications', [ApplicantJobController::class, 'myApplications'])->name('applicant.applications');
 
+
+
+
 });
+
 
 // ✅ Employee-related routes with auth middleware
 Route::prefix('employee')->name('employee.')->middleware('auth')->group(function () {
@@ -166,6 +169,8 @@ Route::post('/apply/{job}', [ApplicantJobController::class, 'apply'])->name('job
 
 //hello
 //hi
+
+
 
 
 

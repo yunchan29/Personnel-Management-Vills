@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\WorkExperience;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -48,12 +49,16 @@ class UserController extends Controller
 
     private function showProfileByRole($role) {
         $user = auth()->user();
-        return view("$role.profile", compact('user'));
+        $experiences = $user->workExperiences()->get();
+
+        return view("$role.profile", compact('user', 'experiences'));
     }
 
     private function editProfileByRole($role) {
         $user = auth()->user();
-        return view("$role.edit", compact('user'));
+        $experiences = $user->workExperiences()->get();
+
+        return view("$role.profile", compact('user', 'experiences'));
     }
 
     private function updateProfileByRole(Request $request, $role)
@@ -63,33 +68,50 @@ class UserController extends Controller
             return redirect()->back()->with('error', 'Unauthorized');
         }
 
-        // 1. Validate everything (including the file, if any)
-        $validated = $request->validate($this->validationRules($user->id));
+        $validated = $request->validate(array_merge(
+            $this->validationRules($user->id),
+            [
+                'job_industry' => 'required|string|max:255',
+                'work_experience.*.job_title' => 'required|string|max:255',
+                'work_experience.*.company_name' => 'required|string|max:255',
+                'work_experience.*.start_date' => 'required|date',
+                'work_experience.*.end_date' => 'nullable|date|after_or_equal:work_experience.*.start_date',
+            ]
+        ));
 
-        // 2. If there’s an uploaded picture, store it and inject into validated data
         if ($request->hasFile('profile_picture')) {
-            $path = $request
-                ->file('profile_picture')
-                ->store('profile_pictures', 'public');
+            $path = $request->file('profile_picture')->store('profile_pictures', 'public');
             Log::info('Profile picture uploaded:', ['path' => $path]);
             $validated['profile_picture'] = $path;
         }
 
-        // 3. Log the exact array you’re about to save
         Log::info("Updating $role profile with data:", [
             'user_id' => $user->id,
             'data'    => $validated,
         ]);
 
-        // 4. Mass‐assign and save
         $user->fill($validated);
+        $user->job_industry = $request->input('job_industry');
         $user->save();
+
+        if ($request->has('work_experience')) {
+            WorkExperience::where('user_id', $user->id)->delete();
+
+            foreach ($request->input('work_experience') as $exp) {
+                WorkExperience::create([
+                    'user_id' => $user->id,
+                    'job_title' => $exp['job_title'],
+                    'company_name' => $exp['company_name'],
+                    'start_date' => $exp['start_date'],
+                    'end_date' => $exp['end_date'],
+                ]);
+            }
+        }
 
         return redirect()
             ->route("$role.profile")
             ->with('success', 'Profile updated successfully!');
     }
-
 
     private function validationRules($userId) {
         return [
@@ -110,7 +132,7 @@ class UserController extends Controller
             'province' => 'nullable|string|max:100',
             'city' => 'nullable|string|max:100',
             'barangay' => 'nullable|string|max:100',
-            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
             'street_details' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:20',
         ];

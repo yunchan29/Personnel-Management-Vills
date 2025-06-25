@@ -1,3 +1,7 @@
+@php
+    $experiences = $experiences ?? collect();
+@endphp
+
 @extends('layouts.applicantHome')
 
 @section('content')
@@ -47,7 +51,7 @@
             </div>
 
             <div id="tab-work" class="tab-content hidden">
-                <x-applicant.work-experience />
+                <x-applicant.work-experience :experiences="$experiences" :user="$user" />
             </div>
     </div>
 </div>
@@ -73,12 +77,18 @@
                 personalBtn.classList.add('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
                 workBtn.classList.remove('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
                 workBtn.classList.add('text-gray-600');
+
+                // Disable required when user's on personal information tab
+                jobIndustry.removeAttribute('required');
             } else {
                 personalTab.classList.add('hidden');
                 workTab.classList.remove('hidden');
                 workBtn.classList.add('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
                 personalBtn.classList.remove('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
                 personalBtn.classList.add('text-gray-600');
+
+                // Enable required on visible fields
+                job_industry.setAttribute('required', 'required');
             }
         }
 
