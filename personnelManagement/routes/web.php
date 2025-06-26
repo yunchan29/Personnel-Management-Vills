@@ -66,9 +66,6 @@ Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(functi
     // Applications listing
     Route::get('/my-applications', [ApplicantJobController::class, 'myApplications'])->name('applicant.applications');
 
-
-
-
 });
 
 
@@ -115,8 +112,6 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
 
     Route::get('/viewApplication', [JobController::class, 'viewApplications'])->name('viewApplication');
     Route::get('/viewApplicants/{id}', [JobController::class, 'viewApplicants'])->name('viewApplicants');
-
-    
 
     // Job posting routes
     Route::get('/job-posting', [JobController::class, 'index'])->name('jobPosting');

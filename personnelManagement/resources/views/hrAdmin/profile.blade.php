@@ -1,7 +1,11 @@
 @extends('layouts.hrAdmin')
 
 @section('content')
-<form action="{{ route('hrAdmin.profile.update') }}" method="POST" enctype="multipart/form-data">
+<form id="profileForm" 
+      action="{{ route('hrAdmin.profile.update') }}" 
+      method="POST" 
+      enctype="multipart/form-data">
+
     @csrf
     @method('PUT')
 <!-- Profile Picture + Form Row -->
@@ -42,31 +46,59 @@
             </div>
 
                     <!-- Tab Content -->
-                    <div id="tab-personal" class="tab-content">
-                        <x-employee.personal-information :user="$user" />
-                    </div>
+            <div id="tab-personal" class="tab-content">
+                <x-hrAdmin.personal-information :user="$user" />
+            </div>
 
             <div id="tab-work" class="tab-content hidden">
-                    <h2 class="text-lg font-semibold mb-4 text-[#BD6F22]">Work Experience</h2>
-                        <div class="flex flex-col items-center justify-center p-6 bg-orange-50 rounded-xl border border-dashed border-[#BD6F22] shadow-sm">
-                            <!-- Capybara with construction hat -->
-                            <img src="/images/capy.png" alt="..." class="border-4 border-dashed border-[#BD6F22] rounded-lg p-1" />
-                            <!-- Message -->
-                            <p class="text-center text-l text-gray-600 mb-1">
-                                Oops! This section is still under development.
-                            </p>
-                        </div>
-                </div>
+                <x-hrAdmin.work-experience :experiences="$experiences" :user="$user" />
+            </div>
     </div>
 </div>
     <!-- Submit Button -->
     <div class="mt-6 text-right">
-        <button type="submit" class="text-white px-6 py-2 rounded transition" style="background-color: #BD6F22;">Save</button>
+        <button 
+            type="button" 
+            onclick="validateAllTabsAndSubmit()"
+            class="text-white px-6 py-2 rounded transition" 
+            style="background-color: #BD6F22;">
+            Save
+        </button>
     </div>
 </form>
 
 <!-- Scripts -->
+
+
+<!-- Global Form Validation -->
+<script>
+window.formSections = {};
+function validateAllTabsAndSubmit() {
+    // Access both registered Alpine components
+    const sections = window.formSections;
+    const order = ['personal', 'work'];
+
+    for (const key of order) {
+        const section = sections[key];
+        if (section && typeof section.validate === 'function') {
+            const valid = section.validate();
+            if (!valid) {
+                // Show the tab to user
+                document.querySelector(`#tab-${key}-btn`)?.click();
+                return; // Stop submission if one is invalid
+            }
+        }
+    }
+
+    // All valid — programmatically submit
+    document.getElementById('profileForm').submit();
+}
+</script>
+
+<!-- SweetAlert2 for notifications -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Component Tab logic -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const personalBtn = document.getElementById('tab-personal-btn');
@@ -81,12 +113,18 @@
                 personalBtn.classList.add('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
                 workBtn.classList.remove('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
                 workBtn.classList.add('text-gray-600');
+
+                // Disable required when user's on personal information tab
+                job_industry.removeAttribute('required');
             } else {
                 personalTab.classList.add('hidden');
                 workTab.classList.remove('hidden');
                 workBtn.classList.add('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
                 personalBtn.classList.remove('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
                 personalBtn.classList.add('text-gray-600');
+
+                // Enable required on visible fields
+                job_industry.setAttribute('required', 'required');
             }
         }
 
