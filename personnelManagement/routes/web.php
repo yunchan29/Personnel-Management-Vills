@@ -170,6 +170,32 @@ Route::post('/apply/{job}', [ApplicantJobController::class, 'apply'])->name('job
 //hello
 //hi
 
+// ✅ HRstaff-related routes with auth middleware
+Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function () {
+    // Dashboard route
+    Route::get('/dashboard', function () {
+        return view('hrStaff.dashboard');
+    })->name('dashboard');
+
+      Route::get('/employees', function () {
+        return view('hrStaff.employees');
+    })->name('employees');
+
+     Route::get('/perfEval', function () {
+        return view('hrStaff.perfEval');
+    })->name('perfEval');
+
+     Route::get('/leaveForm', function () {
+        return view('hrStaff.leaveForm');
+    })->name('leaveForm');
+
+    // Change password/settings route
+    Route::get('/settings', function () {
+        return view('hrStaff.settings');
+    })->name('settings');
+
+});
+
 
 
 

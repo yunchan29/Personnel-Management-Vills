@@ -38,7 +38,11 @@ class LoginController extends Controller
                 return redirect()->route('applicant.dashboard'); // ✅ fixed here
             } elseif ($user->role === 'employee') {
                 return redirect()->route('employee.dashboard');
+            
+             } elseif ($user->role === 'hrStaff') {
+                return redirect()->route('hrStaff.dashboard');
             }
+
 
             // Fallback redirection
             return redirect()->intended('/home');
