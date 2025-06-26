@@ -41,6 +41,7 @@ class LeaveFormController extends Controller
             'date_range'  => $request->date_range,
             'about'       => $request->about,
             'file_path'   => $path,
+            'status'      => 'Pending',
         ]);
 
         return back()->with('success', 'Leave form submitted successfully.');
@@ -55,4 +56,23 @@ class LeaveFormController extends Controller
 
         return back()->with('success', 'Leave form deleted.');
     }
+
+    public function approve($id)
+{
+    $form = LeaveForm::findOrFail($id);
+    $form->status = 'Approved';
+    $form->save();
+
+    return back()->with('success', 'Leave request approved.');
+}
+
+public function decline($id)
+{
+    $form = LeaveForm::findOrFail($id);
+    $form->status = 'Declined';
+    $form->save();
+
+    return back()->with('success', 'Leave request declined.');
+}
+
 }
