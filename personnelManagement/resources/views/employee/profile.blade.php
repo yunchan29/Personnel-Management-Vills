@@ -47,16 +47,8 @@
                     </div>
 
             <div id="tab-work" class="tab-content hidden">
-                    <h2 class="text-lg font-semibold mb-4 text-[#BD6F22]">Work Experience</h2>
-                        <div class="flex flex-col items-center justify-center p-6 bg-orange-50 rounded-xl border border-dashed border-[#BD6F22] shadow-sm">
-                            <!-- Capybara with construction hat -->
-                            <img src="/images/capy.png" alt="..." class="border-4 border-dashed border-[#BD6F22] rounded-lg p-1" />
-                            <!-- Message -->
-                            <p class="text-center text-l text-gray-600 mb-1">
-                                Oops! This section is still under development.
-                            </p>
-                        </div>
-                </div>
+                <x-employee.work-experience :experiences="$experiences" :user="$user" />
+            </div>
     </div>
 </div>
     <!-- Submit Button -->
@@ -81,12 +73,18 @@
                 personalBtn.classList.add('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
                 workBtn.classList.remove('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
                 workBtn.classList.add('text-gray-600');
+
+                // Disable required when user's on personal information tab
+                jobIndustry.removeAttribute('required');
             } else {
                 personalTab.classList.add('hidden');
                 workTab.classList.remove('hidden');
                 workBtn.classList.add('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
                 personalBtn.classList.remove('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
                 personalBtn.classList.add('text-gray-600');
+
+                // Enable required on visible fields
+                job_industry.setAttribute('required', 'required');
             }
         }
 

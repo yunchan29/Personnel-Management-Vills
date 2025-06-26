@@ -1,7 +1,4 @@
-<div x-data='workExperienceForm(@json($experiences->toArray()))'
-x-init="$nextTick(() => window.formSections.work = $data)"
-x-ref="workForm"
-class="space-y-6">
+<div x-data='workExperienceForm(@json($experiences->toArray()))'class="space-y-6">
 
     <!-- Work Experience Entries -->
     <template x-for="(experience, index) in experiences" :key="experience.id">
@@ -19,7 +16,7 @@ class="space-y-6">
                            :id="`job_title_${index}`"
                            x-model="experience.job_title"
                            class="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                           >
+                           required>
                 </div>
 
                 <!-- Company Name -->
@@ -30,7 +27,7 @@ class="space-y-6">
                            :id="`company_name_${index}`"
                            x-model="experience.company_name"
                            class="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                           >
+                           required>
                 </div>
 
                 <!-- Start Date -->
@@ -41,7 +38,7 @@ class="space-y-6">
                            :id="`start_date_${index}`"
                            x-model="experience.start_date"
                            class="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                           >
+                           required>
                 </div>
 
                 <!-- End Date -->
@@ -52,16 +49,16 @@ class="space-y-6">
                            :id="`end_date_${index}`"
                            x-model="experience.end_date"
                            class="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                           >
+                           required>
                 </div>
             </div>
 
             <!-- Delete Button -->
             <button type="button"
                     class="absolute top-2 right-2 text-sm text-red-500 hover:text-red-700"
-                    @click="experiences.length > 1 ? removeExperience(index) : clearExperience(index)">
-                <span x-show="experiences.length > 1">✕</span>
-                <span x-show="experiences.length === 1">🧹</span>
+                    x-show="experiences.length > 1"
+                    @click="removeExperience(index)">
+                ✕
             </button>
         </div>
     </template>
@@ -82,7 +79,7 @@ class="space-y-6">
         <div>
             <label for="job_industry" class="block mb-2 font-medium">Job Industry</label>
             <select name="job_industry" id="job_industry"
-                    class="w-full p-2 border rounded">
+                    class="w-full p-2 border rounded" required>
                 <option value="">-- Select Job Industry --</option>
                 @foreach([
                     "Accounting", "Administration", "Architecture", "Arts and Design",
@@ -134,7 +131,6 @@ function workExperienceForm(existing = []) {
                 start_date: '',
                 end_date: ''
             }],
-
         addExperience() {
             this.experiences.push({
                 id: Date.now() + this.experiences.length,
@@ -144,58 +140,8 @@ function workExperienceForm(existing = []) {
                 end_date: ''
             });
         },
-
         removeExperience(index) {
             this.experiences.splice(index, 1);
-        },
-
-        clearExperience(index) {
-            this.experiences[index].job_title = '';
-            this.experiences[index].company_name = '';
-            this.experiences[index].start_date = '';
-            this.experiences[index].end_date = '';
-        },
-
-        validate() {
-            for (let i = 0; i < this.experiences.length; i++) {
-                const exp = this.experiences[i];
-                const fields = [exp.job_title, exp.company_name, exp.start_date, exp.end_date];
-                const someFilled = fields.some(f => f && f.trim() !== '');
-                const allFilled = fields.every(f => f && f.trim() !== '');
-
-                if (someFilled && !allFilled) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: `Incomplete Work Experience ${i + 1}`,
-                        text: `Please complete all fields in Work Experience ${i + 1}.`,
-                        confirmButtonColor: '#BD6F22'
-                    });
-                    return false;
-                }
-
-                if (exp.start_date && exp.end_date && exp.start_date > exp.end_date) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: `Invalid Dates in Work Experience #${i + 1}`,
-                    text: 'Start date must not be later than end date.',
-                    confirmButtonColor: '#BD6F22'
-                });
-                    return false;
-                }
-            }
-            const jobIndustry = document.getElementById('job_industry');
-                
-            if (!jobIndustry.value) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Missing Job Industry',
-                    text: 'Please select a job industry.',
-                    confirmButtonColor: '#BD6F22'
-                });
-                return false;
-            }
-
-            return true;
         }
     };
 }

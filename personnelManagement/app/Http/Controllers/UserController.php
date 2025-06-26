@@ -71,10 +71,10 @@ class UserController extends Controller
         $validated = $request->validate(array_merge(
             $this->validationRules($user->id),
             [
-                'job_industry' => 'required|string|max:255',
-                'work_experience.*.job_title' => 'required|string|max:255',
-                'work_experience.*.company_name' => 'required|string|max:255',
-                'work_experience.*.start_date' => 'required|date',
+                'job_industry' => 'nullable|string|max:255',
+                'work_experience.*.job_title' => 'nullable|string|max:255',
+                'work_experience.*.company_name' => 'nullable|string|max:255',
+                'work_experience.*.start_date' => 'nullable|date',
                 'work_experience.*.end_date' => 'nullable|date|after_or_equal:work_experience.*.start_date',
             ]
         ));
@@ -98,6 +98,15 @@ class UserController extends Controller
             WorkExperience::where('user_id', $user->id)->delete();
 
             foreach ($request->input('work_experience') as $exp) {
+                $isEmpty = empty($exp['job_title']) &&
+                        empty($exp['company_name']) &&
+                        empty($exp['start_date']) &&
+                        empty($exp['end_date']);
+
+                if ($isEmpty) {
+                    continue; // Skip empty experience blocks
+                }
+
                 WorkExperience::create([
                     'user_id' => $user->id,
                     'job_title' => $exp['job_title'],
