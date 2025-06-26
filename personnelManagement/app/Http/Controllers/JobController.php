@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Job;
-
+use App\Models\Application;
 
 class JobController extends Controller
 {
@@ -95,19 +95,27 @@ class JobController extends Controller
     return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job updated successfully!');
 }
 
-    public function viewApplicants($id)
-    {
-        $job = Job::with(['applications.user'])->findOrFail($id);
-        $applications = $job->applications;
+    public function viewApplicants($jobId)
+{
+    $job = Job::with('applications.user')->findOrFail($jobId);
+    $jobs = Job::withCount('applications')->get();
 
-        return view('hrAdmin.viewApplicants', compact('job', 'applications'));
-    }
+    return view('hrAdmin.application', [
+        'jobs' => $jobs,
+        'applications' => $job->applications,
+        'selectedJob' => $job,
+        'selectedTab' => 'applicants', // this sets the tab via Alpine
+    ]);
+}
 
-    public function applications()
-    {
-        $jobs = Job::withCount('applications')->get(); // Adds 'applicants_count' for application.blade.php
-        return view('hrAdmin.application', compact('jobs'));
-    }
+
+   public function applications()
+{
+    $jobs = Job::withCount('applications')->get();
+    $applications = Application::with('user', 'job')->latest()->get(); // ✅ include applicants
+
+    return view('hrAdmin.application', compact('jobs', 'applications'));
+}
     public function destroy($id)
 {
     $job = Job::findOrFail($id);
@@ -115,4 +123,11 @@ class JobController extends Controller
 
     return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job deleted successfully.');
 }
+
+public function getApplicants($id)
+{
+    $job = Job::with(['applications.user', 'applications.job'])->findOrFail($id);
+    return response()->json($job->applications);
+}
+
 }

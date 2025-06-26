@@ -64,11 +64,16 @@
 
     {{-- Footer --}}
     <div class="flex justify-end items-center text-sm">
-        <a href="{{ route('hrAdmin.viewApplicants', $job->id) }}" class="text-[#BD6F22] hover:underline flex items-center gap-1">
-            View Applicants
-            <span class="bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5">
-                {{ $job->applications_count }}
-            </span>
-        </a>
+      <a 
+    href="{{ route('hrAdmin.applicants', $job->id) }}" 
+    class="text-[#BD6F22] hover:underline flex items-center gap-1"
+>
+    View Applicants
+    <span class="bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5">
+        {{ $job->applications_count }}
+    </span>
+</a>
+
+
     </div>
 </div>

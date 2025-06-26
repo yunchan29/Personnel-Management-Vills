@@ -127,6 +127,9 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
     // View applicants routes
     Route::get('/viewApplicants/{id}', [JobController::class, 'viewApplicants'])->name('viewApplicants');
 
+    Route::get('/job/{id}/applicants', [JobController::class, 'viewApplicants'])->name('applicants');
+
+  
     // Leave Form routes (Pre-made)
     Route::get('/leave-forms', [LeaveFormController::class, 'index'])->name('leaveForm'); 
     Route::post('/leave-forms', [LeaveFormController::class, 'store'])->name('leaveForms.store');
