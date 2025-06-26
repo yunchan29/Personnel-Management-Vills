@@ -1,9 +1,9 @@
-@extends('layouts.hrAdmin')
+@extends('layouts.hrStaff')
 
 @section('content')
 <div class="max-w-7xl mx-auto px-6 py-8"
-     x-data="draggableModal()"
-     x-init="initDrag()"
+    x-data="draggableModal()"
+    x-init="initDrag()"
 >
     <h1 class="text-2xl font-semibold text-[#BD6F22] mb-6">Leave Form</h1>
 
@@ -23,7 +23,7 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Left Column -->
+        <!-- List -->
         <div class="md:col-span-2 space-y-4 max-h-[600px] overflow-y-auto pr-2">
             @foreach ($leaveForms as $form)
                 <div 
@@ -52,7 +52,7 @@
             @endforeach
         </div>
 
-        <!-- Right Panel -->
+        <!-- Right Pane -->
         <div class="bg-white shadow rounded-md border p-6 min-h-[300px]" 
              x-show="selectedForm && !showModal" x-transition>
             <template x-if="selectedForm">
@@ -67,7 +67,7 @@
                         </div>
                         <button @click="openModal" title="Open as Modal">
                             <svg class="w-5 h-5 text-gray-500 hover:text-[#BD6F22]" fill="none" stroke="currentColor" stroke-width="2"
-                                 viewBox="0 0 24 24">
+                                viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 3h6v6m0-6L10 14m-7 7h6v-6"></path>
                             </svg>
                         </button>
@@ -92,11 +92,11 @@
 
                     <div class="mb-4">
                         <label class="block text-sm text-gray-700 mb-1">Attachment:</label>
-                        <button type="button"
-                            class="text-blue-600 hover:underline text-sm"
-                            @click="openAttachmentModal('/storage/' + selectedForm.file_path)">
+                        <a class="block text-blue-600 hover:underline text-sm" 
+                           :href="'/storage/' + selectedForm.file_path" 
+                           target="_blank">
                             View Attachment
-                        </button>
+                        </a>
                     </div>
 
                     <div class="flex justify-end gap-2" x-show="selectedForm.status === 'Pending'">
@@ -114,13 +114,15 @@
         </div>
     </div>
 
-    <!-- Leave Form Modal -->
+    <!-- Draggable Modal -->
     <div class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
          x-show="showModal"
          x-transition
          @click.self="closeModal">
         <div class="bg-white rounded-lg max-w-lg w-full p-6 absolute shadow-xl"
              :style="`transform: translate(${x}px, ${y}px)`">
+
+            <!-- Drag handle -->
             <div class="cursor-move mb-4 text-[#BD6F22] font-semibold text-lg flex justify-between items-center"
                  @mousedown.prevent="startDrag">
                 Leave Form Details
@@ -151,9 +153,11 @@
 
                     <div class="mb-4">
                         <label class="block text-sm text-gray-700 mb-1">Attachment:</label>
-                        <button class="text-blue-600 hover:underline text-sm" @click="openAttachmentModal('/storage/' + selectedForm.file_path)">
+                        <a class="block text-blue-600 hover:underline text-sm" 
+                           :href="'/storage/' + selectedForm.file_path" 
+                           target="_blank">
                             View Attachment
-                        </button>
+                        </a>
                     </div>
 
                     <div class="flex justify-end gap-2" x-show="selectedForm.status === 'Pending'">
@@ -170,52 +174,25 @@
             </template>
         </div>
     </div>
-
-    <!-- Attachment Modal -->
-    <div class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
-         x-show="showAttachmentModal"
-         x-transition
-         @click.self="closeAttachmentModal">
-        <div class="bg-white rounded-lg max-w-3xl w-full p-4 absolute shadow-xl"
-             :style="`transform: translate(${x}px, ${y}px)`">
-            <div class="cursor-move mb-4 text-[#BD6F22] font-semibold text-lg flex justify-between items-center"
-                 @mousedown.prevent="startDrag">
-                Attachment Viewer
-                <button @click="closeAttachmentModal" class="text-gray-500 hover:text-black text-xl">&times;</button>
-            </div>
-            <div class="border rounded overflow-hidden">
-                <iframe 
-                    :src="attachmentUrl" 
-                    class="w-full h-[500px]" 
-                    frameborder="0">
-                </iframe>
-            </div>
-        </div>
-    </div>
 </div>
 
-<!-- Alpine Logic -->
 <script>
 function draggableModal() {
     return {
         selectedStatus: 'Pending',
         selectedForm: null,
         showModal: false,
-        showAttachmentModal: false,
-        attachmentUrl: '',
         x: 0,
         y: 0,
         dragging: false,
         offsetX: 0,
         offsetY: 0,
-
         selectForm(event) {
             const formData = event.currentTarget.dataset.form;
             if (formData) {
                 try {
                     this.selectedForm = JSON.parse(formData);
                     this.showModal = false;
-                    this.showAttachmentModal = false;
                 } catch (e) {
                     console.error('Invalid form data:', formData);
                 }
@@ -226,14 +203,6 @@ function draggableModal() {
         },
         closeModal() {
             this.showModal = false;
-        },
-        openAttachmentModal(url) {
-            this.attachmentUrl = url;
-            this.showAttachmentModal = true;
-        },
-        closeAttachmentModal() {
-            this.showAttachmentModal = false;
-            this.attachmentUrl = '';
         },
         initDrag() {
             this.doDrag = this.doDrag.bind(this);

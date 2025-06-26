@@ -44,13 +44,12 @@
       background-size: cover;
       background-position: center;
       background-attachment: scroll;
-   
     }
 
     @keyframes fadeSlideUp {
       0% {
         opacity: 0;
-        transform: translateY(40px);
+        transform: translateY(30px);
       }
       100% {
         opacity: 1;
@@ -58,8 +57,15 @@
       }
     }
 
-    .animate-fadeSlideUp {
-      animation: fadeSlideUp 1.5s ease-out forwards;
+    .fade-slide-up {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 1s ease-out;
+    }
+
+    .fade-slide-up.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
   </style>
 </head>
@@ -70,12 +76,11 @@
 
   <!-- Hero Section -->
   <section class="relative w-full h-screen bg-cover bg-center pt-16 parallax-bg">
-
     <div class="absolute inset-0 bg-black bg-opacity-10 z-0"></div>
 
     <div class="relative z-10 flex items-center h-full px-6 md:px-16">
       <h1 id="hero-heading"
-          class="barlow-condensed text-[#8C5A3C] text-3xl sm:text-4xl md:text-5xl font-bold leading-normal tracking-tight max-w-2xl text-left uppercase animate-fadeSlideUp">
+          class="barlow-condensed fade-slide-up text-[#8C5A3C] text-3xl sm:text-4xl md:text-5xl font-bold leading-normal tracking-tight max-w-2xl text-left uppercase">
         “CONNECTING TALENT WITH OPPORTUNITY — ANYTIME,<br>ANYWHERE.”
       </h1>
     </div>
@@ -98,29 +103,29 @@
 
   <!-- Scroll Animations -->
   <script>
-    // Parallax text on scroll
-    window.addEventListener('scroll', () => {
-      const heroText = document.getElementById('hero-heading');
-      const scrollY = window.scrollY;
+    // Hero text scroll + fade-up reveal
+    const heroHeading = document.getElementById('hero-heading');
 
-      if (heroText) {
-        heroText.style.transform = `translateY(${scrollY * 0.2}px)`;
-        heroText.style.opacity = 1 - scrollY * 0.002;
-      }
-    });
-
-    // Scroll reveal animation
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          entry.target.classList.add('animate-fadeSlideUp');
+          entry.target.classList.add('visible');
           observer.unobserve(entry.target);
         }
       });
-    }, { threshold: 0.1 });
+    }, {
+      threshold: 0.5
+    });
 
-    document.querySelectorAll('.job-card').forEach(el => {
-      observer.observe(el);
+    if (heroHeading) observer.observe(heroHeading);
+
+    // Parallax scroll effect
+    window.addEventListener('scroll', () => {
+      const scrollY = window.scrollY;
+      if (heroHeading) {
+        heroHeading.style.transform = `translateY(${Math.min(20 + scrollY * 0.1, 100)}px)`;
+        heroHeading.style.opacity = Math.max(1 - scrollY * 0.002, 0);
+      }
     });
   </script>
 
@@ -135,11 +140,10 @@
     </div>
   </div>
 
-  <!-- Loader triggers -->
+  <!-- Loader Triggers -->
   <script>
     const loadingOverlay = document.getElementById('loading-overlay');
 
-    // Show loader on form submit
     const searchForm = document.querySelector('form[action="{{ route('welcome') }}"]');
     if (searchForm) {
       searchForm.addEventListener('submit', function () {
@@ -147,22 +151,21 @@
       });
     }
 
-    // Show loader on pagination clicks
     document.addEventListener('DOMContentLoaded', function () {
       document.querySelectorAll('.pagination a').forEach(function (el) {
         el.addEventListener('click', function () {
           loadingOverlay.classList.remove('hidden');
         });
       });
-    });
 
-    // Show loader on Apply Now button clicks
-    document.querySelectorAll('a[href^="/job/"]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        loadingOverlay.classList.remove('hidden');
+      document.querySelectorAll('a[href^="/job/"]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          loadingOverlay.classList.remove('hidden');
+        });
       });
     });
   </script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
 </body>
 </html>

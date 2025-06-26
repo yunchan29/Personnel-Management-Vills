@@ -10,19 +10,25 @@ use Illuminate\Support\Facades\Storage;
 class LeaveFormController extends Controller
 {
     public function index()
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        if ($user->role === 'hrAdmin') {
-        // HR Admin can view all leave forms
+    if (in_array($user->role, ['hrAdmin', 'hrStaff'])) {
+        // HR Admin and HR Staff can view all leave forms
         $leaveForms = LeaveForm::with('user')->latest()->get();
-        return view('hradmin.leaveForm', compact('leaveForms'));
-        }
 
-        // Regular employee view
-        $leaveForms = LeaveForm::where('user_id', $user->id)->latest()->get();
-        return view('employee.leaveForm', compact('leaveForms'));
+        $view = $user->role === 'hrAdmin' 
+            ? 'hrAdmin.leaveForm' 
+            : 'hrStaff.leaveForm';
+
+        return view($view, compact('leaveForms'));
     }
+
+    // Regular employee view
+    $leaveForms = LeaveForm::where('user_id', $user->id)->latest()->get();
+    return view('employee.leaveForm', compact('leaveForms'));
+}
+
 
     public function store(Request $request)
     {
@@ -30,18 +36,18 @@ class LeaveFormController extends Controller
             'attachment' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
             'leave_type' => 'required|string',
             'date_range' => 'required|string',
-            'about' => 'nullable|string',
+            'about'      => 'nullable|string',
         ]);
 
         $path = $request->file('attachment')->store('leave_forms', 'public');
 
         LeaveForm::create([
-            'user_id'     => Auth::id(),
-            'leave_type'  => $request->leave_type,
-            'date_range'  => $request->date_range,
-            'about'       => $request->about,
-            'file_path'   => $path,
-            'status'      => 'Pending',
+            'user_id'    => Auth::id(),
+            'leave_type' => $request->leave_type,
+            'date_range' => $request->date_range,
+            'about'      => $request->about,
+            'file_path'  => $path,
+            'status'     => 'Pending',
         ]);
 
         return back()->with('success', 'Leave form submitted successfully.');
@@ -58,21 +64,20 @@ class LeaveFormController extends Controller
     }
 
     public function approve($id)
-{
-    $form = LeaveForm::findOrFail($id);
-    $form->status = 'Approved';
-    $form->save();
+    {
+        $form = LeaveForm::findOrFail($id);
+        $form->status = 'Approved';
+        $form->save();
 
-    return back()->with('success', 'Leave request approved.');
-}
+        return back()->with('success', 'Leave request approved.');
+    }
 
-public function decline($id)
-{
-    $form = LeaveForm::findOrFail($id);
-    $form->status = 'Declined';
-    $form->save();
+    public function decline($id)
+    {
+        $form = LeaveForm::findOrFail($id);
+        $form->status = 'Declined';
+        $form->save();
 
-    return back()->with('success', 'Leave request declined.');
-}
-
+        return back()->with('success', 'Leave request declined.');
+    }
 }

@@ -1,4 +1,4 @@
-@extends('layouts.hrAdmin')
+@extends('layouts.hrStaff')
 
 @section('content')
 <section class="p-6 max-w-6xl mx-auto" x-data="{ tab: 'postings', selectedJobId: null }">

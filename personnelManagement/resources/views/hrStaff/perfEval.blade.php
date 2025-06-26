@@ -1,8 +1,8 @@
-@extends('layouts.hrAdmin')
+@extends('layouts.hrStaff')
 
 @section('content')
 <section class="p-6 max-w-6xl mx-auto" x-data="{ tab: 'postings', selectedJobId: null }">
-    <h1 class="mb-6 text-xl font-bold text-[#BD6F22]">Employees</h1>
+    <h1 class="mb-6 text-xl font-bold text-[#BD6F22]">Performance Evaluation</h1>
 
     {{-- Tabs --}}
     <div class="flex border-b border-gray-300 mb-6 space-x-6">
@@ -19,7 +19,7 @@
             class="pb-2 font-semibold focus:outline-none"
             :disabled="!selectedJobId"
         >
-            Employee
+            Evaluation
         </button>
     </div>
 
@@ -28,17 +28,27 @@
         <div class="grid gap-6">
             @forelse($jobs as $job)
                 <div 
-                    class="bg-white border shadow-sm rounded-md p-6 flex flex-col gap-3"
+                    class="bg-white border shadow-sm rounded-md p-6 flex flex-col justify-between"
                     x-data="{ expanded: false }"
                 >
-                    <div>
-                        <h2 class="text-lg font-semibold text-[#BD6F22]">{{ $job->job_title }}</h2>
-                        <p class="text-sm text-gray-600">{{ $job->company }}</p>
+                    {{-- Header --}}
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 class="text-lg font-semibold text-[#BD6F22]">{{ $job->job_title }}</h2>
+                            <p class="text-sm text-gray-600">{{ $job->company }}</p>
+                        </div>
+                        <div class="text-right text-xs text-gray-500 leading-tight">
+                            <span>Employees: </span>
+                            <span class="bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5">
+                                {{ $employees->where('job_id', $job->id)->count() }}
+                            </span>
+                        </div>
                     </div>
 
-                    <div class="text-sm text-gray-800">
-                        <p class="mb-1 font-medium">Qualification:</p>
-                        <ul class="list-disc list-inside text-sm">
+                    {{-- Qualifications --}}
+                    <div class="text-sm text-gray-800 mb-3">
+                        <p class="font-medium mb-1">Qualification:</p>
+                        <ul class="list-disc list-inside text-sm space-y-1">
                             @foreach($job->qualifications as $index => $qual)
                                 <li x-show="expanded || {{ $index }} < 3">{{ $qual }}</li>
                             @endforeach
@@ -50,28 +60,28 @@
                         <div class="flex justify-center">
                             <button 
                                 @click="expanded = !expanded" 
-                                class="text-[#BD6F22] text-xs hover:underline"
+                                class="text-xs text-[#BD6F22] hover:underline"
                             >
                                 <span x-text="expanded ? 'See Less' : 'See More'"></span>
                             </button>
                         </div>
                     @endif
 
-                    <div class="flex justify-between items-center text-sm text-gray-700">
+                    {{-- Location & View --}}
+                    <div class="flex justify-between items-center text-sm text-gray-700 mt-3">
                         <div class="flex items-center gap-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#BD6F22]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 12.414M13.414 12.414L17.657 8.172M13.414 12.414L8.343 7.343M13.414 12.414L8.343 17.485"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2C8.13401 2 5 5.13401 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86599-3.134-7-7-7z" />
+                                <circle cx="12" cy="9" r="2.5" fill="currentColor" />
                             </svg>
                             <span>{{ $job->location ?? 'No location' }}</span>
                         </div>
-                        <div class="flex gap-4 items-center">
-                            <button 
-                                @click="tab = 'employees'; selectedJobId = {{ $job->id }}" 
-                                class="text-sm font-medium text-gray-500 hover:underline"
-                            >
-                                View Employee
-                            </button>
-                        </div>
+                        <button 
+                            @click="tab = 'employees'; selectedJobId = {{ $job->id }}" 
+                            class="text-sm font-medium text-gray-500 hover:underline"
+                        >
+                            View Evaluation
+                        </button>
                     </div>
                 </div>
             @empty
