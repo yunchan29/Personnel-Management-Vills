@@ -1,98 +1,116 @@
- <!-- Job Listing Section -->
-    <section class="w-full">
-        <!-- Header -->
-        <div class="bg-[#BD9168] w-full h-16 flex items-center justify-center animate-fadeIn">
-            <h2 class="text-white text-3xl font-bold">Job Listing</h2>
-        </div>
+<div x-data="{ selectedJob: null, showModal: false }">
 
-        <!-- Content Canvas -->
-        <div class="p-6 bg-white animate-fadeIn delay-200">
-            <!-- Search Bar -->
-            <div class="flex items-center gap-4 mb-6">
-               <form method="GET" action="{{ route('welcome') }}" class="flex items-center gap-4 mb-6">
-    <label for="search" class="text-lg font-medium text-gray-700">Search Position</label>
-    <input 
-        type="text" 
-        name="search"
-        id="search" 
-        placeholder="Enter job title..." 
-        class="border border-gray-300 rounded-lg px-4 py-2 w-full max-w-md focus:outline-none focus:ring-2 focus:ring-[#BD9168]"
-        value="{{ request('search') }}"
-    />
-    <button type="submit" class="bg-[#BD9168] text-white px-4 py-2 rounded-lg hover:bg-[#a37653] flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z" />
-        </svg>
-        Search
-    </button>
-</form>
-
-            </div>
-
-            <!-- Job cards will go here next -->
-            <div class="p-6 bg-white">
-                <!-- Cards Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+  <!-- Cards Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
     @forelse($jobs as $job)
-        <div class="flex items-start p-6 border rounded-lg shadow-sm bg-white gap-6 transform hover:scale-105 transition duration-300">
-            <!-- Left Side -->
-            <div class="flex flex-col items-start gap-4">
-                <div class="text-gray-500 text-sm">
-                    <p>Last Posted: <span class="font-medium">{{ $job->created_at->diffForHumans() }}</span></p>
-                    <p>Apply until: <span class="font-medium">{{ \Carbon\Carbon::parse($job->apply_until)->format('F d, Y') }}</span></p>
-                </div>
-                <a href="{{ route('job.show', $job->id) }}" class="bg-[#BD9168] text-white px-6 py-2 rounded-md hover:bg-[#a37653] flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                    Apply Now
-                </a>
-            </div>
-
-            <!-- Right Side -->
-            <div class="flex flex-col gap-2">
-                <h3 class="text-[#BD9168] text-2xl font-bold">{{ $job->job_title }}</h3>
-                <p class="text-black font-semibold">{{ $job->company_name }}</p>
-
-                <div class="flex items-start gap-2 mt-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#BD9168] mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 01-8 0M12 14a8 8 0 00-8 8h16a8 8 0 00-8-8z" />
-                    </svg>
-                    <div>
-                        <p class="font-semibold">Qualifications:</p>
-                     @if (!empty($job->qualifications) && is_array($job->qualifications))
-    <ul class="list-disc list-inside text-black">
-        @foreach ($job->qualifications as $qual)
-            <li>{{ $qual }}</li>
-        @endforeach
-    </ul>
-@else
-    <p>No qualifications listed.</p>
-@endif
-
-
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-2 mt-4 text-black">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#BD9168]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 12.414m0 0L9.172 8.172m4.242 4.242A4 4 0 1116.657 7.343a4 4 0 01-4.243 4.243z" />
-                    </svg>
-                    <p>{{ $job->location }}</p>
-                </div>
-            </div>
+      <div class="flex items-start p-6 border rounded-lg shadow-sm bg-white gap-6 hover:shadow-md transition duration-300">
+        <!-- Left Side -->
+        <div class="flex flex-col gap-4 min-w-[160px] text-gray-600">
+          <div class="text-sm">
+            <p>Posted: <span class="font-semibold">{{ $job->created_at->diffForHumans() }}</span></p>
+            <p>Deadline: <span class="font-semibold">{{ \Carbon\Carbon::parse($job->apply_until)->format('F d, Y') }}</span></p>
+          </div>
+          <a href="{{ route('job.show', $job->id) }}"
+             class="bg-[#BD9168] text-white text-sm px-5 py-2 rounded-md hover:bg-[#a37653] flex items-center gap-2 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+            Apply Now
+          </a>
         </div>
+
+        <!-- Right Side -->
+        <div class="flex-1 space-y-2">
+          <h3 class="text-lg font-semibold text-[#BD9168]">{{ $job->job_title }}</h3>
+          <p class="text-sm font-medium text-gray-800">{{ $job->company_name }}</p>
+
+          <div class="flex items-start gap-2 text-sm text-gray-700 mt-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#BD9168] mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17.657 16.657L13.414 12.414m0 0L9.172 8.172m4.242 4.242A4 4 0 1116.657 7.343a4 4 0 01-4.243 4.243z" />
+            </svg>
+            <p>{{ $job->location }}</p>
+          </div>
+
+          <!-- See More Button -->
+          <button @click="selectedJob = {{ $job->toJson() }}; showModal = true"
+                  class="mt-2 text-sm text-[#BD9168] hover:underline focus:outline-none font-medium">
+            See More
+          </button>
+        </div>
+      </div>
     @empty
-        <p class="text-gray-500">No job listings available right now.</p>
+      <p class="text-gray-500 text-sm">No job listings available right now.</p>
     @endforelse
-</div>
+  </div>
 
+  <!-- Modal -->
+  <div x-show="showModal" x-transition x-cloak
+       class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 px-4"
+       @keydown.window.escape="showModal = false">
+    <div
+      x-ref="modal"
+      x-init="
+        let offset = { x: 0, y: 0 };
+        let isDragging = false;
+        const modal = $refs.modal;
+        const header = modal.querySelector('.modal-header');
+        header.addEventListener('mousedown', (e) => {
+          isDragging = true;
+          offset.x = e.clientX - modal.getBoundingClientRect().left;
+          offset.y = e.clientY - modal.getBoundingClientRect().top;
+        });
+        window.addEventListener('mousemove', (e) => {
+          if (isDragging) {
+            modal.style.left = `${e.clientX - offset.x}px`;
+            modal.style.top = `${e.clientY - offset.y}px`;
+            modal.style.position = 'absolute';
+            modal.style.margin = 0;
+          }
+        });
+        window.addEventListener('mouseup', () => isDragging = false);
+      "
+      class="bg-white rounded-lg shadow-lg p-6 relative space-y-4 overflow-auto resize"
+      style="min-width: 300px; min-height: 200px; max-width: 90vw; max-height: 90vh;"
+    >
 
-                          <!-- Pagination -->
-<div class="mt-6">
-   {{ $jobs->links('vendor.pagination.tailwind') }}
+      <!-- Drag Handle -->
+      <div class="modal-header cursor-move flex justify-between items-center mb-2">
+        <h2 class="text-xl font-bold text-[#BD9168]" x-text="selectedJob?.job_title"></h2>
+        <button @click="showModal = false"
+                class="text-gray-500 hover:text-gray-700 text-2xl leading-none">
+          &times;
+        </button>
+      </div>
 
-</div>
-            </div>
+      <div>
+        <p class="text-base font-medium text-gray-800" x-text="selectedJob?.company_name"></p>
+        <p class="text-sm text-gray-600 mb-3" x-text="'Location: ' + selectedJob?.location"></p>
+
+        <div class="mt-3">
+          <p class="font-semibold text-sm text-gray-800">Qualifications:</p>
+          <ul class="list-disc list-inside text-sm text-gray-700 space-y-1 mt-1">
+            <template x-for="qual in selectedJob?.qualifications ?? []" :key="qual">
+              <li x-text="qual"></li>
+            </template>
+            <template x-if="!(selectedJob?.qualifications && selectedJob?.qualifications.length)">
+              <li>No qualifications listed.</li>
+            </template>
+          </ul>
         </div>
-    </section>
+
+        <!-- Modal "Apply Now" -->
+        <div class="mt-6">
+          <a :href="`/job/${selectedJob?.id}`"
+             class="inline-flex items-center bg-[#BD9168] text-white px-4 py-2 text-sm rounded-md hover:bg-[#a37653] transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+            Apply Now
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
