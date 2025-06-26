@@ -13,6 +13,7 @@ use App\Http\Controllers\ResumeController;
 use App\Http\Controllers\LeaveFormController;
 use App\Http\Controllers\EmployeeController;
 
+
 //temporary ulit HAHAHAHH sorry
 Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
 
@@ -111,7 +112,6 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
     Route::get('/application', [JobController::class, 'applications'])->name('application');
 
     Route::get('/viewApplication', [JobController::class, 'viewApplications'])->name('viewApplication');
-    Route::get('/viewApplicants/{id}', [JobController::class, 'viewApplicants'])->name('viewApplicants');
 
     // Job posting routes
     Route::get('/job-posting', [JobController::class, 'index'])->name('jobPosting');
@@ -123,6 +123,9 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
 
     // Government IDs and Licenses (File 201) routes (Pre-made)
     Route::get('/files', function () {return view('hrAdmin.files');})->name('files');
+
+    // View applicants routes
+    Route::get('/viewApplicants/{id}', [JobController::class, 'viewApplicants'])->name('viewApplicants');
 
     // Leave Form routes (Pre-made)
     Route::get('/leave-forms', [LeaveFormController::class, 'index'])->name('leaveForm'); 

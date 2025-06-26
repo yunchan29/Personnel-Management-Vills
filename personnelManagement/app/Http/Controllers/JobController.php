@@ -95,12 +95,12 @@ class JobController extends Controller
     return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job updated successfully!');
 }
 
-
     public function viewApplicants($id)
     {
-        $job = Job::with('applications')->findOrFail($id); // Load applicants with the job
-        $applicants = $job->applicants;
-        return view('hrAdmin.viewApplicants', compact('job', 'applicants'));
+        $job = Job::with(['applications.user'])->findOrFail($id);
+        $applications = $job->applications;
+
+        return view('hrAdmin.viewApplicants', compact('job', 'applications'));
     }
 
     public function applications()
