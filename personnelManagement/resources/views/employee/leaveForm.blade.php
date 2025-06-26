@@ -31,6 +31,13 @@
 
         <div class="flex flex-col gap-4">
             @foreach($leaveForms as $form)
+                @php
+                    $badgeColor = match($form->status) {
+                        'Approved' => 'bg-green-600',
+                        'Declined' => 'bg-red-600',
+                        default => 'bg-yellow-500',
+                    };
+                @endphp
                 <div class="bg-white border rounded-lg shadow px-6 py-4 w-full relative">
                     <div class="flex justify-between items-start">
                         <div>
@@ -54,7 +61,9 @@
                             <a href="{{ asset('storage/' . $form->file_path) }}" target="_blank" class="text-blue-600 text-xl hover:text-blue-800" title="Open file in new tab">
                                 <i class="fas fa-arrow-up-right-from-square"></i>
                             </a>
-                            <span class="bg-red-500 text-white text-xs px-3 py-1 rounded-full">To Review</span>
+                            <span class="text-white text-xs px-3 py-1 rounded-full {{ $badgeColor }}">
+                                {{ $form->status ?? 'Pending' }}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -163,7 +172,6 @@
                     numberOfColumns: 2
                 });
 
-                // Submit confirmation with file size validation
                 const leaveForm = document.getElementById('leaveForm');
                 leaveForm.addEventListener('submit', function(e) {
                     e.preventDefault();
@@ -198,12 +206,11 @@
         }));
     });
 
-    // 🔥 Delete confirmation - moved outside Alpine
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.delete-form').forEach(form => {
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
-                window.allowSubmit = false; // Prevent loading overlay
+                window.allowSubmit = false;
                 Swal.fire({
                     icon: 'warning',
                     title: 'Delete this leave request?',
@@ -221,6 +228,7 @@
         });
     });
 </script>
+
 @if(session('success'))
     <script>
         Swal.fire({

@@ -16,6 +16,7 @@ class LeaveForm extends Model
         'date_range',
         'about',
         'file_path',
+        'status',
     ];
 
     public function user()
