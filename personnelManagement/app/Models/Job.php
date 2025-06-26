@@ -12,7 +12,6 @@ class Job extends Model
     'job_title',
     'company_name',
     'job_industry',
-    'role_type',
     'location',
     'vacancies',
     'apply_until',

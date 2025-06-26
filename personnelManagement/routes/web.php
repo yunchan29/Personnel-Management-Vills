@@ -130,13 +130,13 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
     Route::delete('/leave-forms/{id}', [LeaveFormController::class, 'destroy'])->name('leaveForms.destroy');
 
     // ✅ Add this inside Route::prefix('hrAdmin')...
-Route::post('/leave-forms/{id}/approve', [LeaveFormController::class, 'approve'])->name('leaveForms.approve');
-Route::post('/leave-forms/{id}/decline', [LeaveFormController::class, 'decline'])->name('leaveForms.decline');
-
+    Route::post('/leave-forms/{id}/approve', [LeaveFormController::class, 'approve'])->name('leaveForms.approve');
+    Route::post('/leave-forms/{id}/decline', [LeaveFormController::class, 'decline'])->name('leaveForms.decline');
 
     // Change password route
-    Route::get('/settings', function () {return view('hrAdmin.settings');})->name('settings');});
-    
+    Route::get('/settings', function () {return view('hrAdmin.settings');})->name('settings');
+});
+  
 Route::get('/employees', [EmployeeController::class, 'index'])
     ->name('hrAdmin.employees');
 

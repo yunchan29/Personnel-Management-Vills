@@ -16,7 +16,8 @@
       <thead class="border-b font-semibold bg-gray-50">
         <tr>
           <th class="py-3 px-4">Name</th>
-          <th class="py-3 px-4">Job Position</th>
+          <th class="py-3 px-4">Position Applied</th>
+          <th class="py-3 px-4">Company</th>
           <th class="py-3 px-4">Date Applied</th>
           <th class="py-3 px-4">Resume</th>
           <th class="py-3 px-4">201 Files</th>
@@ -27,6 +28,7 @@
         <tr class="border-b hover:bg-gray-50">
           <td class="py-3 px-4 font-medium">Charlene S. Manzanilla</td>
           <td class="py-3 px-4">Production Operator</td>
+          <td class="py-3 px-4">Toyota Philippines Corp.</td>
           <td class="py-3 px-4 italic">May 14, 2025</td>
           <td class="py-3 px-4">
             <button class="bg-[#BD6F22] text-white px-3 py-1 rounded shadow hover:bg-[#a95e1d]">

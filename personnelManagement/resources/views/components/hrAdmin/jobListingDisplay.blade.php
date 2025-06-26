@@ -50,7 +50,7 @@
                     <ul class="list-disc ml-6">
                         <template x-for="(item, index) in qualifications" :key="index">
                             <li 
-                                x-show="expanded || index < 3" 
+                                x-show="showAll || index < 3"
                                 x-transition.duration.300ms 
                                 x-text="item"
                             ></li>

@@ -40,14 +40,10 @@
             ✕
         </button>
 
+        {{-- Modal Content --}}
         <h3 class="text-xl font-semibold text-[#BD6F22] mb-6" x-text="isEdit ? 'Edit Job' : 'Add Job'"></h3>
 
-        <form 
-            :action="isEdit 
-                ? `/hrAdmin/jobPosting/${job.id}` 
-                : '{{ route('hrAdmin.jobPosting.store') }}'"
-            method="POST"
-        >
+        <form :action="isEdit   ? `/hrAdmin/jobPosting/${job.id}` : '{{ route('hrAdmin.jobPosting.store') }}'" method="POST">
             @csrf
             <template x-if="isEdit">
                 <input type="hidden" name="_method" value="PUT">
@@ -59,31 +55,25 @@
                     <div>
                         <label for="job_title" class="block font-medium mb-1">Job Title</label>
                         <input type="text" name="job_title" id="job_title" 
-                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
+                            class="w-full border border-gray-300 rounded-md px-3 py-2" 
                             :value="job.job_title || ''" required>
                     </div>
                     <div>
                         <label for="company_name" class="block font-medium mb-1">Company</label>
                         <input type="text" name="company_name" id="company_name" 
-                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
+                            class="w-full border border-gray-300 rounded-md px-3 py-2" 
                             :value="job.company_name || ''" required>
-                    </div>
-                    <div>
-                        <label for="job_industry" class="block font-medium mb-1">Industry</label>
-                        <input type="text" name="job_industry" id="job_industry" 
-                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
-                            :value="job.job_industry || ''" required>
                     </div>
                     <div>
                         <label for="vacancies" class="block font-medium mb-1">Number of Vacancies</label>
                         <input type="number" name="vacancies" id="vacancies" 
-                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
+                            class="w-full border border-gray-300 rounded-md px-3 py-2" 
                             :value="job.vacancies || ''" required>
                     </div>
                     <div>
                         <label for="qualifications" class="block font-medium mb-1">Qualification</label>
                         <textarea name="qualifications" id="qualifications" rows="5"
-                            class="w-full bg-white border border-gray-300 rounded-md p-2"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2"
                             x-text="
                                 Array.isArray(job.qualifications)
                                     ? job.qualifications.flatMap(q => q.split(',')).join('\n')
@@ -96,7 +86,7 @@
                 <!-- Right Column -->
                 <div class="space-y-4">
                     <div>
-                        <label for="job_industry" class="block mb-2 font-medium">Job Industry</label>
+                        <label for="job_industry" class="block mb-1 font-medium">Job Industry</label>
                         <select name="job_industry" id="job_industry" class="w-full p-2 border rounded">
                             <option value="">-- Select Job Industry --</option>
                             @foreach([
@@ -112,7 +102,10 @@
                                 "Telecommunications", "Tourism", "Transportation", "Utilities",
                                 "Warehouse and Distribution", "Writing and Publishing"
                             ] as $industry)
-                                <option value="{{ $industry }}" {{ old('job_industry') === $industry ? 'selected' : '' }}>
+                                <option 
+                                    value="{{ $industry }}" 
+                                    :selected="(job.job_industry || '') === '{{ $industry }}'"
+                                >
                                     {{ $industry }}
                                 </option>
                             @endforeach
@@ -122,19 +115,19 @@
                     <div>
                         <label for="location" class="block font-medium mb-1">Location</label>
                         <input type="text" name="location" id="location" 
-                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
+                            class="w-full border border-gray-300 rounded-md px-3 py-2" 
                             :value="job.location || ''" required>
                     </div>
                     <div>
                         <label for="apply_until" class="block font-medium mb-1">Apply until</label>
                         <input type="date" name="apply_until" id="apply_until" 
-                            class="w-full bg-white border border-gray-300 rounded-md p-2" 
+                            class="w-full border border-gray-300 rounded-md px-3 py-2" 
                             :value="job.apply_until || ''" required>
                     </div>
                     <div>
                         <label for="additional_info" class="block font-medium mb-1">Additional Information</label>
                         <textarea name="additional_info" id="additional_info" rows="5"
-                            class="w-full bg-white border border-gray-300 rounded-md p-2"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2"
                             x-text="
                                 Array.isArray(job.additional_info)
                                     ? job.additional_info.flatMap(info => info.split(',')).join('\n')

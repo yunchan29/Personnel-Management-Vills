@@ -13,6 +13,22 @@
             <button class="bg-[#BD9168] text-white px-4 py-2 rounded-lg">Search</button>
         </div>
 
+@php
+    $selectedIndustry = request('industry') ?? auth()->user()->job_industry;
+@endphp
+
+@if (!is_null($industry))
+    <div class="mb-6">
+        <div class="inline-flex items-center bg-gray-200 text-gray-700 px-4 py-1 rounded-full text-sm font-medium shadow-sm">
+            <a href="{{ route('applicant.dashboard', ['industry' => '']) }}" 
+               class="mr-2 text-gray-600 hover:text-red-600 font-bold" 
+               title="Clear filter">
+                &times;
+            </a>
+            {{ $industry }}
+        </div>
+    </div>
+@endif
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     @forelse($jobs as $job)
         <div class="p-4 rounded-lg shadow-md">
