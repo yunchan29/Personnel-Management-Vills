@@ -27,20 +27,35 @@
     <div x-show="tab === 'postings'" x-transition>
         <div class="grid gap-6">
             @forelse($jobs as $job)
-                <div class="bg-white border shadow-sm rounded-md p-6 flex flex-col gap-3">
+                <div 
+                    class="bg-white border shadow-sm rounded-md p-6 flex flex-col gap-3"
+                    x-data="{ expanded: false }"
+                >
                     <div>
                         <h2 class="text-lg font-semibold text-[#BD6F22]">{{ $job->job_title }}</h2>
                         <p class="text-sm text-gray-600">{{ $job->company }}</p>
                     </div>
 
                     <div class="text-sm text-gray-800">
-                        <p class="mb-1 font-medium">Qualification :</p>
+                        <p class="mb-1 font-medium">Qualification:</p>
                         <ul class="list-disc list-inside text-sm">
-                            @foreach($job->qualifications as $qual)
-                                <li>{{ $qual }}</li>
+                            @foreach($job->qualifications as $index => $qual)
+                                <li x-show="expanded || {{ $index }} < 3">{{ $qual }}</li>
                             @endforeach
                         </ul>
                     </div>
+
+                    {{-- Expand Button --}}
+                    @if(count($job->qualifications) > 3)
+                        <div class="flex justify-center">
+                            <button 
+                                @click="expanded = !expanded" 
+                                class="text-[#BD6F22] text-xs hover:underline"
+                            >
+                                <span x-text="expanded ? 'See Less' : 'See More'"></span>
+                            </button>
+                        </div>
+                    @endif
 
                     <div class="flex justify-between items-center text-sm text-gray-700">
                         <div class="flex items-center gap-1">
@@ -56,7 +71,6 @@
                             >
                                 View Employee
                             </button>
-                            <span class="text-xs text-[#BD6F22] cursor-pointer hover:underline">See More</span>
                         </div>
                     </div>
                 </div>
