@@ -77,7 +77,7 @@ class="space-y-6">
 
     <!-- Preferred Classification -->
     <h3 class="text-lg font-semibold text-[#BD6F22] mt-6">Preferred Classification</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="mt-2">
         <!-- Job Industry -->
         <div>
             <label for="job_industry" class="block mb-2 font-medium">Job Industry</label>
@@ -98,18 +98,6 @@ class="space-y-6">
                     "Warehouse and Distribution", "Writing and Publishing"
                 ] as $industry)
                     <option value="{{ $industry }}" {{ $user->job_industry === $industry ? 'selected' : '' }}>{{ $industry }}</option>
-                @endforeach
-            </select>
-        </div>
-
-        <!-- Role Type -->
-        <div>
-            <label for="preferred_role" class="block text-sm font-medium text-gray-700">Role Type <span class="text-red-500">*</span></label>
-            <select name="preferred_role" id="preferred_role"
-                    class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                <option value="">-- Select Role Type --</option>
-                @foreach(['Full-Time', 'Part-Time', 'Internship'] as $type)
-                    <option value="{{ $type }}" {{ $user->preferred_role === $type ? 'selected' : '' }}>{{ $type }}</option>
                 @endforeach
             </select>
         </div>

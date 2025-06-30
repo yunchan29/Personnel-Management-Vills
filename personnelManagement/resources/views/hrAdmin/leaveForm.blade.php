@@ -118,6 +118,7 @@
     <div class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
          x-show="showModal"
          x-transition
+         x-cloak
          @click.self="closeModal">
         <div class="bg-white rounded-lg max-w-lg w-full p-6 absolute shadow-xl"
              :style="`transform: translate(${x}px, ${y}px)`">
@@ -175,6 +176,7 @@
     <div class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
          x-show="showAttachmentModal"
          x-transition
+         x-cloak
          @click.self="closeAttachmentModal">
         <div class="bg-white rounded-lg max-w-3xl w-full p-4 absolute shadow-xl"
              :style="`transform: translate(${x}px, ${y}px)`">

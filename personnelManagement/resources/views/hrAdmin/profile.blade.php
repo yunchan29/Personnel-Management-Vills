@@ -89,11 +89,67 @@ function validateAllTabsAndSubmit() {
             }
         }
     }
-
+    
+    updateFullAddress();
     // All valid — programmatically submit
     document.getElementById('profileForm').submit();
+
 }
 </script>
+
+<!-- Auto-Fill Full Address Script -->
+<script>
+    function updateFullAddress() {
+        const street = document.querySelector('[name="street_details"]')?.value.trim() || '';
+        const postal = document.querySelector('[name="postal_code"]')?.value.trim() || '';
+
+        const getSelectedText = (selectId) => {
+            const select = document.getElementById(selectId);
+            if (select && !select.disabled && select.value !== '') {
+                const selectedOption = select.options[select.selectedIndex];
+                return selectedOption?.text?.trim() || '';
+            }
+            return '';
+        };
+
+        const province = getSelectedText('province');
+        const city = getSelectedText('city');
+        const barangay = getSelectedText('barangay');
+
+        const addressParts = [street, barangay, city, province].filter(Boolean);
+        let fullAddress = addressParts.join(', ');
+        if (postal) fullAddress += ` ${postal}`;
+
+        const fullAddressInput = document.getElementById('full_address');
+        if (fullAddressInput) {
+            fullAddressInput.value = fullAddress;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const fields = ['street_details', 'postal_code'];
+        const selects = ['province', 'city', 'barangay'];
+
+        // Input field listeners
+        fields.forEach(name => {
+            const el = document.querySelector(`[name="${name}"]`);
+            if (el) el.addEventListener('input', updateFullAddress);
+        });
+
+        // Select dropdown listeners
+        selects.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('change', updateFullAddress);
+                if (el.value !== '') el.disabled = false;
+            }
+        });
+
+        // Delay initial fill to ensure dropdowns are populated
+        setTimeout(updateFullAddress, 300);
+    });
+</script>
+
 
 <!-- SweetAlert2 for notifications -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

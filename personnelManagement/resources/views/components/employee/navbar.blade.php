@@ -42,9 +42,10 @@
                     Profile
                 </x-dropdown-link>
 
-                <form method="POST" action="/logout">
+                <form method="POST" action="/logout" class="m-0 p-0">
                     @csrf
-                    <x-dropdown-link href="/logout" onclick="event.preventDefault(); this.closest('form').submit();">
+                    <x-dropdown-link href="/logout" 
+                        onclick="event.preventDefault(); this.closest('form').submit();">
                         Log Out
                     </x-dropdown-link>
                 </form>

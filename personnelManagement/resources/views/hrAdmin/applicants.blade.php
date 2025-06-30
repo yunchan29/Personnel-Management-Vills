@@ -9,7 +9,7 @@
 }" class="relative">
 
     <!-- Applicants Table -->
-    <div class="overflow-x-auto overflow-visible bg-white p-6 rounded-lg shadow-lg">
+    <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg">
         <table class="min-w-full text-sm text-left text-gray-700">
             <thead class="border-b font-semibold bg-gray-50">
                 <tr>
@@ -55,28 +55,37 @@
                                 View
                             </button>
                         </td>
-                        <td class="py-3 px-4 relative group overflow-visible z-20">
-                            <button type="button"
-                                class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow flex items-center gap-2">
-                                {{ $application->status ?? 'Pending' }}
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                                     viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M6 9l6 6 6-6" />
-                                </svg>
-                            </button>
-                            <div class="absolute hidden group-hover:block bg-white border border-gray-200 rounded shadow-md z-50 mt-1 w-32">
-                                <button
-                                    @click="statusAction = 'approve'; selectedApplicant = { id: {{ $application->id }}, name: '{{ $application->user->first_name }} {{ $application->user->last_name }}' }; showStatusModal = true"
-                                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    Approve
-                                </button>
-                                <button
-                                    @click="statusAction = 'decline'; selectedApplicant = { id: {{ $application->id }}, name: '{{ $application->user->first_name }} {{ $application->user->last_name }}' }; showStatusModal = true"
-                                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    Decline
-                                </button>
-                            </div>
-                        </td>
+            <td class="py-3 px-4 relative z-20" x-data="{ open: false }">
+                <button 
+                    type="button"
+                    @click="open = !open"
+                    @click.outside="open = false"
+                    class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow flex items-center gap-2">
+                    {{ $application->status ?? 'Pending' }}
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 9l6 6 6-6" />
+                    </svg>
+                </button>
+
+                <div x-show="open"
+                    x-transition
+                    class="absolute bg-white border border-gray-200 rounded shadow-md mt-1 w-32 right-0 z-50"
+                    @click.outside="open = false"
+                    x-cloak>
+                    <button
+                        @click="statusAction = 'approve'; selectedApplicant = { id: {{ $application->id }}, name: '{{ $application->user->first_name }} {{ $application->user->last_name }}' }; showStatusModal = true"
+                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Approve
+                    </button>
+                    <button
+                        @click="statusAction = 'decline'; selectedApplicant = { id: {{ $application->id }}, name: '{{ $application->user->first_name }} {{ $application->user->last_name }}' }; showStatusModal = true"
+                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Decline
+                    </button>
+                </div>
+            </td>
+
                     </tr>
                 @empty
                     <tr>
@@ -149,20 +158,19 @@
 
                 <div x-data="{ tab: 'profile' }" class="flex flex-col md:flex-row gap-6">
                     <!-- Profile Picture -->
-                    <div class="w-full md:w-1/4 flex justify-center md:justify-start">
+                    <div class="flex justify-center md:justify-start flex-shrink-0 w-full md:w-auto">
                         <div class="flex flex-col items-center text-center">
-    <img src="{{ $application->user->profile_picture ? asset('storage/' . $application->user->profile_picture) : asset('images/default.png') }}"
-         alt="Profile Picture"
-         class="rounded-full w-36 h-36 object-cover border-2 border-gray-300 shadow-md mb-3">
-    <h1 class="text-lg font-semibold text-[#BD6F22]">
-        {{ $application->user->first_name }} {{ $application->user->last_name }}
-    </h1>
-</div>
-
+                        <img src="{{ $application->user->profile_picture ? asset('storage/' . $application->user->profile_picture) : asset('images/default.png') }}"
+                            alt="Profile Picture"
+                            class="rounded-full w-36 h-36 object-cover border-2 border-gray-300 shadow-md mb-3">
+                        <h1 class="text-lg font-semibold text-[#BD6F22]">
+                            {{ $application->user->first_name }} {{ $application->user->last_name }}
+                        </h1>
                     </div>
+                </div>
 
                     <!-- Tabbed Content -->
-                    <div class="w-full md:w-3/4">
+                    <div class="flex-1">
                         <div class="flex space-x-6 border-b mb-4 text-sm font-medium">
                             <button @click="tab = 'profile'"
                                     :class="tab === 'profile' ? 'border-b-2 border-[#BD6F22] text-[#BD6F22]' : ''"
@@ -170,16 +178,19 @@
                             <button @click="tab = 'work'"
                                     :class="tab === 'work' ? 'border-b-2 border-[#BD6F22] text-[#BD6F22]' : ''"
                                     class="pb-2">Work Experience</button>
-                            <button @click="tab = 'gov'"
+                            <!--<button @click="tab = 'gov'"
                                     :class="tab === 'gov' ? 'border-b-2 border-[#BD6F22] text-[#BD6F22]' : ''"
-                                    class="pb-2">201 Files</button>
+                                    class="pb-2">201 Files</button>-->
                         </div>
 
                         <div x-show="tab === 'profile'" x-cloak>
                             @include('components.hrAdmin.applicantProfile', ['user' => $application->user])
                         </div>
                         <div x-show="tab === 'work'" x-cloak>
-                            @include('components.hrAdmin.applicantWorkExperience', ['experiences' => $application->user->experiences])
+                            @include('components.hrAdmin.applicantWorkExperience', [
+                                'experiences' => $application->user->workExperiences,
+                                'user' => $application->user
+                            ])
                         </div>
                         <div x-show="tab === 'gov'" x-cloak>
                             @include('components.hrAdmin.applicant201', ['file201' => $application->user->file201])

@@ -149,6 +149,7 @@ public function workExperiences()
 {
     return $this->hasMany(WorkExperience::class);
 }
+
 public function job()
 {
     return $this->belongsTo(Job::class);

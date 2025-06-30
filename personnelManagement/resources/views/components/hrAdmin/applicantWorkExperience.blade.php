@@ -1,3 +1,4 @@
+
 <div class="space-y-6">
     <!-- Work Experience Entries -->
     @if(!empty($experiences) && is_iterable($experiences))
@@ -48,21 +49,11 @@
 
     <!-- Preferred Classification -->
     <h3 class="text-lg font-semibold text-[#BD6F22] mt-6">Preferred Classification</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Job Industry -->
-        <div>
-            <label class="block mb-2 font-medium">Job Industry</label>
-            <div class="w-full p-2 border rounded bg-gray-100">
-                {{ $user->job_industry ?? '-' }}
-            </div>
-        </div>
-
-        <!-- Role Type -->
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Role Type</label>
-            <div class="mt-1 w-full border border-gray-300 rounded-md p-2 bg-gray-100">
-                {{ $user->preferred_role ?? '-' }}
-            </div>
+    <div class="mt-2">
+        <label class="block mb-2 font-medium">Job Industry</label>
+        <div class="w-full p-2 border rounded bg-gray-100">
+            {{ $user->job_industry ?? '-' }}
         </div>
     </div>
+
 </div>
