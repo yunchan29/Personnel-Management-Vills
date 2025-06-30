@@ -31,6 +31,42 @@
         </form>
     </div>
 
+    <!-- Account Status -->
+    <div class="border-t border-gray-300 pt-4 mb-6" 
+        x-data="{ status: '{{ auth()->user()->active_status }}' }">
+        <h4 class="text-md font-medium text-gray-700 mb-2">Account Status</h4>
+
+        <form method="POST" action="{{ route('applicant.user.toggleVisibility') }}">
+            @csrf
+            <input type="hidden" name="active_status" :value="status">
+
+            <button 
+                type="submit"
+                @click.prevent="status = status === 'Active' ? 'Inactive' : 'Active'; $nextTick(() => $el.form.submit())"
+                class="inline-flex items-center gap-2"
+            >
+                <!-- Toggle Icon -->
+                <div :class="status === 'Active' ? 'bg-green-500 justify-end' : 'bg-gray-300 justify-start'"
+                    class="w-10 h-6 rounded-full flex items-center px-1 transition-all duration-200">
+                    <div class="w-4 h-4 bg-white rounded-full shadow"></div>
+                </div>
+
+                <span class="text-sm font-medium text-gray-800" x-text="status"></span>
+            </button>
+        </form>
+
+        <!-- Descriptions -->
+        <div class="text-sm text-gray-600 flex items-start mt-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mt-0.5 mr-1.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 6a9 9 0 110 18 9 9 0 010-18z" />
+            </svg>
+            <span x-show="status === 'Active'">Your profile will be visible to HR, and they may contact you regarding job opportunities.</span>
+            <span x-show="status === 'Inactive'">Your profile is hidden. HR won’t be able to see or contact you.</span>
+        </div>
+    </div>
+
+
+
     <!-- Delete Account -->
     <div class="border-t border-gray-300 pt-4">
         <h4 class="text-md font-medium text-gray-700 mb-2">Delete Account</h4>

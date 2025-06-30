@@ -46,6 +46,8 @@ class User extends Authenticatable
         'uuid',
         'street_details',
         'postal_code',
+
+        'active_status',
     ];
 
     /**

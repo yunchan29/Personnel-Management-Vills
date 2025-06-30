@@ -47,6 +47,19 @@ class UserController extends Controller
         return $this->updateProfileByRole($request, 'hrAdmin');
     }
 
+    public function toggleVisibility(Request $request)
+    {
+        $request->validate([
+            'active_status' => 'required|in:Active,Inactive',
+        ]);
+
+        $user = auth()->user();
+        $user->active_status = $request->input('active_status');
+        $user->save();
+
+        return redirect()->back()->with('success', 'Account status updated.');
+    }
+
     private function showProfileByRole($role) {
         $user = auth()->user();
         $experiences = $user->workExperiences()->get();

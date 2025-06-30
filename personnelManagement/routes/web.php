@@ -53,6 +53,8 @@ Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(functi
 
     // Settings
     Route::get('/settings', fn () => view('applicant.settings'))->name('settings');
+    Route::post('/user/toggle-visibility', [UserController::class, 'toggleVisibility'])->name('user.toggleVisibility');
+
 
     // Resume and Applications
     Route::get('/application', [ResumeController::class, 'show'])->name('application');
