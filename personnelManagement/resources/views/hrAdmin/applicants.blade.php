@@ -150,11 +150,15 @@
                 <div x-data="{ tab: 'profile' }" class="flex flex-col md:flex-row gap-6">
                     <!-- Profile Picture -->
                     <div class="w-full md:w-1/4 flex justify-center md:justify-start">
-                        <div class="flex flex-col items-center">
-                            <img src="{{ $application->user->profile_picture ? asset('storage/' . $application->user->profile_picture) : asset('images/default.png') }}"
-                                 alt="Profile Picture"
-                                 class="rounded-full w-36 h-36 object-cover border-2 border-gray-300 shadow-md">
-                        </div>
+                        <div class="flex flex-col items-center text-center">
+    <img src="{{ $application->user->profile_picture ? asset('storage/' . $application->user->profile_picture) : asset('images/default.png') }}"
+         alt="Profile Picture"
+         class="rounded-full w-36 h-36 object-cover border-2 border-gray-300 shadow-md mb-3">
+    <h2 class="text-lg font-semibold text-[#BD6F22]">
+        {{ $application->user->first_name }} {{ $application->user->last_name }}
+    </h2>
+</div>
+
                     </div>
 
                     <!-- Tabbed Content -->
