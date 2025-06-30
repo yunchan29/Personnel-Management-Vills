@@ -12,7 +12,7 @@ return new class extends Migration
    public function up()
 {
     Schema::table('leave_forms', function (Blueprint $table) {
-   //     $table->string('status')->default('Pending');
+        $table->string('status')->default('Pending');
     });
 }
 

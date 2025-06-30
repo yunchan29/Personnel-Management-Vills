@@ -42,11 +42,36 @@ class JobController extends Controller
     return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job posted successfully!');
 }
 
-    public function index()
+    public function index(Request $request)
     {
-        $jobs = Job::withCount('applications')->get();
+        $query = Job::withCount('applications');
+
+        // Search by job title / position
+        if ($request->filled('search')) {
+            $query->where('job_title', 'like', '%' . $request->search . '%');
+        }
+
+        // Sort logic
+        switch ($request->sort) {
+            case 'latest':
+                $query->orderBy('created_at', 'desc');
+                break;
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'position_asc':
+                $query->orderBy('job_title', 'asc');
+                break;
+            case 'position_desc':
+                $query->orderBy('job_title', 'desc');
+                break;
+        }
+
+        $jobs = $query->get();
+
         return view('hrAdmin.jobPosting', compact('jobs'));
     }
+
 
     public function show($id)
     {
