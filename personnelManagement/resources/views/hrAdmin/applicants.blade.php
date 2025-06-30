@@ -154,9 +154,9 @@
     <img src="{{ $application->user->profile_picture ? asset('storage/' . $application->user->profile_picture) : asset('images/default.png') }}"
          alt="Profile Picture"
          class="rounded-full w-36 h-36 object-cover border-2 border-gray-300 shadow-md mb-3">
-    <h2 class="text-lg font-semibold text-[#BD6F22]">
+    <h1 class="text-lg font-semibold text-[#BD6F22]">
         {{ $application->user->first_name }} {{ $application->user->last_name }}
-    </h2>
+    </h1>
 </div>
 
                     </div>
