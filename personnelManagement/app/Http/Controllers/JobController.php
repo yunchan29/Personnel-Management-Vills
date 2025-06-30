@@ -149,10 +149,6 @@ class JobController extends Controller
     return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job deleted successfully.');
 }
 
-public function getApplicants($id)
-{
-    $job = Job::with(['applications.user', 'applications.job'])->findOrFail($id);
-    return response()->json($job->applications);
-}
+
 
 }
