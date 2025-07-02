@@ -193,29 +193,31 @@
     </button>
 
     <!-- If already approved -->
-    <template x-if="selectedApplicant?.status === 'approved'">
-        <button
-            class="px-4 py-2 text-sm rounded bg-green-600 text-white cursor-not-allowed opacity-70"
-            disabled>
-            Approved
-        </button>
-    </template>
+<template x-if="selectedApplicant && selectedApplicant.status === 'approved'">
+    <button
+        class="px-4 py-2 text-sm rounded bg-green-600 text-white cursor-not-allowed opacity-70"
+        disabled>
+        Approved
+    </button>
+</template>
 
-    <!-- If not yet approved -->
-    <template x-if="selectedApplicant?.status !== 'approved'">
-        <div class="flex gap-3">
-            <button
-                @click="confirmStatus('approved', selectedApplicant.id, selectedApplicant.name)"
-                class="px-4 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700">
-                Approve
-            </button>
-            <button
-                @click="confirmStatus('declined', selectedApplicant.id, selectedApplicant.name)"
-                class="px-4 py-2 text-sm rounded bg-red-600 text-white hover:bg-red-700">
-                Decline
-            </button>
-        </div>
-    </template>
+<!-- If not yet approved -->
+<template x-if="selectedApplicant && selectedApplicant.status !== 'approved'">
+    <div class="flex gap-3">
+       <button
+    @click="statusAction = 'approved'; submitStatusChange()"
+    class="px-4 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700">
+    Approve
+</button>
+
+        <button
+            @click="statusAction = 'declined'; submitStatusChange()"
+            class="px-4 py-2 text-sm rounded bg-red-600 text-white hover:bg-red-700">
+            Decline
+        </button>
+    </div>
+</template>
+
 </div>
 
         </div>
