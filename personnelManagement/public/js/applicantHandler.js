@@ -11,11 +11,17 @@ document.addEventListener('alpine:init', () => {
         interviewApplicant: null,
         interviewDate: '',
         applicants: [],
+        removedApplicants: [],
+        feedbackMessage: '',
+        feedbackVisible: false,
+        showAll: false, // ✅ ADDED: Toggle to show all or only pending
 
         init() {
+            // ✅ Store all applicants with their IDs
             this.applicants = Array.from(document.querySelectorAll('tr[data-applicant-id]')).map(row => ({
                 id: parseInt(row.dataset.applicantId),
-                element: row
+                element: row,
+                status: row.dataset.status
             }));
         },
 
@@ -51,22 +57,27 @@ document.addEventListener('alpine:init', () => {
 
                 this.showStatusModal = false;
 
-                const applicantIndex = this.applicants.findIndex(app => app.id === result.application_id);
-                const applicantRow = this.applicants[applicantIndex]?.element;
+                // ✅ Trigger Alpine reactivity to hide the row
+                window.dispatchEvent(new CustomEvent('applicant-approved', {
+                    detail: { id: result.application_id }
+                }));
 
-                if (applicantRow) {
-                    applicantRow.classList.add('transition', 'opacity-0');
-                    setTimeout(() => {
-                        applicantRow.remove();
-                    }, 300);
-                }
+                setTimeout(() => {
+                    this.removedApplicants.push(result.application_id);
+                }, 300);
 
-                if (applicantIndex !== -1) {
-                    this.applicants.splice(applicantIndex, 1);
-                }
+                this.feedbackMessage = `Applicant ${this.statusAction} successfully.`;
+                this.feedbackVisible = true;
+
+                setTimeout(() => this.feedbackVisible = false, 3000);
+
+                // Optional cleanup from cached list
+                const index = this.applicants.findIndex(app => app.id === result.application_id);
+                if (index !== -1) this.applicants.splice(index, 1);
 
                 this.selectedApplicant = null;
                 this.statusAction = '';
+
             } catch (error) {
                 alert('Error: ' + error.message);
             }
@@ -75,7 +86,6 @@ document.addEventListener('alpine:init', () => {
         openSetInterview(id, name) {
             this.interviewApplicant = { id, name };
 
-            // ✅ Get the interview date from the row attribute if it exists
             const row = document.querySelector(`tr[data-applicant-id='${id}']`);
             const dateStr = row?.getAttribute('data-interview-date');
             this.interviewDate = dateStr || '';
@@ -102,7 +112,6 @@ document.addEventListener('alpine:init', () => {
                 if (!response.ok) throw new Error('Failed to set interview date');
                 const result = await response.json();
 
-                // ✅ Update the data attribute in the row for future usage
                 const row = document.querySelector(`tr[data-applicant-id='${this.interviewApplicant.id}']`);
                 if (row) {
                     row.setAttribute('data-interview-date', this.interviewDate);

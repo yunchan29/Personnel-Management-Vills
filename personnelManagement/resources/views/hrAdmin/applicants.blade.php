@@ -1,4 +1,14 @@
+
 <div x-data="applicantsHandler()" class="relative">
+    <div class="flex justify-end mb-4">
+    <button
+        @click="showAll = !showAll"
+        class="px-4 py-2 bg-[#BD6F22] text-white text-sm font-medium rounded shadow hover:bg-[#a95e1d]">
+        <span x-text="showAll ? 'Show Only Pending Applicants' : 'Show All Applicants'"></span>
+    </button>
+</div>
+
+
     <!-- Applicants Table -->
     <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg">
         <table class="min-w-full text-sm text-left text-gray-700">
@@ -13,105 +23,133 @@
                     <th class="py-3 px-4">Progress</th>
                 </tr>
             </thead>
-            <tbody>
-                @forelse($applications as $application)
-                   @if($application->status !== 'approved')
-                    <tr class="border-b hover:bg-gray-50" data-applicant-id="{{ $application->id }}">
+           <tbody>
+    @forelse($applications as $application)
+        <tr 
+            x-data="{ 
+                visible: true, 
+                id: {{ $application->id }}, 
+                status: '{{ $application->status }}' 
+            }"
+            x-show="(showAll || status !== 'approved') && !removedApplicants.includes(id)"
+            x-transition:enter="transition ease-out duration-500"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            @applicant-approved.window="if ($event.detail.id === id) visible = false"
+            data-applicant-id="{{ $application->id }}"
+            data-status="{{ $application->status }}"
+            class="border-b hover:bg-gray-50"
+        >
+            <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
+                <span class="inline-block w-3 h-3 rounded-full {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
+                {{ $application->user->first_name . ' ' . $application->user->last_name }}
+            </td>
 
-                     <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
-    <span class="inline-block w-3 h-3 rounded-full {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
-    {{ $application->user->first_name . ' ' . $application->user->last_name }}
-</td>
+            <td class="py-3 px-4 whitespace-nowrap">
+                {{ $application->job->job_title ?? 'N/A' }}
+            </td>
+            <td class="py-3 px-4 whitespace-nowrap">
+                {{ $application->job->company_name ?? 'N/A' }}
+            </td>
+            <td class="py-3 px-4 italic whitespace-nowrap">
+                {{ \Carbon\Carbon::parse($application->created_at)->format('F d, Y') }}
+            </td>
 
+            <td class="py-3 px-4">
+                @if($application->user->active_status === 'Active' && $application->resume_snapshot)
+                    <button
+                        @click="openResume('{{ asset('storage/' . $application->resume_snapshot) }}')"
+                        class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
+                        View
+                    </button>
+                @elseif($application->user->active_status === 'Inactive')
+                    <span class="text-gray-400 italic">Inactive</span>
+                @else
+                    <span class="text-gray-500 italic">None</span>
+                @endif
+            </td>
 
-                        <td class="py-3 px-4 whitespace-nowrap">
-                            {{ $application->job->job_title ?? 'N/A' }}
-                        </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
-                            {{ $application->job->company_name ?? 'N/A' }}
-                        </td>
-                        <td class="py-3 px-4 italic whitespace-nowrap">
-                            {{ \Carbon\Carbon::parse($application->created_at)->format('F d, Y') }}
-                        </td>
-                       <td class="py-3 px-4">
- @if($application->user->active_status === 'Active' && $application->resume_snapshot)
+            <td class="py-3 px-4">
+                @if($application->user->active_status === 'Active')
+                    <button
+                        @click="openProfile({{ $application->id }})"
+                        class="border border-[#BD6F22] text-[#BD6F22] text-sm font-medium h-8 px-3 rounded hover:bg-[#BD6F22] hover:text-white">
+                        View
+                    </button>
+                @else
+                    <span class="text-gray-400 italic">Inactive</span>
+                @endif
+            </td>
 
-    <button
-        @click="openResume('{{ asset('storage/' . $application->resume_snapshot) }}')"
-        class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
-        View
-    </button>
-@elseif($application->user->active_status === 'Inactive')
-
-    <span class="text-gray-400 italic">Inactive</span>
-@else
-    <span class="text-gray-500 italic">None</span>
-@endif
-
-</td>
-
-                        <td class="py-3 px-4">
-                       @if($application->user->active_status === 'Active')
-
-    <button
-        @click="openProfile({{ $application->id }})"
-        class="border border-[#BD6F22] text-[#BD6F22] text-sm font-medium h-8 px-3 rounded hover:bg-[#BD6F22] hover:text-white">
-        View
-    </button>
-@else
-    <span class="text-gray-400 italic">Inactive</span>
-@endif
-
-
-                        </td>
-                      <td class="py-3 px-4 relative z-20">
+         <td class="py-3 px-4">
     @if($application->user->active_status === 'Active')
-
-        <div x-data="{ open: false }" class="relative">
-            <button 
-                type="button"
-                @click="open = !open"
-                @click.outside="open = false"
-                class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow flex items-center gap-2">
-                {{ ucfirst($application->status ?? 'Pending') }}
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                    viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M6 9l6 6 6-6" />
-                </svg>
-            </button>
-
-            <div x-show="open"
-                 x-transition
-                 class="absolute bg-white border border-gray-200 rounded shadow-md mt-1 w-32 right-0 z-50"
-                 @click.outside="open = false"
-                 x-cloak>
-                <button
-                    @click="confirmStatus('approved', {{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}')"
-                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    Approve
+        <div x-data="{ applicantStatus: '{{ $application->status }}' }">
+            <template x-if="applicantStatus === 'approved'">
+                <button 
+                    class="bg-green-600 text-white text-sm font-medium h-8 px-3 rounded shadow cursor-not-allowed opacity-70"
+                    disabled>
+                    Approved
                 </button>
+            </template>
+            <template x-if="applicantStatus !== 'approved'">
                 <button
-                    @click="confirmStatus('declined', {{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}')"
-                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    Decline
+                    @click="selectedApplicant = { 
+                        id: {{ $application->id }},
+                        name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+                        status: applicantStatus
+                    }; showStatusModal = true"
+                    class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
+                    Manage
                 </button>
-            </div>
+            </template>
         </div>
     @else
         <span class="text-gray-400 italic">Inactive</span>
     @endif
 </td>
 
-                    </tr>
-                    @endif
-                @empty
-                    <tr>
-                        <td colspan="7" class="py-6 text-center text-gray-500">No applicants yet.</td>
-                    </tr>
-                @endforelse
-            </tbody>
+
+        </tr>
+    @empty
+        <tr>
+            <td colspan="7" class="py-6 text-center text-gray-500">No applicants yet.</td>
+        </tr>
+    @endforelse
+</tbody>
+
+
         </table>
     </div>
+
+<!-- Feedback Toast -->
+<div 
+    x-show="feedbackVisible"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 translate-y-4"
+    x-transition:enter-end="opacity-100 translate-y-0"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100 translate-y-0"
+    x-transition:leave-end="opacity-0 translate-y-4"
+    class="fixed bottom-6 right-6 bg-green-600 text-white px-5 py-4 rounded-xl shadow-lg z-50 w-80 overflow-hidden"
+    x-cloak
+>
+    <div class="flex items-center gap-3">
+        <!-- ✅ Check Animation Icon -->
+        <svg class="w-6 h-6 text-white animate-checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span class="font-semibold text-sm" x-text="feedbackMessage"></span>
+    </div>
+
+    <!-- ✅ Progress Bar -->
+    <div class="mt-3 h-1 w-full bg-white/20 rounded overflow-hidden">
+        <div class="h-full bg-white animate-progress-bar"></div>
+    </div>
+</div>
+
 
     <!-- Resume Modal -->
     <div x-show="showModal"
@@ -141,23 +179,45 @@
                 &times;
             </button>
             <h2 class="text-lg font-semibold text-[#BD6F22] mb-4">
-                Confirm <span x-text="statusAction === 'approved' ? 'Approval' : 'Decline'"></span>
-            </h2>
-            <p class="mb-6 text-sm text-gray-700">
-                Are you sure you want to <span class="font-bold" x-text="statusAction"></span> the application of
-                <span class="font-semibold text-[#BD6F22]" x-text="selectedApplicant?.name"></span>?
-            </p>
-            <div class="flex justify-end gap-3">
-                <button @click="showStatusModal = false"
-                        class="px-4 py-2 text-sm rounded border border-gray-300 hover:bg-gray-100">
-                    Cancel
-                </button>
-                <button
-                    @click="submitStatusChange"
-                    class="px-4 py-2 text-sm rounded bg-[#BD6F22] text-white hover:bg-[#a95e1d]">
-                    Confirm
-                </button>
-            </div>
+    Manage Application
+</h2>
+<p class="mb-6 text-sm text-gray-700">
+    What action would you like to take for 
+    <span class="font-semibold text-[#BD6F22]" x-text="selectedApplicant?.name"></span>?
+</p>
+
+<div class="flex justify-end gap-3 flex-wrap">
+    <button @click="showStatusModal = false"
+            class="px-4 py-2 text-sm rounded border border-gray-300 hover:bg-gray-100">
+        Cancel
+    </button>
+
+    <!-- If already approved -->
+    <template x-if="selectedApplicant?.status === 'approved'">
+        <button
+            class="px-4 py-2 text-sm rounded bg-green-600 text-white cursor-not-allowed opacity-70"
+            disabled>
+            Approved
+        </button>
+    </template>
+
+    <!-- If not yet approved -->
+    <template x-if="selectedApplicant?.status !== 'approved'">
+        <div class="flex gap-3">
+            <button
+                @click="confirmStatus('approved', selectedApplicant.id, selectedApplicant.name)"
+                class="px-4 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700">
+                Approve
+            </button>
+            <button
+                @click="confirmStatus('declined', selectedApplicant.id, selectedApplicant.name)"
+                class="px-4 py-2 text-sm rounded bg-red-600 text-white hover:bg-red-700">
+                Decline
+            </button>
+        </div>
+    </template>
+</div>
+
         </div>
     </div>
 
