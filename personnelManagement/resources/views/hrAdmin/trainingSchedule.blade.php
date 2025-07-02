@@ -15,10 +15,8 @@
             </thead>
             <tbody>
                 @forelse($applications as $application)
-                   @if($application->status !== 'approved')
-                    <tr class="border-b hover:bg-gray-50" data-applicant-id="{{ $application->id }}">
-
-                     <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
+                    <tr class="border-b hover:bg-gray-50">
+<td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
     <span class="inline-block w-3 h-3 rounded-full {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
     {{ $application->user->first_name . ' ' . $application->user->last_name }}
 </td>
@@ -33,26 +31,22 @@
                         <td class="py-3 px-4 italic whitespace-nowrap">
                             {{ \Carbon\Carbon::parse($application->created_at)->format('F d, Y') }}
                         </td>
-                       <td class="py-3 px-4">
- @if($application->user->active_status === 'Active' && $application->resume_snapshot)
-
+                        <td class="py-3 px-4">
+                          @if($application->user->active_status === 'Active' && $application->resume_snapshot)
     <button
         @click="openResume('{{ asset('storage/' . $application->resume_snapshot) }}')"
         class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
         View
     </button>
 @elseif($application->user->active_status === 'Inactive')
-
     <span class="text-gray-400 italic">Inactive</span>
 @else
     <span class="text-gray-500 italic">None</span>
 @endif
 
-</td>
-
+                        </td>
                         <td class="py-3 px-4">
-                       @if($application->user->active_status === 'Active')
-
+                           @if($application->user->active_status === 'Active')
     <button
         @click="openProfile({{ $application->id }})"
         class="border border-[#BD6F22] text-[#BD6F22] text-sm font-medium h-8 px-3 rounded hover:bg-[#BD6F22] hover:text-white">
@@ -62,11 +56,9 @@
     <span class="text-gray-400 italic">Inactive</span>
 @endif
 
-
                         </td>
-                      <td class="py-3 px-4 relative z-20">
+                        <td class="py-3 px-4 relative z-20">
     @if($application->user->active_status === 'Active')
-
         <div x-data="{ open: false }" class="relative">
             <button 
                 type="button"
@@ -79,12 +71,11 @@
                     <path d="M6 9l6 6 6-6" />
                 </svg>
             </button>
-
             <div x-show="open"
-                 x-transition
-                 class="absolute bg-white border border-gray-200 rounded shadow-md mt-1 w-32 right-0 z-50"
-                 @click.outside="open = false"
-                 x-cloak>
+                x-transition
+                class="absolute bg-white border border-gray-200 rounded shadow-md mt-1 w-32 right-0 z-50"
+                @click.outside="open = false"
+                x-cloak>
                 <button
                     @click="confirmStatus('approved', {{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}')"
                     class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
@@ -103,7 +94,6 @@
 </td>
 
                     </tr>
-                    @endif
                 @empty
                     <tr>
                         <td colspan="7" class="py-6 text-center text-gray-500">No applicants yet.</td>
@@ -213,5 +203,5 @@
 
 <!-- Alpine.js and Handler Script -->
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-<script src="{{ asset('js/applicantHandler.js') }}"></script>
+<script src="{{ asset('js/applicantsHandler.js') }}"></script>
 

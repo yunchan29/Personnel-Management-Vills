@@ -100,51 +100,56 @@ Route::prefix('employee')->name('employee.')->middleware('auth')->group(function
     Route::get('/files', [File201Controller::class, 'show'])->name('files');
 });
 
+
 // ✅ HRadmin-related routes with auth middleware
 Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function () {
-    // Dashboard route
-    Route::get('/dashboard', function () {return view('hrAdmin.dashboard');})->name('dashboard');
 
-    // Profile routes to edit and update user profile
+    // Dashboard
+    Route::get('/dashboard', fn() => view('hrAdmin.dashboard'))->name('dashboard');
+
+    // Profile Management
     Route::get('/profile', [UserController::class, 'showHrAdmin'])->name('profile');
     Route::get('/profile/edit', [UserController::class, 'editHrAdmin'])->name('profile.edit');
     Route::put('/profile', [UserController::class, 'updateHrAdmin'])->name('profile.update');
 
-    // Application (Pre-made)
+    // Application Viewing
     Route::get('/application', [JobController::class, 'applications'])->name('application');
-
     Route::get('/viewApplication', [JobController::class, 'viewApplications'])->name('viewApplication');
+    Route::get('/viewApplicants/{id}', [JobController::class, 'viewApplicants'])->name('viewApplicants');
+    Route::get('/job/{id}/applicants', [JobController::class, 'viewApplicants'])->name('applicants');
 
-    // Job posting routes
+    // Applicant Actions
+    Route::post('/applications/{id}/status', [JobController::class, 'updateApplicationStatus'])->name('applications.updateStatus');
+    Route::post('/applications/{id}/interview-date', [JobController::class, 'setInterviewDate'])->name('applications.setInterviewDate');
+
+    // Job Posting CRUD
     Route::get('/job-posting', [JobController::class, 'index'])->name('jobPosting');
     Route::post('/jobPosting/store', [JobController::class, 'store'])->name('jobPosting.store');
     Route::get('/job-posting/{id}/edit', [JobController::class, 'edit'])->name('jobPosting.edit');
-    Route::put('jobPosting/{id}', [JobController::class, 'update'])->name('hrAdmin.jobPosting.update');
+    Route::put('/jobPosting/{id}', [JobController::class, 'update'])->name('jobPosting.update');
     Route::get('/job-posting/{id}', [JobController::class, 'show'])->name('jobPosting.show');
     Route::delete('/jobPosting/{id}', [JobController::class, 'destroy'])->name('jobPosting.destroy');
 
-    // Government IDs and Licenses (File 201) routes (Pre-made)
-    Route::get('/files', function () {return view('hrAdmin.files');})->name('files');
+    // 201 Files: Government IDs and Licenses
+    Route::get('/files', fn() => view('hrAdmin.files'))->name('files');
 
-    // View applicants routes
-    Route::get('/viewApplicants/{id}', [JobController::class, 'viewApplicants'])->name('viewApplicants');
-
-    Route::get('/job/{id}/applicants', [JobController::class, 'viewApplicants'])->name('applicants');
-
-  
-    // Leave Form routes (Pre-made)
-    Route::get('/leave-forms', [LeaveFormController::class, 'index'])->name('leaveForm'); 
+    // Leave Form
+    Route::get('/leave-forms', [LeaveFormController::class, 'index'])->name('leaveForm');
     Route::post('/leave-forms', [LeaveFormController::class, 'store'])->name('leaveForms.store');
     Route::delete('/leave-forms/{id}', [LeaveFormController::class, 'destroy'])->name('leaveForms.destroy');
-    Route::get('/employees', [EmployeeController::class, 'index'])
-    ->name('employees');
-    // ✅ Add this inside Route::prefix('hrAdmin')...
     Route::post('/leave-forms/{id}/approve', [LeaveFormController::class, 'approve'])->name('leaveForms.approve');
     Route::post('/leave-forms/{id}/decline', [LeaveFormController::class, 'decline'])->name('leaveForms.decline');
 
-    // Change password route
-    Route::get('/settings', function () {return view('hrAdmin.settings');})->name('settings');
+    // Employee Listing
+    Route::get('/employees', [EmployeeController::class, 'index'])->name('employees');
+
+    // Settings
+    Route::get('/settings', fn() => view('hrAdmin.settings'))->name('settings');
+
+    // Training Schedule
+    Route::get('/training-schedule', [JobController::class, 'trainingSchedule'])->name('training.schedule');
 });
+
     
 // Fallback route for undefined pages
 Route::fallback(function () {return response()->view('errors.404', [], 404);});

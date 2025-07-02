@@ -37,54 +37,53 @@
                 class="pb-2 focus:outline-none">Training Schedule</button>
     </div>
 
-{{-- Job Postings --}}
-<div x-data="{ search: '' }" x-show="$store.applications.tab === 'postings'" 
-     x-transition:enter="transition ease-out duration-300"
-     x-transition:enter-start="opacity-0 translate-y-2"
-     x-transition:enter-end="opacity-100 translate-y-0"
-     class="space-y-6">
-    
-    {{-- Search --}}
-    <div class="flex items-center mb-6">
-        <label for="search" class="mr-4 font-medium text-sm block">Search Position</label>
-        <input type="text"
-            id="search"
-            name="search"
-            x-model="search"
-            class="flex-1 border border-gray-300 rounded-md p-2 text-sm"
-            placeholder="Enter job title...">
-        <button class="ml-4 bg-[#BD9168] text-white px-6 py-2 rounded-md hover:bg-[#a37654] transition text-sm flex items-center gap-2">
-            <img src="{{ asset('images/Search2.png') }}" alt="Search" class="h-4 w-4">
-            <span>Search</span>
-        </button>
-    </div>
-
-    {{-- Listings --}}
-    @forelse($jobs as $job)
-        @php
-            $jobTitle = Js::from(strtolower($job->job_title));
-            $companyName = Js::from(strtolower($job->company_name));
-            $location = Js::from(strtolower($job->location));
-            $qualifications = Js::from(strtolower(implode(' ', $job->qualifications)));
-            $additionalInfo = Js::from(strtolower(implode(' ', $job->additional_info ?? [])));
-        @endphp
-
-        <div 
-            x-show="search === '' 
-                || {{ $jobTitle }}.includes(search.toLowerCase()) 
-                || {{ $companyName }}.includes(search.toLowerCase()) 
-                || {{ $location }}.includes(search.toLowerCase()) 
-                || {{ $qualifications }}.includes(search.toLowerCase()) 
-                || {{ $additionalInfo }}.includes(search.toLowerCase())"
-            x-transition
-        >
-            <x-hradmin.applicationJobListing :job="$job" />
+    {{-- Job Postings --}}
+    <div x-data="{ search: '' }" x-show="$store.applications.tab === 'postings'" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-2"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         class="space-y-6">
+        
+        {{-- Search --}}
+        <div class="flex items-center mb-6">
+            <label for="search" class="mr-4 font-medium text-sm block">Search Position</label>
+            <input type="text"
+                id="search"
+                name="search"
+                x-model="search"
+                class="flex-1 border border-gray-300 rounded-md p-2 text-sm"
+                placeholder="Enter job title...">
+            <button class="ml-4 bg-[#BD9168] text-white px-6 py-2 rounded-md hover:bg-[#a37654] transition text-sm flex items-center gap-2">
+                <img src="{{ asset('images/Search2.png') }}" alt="Search" class="h-4 w-4">
+                <span>Search</span>
+            </button>
         </div>
-    @empty
-        <p class="text-center text-gray-500">No job applications available.</p>
-    @endforelse
-</div>
 
+        {{-- Listings --}}
+        @forelse($jobs as $job)
+            @php
+                $jobTitle = Js::from(strtolower($job->job_title));
+                $companyName = Js::from(strtolower($job->company_name));
+                $location = Js::from(strtolower($job->location));
+                $qualifications = Js::from(strtolower(implode(' ', $job->qualifications)));
+                $additionalInfo = Js::from(strtolower(implode(' ', $job->additional_info ?? [])));
+            @endphp
+
+            <div 
+                x-show="search === '' 
+                    || {{ $jobTitle }}.includes(search.toLowerCase()) 
+                    || {{ $companyName }}.includes(search.toLowerCase()) 
+                    || {{ $location }}.includes(search.toLowerCase()) 
+                    || {{ $qualifications }}.includes(search.toLowerCase()) 
+                    || {{ $additionalInfo }}.includes(search.toLowerCase())"
+                x-transition
+            >
+                <x-hradmin.applicationJobListing :job="$job" />
+            </div>
+        @empty
+            <p class="text-center text-gray-500">No job applications available.</p>
+        @endforelse
+    </div>
 
     {{-- Applicants Tab --}}
     <div x-show="$store.applications.tab === 'applicants'" x-transition:enter="transition ease-out duration-300"
@@ -112,26 +111,34 @@
     </div>
 
     {{-- Interview Tab --}}
-    <div x-show="$store.applications.tab === 'interview'" x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 translate-y-2"
-         x-transition:enter-end="opacity-100 translate-y-0"
-         class="space-y-4">
-        <div class="flex flex-col items-center justify-center p-6 bg-orange-50 rounded-xl border border-dashed border-[#BD6F22] shadow-sm">
-            <img src="/images/capy.png" alt="Under Construction" class="border-4 border-dashed border-[#BD6F22] rounded-lg p-1" />
-            <p class="text-center text-l text-gray-600 mb-1">Oops! This section is still under development.</p>
-        </div>
-    </div>
+<div x-show="$store.applications.tab === 'interview'" 
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="opacity-0 translate-y-2"
+     x-transition:enter-end="opacity-100 translate-y-0"
+     class="space-y-4">
+
+    @include('hrAdmin.interviewSchedule', ['interviewApplicants' => $interviewApplicants ?? null])
+
+</div>
+
 
     {{-- Training Tab --}}
-    <div x-show="$store.applications.tab === 'training'" x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 translate-y-2"
-         x-transition:enter-end="opacity-100 translate-y-0"
-         class="space-y-4">
-        <div class="flex flex-col items-center justify-center p-6 bg-orange-50 rounded-xl border border-dashed border-[#BD6F22] shadow-sm">
-            <img src="/images/capy.png" alt="Under Construction" class="border-4 border-dashed border-[#BD6F22] rounded-lg p-1" />
-            <p class="text-center text-l text-gray-600 mb-1">Oops! This section is still under development.</p>
-        </div>
-    </div>
+    {{-- Training Tab --}}
+<div x-show="$store.applications.tab === 'training'" 
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="opacity-0 translate-y-2"
+     x-transition:enter-end="opacity-100 translate-y-0"
+     class="space-y-4">
+
+    @if(isset($approvedApplicants) && $approvedApplicants->count() > 0)
+        @include('hrAdmin.trainingSchedule', ['approvedApplicants' => $approvedApplicants])
+    @else
+        <p class="text-center text-gray-500">No approved applicants for training yet.</p>
+    @endif
+
+</div>
+
+
 </section>
 
 @endsection

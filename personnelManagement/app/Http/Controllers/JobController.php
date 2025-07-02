@@ -120,35 +120,102 @@ class JobController extends Controller
     return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job updated successfully!');
 }
 
-    public function viewApplicants($jobId)
+  // View all applications (default page)
+    public function applications()
+    {
+        $jobs = Job::withCount('applications')->get();
+        $applications = Application::with('user', 'job')->latest()->get();
+
+        return view('hrAdmin.application', compact('jobs', 'applications'));
+    }
+
+   // View applicants per job
+public function viewApplicants($jobId)
 {
-    $job = Job::with('applications.user')->findOrFail($jobId);
+    // Load the selected job
+    $job = Job::findOrFail($jobId);
+
+    // Load all jobs with application count for the sidebar or filter
     $jobs = Job::withCount('applications')->get();
+
+    // Get all applications for the selected job, including user and job relationships
+    $applications = Application::with(['user', 'job'])
+        ->where('job_id', $jobId)
+        ->get();
+
+    // Get all approved applicants (for training schedule, etc.)
+    $approvedApplicants = Application::with(['user', 'job'])
+        ->where('status', 'approved')
+        ->get();
 
     return view('hrAdmin.application', [
         'jobs' => $jobs,
-        'applications' => $job->applications,
+        'applications' => $applications,
         'selectedJob' => $job,
-        'selectedTab' => 'applicants', // this sets the tab via Alpine
+        'selectedTab' => 'applicants',
+        'approvedApplicants' => $approvedApplicants,
     ]);
 }
 
+    // Update application status (approve / decline)
+    public function updateApplicationStatus(Request $request, $id)
+    {
+        $application = Application::findOrFail($id);
 
-   public function applications()
-{
-    $jobs = Job::withCount('applications')->get();
-    $applications = Application::with('user', 'job')->latest()->get(); // ✅ include applicants
+        $validated = $request->validate([
+            'status' => 'required|in:approved,declined,interviewed,pending'
+        ]);
 
-    return view('hrAdmin.application', compact('jobs', 'applications'));
-}
+        $application->status = $validated['status'];
+        $application->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Application status updated successfully.',
+            'status' => $application->status,
+            'application_id' => $application->id,
+        ]);
+    }
+
+    // ✅ Set interview date (new method)
+    public function setInterviewDate(Request $request, $id)
+    {
+        $application = Application::findOrFail($id);
+
+        $validated = $request->validate([
+            'interview_date' => 'required|date|after_or_equal:today',
+        ]);
+
+        $application->interview_date = $validated['interview_date'];
+        $application->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Interview date set successfully.',
+            'application_id' => $application->id,
+            'interview_date' => $application->interview_date,
+        ]);
+    }
+
+    // Show training schedule for approved applicants
+    public function trainingSchedule()
+    {
+        $applications = Application::with(['user', 'job'])
+            ->where('status', 'approved')
+            ->latest()
+            ->get();
+
+        return view('hrAdmin.trainingSchedule', compact('applications'));
+    }
+
+    // Delete a job posting
     public function destroy($id)
-{
-    $job = Job::findOrFail($id);
-    $job->delete();
+    {
+        $job = Job::findOrFail($id);
+        $job->delete();
 
-    return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job deleted successfully.');
-}
-
+        return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job deleted successfully.');
+    }
 
 
 }
