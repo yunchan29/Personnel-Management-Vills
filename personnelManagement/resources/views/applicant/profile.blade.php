@@ -72,10 +72,26 @@
 
 <!-- Global Form Validation -->
 <script>
-window.formSections = {};
 function validateAllTabsAndSubmit() {
-    // Access both registered Alpine components
+    const profilePicInput = document.getElementById('profile_picture');
+    const previewImage = document.getElementById('previewImage');
+    const hasExistingPic = previewImage && !previewImage.src.includes('default.png');
+
+    // Validate profile picture
+    if (!hasExistingPic && (!profilePicInput || !profilePicInput.files.length)) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Missing Profile Picture',
+            text: 'Please upload a profile picture before submitting.',
+            confirmButtonColor: '#BD6F22'
+        });
+        return;
+    }
+
+    // Validate form sections
+    window.formSections = window.formSections || {}; // ✅ Ensure it's defined before use
     const sections = window.formSections;
+
     const order = ['personal', 'work'];
 
     for (const key of order) {
@@ -83,19 +99,18 @@ function validateAllTabsAndSubmit() {
         if (section && typeof section.validate === 'function') {
             const valid = section.validate();
             if (!valid) {
-                // Show the tab to user
+                // Show the relevant tab
                 document.querySelector(`#tab-${key}-btn`)?.click();
-                return; // Stop submission if one is invalid
+                return;
             }
         }
     }
-    
-    updateFullAddress();
-    // All valid — programmatically submit
-    document.getElementById('profileForm').submit();
 
+    updateFullAddress();
+    document.getElementById('profileForm').submit();
 }
 </script>
+
 
 <!-- Auto-Fill Full Address Script -->
 <script>

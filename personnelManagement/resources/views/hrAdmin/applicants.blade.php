@@ -1,13 +1,6 @@
 
 <div x-data="applicantsHandler()" class="relative">
-    <div class="flex justify-end mb-4">
-    <button
-        @click="showAll = !showAll"
-        class="px-4 py-2 bg-[#BD6F22] text-white text-sm font-medium rounded shadow hover:bg-[#a95e1d]">
-        <span x-text="showAll ? 'Show Only Pending Applicants' : 'Show All Applicants'"></span>
-    </button>
-</div>
-
+    
 
     <!-- Applicants Table -->
     <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg">
@@ -122,7 +115,15 @@
 
 
         </table>
+        
     </div>
+    <div class="flex justify-center mb-4">
+    <button
+        @click="showAll = !showAll"
+        class="px-4 py-2 bg-[#bd6f2200] text-black text-sm font-medium  hover:text-[#a95e1d]">
+        <span x-text="showAll ? 'Show Only Pending Applicants' : 'Show All Applicants'"></span>
+    </button>
+</div>
 
 <!-- Feedback Toast -->
 <div 

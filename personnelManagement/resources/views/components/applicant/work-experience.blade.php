@@ -1,5 +1,8 @@
 <div x-data='workExperienceForm(@json($experiences->toArray()))'
-x-init="$nextTick(() => window.formSections.work = $data)"
+x-init="$nextTick(() => {
+    window.formSections = window.formSections || {};
+    window.formSections.work = $data;
+})"
 x-ref="workForm"
 class="space-y-6">
 
