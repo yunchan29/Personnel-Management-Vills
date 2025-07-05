@@ -20,10 +20,19 @@
                 class="rounded-full w-36 h-36 object-cover border-2 border-gray-300">
             
             <div class="mt-4">
-                <button type="button" onclick="document.getElementById('profile_picture').click()" class="cursor-pointer text-white px-4 py-2 rounded transition" style="background-color: #BD6F22;">
+                <button type="button" 
+                        onclick="document.getElementById('profile_picture').click()" 
+                        class="cursor-pointer text-white px-4 py-2 rounded transition" 
+                        style="background-color: #BD6F22;">
                     Edit Picture
                 </button>
-                <input type="file" name="profile_picture" id="profile_picture" class="hidden" onchange="previewFile(this)">
+
+                <input type="file"
+                    id="profile_picture"
+                    name="profile_picture"
+                    accept="image/jpeg, image/png"
+                    onchange="validateImage(this)"
+                    class="hidden">
             </div>
             
         </div>
@@ -72,10 +81,26 @@
 
 <!-- Global Form Validation -->
 <script>
-window.formSections = {};
 function validateAllTabsAndSubmit() {
-    // Access both registered Alpine components
+    const profilePicInput = document.getElementById('profile_picture');
+    const previewImage = document.getElementById('previewImage');
+    const hasExistingPic = previewImage && !previewImage.src.includes('default.png');
+
+    // Validate profile picture
+    if (!hasExistingPic && (!profilePicInput || !profilePicInput.files.length)) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Missing Profile Picture',
+            text: 'Please upload a profile picture before submitting.',
+            confirmButtonColor: '#BD6F22'
+        });
+        return;
+    }
+
+    // Validate form sections
+    window.formSections = window.formSections || {}; // ✅ Ensure it's defined before use
     const sections = window.formSections;
+
     const order = ['personal', 'work'];
 
     for (const key of order) {
@@ -83,17 +108,15 @@ function validateAllTabsAndSubmit() {
         if (section && typeof section.validate === 'function') {
             const valid = section.validate();
             if (!valid) {
-                // Show the tab to user
+                // Show the relevant tab
                 document.querySelector(`#tab-${key}-btn`)?.click();
-                return; // Stop submission if one is invalid
+                return;
             }
         }
     }
-    
-    updateFullAddress();
-    // All valid — programmatically submit
-    document.getElementById('profileForm').submit();
 
+    updateFullAddress();
+    document.getElementById('profileForm').submit();
 }
 </script>
 
@@ -187,6 +210,25 @@ function validateAllTabsAndSubmit() {
         personalBtn.addEventListener('click', () => activateTab('personal'));
         workBtn.addEventListener('click', () => activateTab('work'));
     });
+
+    function validateImage(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (!validTypes.includes(file.type)) {
+            input.value = '';
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid file type',
+                text: 'Only JPG and PNG files are allowed.',
+                confirmButtonColor: '#BD6F22'
+            });
+            return;
+        }
+
+        previewFile(input); // 👈 this ensures the preview still happens
+    }
 
     function previewFile(input) {
         const file = input.files[0];

@@ -2,6 +2,7 @@
 
 @section('content')
 <section class="bg-white font-sans text-gray-800 p-6 min-h-screen">
+  <input type="hidden" id="isProfileIncomplete" value="{{ auth()->user()->is_profile_complete ? '0' : '1' }}">
 
   <!-- Greeting -->
   <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">
@@ -163,6 +164,31 @@
     html += '</div></div>';
     calendar.innerHTML = html;
   });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const isIncomplete = document.getElementById('isProfileIncomplete');
+    
+    if (isIncomplete && isIncomplete.value === '1') {
+        Swal.fire({
+            title: 'Profile Incomplete',
+            text: 'Your profile is incomplete. Would you like to update it now?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Update Now',
+            cancelButtonText: 'Not Now',
+            confirmButtonColor: '#BD6F22',
+            cancelButtonColor: '#aaa',
+            allowOutsideClick: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "{{ route('hrAdmin.profile') }}"; // Adjust route if needed
+            }
+        });
+    }
+});
 </script>
 
 @endsection

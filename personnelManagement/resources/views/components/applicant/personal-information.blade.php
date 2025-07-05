@@ -1,7 +1,7 @@
 <div x-data="personalForm()" x-init="$nextTick(() => {
     window.formSections = window.formSections || {};
-    window.formSections.personal = $data;>
-    
+    window.formSections.personal = $data;
+})">
     <div class="flex flex-col md:flex-row gap-6">
         <!-- Profile Form -->
         <div class="flex-1">

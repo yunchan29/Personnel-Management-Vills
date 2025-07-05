@@ -20,10 +20,19 @@
                 class="rounded-full w-36 h-36 object-cover border-2 border-gray-300">
             
             <div class="mt-4">
-                <button type="button" onclick="document.getElementById('profile_picture').click()" class="cursor-pointer text-white px-4 py-2 rounded transition" style="background-color: #BD6F22;">
+                <button type="button" 
+                        onclick="document.getElementById('profile_picture').click()" 
+                        class="cursor-pointer text-white px-4 py-2 rounded transition" 
+                        style="background-color: #BD6F22;">
                     Edit Picture
                 </button>
-                <input type="file" name="profile_picture" id="profile_picture" class="hidden" onchange="previewFile(this)">
+
+                <input type="file"
+                    id="profile_picture"
+                    name="profile_picture"
+                    accept="image/jpeg, image/png"
+                    onchange="validateImage(this)"
+                    class="hidden">
             </div>
             
         </div>
@@ -58,11 +67,7 @@
     </div>
 </div>
 
-
-          
-   
-
-
+</div>
     <!-- Submit Button -->
     <div class="mt-6 text-right">
         <button 
@@ -73,7 +78,6 @@
             Save
         </button>
     </div>
-</div>
 </form>
 
 
@@ -212,6 +216,25 @@ function validateAllTabsAndSubmit() {
         personalBtn.addEventListener('click', () => activateTab('personal'));
         workBtn.addEventListener('click', () => activateTab('work'));
     });
+
+    function validateImage(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (!validTypes.includes(file.type)) {
+            input.value = '';
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid file type',
+                text: 'Only JPG and PNG files are allowed.',
+                confirmButtonColor: '#BD6F22'
+            });
+            return;
+        }
+
+        previewFile(input); // 👈 this ensures the preview still happens
+    }
 
     function previewFile(input) {
         const file = input.files[0];
