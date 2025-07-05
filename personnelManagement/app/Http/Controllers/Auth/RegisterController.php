@@ -7,7 +7,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
-use Carbon\Carbon; // for date calculations
+use Carbon\Carbon;
 
 class RegisterController extends Controller
 {
@@ -18,14 +18,31 @@ class RegisterController extends Controller
 
     public function register(Request $request)
     {
+        // Custom password validation rule
         $validator = Validator::make($request->all(), [
             'first_name'   => ['required', 'string', 'max:255'],
             'last_name'    => ['required', 'string', 'max:255'],
             'email'        => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'birth_date'   => ['required', 'date_format:m/d/Y'],
             'gender'       => ['required', 'string'],
-            'password'     => ['required', 'string', 'min:8', 'confirmed'],
-            'terms'        => ['accepted'],
+            'password'     => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                function ($attribute, $value, $fail) {
+                    if (!preg_match('/[A-Z]/', $value)) {
+                        $fail('The password must contain at least one uppercase letter.');
+                    }
+                    if (!preg_match('/[0-9]/', $value)) {
+                        $fail('The password must contain at least one number.');
+                    }
+                    if (!preg_match('/[!@#$%^&*(),.?":{}|<>]/', $value)) {
+                        $fail('The password must contain at least one special character.');
+                    }
+                },
+            ],
+            'terms' => ['accepted'],
         ]);
 
         if ($validator->fails()) {
@@ -43,7 +60,7 @@ class RegisterController extends Controller
                 ->withInput();
         }
 
-        // Optional: Enforce 18+ rule on backend
+        // Backend age enforcement
         if ($birthDate->age < 18) {
             return redirect()->back()
                 ->withErrors(['birth_date' => 'You must be at least 18 years old to register.'])
@@ -55,20 +72,22 @@ class RegisterController extends Controller
             'first_name' => $request->first_name,
             'last_name'  => $request->last_name,
             'email'      => $request->email,
-            'birth_date' => $birthDate->format('Y-m-d'), // MySQL format
+            'birth_date' => $birthDate->format('Y-m-d'),
             'age'        => $birthDate->age,
             'gender'     => $request->gender,
             'password'   => Hash::make($request->password),
-            'role'       => 'applicant', // default role
+            'role'       => 'applicant',
         ]);
 
         auth()->login($user);
 
-        // Redirect by role
+        // Redirect based on role with SweetAlert success
+        $successMessage = 'Welcome! Your account has been successfully created.';
+
         return match ($user->role) {
-            'admin'     => redirect()->route('admin.dashboard'),
-            'applicant' => redirect()->route('applicant.dashboard'),
-            default     => redirect('/login'),
+            'admin'     => redirect()->route('admin.dashboard')->with('success', $successMessage),
+            'applicant' => redirect()->route('applicant.dashboard')->with('success', $successMessage),
+            default     => redirect('/login')->with('success', $successMessage),
         };
     }
 }

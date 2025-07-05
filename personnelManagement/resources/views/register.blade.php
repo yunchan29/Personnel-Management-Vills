@@ -50,7 +50,8 @@
       <h1 class="text-2xl md:text-3xl font-bold text-center mb-2 text-[#BD6F22]">Create Account</h1>
       
 
-      <form method="POST" action="{{ route('register') }}" class="w-full max-w-sm">
+   <form method="POST" action="{{ route('register') }}" class="w-full max-w-sm" id="registerForm">
+
         @csrf
 
         <!-- Row 1: First Name and Last Name -->
@@ -160,5 +161,58 @@
   maxDate: new Date(new Date().setFullYear(new Date().getFullYear() - 18)) // 18+ limit
 });
 </script>
+
+<script>
+  document.getElementById("registerForm").addEventListener("submit", function (e) {
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("password_confirmation").value;
+
+    const errors = [];
+
+    if (password.length < 8) {
+      errors.push("Password must be at least 8 characters long.");
+    }
+    if (!/[A-Z]/.test(password)) {
+      errors.push("Password must contain at least one uppercase letter.");
+    }
+    if (!/[0-9]/.test(password)) {
+      errors.push("Password must contain at least one number.");
+    }
+    if (!/[!@#$%^&*(),.?\":{}|<>]/.test(password)) {
+      errors.push("Password must contain at least one special character.");
+    }
+    if (password !== confirmPassword) {
+      errors.push("Passwords do not match.");
+    }
+
+    if (errors.length > 0) {
+      e.preventDefault();
+      Swal.fire({
+        icon: 'error',
+        title: 'Please check your password',
+        html: errors.join('<br>'),
+        confirmButtonColor: '#BD6F22'
+      });
+    }
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@if(session('success'))
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: '{{ session("success") }}',
+        confirmButtonColor: '#BD6F22',
+        timer: 2500,
+        showConfirmButton: false
+      });
+    });
+  </script>
+@endif
+
 </body>
 </html>
