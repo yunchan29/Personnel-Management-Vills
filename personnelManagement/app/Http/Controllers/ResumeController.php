@@ -31,31 +31,37 @@ class ResumeController extends Controller
     /**
      * Store or update the resume file.
      */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'resume_file' => 'required|file|mimes:pdf|max:25000', // Max 25 MB
+   public function store(Request $request)
+{
+    $request->validate([
+        'resume_file' => 'required|file|mimes:pdf|max:25000', // Max 25 MB
+    ]);
+
+    $user = auth()->user();
+    $file = $request->file('resume_file');
+    $path = $file->store('resumes', 'public');
+    $originalName = $file->getClientOriginalName(); // <-- This line gets the original name
+
+    if ($user->resume) {
+        // Delete old file from storage
+        Storage::disk('public')->delete($user->resume->resume);
+
+        // Update DB
+        $user->resume->update([
+            'resume' => $path,
+            'original_name' => $originalName // <-- Save original name
         ]);
-
-        $user = auth()->user();
-        $file = $request->file('resume_file');
-        $path = $file->store('resumes', 'public');
-
-        if ($user->resume) {
-            Storage::disk('public')->delete($user->resume->resume);
-            $user->resume->update([
-                'resume' => $path,
-            ]);
-        } else {
-            $user->resume()->create([
-                'resume' => $path,
-            ]);
-        }
-
-        return redirect()
-            ->route('applicant.application')
-            ->with('success', 'Resume uploaded successfully!');
+    } else {
+        $user->resume()->create([
+            'resume' => $path,
+            'original_name' => $originalName // <-- Save original name
+        ]);
     }
+
+    return redirect()
+        ->route('applicant.application')
+        ->with('success', 'Resume uploaded successfully!');
+}
 
     /**
      * Delete resume and database reference.

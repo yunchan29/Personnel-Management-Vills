@@ -7,60 +7,75 @@
     <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">My Applications</h1>
 
     <!-- Resume Upload Notice (only if no resume) -->
-    @if(empty($resume) || !$resume->resume)
-    <div class="border border-gray-300 rounded-md shadow-sm p-4 mb-6">
-        <div class="flex items-start gap-2 mb-4">
-            <span class="text-xl">⚠️</span>
-            <div class="text-sm text-gray-800" style="color: #BD6F22">
-                <ul class="list-disc pl-4 space-y-1">
-                    <li>Make sure your resume is in PDF format only.</li>
-                    <li>Update your 201 files to boost your chances of getting hired. (ex. Certifications, etc.)</li>
-                </ul>
-            </div>
+@if(empty($resume) || !$resume->resume)
+<div class="border border-gray-300 rounded-md shadow-sm p-4 mb-6 bg-white">
+    <div class="flex items-start gap-2 mb-4">
+        <span class="text-xl">⚠️</span>
+        <div class="text-sm" style="color: #BD6F22;">
+            <ul class="list-disc pl-4 space-y-1">
+                <li>Make sure your resume is in PDF format only.</li>
+                <li>Update your 201 files to boost your chances of getting hired. (e.g., Certifications)</li>
+            </ul>
         </div>
-
-        <form
-            action="{{ route('applicant.application.store') }}"
-            method="POST"
-            enctype="multipart/form-data"
-            class="flex flex-col md:flex-row items-center gap-4"
-        >
-            @csrf
-
-            <label class="w-full md:flex-1">
-                <span class="block mb-1 text-sm text-gray-700">
-                    Please upload your resume (PDF only)
-                </span>
-                <input
-                    type="file"
-                    name="resume_file"
-                    accept=".pdf"
-                    required
-                    class="w-full border border-gray-300 rounded px-3 py-2"
-                >
-                @error('resume_file')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                @enderror
-            </label>
-
-            <button
-                type="submit"
-                class="px-6 py-2 text-white rounded"
-                style="background-color: #BD6F22;"
-            >
-                Upload
-            </button>
-        </form>
     </div>
-    @endif
 
-    <!-- Resume Actions -->
-    @if(isset($resume) && $resume->resume)
-    <div class="mb-6 flex items-center gap-4">
+    <form
+        action="{{ route('applicant.application.store') }}"
+        method="POST"
+        enctype="multipart/form-data"
+        class="flex flex-col md:flex-row items-center gap-4"
+    >
+        @csrf
+
+        <label class="w-full md:flex-1">
+            <span class="block mb-1 text-sm font-medium text-gray-700">
+                Upload your resume (PDF only)
+            </span>
+            <input
+                type="file"
+                name="resume_file"
+                id="resumeInput"
+                accept=".pdf"
+                required
+                class="w-full border border-gray-300 rounded px-3 py-2 file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-[#BD6F22] file:text-white hover:file:bg-[#a75e1c] transition"
+            >
+            <p id="fileName" class="text-sm text-gray-600 mt-1"></p>
+
+            @error('resume_file')
+                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+            @enderror
+        </label>
+
+        <button
+            type="submit"
+            class="px-6 py-2 text-white rounded font-medium transition"
+            style="background-color: #BD6F22;"
+        >
+            Upload
+        </button>
+    </form>
+</div>
+@endif
+
+<!-- Resume Actions -->
+@if(isset($resume) && $resume->resume)
+@php
+    $fileName = $resume->original_name ?? basename($resume->resume);
+@endphp
+
+<div class="mb-6 flex flex-col gap-2 bg-white p-4 rounded-md shadow-sm border border-gray-300">
+    
+    <!-- File Name -->
+ <p class="text-sm text-gray-700 font-medium">
+    Uploaded File: <span class="text-[#BD6F22]">{{ $fileName }}</span>
+</p>
+
+
+    <div class="flex flex-wrap items-center gap-4">
         <a
             href="{{ asset('storage/' . $resume->resume) }}"
             target="_blank"
-            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+            class="px-5 py-2 bg-[#BD6F22] text-white rounded hover:bg-[#a75e1c] transition font-medium"
         >
             Show Resume
         </a>
@@ -71,13 +86,18 @@
             <button
                 type="button"
                 id="deleteResumeBtn"
-                class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+                class="px-5 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition font-medium"
             >
                 Delete Resume
             </button>
         </form>
     </div>
-    @endif
+</div>
+@endif
+
+
+
+    
 
     <!-- Application Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -159,6 +179,18 @@ document.getElementById('deleteResumeBtn')?.addEventListener('click', function (
         }
     });
 });
+</script>
+<script>
+    const resumeInput = document.getElementById('resumeInput');
+    const fileName = document.getElementById('fileName');
+
+    resumeInput?.addEventListener('change', function () {
+        if (this.files && this.files.length > 0) {
+            fileName.textContent = `Selected File: ${this.files[0].name}`;
+        } else {
+            fileName.textContent = '';
+        }
+    });
 </script>
 
 <!-- Success SweetAlert -->

@@ -9,10 +9,12 @@ class Resume extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'user_id',
-        'resume',
-    ];
+   protected $fillable = [
+    'user_id',
+    'resume',
+    'original_name',
+];
+
 
 
 
