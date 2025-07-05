@@ -29,32 +29,40 @@
         </div>
     </div>
 
-    <!-- Right Column -->
-    <div class="w-full md:flex-1 flex flex-col">
+<!-- Right Column -->
+<div class="w-full md:flex-1">
+    <div class="max-w-4xl w-full mx-auto px-4 md:px-6 flex flex-col">
 
         <!-- Tab Title + Buttons -->
-            <div class="flex flex-col md:flex-row justify-between items-center md:items-start mb-4 gap-2">   
-                <nav class="flex space-x-4 text-sm font-medium">
-                    <button type="button" id="tab-personal-btn" class="tab-btn text-[#BD6F22] border-b-2 border-[#BD6F22] pb-2">
-                        Personal Information
-                    </button>
+        <div class="flex flex-col md:flex-row justify-between items-center md:items-start mb-4 gap-2">   
+            <nav class="flex space-x-4 text-sm font-medium">
+                <button type="button" id="tab-personal-btn" class="tab-btn text-[#BD6F22] border-b-2 border-[#BD6F22] pb-2">
+                    Personal Information
+                </button>
 
-                    <button type="button" id="tab-work-btn" class="tab-btn text-gray-600 hover:text-[#BD6F22] pb-2">
-                        Work Experience
-                    </button>
-                </nav>
-            </div>
+                <button type="button" id="tab-work-btn" class="tab-btn text-gray-600 hover:text-[#BD6F22] pb-2">
+                    Work Experience
+                </button>
+            </nav>
+        </div>
 
-                    <!-- Tab Content -->
-            <div id="tab-personal" class="tab-content">
-                <x-applicant.personal-information :user="$user" />
-            </div>
+        <!-- Tab Content -->
+        <div id="tab-personal" class="tab-content">
+            <x-applicant.personal-information :user="$user" />
+        </div>
 
-            <div id="tab-work" class="tab-content hidden">
-                <x-applicant.work-experience :experiences="$experiences" :user="$user" />
-            </div>
+        <div id="tab-work" class="tab-content hidden">
+            <x-applicant.work-experience :experiences="$experiences" :user="$user" />
+        </div>
+
     </div>
 </div>
+
+
+          
+   
+
+
     <!-- Submit Button -->
     <div class="mt-6 text-right">
         <button 
@@ -65,7 +73,9 @@
             Save
         </button>
     </div>
+</div>
 </form>
+
 
 <!-- Scripts -->
 
