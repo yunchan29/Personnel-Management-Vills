@@ -6,30 +6,32 @@
     <!-- Section Title -->
     <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">My Applications</h1>
 
-    <!-- Resume Upload Notice (only if no resume) -->
-@if(empty($resume) || !$resume->resume)
-<div class="border border-gray-300 rounded-md shadow-sm p-4 mb-6 bg-white">
-    <div class="flex items-start gap-2 mb-4">
-        <span class="text-xl">⚠️</span>
-        <div class="text-sm" style="color: #BD6F22;">
+
+
+
+<div class="border border-gray-300 rounded-md shadow-sm p-6 mb-6 bg-white">
+    <div class="flex items-start gap-3 mb-4">
+        <div class="text-xl text-[#BD6F22]">⚠️</div>
+        <div class="text-sm text-[#BD6F22]">
             <ul class="list-disc pl-4 space-y-1">
-                <li>Make sure your resume is in PDF format only.</li>
+                <li>Make sure your resume is in PDF format only (Max: 25 MB).</li>
                 <li>Update your 201 files to boost your chances of getting hired. (e.g., Certifications)</li>
             </ul>
         </div>
     </div>
 
+    <!-- Upload Form -->
     <form
         action="{{ route('applicant.application.store') }}"
         method="POST"
         enctype="multipart/form-data"
-        class="flex flex-col md:flex-row items-center gap-4"
+        class="flex flex-col md:flex-row items-start md:items-end gap-4"
     >
         @csrf
 
         <label class="w-full md:flex-1">
             <span class="block mb-1 text-sm font-medium text-gray-700">
-                Upload your resume (PDF only)
+                {{ isset($resume) && $resume->resume ? 'Update your resume' : 'Upload your resume (PDF only)' }}
             </span>
             <input
                 type="file"
@@ -48,52 +50,54 @@
 
         <button
             type="submit"
-            class="px-6 py-2 text-white rounded font-medium transition"
-            style="background-color: #BD6F22;"
+            class="px-6 py-2 bg-[#BD6F22] text-white rounded font-medium hover:bg-[#a75e1c] transition"
         >
-            Upload
+            {{ isset($resume) && $resume->resume ? 'Update Resume' : 'Upload' }}
         </button>
     </form>
+
+    <!-- Resume Actions -->
+    @if(isset($resume) && $resume->resume)
+        @php
+            $fileName = $resume->original_name ?? basename($resume->resume);
+        @endphp
+
+        <div class="mt-6 pt-4 border-t border-gray-200">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="text-sm">
+                    <p class="font-medium text-gray-700">Current Uploaded Resume:</p>
+                    <p class="text-[#BD6F22]">{{ $fileName }}</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                   <button
+    type="button"
+    onclick="openResumeModal('{{ asset('storage/' . $resume->resume) }}')"
+    class="px-4 py-2 bg-[#BD6F22] text-white rounded hover:bg-[#a75e1c] transition text-sm"
+>
+    View Resume
+</button>
+
+
+                    <form id="deleteForm" action="{{ route('applicant.application.destroy') }}" method="POST">
+                        @csrf
+                        @method('DELETE')
+                        <button
+                            type="button"
+                            id="deleteResumeBtn"
+                            class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm"
+                        >
+                            Delete Resume
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
-@endif
-
-<!-- Resume Actions -->
-@if(isset($resume) && $resume->resume)
-@php
-    $fileName = $resume->original_name ?? basename($resume->resume);
-@endphp
-
-<div class="mb-6 flex flex-col gap-2 bg-white p-4 rounded-md shadow-sm border border-gray-300">
-    
-    <!-- File Name -->
- <p class="text-sm text-gray-700 font-medium">
-    Uploaded File: <span class="text-[#BD6F22]">{{ $fileName }}</span>
-</p>
 
 
-    <div class="flex flex-wrap items-center gap-4">
-        <a
-            href="{{ asset('storage/' . $resume->resume) }}"
-            target="_blank"
-            class="px-5 py-2 bg-[#BD6F22] text-white rounded hover:bg-[#a75e1c] transition font-medium"
-        >
-            Show Resume
-        </a>
 
-        <form id="deleteForm" action="{{ route('applicant.application.destroy') }}" method="POST">
-            @csrf
-            @method('DELETE')
-            <button
-                type="button"
-                id="deleteResumeBtn"
-                class="px-5 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition font-medium"
-            >
-                Delete Resume
-            </button>
-        </form>
-    </div>
-</div>
-@endif
 
 
 
@@ -156,8 +160,34 @@
 
 </div>
 
+
+<!-- Resume Preview Modal -->
+<div id="resumeModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-lg overflow-hidden w-full max-w-4xl h-[90%] flex flex-col">
+        <div class="flex justify-between items-center px-4 py-2 border-b">
+            <h2 class="text-lg font-semibold text-[#BD6F22]">Resume Preview</h2>
+            <button onclick="closeResumeModal()" class="text-gray-500 hover:text-red-500 text-xl font-bold">&times;</button>
+        </div>
+        <iframe id="resumeFrame" class="flex-1 w-full" style="border: none;"></iframe>
+    </div>
+</div>
+
+
 <!-- SweetAlert2 CDN -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function openResumeModal(fileUrl) {
+        document.getElementById('resumeFrame').src = fileUrl;
+        document.getElementById('resumeModal').classList.remove('hidden');
+        document.getElementById('resumeModal').classList.add('flex');
+    }
+
+    function closeResumeModal() {
+        document.getElementById('resumeModal').classList.remove('flex');
+        document.getElementById('resumeModal').classList.add('hidden');
+        document.getElementById('resumeFrame').src = ''; // Clear the iframe
+    }
+</script>
 
 <!-- Delete Resume with SweetAlert -->
 <script>
@@ -191,7 +221,26 @@ document.getElementById('deleteResumeBtn')?.addEventListener('click', function (
             fileName.textContent = '';
         }
     });
+
+    document.getElementById('deleteResumeBtn')?.addEventListener('click', function (e) {
+        e.preventDefault();
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "Delete your existing resume?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('deleteForm').submit();
+            }
+        });
+    });
 </script>
+
 
 <!-- Success SweetAlert -->
 @if(session('success'))
