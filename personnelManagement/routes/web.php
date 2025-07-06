@@ -1,8 +1,10 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\UserController;
 use App\Models\User;
 use App\Http\Controllers\JobController; 
@@ -170,10 +172,23 @@ Route::get('/admin/dashboard', function () {return view('admin.dashboard');})->n
 Route::get('/home', function () {return view('home'); // Ensure this view exists
 })->name('home')->middleware('auth');
 
-// Password reset placeholder
+// Password reset 
 Route::get('/forgot-password', function () {
-    return 'Password reset page coming soon...';
+    return view('auth.forgot-password'); // Change this to load the Blade
 })->name('password.request');
+
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])
+    ->name('password.email');
+
+Route::get('/reset-password', function (Request $request) {
+    return view('auth.reset-password', [
+        'token' => $request->query('token'),
+        'email' => $request->query('email')
+    ]);
+})->name('password.reset');
+
+Route::post('/reset-password', [\App\Http\Controllers\Auth\ForgotPasswordController::class, 'resetPassword'])
+    ->name('password.update');
 
 // Apply route for applicants (di ko pa na sosort nag eerror pa eh)
 Route::post('/apply/{job}', [ApplicantJobController::class, 'apply'])->name('jobs.apply');
