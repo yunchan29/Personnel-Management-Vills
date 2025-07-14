@@ -10,18 +10,18 @@ document.addEventListener('alpine:init', () => {
         showInterviewModal: false,
         interviewApplicant: null,
         interviewDate: '',
+        interviewTime: '',
         applicants: [],
         removedApplicants: [],
         feedbackMessage: '',
         feedbackVisible: false,
-        showAll: false, // ✅ ADDED: Toggle to show all or only pending
+        showAll: false,
 
         init() {
-            // ✅ Store all applicants with their IDs
             this.applicants = Array.from(document.querySelectorAll('tr[data-applicant-id]')).map(row => ({
                 id: parseInt(row.dataset.applicantId),
-                element: row,
-                status: row.dataset.status
+                status: row.dataset.status || '',
+                element: row
             }));
         },
 
@@ -35,9 +35,15 @@ document.addEventListener('alpine:init', () => {
             this.showProfile = true;
         },
 
+        openStatusModal(id, name) {
+            const found = this.applicants.find(a => a.id === id);
+            this.selectedApplicant = { id, name, status: found?.status || '' };
+            this.showStatusModal = true;
+        },
+
         confirmStatus(action, id, name) {
             this.statusAction = action;
-            this.selectedApplicant = { id, name };
+            this.selectedApplicant = { id, name, status: action };
             this.showStatusModal = true;
         },
 
@@ -57,23 +63,33 @@ document.addEventListener('alpine:init', () => {
 
                 this.showStatusModal = false;
 
-                // ✅ Trigger Alpine reactivity to hide the row
-                window.dispatchEvent(new CustomEvent('applicant-approved', {
-                    detail: { id: result.application_id }
-                }));
+                const row = document.querySelector(`tr[data-applicant-id='${result.application_id}']`);
+                if (row) {
+                    row.setAttribute('data-status', this.statusAction);
+                }
 
-                setTimeout(() => {
-                    this.removedApplicants.push(result.application_id);
-                }, 300);
+                const index = this.applicants.findIndex(a => a.id === result.application_id);
+                if (index !== -1) {
+                    this.applicants[index].status = this.statusAction;
+                    this.applicants = [...this.applicants]; // trigger reactivity
+                }
 
-                this.feedbackMessage = `Applicant ${this.statusAction} successfully.`;
+                const label = {
+                    approved: 'approved',
+                    interviewed: 'passed',
+                    declined: 'failed',
+                    for_interview: 'scheduled for interview'
+                }[this.statusAction] || 'updated';
+
+                this.feedbackMessage = `Applicant ${label} successfully.`;
                 this.feedbackVisible = true;
-
                 setTimeout(() => this.feedbackVisible = false, 3000);
 
-                // Optional cleanup from cached list
-                const index = this.applicants.findIndex(app => app.id === result.application_id);
-                if (index !== -1) this.applicants.splice(index, 1);
+                if (['interviewed', 'declined'].includes(this.statusAction)) {
+                    setTimeout(() => {
+                        this.removedApplicants.push(result.application_id);
+                    }, 300);
+                }
 
                 this.selectedApplicant = null;
                 this.statusAction = '';
@@ -85,19 +101,22 @@ document.addEventListener('alpine:init', () => {
 
         openSetInterview(id, name) {
             this.interviewApplicant = { id, name };
-
             const row = document.querySelector(`tr[data-applicant-id='${id}']`);
-            const dateStr = row?.getAttribute('data-interview-date');
-            this.interviewDate = dateStr || '';
+            const dateStr = row?.getAttribute('data-interview-date') || '';
+            const [date, time] = dateStr.split(' ');
 
+            this.interviewDate = date || '';
+            this.interviewTime = time || '';
             this.showInterviewModal = true;
         },
 
         async submitInterviewDate() {
-            if (!this.interviewDate) {
-                alert('Please select a date.');
+            if (!this.interviewDate || !this.interviewTime) {
+                alert('Please select both date and time.');
                 return;
             }
+
+            const interviewDateTime = `${this.interviewDate} ${this.interviewTime}`;
 
             try {
                 const response = await fetch(`/hrAdmin/applications/${this.interviewApplicant.id}/interview-date`, {
@@ -106,7 +125,10 @@ document.addEventListener('alpine:init', () => {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     },
-                    body: JSON.stringify({ interview_date: this.interviewDate })
+                    body: JSON.stringify({
+                        interview_date: interviewDateTime,
+                        status: 'for_interview'
+                    })
                 });
 
                 if (!response.ok) throw new Error('Failed to set interview date');
@@ -114,11 +136,21 @@ document.addEventListener('alpine:init', () => {
 
                 const row = document.querySelector(`tr[data-applicant-id='${this.interviewApplicant.id}']`);
                 if (row) {
-                    row.setAttribute('data-interview-date', this.interviewDate);
+                    row.setAttribute('data-interview-date', interviewDateTime);
+                    row.setAttribute('data-status', 'for_interview');
                 }
 
+                const index = this.applicants.findIndex(a => a.id === this.interviewApplicant.id);
+                if (index !== -1) {
+                    this.applicants[index].status = 'for_interview';
+                    this.applicants = [...this.applicants];
+                }
+
+                this.feedbackMessage = 'Interview date set successfully!';
+                this.feedbackVisible = true;
+                setTimeout(() => this.feedbackVisible = false, 3000);
+
                 this.showInterviewModal = false;
-                alert('Interview date set successfully!');
 
             } catch (error) {
                 alert('Error: ' + error.message);

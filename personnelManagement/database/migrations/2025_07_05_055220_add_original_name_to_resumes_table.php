@@ -11,9 +11,7 @@ return new class extends Migration
      */
    public function up()
 {
-   Schema::table('resumes', function (Blueprint $table) {
-    $table->string('original_name')->nullable()->after('resume');
-});
+
 
 }
 
