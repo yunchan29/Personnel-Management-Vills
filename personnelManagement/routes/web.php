@@ -123,8 +123,9 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
     Route::get('/job/{id}/applicants', [JobController::class, 'viewApplicants'])->name('applicants');
 
     // Applicant Actions
-    Route::post('/applications/{id}/status', [JobController::class, 'updateApplicationStatus'])->name('applications.updateStatus');
-    Route::post('/applications/{id}/interview-date', [JobController::class, 'setInterviewDate'])->name('applications.setInterviewDate');
+Route::post('/applications/{id}/status', [JobController::class, 'updateApplicationStatus'])->name('applications.updateStatus');
+Route::post('/applications/{id}/interview-date', [JobController::class, 'setInterviewDate'])->name('applications.setInterviewDate');
+Route::post('/applications/{id}/training-date', [JobController::class, 'setTrainingDate'])->name('applications.setTrainingDate'); // ✅ Add this
 
     // Job Posting CRUD
     Route::get('/job-posting', [JobController::class, 'index'])->name('jobPosting');

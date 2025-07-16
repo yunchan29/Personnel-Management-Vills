@@ -177,25 +177,33 @@ public function viewApplicants($jobId)
         ]);
     }
 
-    // ✅ Set interview date (new method)
-    public function setInterviewDate(Request $request, $id)
-    {
-        $application = Application::findOrFail($id);
+  public function setInterviewDate(Request $request, $id)
+{
+    $application = Application::findOrFail($id);
 
-        $validated = $request->validate([
-            'interview_date' => 'required|date|after_or_equal:today',
-        ]);
+    $validated = $request->validate([
+        'interview_date' => 'required|date|after_or_equal:today',
+        'status' => 'nullable|in:for_interview' // ✅ allow status from request
+    ]);
 
-        $application->interview_date = $validated['interview_date'];
-        $application->save();
+    $application->interview_date = $validated['interview_date'];
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Interview date set successfully.',
-            'application_id' => $application->id,
-            'interview_date' => $application->interview_date,
-        ]);
+    // ✅ Save status if provided (defaults to 'for_interview')
+    if ($request->has('status')) {
+        $application->status = $request->status;
     }
+
+    $application->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Interview date set successfully.',
+        'application_id' => $application->id,
+        'interview_date' => $application->interview_date,
+        'status' => $application->status,
+    ]);
+}
+
 
     // Show training schedule for approved applicants
     public function trainingSchedule()
@@ -207,6 +215,30 @@ public function viewApplicants($jobId)
 
         return view('hrAdmin.trainingSchedule', compact('applications'));
     }
+
+  // ✅ Set training schedule (date range)
+public function setTrainingDate(Request $request, $id)
+{
+    $application = Application::findOrFail($id);
+
+    $validated = $request->validate([
+        'training_schedule' => [
+            'required',
+            'string',
+            'regex:/^\d{2}\/\d{2}\/\d{4}\s\-\s\d{2}\/\d{2}\/\d{4}$/'
+        ]
+    ]);
+
+    $application->training_schedule = $validated['training_schedule'];
+    $application->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Training schedule set successfully.',
+        'application_id' => $application->id,
+        'training_schedule' => $application->training_schedule,
+    ]);
+}
 
     // Delete a job posting
     public function destroy($id)

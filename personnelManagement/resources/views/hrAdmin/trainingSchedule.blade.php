@@ -1,4 +1,5 @@
-<div x-data="applicantsHandler()" class="relative">
+<div x-data="applicantsHandler()" x-init="init()" class="relative">
+
     <!-- Applicants Table -->
     <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg">
         <table class="min-w-full text-sm text-left text-gray-700">
@@ -10,93 +11,64 @@
                     <th class="py-3 px-4">Applied On</th>
                     <th class="py-3 px-4">Resume</th>
                     <th class="py-3 px-4">Profile</th>
-                    <th class="py-3 px-4">Progress</th>
+                    <th class="py-3 px-4">Training Schedule</th>
+                    <th class="py-3 px-4">Action</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse($applications as $application)
-                    <tr class="border-b hover:bg-gray-50">
-<td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
-    <span class="inline-block w-3 h-3 rounded-full {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
-    {{ $application->user->first_name . ' ' . $application->user->last_name }}
-</td>
-
-
-                        <td class="py-3 px-4 whitespace-nowrap">
-                            {{ $application->job->job_title ?? 'N/A' }}
+                @forelse ($applications as $application)
+                    <tr
+                        data-applicant-id="{{ $application->id }}"
+                        data-status="{{ $application->status }}"
+                        data-training-range="{{ $application->training_schedule ?? '' }}"
+                        x-show="(showAll || '{{ $application->training_schedule }}' === '') && '{{ $application->status }}' === 'interviewed' && !removedApplicants.includes({{ $application->id }})"
+                        class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out"
+                    >
+                        <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
+                            <span class="inline-block w-3 h-3 rounded-full {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
+                            {{ $application->user->first_name }} {{ $application->user->last_name }}
                         </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
-                            {{ $application->job->company_name ?? 'N/A' }}
-                        </td>
-                        <td class="py-3 px-4 italic whitespace-nowrap">
-                            {{ \Carbon\Carbon::parse($application->created_at)->format('F d, Y') }}
+                        <td class="py-3 px-4">{{ $application->job->job_title ?? 'N/A' }}</td>
+                        <td class="py-3 px-4">{{ $application->job->company_name ?? 'N/A' }}</td>
+                        <td class="py-3 px-4 italic">{{ \Carbon\Carbon::parse($application->created_at)->format('F d, Y') }}</td>
+                        <td class="py-3 px-4">
+                            @if ($application->resume_snapshot)
+                                <button @click="openResume('{{ asset('storage/' . $application->resume_snapshot) }}')"
+                                        class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
+                                    View
+                                </button>
+                            @else
+                                <span class="text-gray-500 italic">None</span>
+                            @endif
                         </td>
                         <td class="py-3 px-4">
-                          @if($application->user->active_status === 'Active' && $application->resume_snapshot)
-    <button
-        @click="openResume('{{ asset('storage/' . $application->resume_snapshot) }}')"
-        class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
-        View
-    </button>
-@elseif($application->user->active_status === 'Inactive')
-    <span class="text-gray-400 italic">Inactive</span>
-@else
-    <span class="text-gray-500 italic">None</span>
-@endif
-
+                            <button @click="openProfile({{ $application->id }})"
+                                    class="border border-[#BD6F22] text-[#BD6F22] text-sm font-medium h-8 px-3 rounded hover:bg-[#BD6F22] hover:text-white whitespace-nowrap">
+                                View
+                            </button>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-700">
+                            @if ($application->training_schedule)
+                                <span>{{ $application->training_schedule }}</span>
+                            @else
+                                <span class="text-gray-400 italic">None</span>
+                            @endif
                         </td>
                         <td class="py-3 px-4">
-                           @if($application->user->active_status === 'Active')
-    <button
-        @click="openProfile({{ $application->id }})"
-        class="border border-[#BD6F22] text-[#BD6F22] text-sm font-medium h-8 px-3 rounded hover:bg-[#BD6F22] hover:text-white">
-        View
-    </button>
-@else
-    <span class="text-gray-400 italic">Inactive</span>
-@endif
-
+                            <button
+                                @click="openSetTraining({{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}')"
+                                :class="`text-white text-sm font-medium h-8 px-3 rounded whitespace-nowrap ${
+                                    '{{ $application->training_schedule }}'
+                                        ? 'bg-yellow-500 hover:bg-yellow-600'
+                                        : 'bg-blue-600 hover:bg-blue-700'
+                                }`"
+                                x-text="'{{ $application->training_schedule ? 'Reschedule' : 'Set Training' }}'">
+                            </button>
                         </td>
-                        <td class="py-3 px-4 relative z-20">
-    @if($application->user->active_status === 'Active')
-        <div x-data="{ open: false }" class="relative">
-            <button 
-                type="button"
-                @click="open = !open"
-                @click.outside="open = false"
-                class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow flex items-center gap-2">
-                {{ ucfirst($application->status ?? 'Pending') }}
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                    viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M6 9l6 6 6-6" />
-                </svg>
-            </button>
-            <div x-show="open"
-                x-transition
-                class="absolute bg-white border border-gray-200 rounded shadow-md mt-1 w-32 right-0 z-50"
-                @click.outside="open = false"
-                x-cloak>
-                <button
-                    @click="confirmStatus('approved', {{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}')"
-                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    Approve
-                </button>
-                <button
-                    @click="confirmStatus('declined', {{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}')"
-                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    Decline
-                </button>
-            </div>
-        </div>
-    @else
-        <span class="text-gray-400 italic">Inactive</span>
-    @endif
-</td>
-
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="py-6 text-center text-gray-500">No applicants yet.</td>
+                        <td colspan="8" class="py-6 text-center text-gray-500">No applicants yet.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -104,104 +76,85 @@
     </div>
 
     <!-- Resume Modal -->
-    <div x-show="showModal"
-         x-transition
-         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-         x-cloak>
-        <div class="bg-white rounded-lg overflow-hidden w-[90%] max-w-3xl shadow-xl relative">
-            <button @click="showModal = false"
-                    class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl font-bold">
-                &times;
-            </button>
-            <div class="p-6">
-                <h2 class="text-lg font-semibold mb-4 text-[#BD6F22]">Resume Preview</h2>
-                <iframe :src="resumeUrl" class="w-full h-[70vh] border rounded" frameborder="0"></iframe>
-            </div>
-        </div>
-    </div>
-
-    <!-- Status Modal -->
-    <div x-show="showStatusModal"
-         x-transition
-         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-         x-cloak>
-        <div class="bg-white rounded-lg w-full max-w-md p-6 shadow-xl relative">
-            <button @click="showStatusModal = false"
-                    class="absolute top-3 right-4 text-gray-500 hover:text-red-500 text-xl font-bold">
-                &times;
-            </button>
-            <h2 class="text-lg font-semibold text-[#BD6F22] mb-4">
-                Confirm <span x-text="statusAction === 'approved' ? 'Approval' : 'Decline'"></span>
-            </h2>
-            <p class="mb-6 text-sm text-gray-700">
-                Are you sure you want to <span class="font-bold" x-text="statusAction"></span> the application of
-                <span class="font-semibold text-[#BD6F22]" x-text="selectedApplicant?.name"></span>?
-            </p>
-            <div class="flex justify-end gap-3">
-                <button @click="showStatusModal = false"
-                        class="px-4 py-2 text-sm rounded border border-gray-300 hover:bg-gray-100">
-                    Cancel
-                </button>
-                <button
-                    @click="submitStatusChange"
-                    class="px-4 py-2 text-sm rounded bg-[#BD6F22] text-white hover:bg-[#a95e1d]">
-                    Confirm
-                </button>
-            </div>
-        </div>
-    </div>
+    @include('components.hrAdmin.modals.resume')
 
     <!-- Profile Modals -->
     @foreach ($applications as $application)
-        <div x-show="showProfile && activeProfileId === {{ $application->id }}"
-             x-transition
-             class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-             x-cloak>
-            <div class="bg-white rounded-lg overflow-y-auto max-h-[90vh] w-[95%] max-w-6xl shadow-xl relative p-6">
-                <button @click="showProfile = false"
-                        class="absolute top-3 right-4 text-gray-500 hover:text-red-500 text-xl font-bold">
-                    &times;
-                </button>
+        @include('components.hrAdmin.modals.profile', ['application' => $application])
+    @endforeach
 
-                <div x-data="{ tab: 'profile' }" class="flex flex-col md:flex-row gap-6">
-                    <div class="flex justify-center md:justify-start flex-shrink-0 w-full md:w-auto">
-                        <div class="flex flex-col items-center text-center">
-                            <img src="{{ $application->user->profile_picture ? asset('storage/' . $application->user->profile_picture) : asset('images/default.png') }}"
-                                alt="Profile Picture"
-                                class="rounded-full w-36 h-36 object-cover border-2 border-gray-300 shadow-md mb-3">
-                            <h1 class="text-lg font-semibold text-[#BD6F22]">
-                                {{ $application->user->first_name }} {{ $application->user->last_name }}
-                            </h1>
-                        </div>
-                    </div>
+    <!-- ✅ Set Training Modal -->
+    <div x-show="showTrainingModal" x-transition class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" x-cloak>
+        <div class="bg-white rounded-lg w-full max-w-md p-6 shadow-xl relative">
+            <button @click="showTrainingModal = false" class="absolute top-3 right-4 text-gray-500 hover:text-red-500 text-xl font-bold">&times;</button>
+            <h2 class="text-lg font-semibold text-[#BD6F22] mb-4">Set Training Schedule</h2>
 
-                    <div class="flex-1">
-                        <div class="flex space-x-6 border-b mb-4 text-sm font-medium">
-                            <button @click="tab = 'profile'"
-                                    :class="tab === 'profile' ? 'border-b-2 border-[#BD6F22] text-[#BD6F22]' : ''"
-                                    class="pb-2">Profile</button>
-                            <button @click="tab = 'work'"
-                                    :class="tab === 'work' ? 'border-b-2 border-[#BD6F22] text-[#BD6F22]' : ''"
-                                    class="pb-2">Work Experience</button>
-                        </div>
+            <div class="mb-4">
+                <label class="block font-medium text-gray-700 mb-1">
+                    Dates <span class="text-red-500">*</span>
+                </label>
+                <input type="text" x-ref="trainingDateRange" class="w-full border px-3 py-2 rounded" placeholder="MM/DD/YYYY - MM/DD/YYYY">
+            </div>
 
-                        <div x-show="tab === 'profile'" x-cloak>
-                            @include('components.hrAdmin.applicantProfile', ['user' => $application->user])
-                        </div>
-                        <div x-show="tab === 'work'" x-cloak>
-                            @include('components.hrAdmin.applicantWorkExperience', [
-                                'experiences' => $application->user->workExperiences,
-                                'user' => $application->user
-                            ])
-                        </div>
-                    </div>
-                </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button @click="showTrainingModal = false" class="px-4 py-2 text-sm rounded border border-gray-300 hover:bg-gray-100">Cancel</button>
+                <button @click="submitTrainingSchedule" class="px-4 py-2 text-sm rounded bg-[#BD6F22] text-white hover:bg-[#a95e1d]">Confirm</button>
             </div>
         </div>
-    @endforeach
+    </div>
+
+    <!-- ✅ Feedback Toast -->
+    <div x-show="feedbackVisible"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-4"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 translate-y-4"
+         class="fixed bottom-6 right-6 bg-green-600 text-white px-5 py-4 rounded-xl shadow-lg z-50 w-80 overflow-hidden"
+         x-cloak>
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-white animate-checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span class="font-semibold text-sm" x-text="feedbackMessage"></span>
+        </div>
+        <div class="mt-3 h-1 w-full bg-white/20 rounded overflow-hidden">
+            <div class="h-full bg-white animate-progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- ✅ Filter Toggle -->
+    <div class="flex justify-center my-6">
+        <button
+            @click="showAll = !showAll"
+            class="px-4 py-2 bg-[#ffffff] text-black text-sm font-medium hover:text-[#a95e1d]">
+            <span x-text="showAll ? 'Show Only Pending Training' : 'Show All Applicants'"></span>
+        </button>
+    </div>
+
 </div>
 
-<!-- Alpine.js and Handler Script -->
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js"></script>
 <script src="{{ asset('js/applicantsHandler.js') }}"></script>
 
+<!-- Styles -->
+<style>
+[x-cloak] { display: none !important; }
+.animate-checkmark {
+    animation: checkmark 0.3s ease-in-out;
+}
+@keyframes checkmark {
+    from { transform: scale(0.8) rotate(-20deg); opacity: 0; }
+    to { transform: scale(1) rotate(0); opacity: 1; }
+}
+.animate-progress-bar {
+    animation: progress 3s linear forwards;
+}
+@keyframes progress {
+    from { width: 100%; }
+    to { width: 0%; }
+}
+</style>
