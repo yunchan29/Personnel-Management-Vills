@@ -1,6 +1,7 @@
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('applicantsHandler', () => ({
+        pageContext: '',
         showModal: false,
         resumeUrl: '',
         showProfile: false,
@@ -109,9 +110,14 @@ document.addEventListener('alpine:init', () => {
                     trained: 'trained'
                 }[this.statusAction] || 'updated';
 
-                this.feedbackMessage = `Applicant ${label} successfully.`;
-                this.feedbackVisible = true;
-                setTimeout(() => this.feedbackVisible = false, 3000);
+               this.feedbackMessage = `Applicant ${label} successfully.`;
+this.feedbackVisible = true;
+
+// Wait 2.5 seconds, then reload the page
+setTimeout(() => {
+    this.feedbackVisible = false;
+    location.reload();
+}, 2500);
 
                 if (['interviewed', 'declined', 'trained'].includes(this.statusAction)) {
                     setTimeout(() => this.removedApplicants.push(result.application_id), 300);
