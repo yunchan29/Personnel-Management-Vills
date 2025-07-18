@@ -68,7 +68,7 @@
                             <button
                                 @click="statusAction = 'declined'; submitStatusChange()"
                                 class="px-4 py-2 text-sm rounded bg-red-600 text-white hover:bg-red-700">
-                                Decline
+                                Disapprove
                             </button>
                         </div>
                     </template>

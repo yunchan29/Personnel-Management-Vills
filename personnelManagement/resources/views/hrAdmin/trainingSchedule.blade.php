@@ -83,25 +83,63 @@
         @include('components.hrAdmin.modals.profile', ['application' => $application])
     @endforeach
 
-    <!-- ✅ Set Training Modal -->
-    <div x-show="showTrainingModal" x-transition class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" x-cloak>
-        <div class="bg-white rounded-lg w-full max-w-md p-6 shadow-xl relative">
-            <button @click="showTrainingModal = false" class="absolute top-3 right-4 text-gray-500 hover:text-red-500 text-xl font-bold">&times;</button>
-            <h2 class="text-lg font-semibold text-[#BD6F22] mb-4">Set Training Schedule</h2>
+   <!-- ✅ Set Training Modal -->
+<div 
+    x-show="showTrainingModal" 
+    x-transition.opacity 
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" 
+    x-cloak
+>
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative transition-all duration-300">
+        <!-- Close Button -->
+        <button 
+            @click="showTrainingModal = false" 
+            class="absolute top-3 right-4 text-gray-400 hover:text-red-500 text-2xl font-bold"
+            aria-label="Close"
+        >
+            &times;
+        </button>
 
-            <div class="mb-4">
-                <label class="block font-medium text-gray-700 mb-1">
-                    Dates <span class="text-red-500">*</span>
-                </label>
-                <input type="text" x-ref="trainingDateRange" class="w-full border px-3 py-2 rounded" placeholder="MM/DD/YYYY - MM/DD/YYYY">
-            </div>
+        <!-- Modal Title -->
+        <h2 class="text-xl font-bold text-[#BD6F22] mb-2">Set Training Schedule</h2>
 
-            <div class="flex justify-end gap-2 mt-6">
-                <button @click="showTrainingModal = false" class="px-4 py-2 text-sm rounded border border-gray-300 hover:bg-gray-100">Cancel</button>
-                <button @click="submitTrainingSchedule" class="px-4 py-2 text-sm rounded bg-[#BD6F22] text-white hover:bg-[#a95e1d]">Confirm</button>
-            </div>
+        <!-- Applicant Name -->
+        <p class="text-sm text-gray-600 mb-5">
+            Setting schedule for: 
+            <span class="font-medium text-gray-800" x-text="trainingApplicant?.name || 'Applicant'"></span>
+        </p>
+
+        <!-- Date Range Input -->
+        <div class="mb-5">
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+                Training Date Range <span class="text-red-500">*</span>
+            </label>
+            <input 
+                type="text" 
+                x-ref="trainingDateRange" 
+                class="w-full border border-gray-300 focus:border-[#BD6F22] focus:ring-[#BD6F22] rounded-lg px-4 py-2 text-sm shadow-sm transition duration-150"
+                placeholder="MM/DD/YYYY - MM/DD/YYYY"
+            >
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex justify-end gap-2 mt-6">
+            <button 
+                @click="showTrainingModal = false" 
+                class="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-100 transition"
+            >
+                Cancel
+            </button>
+            <button 
+                @click="submitTrainingSchedule" 
+                class="px-4 py-2 text-sm rounded-lg bg-[#BD6F22] text-white hover:bg-[#a95e1d] transition"
+            >
+                Confirm
+            </button>
         </div>
     </div>
+</div>
+
 
     <!-- ✅ Feedback Toast -->
     <div x-show="feedbackVisible"

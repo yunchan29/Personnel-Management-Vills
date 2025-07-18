@@ -8,6 +8,22 @@
         },
         get isEdit() {
             return !!this.job.id;
+        },
+        confirmDelete(id) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'This job posting will be permanently deleted.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#BD6F22',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(`delete-form-${id}`).submit();
+                }
+            });
         }
     }" 
     x-init="window.addEventListener('open-job-modal', e => openModal(e))"
@@ -43,7 +59,7 @@
         {{-- Modal Content --}}
         <h3 class="text-xl font-semibold text-[#BD6F22] mb-6" x-text="isEdit ? 'Edit Job' : 'Add Job'"></h3>
 
-        <form :action="isEdit   ? `/hrAdmin/jobPosting/${job.id}` : '{{ route('hrAdmin.jobPosting.store') }}'" method="POST">
+        <form :action="isEdit ? `/hrAdmin/jobPosting/${job.id}` : '{{ route('hrAdmin.jobPosting.store') }}'" method="POST">
             @csrf
             <template x-if="isEdit">
                 <input type="hidden" name="_method" value="PUT">
@@ -141,14 +157,15 @@
                 {{-- Delete Button (only in Edit mode) --}}
                 <template x-if="isEdit">
                     <form 
+                        :id="`delete-form-${job.id}`"
                         :action="`/hrAdmin/jobPosting/${job.id}`" 
-                        method="POST" 
-                        onsubmit="return confirm('Are you sure you want to delete this job posting?');"
+                        method="POST"
                     >
                         @csrf
                         @method('DELETE')
                         <button 
-                            type="submit"
+                            type="button"
+                            @click="confirmDelete(job.id)"
                             class="px-4 py-2 w-[110px] bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm"
                         >
                             Delete

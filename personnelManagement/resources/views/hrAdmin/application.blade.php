@@ -18,23 +18,54 @@
     </script>
 
     {{-- Tabs --}}
+    @php $hasJob = isset($selectedJob); @endphp
+
     <div class="flex space-x-8 text-sm font-medium text-gray-600 border-b border-gray-300 mb-6">
+        <!-- Job Postings -->
         <button @click="$store.applications.tab = 'postings'"
                 :class="$store.applications.tab === 'postings' ? 'text-[#BD9168] border-b-2 border-[#BD9168] pb-2' : 'hover:text-[#BD9168]'"
-                class="pb-2 focus:outline-none">Job Postings</button>
+                class="pb-2 focus:outline-none">
+            Job Postings
+        </button>
 
-        <button @click="$store.applications.tab = 'applicants'"
-                :class="$store.applications.tab === 'applicants' ? 'text-[#BD9168] border-b-2 border-[#BD9168] pb-2' : 'hover:text-[#BD9168]'"
-                class="pb-2 focus:outline-none {{ !isset($selectedJob) ? 'text-gray-400 cursor-not-allowed' : '' }}"
-                {{ !isset($selectedJob) ? 'disabled' : '' }}>Applicants</button>
+        <!-- Applicants -->
+        <button 
+            x-on:click="$store.applications.tab = 'applicants'"
+            x-bind:disabled="{{ $hasJob ? 'false' : 'true' }}"
+            :class="{
+                'text-[#BD9168] border-b-2 border-[#BD9168] pb-2': $store.applications.tab === 'applicants',
+                'text-gray-400 cursor-not-allowed': {{ $hasJob ? 'false' : 'true' }},
+                'hover:text-[#BD9168]': {{ $hasJob ? 'true' : 'false' }}
+            }"
+            class="pb-2 focus:outline-none">
+            Applicants
+        </button>
 
-        <button @click="$store.applications.tab = 'interview'"
-                :class="$store.applications.tab === 'interview' ? 'text-[#BD9168] border-b-2 border-[#BD9168] pb-2' : 'hover:text-[#BD9168]'"
-                class="pb-2 focus:outline-none">Interview Schedule</button>
+        <!-- Interview Schedule -->
+        <button 
+            x-on:click="$store.applications.tab = 'interview'"
+            x-bind:disabled="{{ $hasJob ? 'false' : 'true' }}"
+            :class="{
+                'text-[#BD9168] border-b-2 border-[#BD9168] pb-2': $store.applications.tab === 'interview',
+                'text-gray-400 cursor-not-allowed': {{ $hasJob ? 'false' : 'true' }},
+                'hover:text-[#BD9168]': {{ $hasJob ? 'true' : 'false' }}
+            }"
+            class="pb-2 focus:outline-none">
+            Interview Schedule
+        </button>
 
-        <button @click="$store.applications.tab = 'training'"
-                :class="$store.applications.tab === 'training' ? 'text-[#BD9168] border-b-2 border-[#BD9168] pb-2' : 'hover:text-[#BD9168]'"
-                class="pb-2 focus:outline-none">Training Schedule</button>
+        <!-- Training Schedule -->
+        <button 
+            x-on:click="$store.applications.tab = 'training'"
+            x-bind:disabled="{{ $hasJob ? 'false' : 'true' }}"
+            :class="{
+                'text-[#BD9168] border-b-2 border-[#BD9168] pb-2': $store.applications.tab === 'training',
+                'text-gray-400 cursor-not-allowed': {{ $hasJob ? 'false' : 'true' }},
+                'hover:text-[#BD9168]': {{ $hasJob ? 'true' : 'false' }}
+            }"
+            class="pb-2 focus:outline-none">
+            Training Schedule
+        </button>
     </div>
 
     {{-- Job Postings --}}
@@ -48,11 +79,11 @@
         <div class="flex items-center mb-6">
             <label for="search" class="mr-4 font-medium text-sm block">Search Position</label>
             <input type="text"
-                id="search"
-                name="search"
-                x-model="search"
-                class="flex-1 border border-gray-300 rounded-md p-2 text-sm"
-                placeholder="Enter job title...">
+                   id="search"
+                   name="search"
+                   x-model="search"
+                   class="flex-1 border border-gray-300 rounded-md p-2 text-sm"
+                   placeholder="Enter job title...">
             <button class="ml-4 bg-[#BD9168] text-white px-6 py-2 rounded-md hover:bg-[#a37654] transition text-sm flex items-center gap-2">
                 <img src="{{ asset('images/Search2.png') }}" alt="Search" class="h-4 w-4">
                 <span>Search</span>
@@ -111,33 +142,26 @@
     </div>
 
     {{-- Interview Tab --}}
-<div x-show="$store.applications.tab === 'interview'" 
-     x-transition:enter="transition ease-out duration-300"
-     x-transition:enter-start="opacity-0 translate-y-2"
-     x-transition:enter-end="opacity-100 translate-y-0"
-     class="space-y-4">
-
-    @include('hrAdmin.interviewSchedule', ['interviewApplicants' => $interviewApplicants ?? null])
-
-</div>
-
+    <div x-show="$store.applications.tab === 'interview'" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-2"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         class="space-y-4">
+        @include('hrAdmin.interviewSchedule', ['interviewApplicants' => $interviewApplicants ?? null])
+    </div>
 
     {{-- Training Tab --}}
-    {{-- Training Tab --}}
-<div x-show="$store.applications.tab === 'training'" 
-     x-transition:enter="transition ease-out duration-300"
-     x-transition:enter-start="opacity-0 translate-y-2"
-     x-transition:enter-end="opacity-100 translate-y-0"
-     class="space-y-4">
-
-    @if(isset($approvedApplicants) && $approvedApplicants->count() > 0)
-        @include('hrAdmin.trainingSchedule', ['approvedApplicants' => $approvedApplicants])
-    @else
-        <p class="text-center text-gray-500">No approved applicants for training yet.</p>
-    @endif
-
-</div>
-
+    <div x-show="$store.applications.tab === 'training'" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-2"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         class="space-y-4">
+        @if(isset($approvedApplicants) && $approvedApplicants->count() > 0)
+            @include('hrAdmin.trainingSchedule', ['approvedApplicants' => $approvedApplicants])
+        @else
+            <p class="text-center text-gray-500">No approved applicants for training yet.</p>
+        @endif
+    </div>
 
 </section>
 
