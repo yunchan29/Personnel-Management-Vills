@@ -17,9 +17,6 @@ class Application extends Model
         'tin_id_number',
         'pagibig_number',
         'status',
-        'interview_schedule',
-        'remarks',
-        'reviewed_at',
     ];
 
     protected $casts = [
@@ -41,5 +38,10 @@ class Application extends Model
     public function getResumeSnapshotUrlAttribute()
     {
         return $this->resume_snapshot ? \Storage::url($this->resume_snapshot) : null;
-}
+    }
+
+    public function interview()
+    {
+        return $this->hasOne(Interview::class);
+    }
 }

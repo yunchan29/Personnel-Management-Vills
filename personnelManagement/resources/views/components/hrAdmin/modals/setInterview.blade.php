@@ -11,16 +11,32 @@
         </h2>
 
         <label class="block text-sm font-medium mb-1">Interview Date</label>
-        <input type="date" x-model="interviewDate" class="w-full mb-4 p-2 border rounded">
+        <input
+            type="date"
+            x-model="interviewDate"
+            :min="new Date().toISOString().split('T')[0]"
+            class="w-full mb-4 p-2 border rounded"
+        />
 
         <label class="block text-sm font-medium mb-1">Interview Time</label>
         <input type="time" x-model="interviewTime" class="w-full mb-4 p-2 border rounded">
 
         <div class="flex justify-end gap-3">
-            <button @click="showInterviewModal = false"
-                class="px-4 py-2 text-sm rounded border border-gray-300 hover:bg-gray-100">Cancel</button>
             <button @click="submitInterviewDate"
-                class="px-4 py-2 text-sm rounded bg-[#BD6F22] text-white hover:bg-[#a95e1d]">Confirm</button>
+                :disabled="loading"
+                class="px-4 py-2 text-sm rounded bg-[#BD6F22] text-white hover:bg-[#a95e1d] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                <template x-if="loading">
+                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                            stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                </template>
+                <span x-text="loading ? 'Processing...' : 'Confirm'"></span>
+            </button>
+
         </div>
     </div>
 </div>

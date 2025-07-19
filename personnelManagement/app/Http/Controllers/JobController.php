@@ -130,32 +130,32 @@ class JobController extends Controller
     }
 
    // View applicants per job
-public function viewApplicants($jobId)
-{
-    // Load the selected job
-    $job = Job::findOrFail($jobId);
+    public function viewApplicants($jobId)
+    {
+        // Load the selected job
+        $job = Job::findOrFail($jobId);
 
-    // Load all jobs with application count for the sidebar or filter
-    $jobs = Job::withCount('applications')->get();
+        // Load all jobs with application count for the sidebar or filter
+        $jobs = Job::withCount('applications')->get();
 
-    // Get all applications for the selected job, including user and job relationships
-    $applications = Application::with(['user', 'job'])
-        ->where('job_id', $jobId)
-        ->get();
+        // Get all applications for the selected job, including user and job relationships
+        $applications = Application::with(['user', 'job'])
+            ->where('job_id', $jobId)
+            ->get();
 
-    // Get all approved applicants (for training schedule, etc.)
-    $approvedApplicants = Application::with(['user', 'job'])
-        ->where('status', 'approved')
-        ->get();
+        // Get all approved applicants (for training schedule, etc.)
+        $approvedApplicants = Application::with(['user', 'job'])
+            ->where('status', 'approved')
+            ->get();
 
-    return view('hrAdmin.application', [
-        'jobs' => $jobs,
-        'applications' => $applications,
-        'selectedJob' => $job,
-        'selectedTab' => 'applicants',
-        'approvedApplicants' => $approvedApplicants,
-    ]);
-}
+        return view('hrAdmin.application', [
+            'jobs' => $jobs,
+            'applications' => $applications,
+            'selectedJob' => $job,
+            'selectedTab' => 'applicants',
+            'approvedApplicants' => $approvedApplicants,
+        ]);
+    }
 
     // Update application status (approve / decline)
     public function updateApplicationStatus(Request $request, $id)
@@ -163,7 +163,7 @@ public function viewApplicants($jobId)
         $application = Application::findOrFail($id);
 
         $validated = $request->validate([
-            'status' => 'required|in:approved,declined,interviewed,pending'
+            'status' => 'required|in:approved,declined,interviewed,for_interview,trained'
         ]);
 
         $application->status = $validated['status'];
@@ -176,34 +176,6 @@ public function viewApplicants($jobId)
             'application_id' => $application->id,
         ]);
     }
-
-  public function setInterviewDate(Request $request, $id)
-{
-    $application = Application::findOrFail($id);
-
-    $validated = $request->validate([
-        'interview_date' => 'required|date|after_or_equal:today',
-        'status' => 'nullable|in:for_interview' // ✅ allow status from request
-    ]);
-
-    $application->interview_date = $validated['interview_date'];
-
-    // ✅ Save status if provided (defaults to 'for_interview')
-    if ($request->has('status')) {
-        $application->status = $request->status;
-    }
-
-    $application->save();
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Interview date set successfully.',
-        'application_id' => $application->id,
-        'interview_date' => $application->interview_date,
-        'status' => $application->status,
-    ]);
-}
-
 
     // Show training schedule for approved applicants
     public function trainingSchedule()

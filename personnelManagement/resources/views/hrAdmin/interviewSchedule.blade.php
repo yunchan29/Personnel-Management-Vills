@@ -16,10 +16,11 @@
                 </tr>
             </thead>
             <tbody>
+
                 @forelse($applications as $application)
                     <tr
                         data-applicant-id="{{ $application->id }}"
-                        data-interview-date="{{ $application->interview_date }}"
+                        data-interview-date="{{ optional($application->interview)?->scheduled_at ? \Carbon\Carbon::parse($application->interview->scheduled_at)->format('Y-m-d H:i') : '' }}"
                         data-status="{{ $application->status }}"
                         x-show="(['approved', 'for_interview', 'interviewed', 'declined'].includes('{{ $application->status }}')) && (showAll || '{{ $application->interview_date }}' === '') && !removedApplicants.includes({{ $application->id }})"
                         class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out">
@@ -78,23 +79,16 @@
                         <td class="py-3 px-4">
                             @if($application->user->active_status === 'Active')
                                 <div class="flex gap-2">
+                                    <button
+                                        @click="openSetInterview({{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}', {{ $application->user_id }}, '{{ optional($application->interview)?->scheduled_at ? \Carbon\Carbon::parse($application->interview->scheduled_at)->format('Y-m-d H:i') : '' }}')"
+                                        class="bg-blue-600 text-white text-sm font-medium h-8 px-3 rounded hover:bg-blue-700 disabled:opacity-50"
+                                        :disabled="['interviewed', 'declined'].includes(applicants.find(a => a.id === {{ $application->id }})?.status)">Interview</button>
                                   <button
-    @click="openSetInterview({{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}')"
-    :disabled="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'interviewed'"
-    class="text-white text-sm font-medium h-8 px-3 rounded transition
-        {{ $application->interview_date ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-blue-600 hover:bg-blue-700' }}
-        disabled:opacity-50 disabled:cursor-not-allowed">
-    {{ $application->interview_date ? 'Reschedule' : 'Interview' }}
-</button>
-
-
-                                  <button
-    @click="openStatusModal({{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}')"
-    class="bg-green-600 text-white text-sm font-medium h-8 px-3 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-    :disabled="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') !== 'for_interview'">
-    Manage
-</button>
-
+                                        @click="openStatusModal({{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}')"
+                                        class="bg-green-600 text-white text-sm font-medium h-8 px-3 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        :disabled="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') !== 'for_interview'">
+                                        Manage
+                                    </button>
                                 </div>
                             @else
                                 <span class="text-gray-400 italic">Inactive</span>

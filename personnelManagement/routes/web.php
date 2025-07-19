@@ -14,6 +14,7 @@ use App\Http\Controllers\File201Controller;
 use App\Http\Controllers\ResumeController;
 use App\Http\Controllers\LeaveFormController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\InterviewController;
 
 
 //temporary ulit HAHAHAHH sorry
@@ -121,6 +122,9 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
     Route::get('/viewApplication', [JobController::class, 'viewApplications'])->name('viewApplication');
     Route::get('/viewApplicants/{id}', [JobController::class, 'viewApplicants'])->name('viewApplicants');
     Route::get('/job/{id}/applicants', [JobController::class, 'viewApplicants'])->name('applicants');
+
+    // Interview Scheduling
+    Route::post('/interviews', [InterviewController::class, 'store'])->name('interviews.store');
 
     // Applicant Actions
 Route::post('/applications/{id}/status', [JobController::class, 'updateApplicationStatus'])->name('applications.updateStatus');

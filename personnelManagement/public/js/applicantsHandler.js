@@ -1,6 +1,7 @@
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('applicantsHandler', () => ({
+        loading: false,
         pageContext: '',
         showModal: false,
         resumeUrl: '',
@@ -50,6 +51,7 @@ document.addEventListener('alpine:init', () => {
                         numberOfColumns: 2,
                     });
                 }
+                
             }, 50);
         },
 
@@ -103,21 +105,21 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 const label = {
-                    approved: 'approved',
-                    interviewed: 'passed',
-                    declined: 'failed',
-                    for_interview: 'scheduled for interview',
-                    trained: 'trained'
-                }[this.statusAction] || 'updated';
+                    approved: 'Approved',
+                    interviewed: 'Passed',
+                    declined: 'Failed',
+                    for_interview: 'Scheduled for Interview',
+                    trained: 'Trained'
+                }[this.statusAction] || 'Updated';
 
                this.feedbackMessage = `Applicant ${label} successfully.`;
-this.feedbackVisible = true;
+               this.feedbackVisible = true;
 
-// Wait 2.5 seconds, then reload the page
-setTimeout(() => {
-    this.feedbackVisible = false;
-    location.reload();
-}, 2500);
+                // Wait 2.5 seconds, then reload the page
+                setTimeout(() => {
+                    this.feedbackVisible = false;
+                    location.reload();
+                }, 2500);
 
                 if (['interviewed', 'declined', 'trained'].includes(this.statusAction)) {
                     setTimeout(() => this.removedApplicants.push(result.application_id), 300);
@@ -132,14 +134,21 @@ setTimeout(() => {
             }
         },
 
-        openSetInterview(id, name) {
-            this.interviewApplicant = { id, name };
-            const row = document.querySelector(`tr[data-applicant-id='${id}']`);
-            const dateStr = row?.getAttribute('data-interview-date') || '';
-            const [date, time] = dateStr.split(' ');
+        openSetInterview(applicationId, name, userId, rawInterviewDate = '') {
+            this.interviewApplicant = {
+                application_id: applicationId,
+                user_id: userId,
+                name: name
+            };
 
+            const [date, time] = rawInterviewDate.split(' ');
             this.interviewDate = date || '';
             this.interviewTime = time || '';
+
+            // ✅ Store original for comparison
+            this.originalDate = date || '';
+            this.originalTime = time || '';
+
             this.showInterviewModal = true;
         },
 
@@ -150,43 +159,86 @@ setTimeout(() => {
             }
 
             const interviewDateTime = `${this.interviewDate} ${this.interviewTime}`;
+            const originalDateTime = `${this.originalDate} ${this.originalTime}`;
 
-            try {
-                const response = await fetch(`/hrAdmin/applications/${this.interviewApplicant.id}/interview-date`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({
-                        interview_date: interviewDateTime,
-                        status: 'for_interview'
-                    })
-                });
+            console.log('Original:', originalDateTime);
+            console.log('New:', interviewDateTime);
 
-                if (!response.ok) throw new Error('Failed to set interview date');
-                const result = await response.json();
-
-                const row = document.querySelector(`tr[data-applicant-id='${this.interviewApplicant.id}']`);
-                if (row) {
-                    row.setAttribute('data-interview-date', interviewDateTime);
-                    row.setAttribute('data-status', 'for_interview');
-                }
-
-                const index = this.applicants.findIndex(a => a.id === this.interviewApplicant.id);
-                if (index !== -1) {
-                    this.applicants[index].status = 'for_interview';
-                    this.applicants = [...this.applicants];
-                }
-
-                this.feedbackMessage = 'Interview date set successfully!';
+            // ✅ Check if no changes were made
+            if (this.originalDate && this.originalTime && interviewDateTime === originalDateTime) {
+                this.feedbackMessage = 'No changes were made to the interview schedule.';
                 this.feedbackVisible = true;
                 setTimeout(() => this.feedbackVisible = false, 3000);
-
                 this.showInterviewModal = false;
+                return; // 🚫 Skip API call
+            }
 
-            } catch (error) {
-                alert('Error: ' + error.message);
+            const isReschedule = this.originalDate && this.originalTime;
+
+            this.loading = true;
+
+            const proceed = async () => {
+                try {
+                    const response = await fetch(`/hrAdmin/interviews`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({
+                            application_id: this.interviewApplicant.application_id,
+                            user_id: this.interviewApplicant.user_id,
+                            scheduled_at: interviewDateTime,
+                            is_reschedule: isReschedule,
+                        })
+                    });
+
+                    if (!response.ok) throw new Error('Failed to set interview date');
+                    const result = await response.json();
+
+                    const row = document.querySelector(`tr[data-applicant-id='${this.interviewApplicant.application_id}']`);
+                    if (row) {
+                        row.setAttribute('data-interview-date', interviewDateTime);
+                        row.setAttribute('data-status', 'for_interview');
+                    }
+
+                    const index = this.applicants.findIndex(a => a.id === this.interviewApplicant.application_id);
+                    if (index !== -1) {
+                        this.applicants[index].status = 'for_interview';
+                        this.applicants = [...this.applicants];
+                    }
+
+                    this.feedbackMessage = 'Interview date set successfully!';
+                    this.feedbackVisible = true;
+                    setTimeout(() => this.feedbackVisible = false, 3000);
+
+                    this.showInterviewModal = false;
+
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                } finally {
+                    this.loading = false; // ✅ Stop loading
+                }
+            };
+
+            if (isReschedule) {
+                Swal.fire({
+                    title: "You're about to reschedule",
+                    text: "Do you want to continue?",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#BD6F22",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Yes, reschedule"
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        proceed();
+                    } else {
+                        this.loading = false; // ✅ Stop loading if cancelled
+                    }
+                });
+            } else {
+                proceed();
             }
         },
 

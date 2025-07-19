@@ -147,6 +147,6 @@
 <!-- Scripts: Load Alpine FIRST -->
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script src="{{ asset('js/applicantsHandler.js') }}"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <!-- Alpine Cloak -->
 <style>[x-cloak] { display: none !important; }</style>
