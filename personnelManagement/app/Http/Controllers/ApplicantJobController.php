@@ -123,10 +123,6 @@ class ApplicantJobController extends Controller
             ->latest()
             ->get();
 
-        // ← dump here:
-        dd('this method is being hit');
-        dd($applications);
-
         $resume = $user->resume ?? null;
 
         return view('applicant.applications', compact('applications', 'resume'));

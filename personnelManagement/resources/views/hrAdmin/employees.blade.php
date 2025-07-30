@@ -88,19 +88,54 @@
                     $jobsMap = $jobs->keyBy('id');
                 @endphp
 
-             @foreach($jobs as $job)
-    <div x-show="selectedJobId === {{ $job->id }}">
-        <h2 class="text-lg font-semibold text-[#BD6F22] mb-4">{{ $job->job_title }}</h2>
+                @foreach($jobs as $job)
+                    <div x-show="selectedJobId === {{ $job->id }}">
+                        <h2 class="text-lg font-semibold text-[#BD6F22] mb-4">{{ $job->job_title }}</h2>
 
-        @php
-            $filteredEmployees = $groupedEmployees[$job->id] ?? collect();
-        @endphp
+                        @php
+                            $filteredEmployees = $groupedEmployees->get($job->id, collect());
+                        @endphp
 
-        <x-hrAdmin.employeeTable :employees="$filteredEmployees" />
-    </div>
-@endforeach
-
-
+                        @if($filteredEmployees->isEmpty())
+                            <p class="text-gray-600">No employees found for this position.</p>
+                        @else
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full bg-white text-base">
+                                    <thead class="bg-gray-100 text-left text-gray-800">
+                                        <tr>
+                                            <th class="py-4 px-6">Name</th>
+                                            <th class="py-4 px-6">Company</th>
+                                            <th class="py-4 px-6">Resume</th>
+                                            <th class="py-4 px-6">201 File</th>
+                                            <th class="py-4 px-6">Start</th>
+                                            <th class="py-4 px-6">End</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($filteredEmployees as $employee)
+                                            <tr class="hover:bg-gray-50 border-b-2 border-gray-300">
+                                                <td class="py-4 px-6 text-lg">{{ $employee->full_name }}</td>
+                                                <td class="py-4 px-6 text-lg">{{ $employee->company ?? '—' }}</td>
+                                                <td class="py-4 px-6">
+                                                    <a href="{{ $employee->resume_url }}" class="inline-block bg-[#BD6F22] text-white text-sm font-medium px-4 py-2 rounded hover:bg-[#a55f1d] transition">
+                                                        See Attachment
+                                                    </a>
+                                                </td>
+                                                <td class="py-4 px-6">
+                                                    <a href="{{ $employee->file_201_url }}" class="inline-block bg-[#BD6F22] text-white text-sm font-medium px-4 py-2 rounded hover:bg-[#a55f1d] transition">
+                                                        View
+                                                    </a>
+                                                </td>
+                                                <td class="py-4 px-6 text-lg">{{ $employee->start_date ?? '—' }}</td>
+                                                <td class="py-4 px-6 text-lg">{{ $employee->end_date ?? '—' }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
             </div>
         </template>
     </div>

@@ -93,7 +93,7 @@
                         <h2 class="text-lg font-semibold text-[#BD6F22] mb-4">{{ $job->job_title }}</h2>
 
                         @php
-                            $filteredEmployees = $employees->where('job_id', $job->id);
+                            $filteredEmployees = $groupedEmployees->get($job->id, collect());
                         @endphp
 
                         @if($filteredEmployees->isEmpty())

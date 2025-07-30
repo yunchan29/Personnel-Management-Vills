@@ -59,6 +59,10 @@ document.addEventListener('alpine:init', () => {
             return this.applicants.filter(applicant => this.showAll || !applicant.training);
         },
 
+        getApplicationById(id) {
+            return this.applicants.find(applicant => applicant.id === id);
+        },
+
         openResume(url) {
             this.resumeUrl = url;
             this.showModal = true;
@@ -243,18 +247,47 @@ document.addEventListener('alpine:init', () => {
         },
 
         openSetTraining(id, name) {
+            const applicant = this.applicants.find(a => a.id === id);
+            const existingRange = applicant?.training || null;
+
             this.trainingApplicant = { id, name };
-
-            const row = document.querySelector(`tr[data-applicant-id='${id}']`);
-            const range = row?.getAttribute('data-training-range') || '';
-
-            if (range && this.trainingPicker) {
-                const [start, end] = range.split(' - ');
-                this.trainingPicker.setDateRange(start, end);
-            }
-
+            this.initialTrainingRange = existingRange;
+            this.selectedTrainingRange = existingRange || ''; // store selected range
             this.showTrainingModal = true;
+
+            this.$nextTick(() => {
+                const input = this.$refs.trainingDateRange;
+
+                // Clear previous value
+                input.value = '';
+
+                // Destroy existing picker if any
+                if (this.trainingPicker) {
+                    this.trainingPicker.destroy();
+                    this.trainingPicker = null;
+                }
+
+                // Recreate picker
+                this.trainingPicker = new Litepicker({
+                    element: input,
+                    singleMode: false,
+                    format: 'MM/DD/YYYY',
+                    setup: (picker) => {
+                        picker.on('selected', (start, end) => {
+                            this.selectedTrainingRange = `${start.format('MM/DD/YYYY')} - ${end.format('MM/DD/YYYY')}`;
+                        });
+                    }
+                });
+
+                // Set range if exists
+                if (existingRange && existingRange.includes(' - ')) {
+                    const [start, end] = existingRange.split(' - ');
+                    this.trainingPicker.setDateRange(start, end);
+                    input.value = existingRange;
+                }
+            });
         },
+
 
         async submitTrainingSchedule() {
             const selectedRange = this.$refs.trainingDateRange.value;
@@ -264,6 +297,8 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
+            const isReschedule = this.initialTrainingRange && this.initialTrainingRange !== selectedRange;
+
             try {
                 const response = await fetch(`/hrAdmin/applications/${this.trainingApplicant.id}/training-date`, {
                     method: 'POST',
@@ -272,7 +307,8 @@ document.addEventListener('alpine:init', () => {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     },
                     body: JSON.stringify({
-                        training_schedule: selectedRange
+                        training_schedule: selectedRange,
+                        reschedule: isReschedule // 👈 send flag
                     })
                 });
 
@@ -288,7 +324,7 @@ document.addEventListener('alpine:init', () => {
                     this.applicants = [...this.applicants];
                 }
 
-                this.feedbackMessage = 'Training schedule set successfully!';
+                this.feedbackMessage = result.message || 'Training schedule set successfully!';
                 this.feedbackVisible = true;
                 setTimeout(() => this.feedbackVisible = false, 3000);
 

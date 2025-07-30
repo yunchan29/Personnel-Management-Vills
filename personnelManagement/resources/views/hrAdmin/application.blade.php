@@ -156,11 +156,8 @@
          x-transition:enter-start="opacity-0 translate-y-2"
          x-transition:enter-end="opacity-100 translate-y-0"
          class="space-y-4">
-        @if(isset($approvedApplicants) && $approvedApplicants->count() > 0)
-            @include('hrAdmin.trainingSchedule', ['approvedApplicants' => $approvedApplicants])
-        @else
-            <p class="text-center text-gray-500">No approved applicants for training yet.</p>
-        @endif
+         @include('hrAdmin.trainingSchedule', ['approvedApplicants' => $approvedApplicants ?? collect()])
+
     </div>
 
 </section>

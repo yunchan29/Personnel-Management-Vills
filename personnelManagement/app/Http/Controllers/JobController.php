@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Job;
 use App\Models\Application;
+use App\Models\trainingSchedule;
 
 class JobController extends Controller
 {
@@ -124,7 +125,7 @@ class JobController extends Controller
     public function applications()
     {
         $jobs = Job::withCount('applications')->get();
-        $applications = Application::with('user', 'job')->latest()->get();
+        $applications = Application::with(['user', 'job', 'trainingSchedule'])->latest()->get();
 
         return view('hrAdmin.application', compact('jobs', 'applications'));
     }
@@ -139,14 +140,14 @@ class JobController extends Controller
         $jobs = Job::withCount('applications')->get();
 
         // Get all applications for the selected job, including user and job relationships
-        $applications = Application::with(['user', 'job'])
+        $applications = Application::with(['user', 'job', 'trainingSchedule'])
             ->where('job_id', $jobId)
             ->get();
 
         // Get all approved applicants (for training schedule, etc.)
-        $approvedApplicants = Application::with(['user', 'job'])
+        $approvedApplicants = Application::with(['user', 'job', 'trainingSchedule'])
             ->where('status', 'approved')
-            ->get();
+            ->get();    
 
         return view('hrAdmin.application', [
             'jobs' => $jobs,
@@ -169,6 +170,12 @@ class JobController extends Controller
         $application->status = $validated['status'];
         $application->save();
 
+        // ✅ If status is set to 'interviewed', mark related interview as completed
+        if ($validated['status'] === 'interviewed') {
+            \App\Models\Interview::where('application_id', $application->id)
+                ->update(['status' => 'completed']);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Application status updated successfully.',
@@ -180,37 +187,13 @@ class JobController extends Controller
     // Show training schedule for approved applicants
     public function trainingSchedule()
     {
-        $applications = Application::with(['user', 'job'])
+        $applications = Application::with(['user', 'job', 'training_schedule'])
             ->where('status', 'approved')
             ->latest()
             ->get();
 
         return view('hrAdmin.trainingSchedule', compact('applications'));
     }
-
-  // ✅ Set training schedule (date range)
-public function setTrainingDate(Request $request, $id)
-{
-    $application = Application::findOrFail($id);
-
-    $validated = $request->validate([
-        'training_schedule' => [
-            'required',
-            'string',
-            'regex:/^\d{2}\/\d{2}\/\d{4}\s\-\s\d{2}\/\d{2}\/\d{4}$/'
-        ]
-    ]);
-
-    $application->training_schedule = $validated['training_schedule'];
-    $application->save();
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Training schedule set successfully.',
-        'application_id' => $application->id,
-        'training_schedule' => $application->training_schedule,
-    ]);
-}
 
     // Delete a job posting
     public function destroy($id)

@@ -15,7 +15,7 @@ use App\Http\Controllers\ResumeController;
 use App\Http\Controllers\LeaveFormController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\InterviewController;
-
+use App\Http\Controllers\TrainingScheduleController;
 
 //temporary ulit HAHAHAHH sorry
 Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
@@ -125,12 +125,14 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
 
     // Interview Scheduling
     Route::post('/interviews', [InterviewController::class, 'store'])->name('interviews.store');
+    
+    // Training Schedule
+    Route::post('applications/{id}/training-date', [TrainingScheduleController::class, 'setTrainingDate']);
 
     // Applicant Actions
-Route::post('/applications/{id}/status', [JobController::class, 'updateApplicationStatus'])->name('applications.updateStatus');
-Route::post('/applications/{id}/interview-date', [JobController::class, 'setInterviewDate'])->name('applications.setInterviewDate');
-Route::post('/applications/{id}/training-date', [JobController::class, 'setTrainingDate'])->name('applications.setTrainingDate'); // ✅ Add this
+    Route::post('/applications/{id}/status', [JobController::class, 'updateApplicationStatus'])->name('applications.updateStatus');
 
+    
     // Job Posting CRUD
     Route::get('/job-posting', [JobController::class, 'index'])->name('jobPosting');
     Route::post('/jobPosting/store', [JobController::class, 'store'])->name('jobPosting.store');
@@ -155,8 +157,6 @@ Route::post('/applications/{id}/training-date', [JobController::class, 'setTrain
     // Settings
     Route::get('/settings', fn() => view('hrAdmin.settings'))->name('settings');
 
-    // Training Schedule
-    Route::get('/training-schedule', [JobController::class, 'trainingSchedule'])->name('training.schedule');
 });
 
     
