@@ -17,16 +17,13 @@
             </thead>
             <tbody>
                 @forelse ($applications as $application)
-                        <tr x-data="{
-                                status: '{{ $application->status }}',
-                                trainingSchedule: '{{ $application->training_schedule }}',
-                                id: {{ $application->id }}
-                            }" 
-                            x-init="console.log('Applicant ID:', id, 'Status:', status, 'Training Schedule:', trainingSchedule)"
-                            x-show="(showAll || !trainingSchedule) && (['interviewed', 'scheduled_for_training'].includes(status)) && !removedApplicants.includes(id)"
-                            class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out"
-                        >
-
+                    <tr
+                        data-applicant-id="{{ $application->id }}"
+                        data-status="{{ $application->status }}"
+                        data-training-range="{{ $application->training_schedule ?? '' }}"
+                        x-show="(showAll || '{{ $application->training_schedule }}' === '') && '{{ $application->status }}' === 'interviewed' && !removedApplicants.includes({{ $application->id }})"
+                        class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out"
+                    >
                         <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
                             <span class="inline-block w-3 h-3 rounded-full {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
                             {{ $application->user->first_name }} {{ $application->user->last_name }}
@@ -51,17 +48,10 @@
                             </button>
                         </td>
                         <td class="py-3 px-4 text-sm text-gray-700">
-                            @if ($application->trainingSchedule?->start_date && $application->trainingSchedule?->end_date)
-                                @php
-                                    $start = \Carbon\Carbon::parse($application->trainingSchedule->start_date);
-                                    $end = \Carbon\Carbon::parse($application->trainingSchedule->end_date);
-                                    $display = $start->format('M d') .
-                                        ($start->isSameMonth($end) ? '–' . $end->format('d') : ' – ' . $end->format('M d')) .
-                                        ', ' . ($start->year === $end->year ? $start->year : $start->year . ' – ' . $end->year);
-                                @endphp
-                                <span>{{ $display }}</span>
+                            @if ($application->training_schedule)
+                                <span>{{ $application->training_schedule }}</span>
                             @else
-                                <span class="text-gray-400 italic">No Schedule Yet</span>
+                                <span class="text-gray-400 italic">None</span>
                             @endif
                         </td>
                         <td class="py-3 px-4">
