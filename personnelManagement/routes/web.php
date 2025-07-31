@@ -2,11 +2,11 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Models\User;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\UserController;
-use App\Models\User;
 use App\Http\Controllers\JobController; 
 use App\Http\Controllers\ApplicantJobController;
 use App\Http\Controllers\LandingPageController;
@@ -15,6 +15,8 @@ use App\Http\Controllers\ResumeController;
 use App\Http\Controllers\LeaveFormController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\InterviewController;
+use App\Http\Controllers\TrainingScheduleController;
+use App\Http\Controllers\InitialApplicationController;
 
 
 //temporary ulit HAHAHAHH sorry
@@ -118,18 +120,21 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
     Route::put('/profile', [UserController::class, 'updateHrAdmin'])->name('profile.update');
 
     // Application Viewing
-    Route::get('/application', [JobController::class, 'applications'])->name('application');
-    Route::get('/viewApplication', [JobController::class, 'viewApplications'])->name('viewApplication');
-    Route::get('/viewApplicants/{id}', [JobController::class, 'viewApplicants'])->name('viewApplicants');
-    Route::get('/job/{id}/applicants', [JobController::class, 'viewApplicants'])->name('applicants');
+    Route::get('/application', [InitialApplicationController::class, 'index'])->name('application');
+    Route::get('/viewApplication', [InitialApplicationController::class, 'index'])->name('viewApplication');
+    Route::get('/viewApplicants/{id}', [InitialApplicationController::class, 'viewApplicants'])->name('viewApplicants');
+    Route::get('/job/{id}/applicants', [InitialApplicationController::class, 'viewApplicants'])->name('applicants');
 
-    // Interview Scheduling
+    // Interview Scheduling 
+    Route::get('/interviews', [InterviewController::class, 'index'])->name('interviews.index');
     Route::post('/interviews', [InterviewController::class, 'store'])->name('interviews.store');
 
-    // Applicant Actions
-Route::post('/applications/{id}/status', [JobController::class, 'updateApplicationStatus'])->name('applications.updateStatus');
-Route::post('/applications/{id}/interview-date', [JobController::class, 'setInterviewDate'])->name('applications.setInterviewDate');
-Route::post('/applications/{id}/training-date', [JobController::class, 'setTrainingDate'])->name('applications.setTrainingDate'); // ✅ Add this
+    // Application Approval
+    Route::post('/applications/{id}/status', [InitialApplicationController::class, 'updateApplicationStatus'])->name('applications.updateStatus');
+
+    // Training Schedule
+    Route::post('/applications/{id}/training-date', [TrainingScheduleController::class, 'setTrainingDate'])->name('applications.setTrainingDate');
+
 
     // Job Posting CRUD
     Route::get('/job-posting', [JobController::class, 'index'])->name('jobPosting');
@@ -156,7 +161,8 @@ Route::post('/applications/{id}/training-date', [JobController::class, 'setTrain
     Route::get('/settings', fn() => view('hrAdmin.settings'))->name('settings');
 
     // Training Schedule
-    Route::get('/training-schedule', [JobController::class, 'trainingSchedule'])->name('training.schedule');
+    Route::post('/training-schedule/{id}', [TrainingScheduleController::class, 'setTrainingDate'])->name('training.schedule.set');
+
 });
 
     

@@ -49,12 +49,10 @@ class ResumeController extends Controller
         // Update DB
         $user->resume->update([
             'resume' => $path,
-            'original_name' => $originalName // <-- Save original name
         ]);
     } else {
         $user->resume()->create([
             'resume' => $path,
-            'original_name' => $originalName // <-- Save original name
         ]);
     }
 

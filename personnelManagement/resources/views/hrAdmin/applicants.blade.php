@@ -18,18 +18,18 @@
             <tbody>
                 @forelse($applications as $application)
                     <tr
-    data-applicant-id="{{ $application->id }}"
-    data-status="{{ $application->status }}"
-    x-show="(showAll || (!['approved', 'interviewed'].includes('{{ $application->status }}'))) && !removedApplicants.includes({{ $application->id }})"
-    x-transition:enter="transition ease-out duration-500"
-    x-transition:enter-start="opacity-0 scale-95"
-    x-transition:enter-end="opacity-100 scale-100"
-    x-transition:leave="transition ease-in duration-300"
-    x-transition:leave-start="opacity-100 scale-100"
-    x-transition:leave-end="opacity-0 scale-95"
-    @applicant-approved.window="if ($event.detail.id === {{ $application->id }}) removedApplicants.push({{ $application->id }})"
-    class="border-b hover:bg-gray-50"
->
+                        data-applicant-id="{{ $application->id }}"
+                        data-status="{{ $application->status }}"
+                        x-show="(showAll || (!['approved', 'interviewed'].includes('{{ $application->status }}'))) && !removedApplicants.includes({{ $application->id }})"
+                        x-transition:enter="transition ease-out duration-500"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-300"
+                        x-transition:leave-start="opacity-100 scale-100"
+                        x-transition:leave-end="opacity-0 scale-95"
+                        @applicant-approved.window="if ($event.detail.id === {{ $application->id }}) removedApplicants.push({{ $application->id }})"
+                        class="border-b hover:bg-gray-50"
+                    >
 
                         <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
                             <span class="inline-block w-3 h-3 rounded-full {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
@@ -71,22 +71,22 @@
                         <td class="py-3 px-4">
                             @if($application->user->active_status === 'Active')
                                 @if($application->status === 'interviewed')
-    <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300">
-        Interviewed
-    </span>
-@elseif($application->status === 'approved')
-    <button 
-        class="bg-green-600 text-white text-sm font-medium h-8 px-3 rounded shadow cursor-not-allowed opacity-70"
-        disabled>
-        Approved
-    </button>
-@else
-    <button
-        @click="confirmStatus('approved', {{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}', '{{ $application->status }}')"
-        class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
-        Approve/Disapprove
-    </button>
-@endif
+                                <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300">
+                                    Interviewed
+                                </span>
+                            @elseif($application->status === 'approved')
+                                <button 
+                                    class="bg-green-600 text-white text-sm font-medium h-8 px-3 rounded shadow cursor-not-allowed opacity-70"
+                                    disabled>
+                                    Approved
+                                </button>
+                            @else
+                                <button
+                                    @click="confirmStatus('approved', {{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}', '{{ $application->status }}')"
+                                    class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
+                                    Approve/Disapprove
+                                </button>
+                            @endif
 
                             @else
                                 <span class="text-gray-400 italic">Inactive</span>

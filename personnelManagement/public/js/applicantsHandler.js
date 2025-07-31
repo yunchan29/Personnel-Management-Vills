@@ -28,6 +28,8 @@ document.addEventListener('alpine:init', () => {
         showAll: false,
 
         init() {
+            console.log('Running init()...');
+
             setTimeout(() => {
                 this.applicants = Array.from(document.querySelectorAll('tr[data-applicant-id]')).map(row => ({
                     id: parseInt(row.dataset.applicantId),
@@ -41,19 +43,27 @@ document.addEventListener('alpine:init', () => {
                     element: row
                 }));
 
-                const ref = this.$refs.trainingDateRange;
-                if (ref) {
-                    this.trainingPicker = new Litepicker({
-                        element: ref,
-                        singleMode: false,
-                        format: 'MM/DD/YYYY',
-                        numberOfMonths: 2,
-                        numberOfColumns: 2,
-                    });
-                }
+                console.log('Applicants loaded:', this.applicants);
                 
+                  const ref = this.$refs.trainingDateRange;
+            if (ref) {
+                // only one Litepicker here, stored on the component
+                this.trainingPicker = new Litepicker({
+                element: ref,
+                singleMode: false,
+                format: 'MM/DD/YYYY',
+                numberOfMonths: 2,
+                numberOfColumns: 2,
+                // optional: auto-apply when you pick
+                autoApply: true,
+                });
+                console.log('Training picker initialized', this.trainingPicker);
+            }  else {
+                    console.warn('Date range input ref not found');
+                }
             }, 50);
         },
+
 
         filteredApplicants() {
             return this.applicants.filter(applicant => this.showAll || !applicant.training);
@@ -210,7 +220,10 @@ document.addEventListener('alpine:init', () => {
 
                     this.feedbackMessage = 'Interview date set successfully!';
                     this.feedbackVisible = true;
-                    setTimeout(() => this.feedbackVisible = false, 3000);
+                    setTimeout(() => {
+                        this.feedbackVisible = false;
+                        location.reload(); // ✅ Reload the page after feedback disappears
+                    }, 3000);
 
                     this.showInterviewModal = false;
 
@@ -242,19 +255,39 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        openSetTraining(id, name) {
+        openSetTraining(id, name, range) {
+            console.log("Opening training modal...");
+            console.log("Applicant ID:", id);
+            console.log("Name:", name);
+            console.log("Training Range:", range);
+
             this.trainingApplicant = { id, name };
-
-            const row = document.querySelector(`tr[data-applicant-id='${id}']`);
-            const range = row?.getAttribute('data-training-range') || '';
-
-            if (range && this.trainingPicker) {
-                const [start, end] = range.split(' - ');
-                this.trainingPicker.setDateRange(start, end);
-            }
-
+            this.trainingRange = range;       // keep for your POST if you need it
             this.showTrainingModal = true;
+
+        this.$nextTick(() => {
+            // do nothing if there’s no picker yet
+            if (!this.trainingPicker) return;
+
+            // if we have a range string like "08/01/2025 - 08/07/2025"
+            if (range && range.includes(' - ')) {
+            const [start, end] = range.split(' - ');
+
+            // set the input’s visible value
+            this.$refs.trainingDateRange.value = range;
+
+            // tell Litepicker to update its selected range
+            this.trainingPicker.setDateRange(start, end, true);
+            console.log('Picker dateRange set to:', start, end);
+            } else {
+            // clear it if there was no existing range
+            this.$refs.trainingDateRange.value = '';
+            this.trainingPicker.clearSelection();
+            }
+        });
         },
+
+
 
         async submitTrainingSchedule() {
             const selectedRange = this.$refs.trainingDateRange.value;
@@ -265,32 +298,35 @@ document.addEventListener('alpine:init', () => {
             }
 
             try {
-                const response = await fetch(`/hrAdmin/applications/${this.trainingApplicant.id}/training-date`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({
-                        training_schedule: selectedRange
-                    })
-                });
+                const response = await fetch(`/hrAdmin/training-schedule/${this.trainingApplicant.id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    training_schedule: selectedRange
+                })
+            });
 
                 if (!response.ok) throw new Error('Failed to set training schedule');
+
                 const result = await response.json();
 
+                // Update training schedule data in table row
                 const row = document.querySelector(`tr[data-applicant-id='${this.trainingApplicant.id}']`);
                 if (row) row.setAttribute('data-training-range', selectedRange);
 
                 const index = this.applicants.findIndex(a => a.id === this.trainingApplicant.id);
                 if (index !== -1) {
                     this.applicants[index].training = selectedRange;
+                    this.applicants[index].status = 'scheduled_for_training'; // Update status in frontend too
                     this.applicants = [...this.applicants];
                 }
 
-                this.feedbackMessage = 'Training schedule set successfully!';
+                this.feedbackMessage = result.message || 'Training schedule set successfully!';
                 this.feedbackVisible = true;
-                setTimeout(() => this.feedbackVisible = false, 3000);
+                setTimeout(() => location.reload(), 2000); // Reload after 2s delay
 
                 this.showTrainingModal = false;
 
@@ -298,5 +334,6 @@ document.addEventListener('alpine:init', () => {
                 alert('Error: ' + error.message);
             }
         }
+
     }));
 });

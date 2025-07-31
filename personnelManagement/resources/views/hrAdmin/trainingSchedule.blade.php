@@ -16,12 +16,23 @@
                 </tr>
             </thead>
             <tbody>
+
                 @forelse ($applications as $application)
+                    @php
+                        $trainingSchedule = json_decode($application->training_schedule);
+                        $trainingRange = '';
+                        if ($trainingSchedule && isset($trainingSchedule->start_date, $trainingSchedule->end_date)) {
+                            $start = \Carbon\Carbon::parse($trainingSchedule->start_date)->format('m/d/Y');
+                            $end = \Carbon\Carbon::parse($trainingSchedule->end_date)->format('m/d/Y');
+                            $trainingRange = $start . ' - ' . $end;
+                        }
+                    @endphp
+
                     <tr
                         data-applicant-id="{{ $application->id }}"
                         data-status="{{ $application->status }}"
-                        data-training-range="{{ $application->training_schedule ?? '' }}"
-                        x-show="(showAll || '{{ $application->training_schedule }}' === '') && '{{ $application->status }}' === 'interviewed' && !removedApplicants.includes({{ $application->id }})"
+                        data-training-range="{{ $trainingRange }}"
+                        x-show="(showAll || '{{ $application->training_schedule }}' === '') && ['interviewed', 'scheduled_for_training'].includes('{{ $application->status }}') && !removedApplicants.includes({{ $application->id }})"
                         class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out"
                     >
                         <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
@@ -48,21 +59,28 @@
                             </button>
                         </td>
                         <td class="py-3 px-4 text-sm text-gray-700">
-                            @if ($application->training_schedule)
-                                <span>{{ $application->training_schedule }}</span>
+                            @if ($application->trainingSchedule)
+                                <span>
+                                    {{ \Carbon\Carbon::parse($application->trainingSchedule->start_date)->format('m/d/Y') }}
+                                    -
+                                    {{ \Carbon\Carbon::parse($application->trainingSchedule->end_date)->format('m/d/Y') }}
+                                </span>
                             @else
                                 <span class="text-gray-400 italic">None</span>
                             @endif
                         </td>
                         <td class="py-3 px-4">
                             <button
-                                @click="openSetTraining({{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}')"
+                                @click="openSetTraining(
+                                    {{ $application->id }},
+                                    '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+                                    '{{ $trainingRange }}'
+                                )"
                                 :class="`text-white text-sm font-medium h-8 px-3 rounded whitespace-nowrap ${
-                                    '{{ $application->training_schedule }}'
-                                        ? 'bg-yellow-500 hover:bg-yellow-600'
-                                        : 'bg-blue-600 hover:bg-blue-700'
+                                    '{{ $application->trainingSchedule ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-blue-600 hover:bg-blue-700' }}'
                                 }`"
-                                x-text="'{{ $application->training_schedule ? 'Reschedule' : 'Set Training' }}'">
+                                x-text="'{{ $application->trainingSchedule ? 'Reschedule' : 'Set Training' }}'"
+>
                             </button>
                         </td>
                     </tr>
