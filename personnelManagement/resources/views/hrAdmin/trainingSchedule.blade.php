@@ -1,3 +1,4 @@
+
 <div x-data="applicantsHandler()" x-init="init()" class="relative">
 
     <!-- Applicants Table -->
@@ -18,13 +19,15 @@
             <tbody>
 
                 @forelse ($applications as $application)
+
                     @php
-                        $trainingSchedule = json_decode($application->training_schedule);
+                        $fullName = $application->user->first_name . ' ' . $application->user->last_name;
+                        $training = $application->trainingSchedule;
                         $trainingRange = '';
-                        if ($trainingSchedule && isset($trainingSchedule->start_date, $trainingSchedule->end_date)) {
-                            $start = \Carbon\Carbon::parse($trainingSchedule->start_date)->format('m/d/Y');
-                            $end = \Carbon\Carbon::parse($trainingSchedule->end_date)->format('m/d/Y');
-                            $trainingRange = $start . ' - ' . $end;
+                        if ($training && $training->start_date && $training->end_date) {
+                            $start = \Carbon\Carbon::parse($training->start_date)->format('m/d/Y');
+                            $end = \Carbon\Carbon::parse($training->end_date)->format('m/d/Y');
+                            $trainingRange = "$start - $end";
                         }
                     @endphp
 
@@ -32,6 +35,7 @@
                         data-applicant-id="{{ $application->id }}"
                         data-status="{{ $application->status }}"
                         data-training-range="{{ $trainingRange }}"
+                        x-cloack
                         x-show="(showAll || '{{ $application->training_schedule }}' === '') && ['interviewed', 'scheduled_for_training'].includes('{{ $application->status }}') && !removedApplicants.includes({{ $application->id }})"
                         class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out"
                     >
@@ -71,16 +75,19 @@
                         </td>
                         <td class="py-3 px-4">
                             <button
+                                x-data
                                 @click="openSetTraining(
-                                    {{ $application->id }},
-                                    '{{ $application->user->first_name }} {{ $application->user->last_name }}',
-                                    '{{ $trainingRange }}'
+                                    $el.dataset.id,
+                                    $el.dataset.name,
+                                    $el.dataset.range
                                 )"
-                                :class="`text-white text-sm font-medium h-8 px-3 rounded whitespace-nowrap ${
-                                    '{{ $application->trainingSchedule ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-blue-600 hover:bg-blue-700' }}'
-                                }`"
-                                x-text="'{{ $application->trainingSchedule ? 'Reschedule' : 'Set Training' }}'"
->
+                                data-id="{{ $application->id }}"
+                                data-name="{{ $fullName }}"
+                                data-range="{{ $trainingRange }}"
+                                class="text-white text-sm font-medium h-8 px-3 rounded whitespace-nowrap
+                                    {{ $application->trainingSchedule ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-blue-600 hover:bg-blue-700' }}"
+                            >
+                                {{ $application->trainingSchedule ? 'Reschedule' : 'Set Training' }}
                             </button>
                         </td>
                     </tr>
@@ -96,67 +103,13 @@
     <!-- Resume Modal -->
     @include('components.hrAdmin.modals.resume')
 
+    <!-- Set Training Modal -->
+    @include('components.hrAdmin.modals.setTraining')
+
     <!-- Profile Modals -->
     @foreach ($applications as $application)
         @include('components.hrAdmin.modals.profile', ['application' => $application])
     @endforeach
-
-   <!-- ✅ Set Training Modal -->
-<div 
-    x-show="showTrainingModal" 
-    x-transition.opacity 
-    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" 
-    x-cloak
->
-    <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative transition-all duration-300">
-        <!-- Close Button -->
-        <button 
-            @click="showTrainingModal = false" 
-            class="absolute top-3 right-4 text-gray-400 hover:text-red-500 text-2xl font-bold"
-            aria-label="Close"
-        >
-            &times;
-        </button>
-
-        <!-- Modal Title -->
-        <h2 class="text-xl font-bold text-[#BD6F22] mb-2">Set Training Schedule</h2>
-
-        <!-- Applicant Name -->
-        <p class="text-sm text-gray-600 mb-5">
-            Setting schedule for: 
-            <span class="font-medium text-gray-800" x-text="trainingApplicant?.name || 'Applicant'"></span>
-        </p>
-
-        <!-- Date Range Input -->
-        <div class="mb-5">
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-                Training Date Range <span class="text-red-500">*</span>
-            </label>
-            <input 
-                type="text" 
-                x-ref="trainingDateRange" 
-                class="w-full border border-gray-300 focus:border-[#BD6F22] focus:ring-[#BD6F22] rounded-lg px-4 py-2 text-sm shadow-sm transition duration-150"
-                placeholder="MM/DD/YYYY - MM/DD/YYYY"
-            >
-        </div>
-
-        <!-- Buttons -->
-        <div class="flex justify-end gap-2 mt-6">
-            <button 
-                @click="showTrainingModal = false" 
-                class="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-100 transition"
-            >
-                Cancel
-            </button>
-            <button 
-                @click="submitTrainingSchedule" 
-                class="px-4 py-2 text-sm rounded-lg bg-[#BD6F22] text-white hover:bg-[#a95e1d] transition"
-            >
-                Confirm
-            </button>
-        </div>
-    </div>
-</div>
 
 
     <!-- ✅ Feedback Toast -->

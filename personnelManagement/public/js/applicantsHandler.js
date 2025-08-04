@@ -44,23 +44,6 @@ document.addEventListener('alpine:init', () => {
                 }));
 
                 console.log('Applicants loaded:', this.applicants);
-                
-                  const ref = this.$refs.trainingDateRange;
-            if (ref) {
-                // only one Litepicker here, stored on the component
-                this.trainingPicker = new Litepicker({
-                element: ref,
-                singleMode: false,
-                format: 'MM/DD/YYYY',
-                numberOfMonths: 2,
-                numberOfColumns: 2,
-                // optional: auto-apply when you pick
-                autoApply: true,
-                });
-                console.log('Training picker initialized', this.trainingPicker);
-            }  else {
-                    console.warn('Date range input ref not found');
-                }
             }, 50);
         },
 
@@ -255,85 +238,169 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        openSetTraining(id, name, range) {
-            console.log("Opening training modal...");
-            console.log("Applicant ID:", id);
-            console.log("Name:", name);
-            console.log("Training Range:", range);
 
-            this.trainingApplicant = { id, name };
-            this.trainingRange = range;       // keep for your POST if you need it
-            this.showTrainingModal = true;
 
-        this.$nextTick(() => {
-            // do nothing if there’s no picker yet
-            if (!this.trainingPicker) return;
+        openSetTraining(applicantId, fullName, range = '') {
+            this.selectedApplicantId = applicantId;
+            this.selectedApplicantName = fullName;
+            this.selectedTrainingDateRange = range;
 
-            // if we have a range string like "08/01/2025 - 08/07/2025"
+            // Normalize the original training range to MM/DD/YYYY - MM/DD/YYYY format
             if (range && range.includes(' - ')) {
-            const [start, end] = range.split(' - ');
-
-            // set the input’s visible value
-            this.$refs.trainingDateRange.value = range;
-
-            // tell Litepicker to update its selected range
-            this.trainingPicker.setDateRange(start, end, true);
-            console.log('Picker dateRange set to:', start, end);
+                const [startRaw, endRaw] = range.split(' - ').map(d => new Date(d.trim()));
+                const formatDate = (date) => {
+                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                    const dd = String(date.getDate()).padStart(2, '0');
+                    const yyyy = date.getFullYear();
+                    return `${mm}/${dd}/${yyyy}`;
+                };
+                this.originalTrainingDateRange = `${formatDate(startRaw)} - ${formatDate(endRaw)}`;
             } else {
-            // clear it if there was no existing range
-            this.$refs.trainingDateRange.value = '';
-            this.trainingPicker.clearSelection();
+                this.originalTrainingDateRange = '';
             }
-        });
+
+            this.showTrainingModal = true;
+            console.log('Received range:', range);
+            console.log('Normalized originalTrainingDateRange:', this.originalTrainingDateRange);
+
+            this.$nextTick(() => {
+                setTimeout(() => {
+                    const ref = this.$refs.trainingDateRange;
+                    if (!ref) {
+                        console.warn("trainingDateRange input not found");
+                        return;
+                    }
+
+                    const [start, end] = (range && range.includes(' - ')) ? range.split(' - ') : [null, null];
+
+                    if (!this.trainingPicker) {
+                        this.trainingPicker = new Litepicker({
+                            element: ref,
+                            singleMode: false,
+                            format: 'MM/DD/YYYY',
+                            numberOfMonths: 2,
+                            numberOfColumns: 2,
+                            autoApply: true,
+                            startDate: start,
+                            endDate: end,
+                        });
+                        console.log("Picker initialized with:", start, end);
+                    } else {
+                        if (start && end) {
+                            this.trainingPicker.setDateRange(start, end, true);
+                            console.log("Date range set:", start, end);
+                        } else {
+                            this.trainingPicker.clearSelection();
+                        }
+                    }
+                }, 50);
+            });
         },
 
 
-
         async submitTrainingSchedule() {
-            const selectedRange = this.$refs.trainingDateRange.value;
+            const selectedRange = this.$refs.trainingDateRange.value?.trim();
 
             if (!selectedRange || !selectedRange.includes(' - ')) {
-                alert('Please select a valid training date range.');
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Input',
+                    text: 'Please select a valid training date range.',
+                });
                 return;
             }
 
-            try {
-                const response = await fetch(`/hrAdmin/training-schedule/${this.trainingApplicant.id}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
-                    training_schedule: selectedRange
-                })
-            });
+            const [newStartStr, newEndStr] = selectedRange.split(' - ').map(s => s.trim());
+            const newStart = new Date(newStartStr);
+            const newEnd = new Date(newEndStr);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
 
-                if (!response.ok) throw new Error('Failed to set training schedule');
+            if (isNaN(newStart) || isNaN(newEnd) || newStart < today || newEnd < today) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Date Range',
+                    text: 'The training schedule must be set to future dates.',
+                });
+                return;
+            }
 
-                const result = await response.json();
+            let isSameAsOriginal = false;
+            if (this.originalTrainingDateRange && this.originalTrainingDateRange.includes(' - ')) {
+                const [originalStartStr, originalEndStr] = this.originalTrainingDateRange.split(' - ').map(d => d.trim());
+                isSameAsOriginal = (newStartStr === originalStartStr && newEndStr === originalEndStr);
+            }
 
-                // Update training schedule data in table row
-                const row = document.querySelector(`tr[data-applicant-id='${this.trainingApplicant.id}']`);
-                if (row) row.setAttribute('data-training-range', selectedRange);
-
-                const index = this.applicants.findIndex(a => a.id === this.trainingApplicant.id);
-                if (index !== -1) {
-                    this.applicants[index].training = selectedRange;
-                    this.applicants[index].status = 'scheduled_for_training'; // Update status in frontend too
-                    this.applicants = [...this.applicants];
-                }
-
-                this.feedbackMessage = result.message || 'Training schedule set successfully!';
+            if (isSameAsOriginal) {
+                this.feedbackMessage = 'No changes were made to the training schedule.';
                 this.feedbackVisible = true;
-                setTimeout(() => location.reload(), 2000); // Reload after 2s delay
-
+                setTimeout(() => this.feedbackVisible = false, 3000);
                 this.showTrainingModal = false;
+                return;
+            }
 
-            } catch (error) {
-                alert('Error: ' + error.message);
+            const isReschedule = !!this.originalTrainingDateRange;
+
+            this.loading = true;
+
+            const proceed = async () => {
+                try {
+                    const response = await fetch(`/hrAdmin/training-schedule/${this.selectedApplicantId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({
+                            training_schedule: selectedRange
+                        })
+                    });
+
+                    if (!response.ok) throw new Error('Failed to set training schedule');
+
+                    const result = await response.json();
+
+                    const row = document.querySelector(`tr[data-applicant-id='${this.selectedApplicantId}']`);
+                    if (row) row.setAttribute('data-training-range', selectedRange);
+
+                    const index = this.applicants.findIndex(a => a.id === this.selectedApplicantId);
+                    if (index !== -1) {
+                        this.applicants[index].training = selectedRange;
+                        this.applicants[index].status = 'scheduled_for_training';
+                        this.applicants = [...this.applicants];
+                    }
+
+                    this.feedbackMessage = result.message || 'Training schedule set successfully!';
+                    this.feedbackVisible = true;
+                    setTimeout(() => location.reload(), 2000);
+                    this.showTrainingModal = false;
+
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                } finally {
+                    this.loading = false;
+                }
+            };
+
+            if (isReschedule) {
+                const result = await Swal.fire({
+                    title: "You're about to reschedule",
+                    html: `New training date range:<br><strong>${selectedRange}</strong><br><br>Do you want to continue?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#BD6F22',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, reschedule'
+                });
+
+                if (result.isConfirmed) {
+                    this.loading = true; // 🔄 show loading after confirm click
+                    proceed();
+                }
+            } else {
+                this.loading = true; // normal schedule, show loading immediately
+                proceed();
             }
         }
-
     }));
 });

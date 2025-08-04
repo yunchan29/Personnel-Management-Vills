@@ -21,7 +21,7 @@ class TrainingScheduleRescheduledMail extends Mailable
     public function build()
     {
         return $this->subject('Training Rescheduled')
-                    ->view('emails.training_schedule_rescheduled.blade')
+                    ->view('emails.training_schedule_rescheduled')
                     ->with(['schedule' => $this->schedule]);
     }
 }
