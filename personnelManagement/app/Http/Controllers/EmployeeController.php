@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Job;
+use App\Models\Application;
 use Illuminate\Http\Request;
 
 class EmployeeController extends Controller
@@ -31,15 +32,23 @@ class EmployeeController extends Controller
     // Performance Evaluation view for hrStaff
     public function performanceEvaluation()
     {
-        $employees = User::where('role', 'employee')
-            ->with('job') // optional but useful if needed in view
-            ->get();
-
         $jobs = Job::all();
 
+        // Applicants ready for evaluation (with training schedule)
+        $applicants = Application::with(['user', 'trainingSchedule'])
+            ->where('status', 'interview_passed') // or 'training_done' depending on your logic
+            ->whereHas('trainingSchedule')
+            ->get();
+
+        // Employees already hired
+        $employees = User::where('role', 'employee')
+            ->with('job')
+            ->get();
+
         return view('hrStaff.perfEval', [
-            'employees' => $employees,
             'jobs' => $jobs,
+            'applicants' => $applicants,
+            'employees' => $employees,
         ]);
     }
 }

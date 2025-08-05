@@ -17,6 +17,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\InterviewController;
 use App\Http\Controllers\TrainingScheduleController;
 use App\Http\Controllers\InitialApplicationController;
+use App\Http\Controllers\EvaluationController;
 
 
 //temporary ulit HAHAHAHH sorry
@@ -210,32 +211,35 @@ Route::post('/apply/{job}', [ApplicantJobController::class, 'apply'])->name('job
 
 // ✅ HRstaff-related routes with auth middleware
 Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function () {
+
     // Dashboard route
     Route::get('/dashboard', function () {
         return view('hrStaff.dashboard');
     })->name('dashboard');
 
+    // Employees
+    Route::get('/employees', [EmployeeController::class, 'index'])->name('employees');
 
-Route::get('/employees', [EmployeeController::class, 'index'])->name('employees');
+    // Performance Evaluation Page
+    Route::get('/perfEval', [EmployeeController::class, 'performanceEvaluation'])->name('perfEval');
 
-Route::get('/perfEval', [EmployeeController::class, 'performanceEvaluation'])->name('perfEval');
+    // Evaluations - Submit Evaluation for an Applicant
+    Route::post('/evaluations/{application}', [EvaluationController::class, 'store'])
+        ->name('evaluations.store');
 
-      // Leave Form routes (Pre-made)
+    // Leave Form Routes
     Route::get('/leave-forms', [LeaveFormController::class, 'index'])->name('leaveForm'); 
     Route::post('/leave-forms', [LeaveFormController::class, 'store'])->name('leaveForms.store');
     Route::delete('/leave-forms/{id}', [LeaveFormController::class, 'destroy'])->name('leaveForms.destroy');
+    Route::post('/leave-forms/{id}/approve', [LeaveFormController::class, 'approve'])->name('leaveForms.approve');
+    Route::post('/leave-forms/{id}/decline', [LeaveFormController::class, 'decline'])->name('leaveForms.decline');
 
-
-Route::post('/leave-forms/{id}/approve', [LeaveFormController::class, 'approve'])->name('leaveForms.approve');
-Route::post('/leave-forms/{id}/decline', [LeaveFormController::class, 'decline'])->name('leaveForms.decline');
-
-    // Change password/settings route
+    // Settings / Change Password
     Route::get('/settings', function () {
         return view('hrStaff.settings');
     })->name('settings');
 
 });
-
 
 
 
