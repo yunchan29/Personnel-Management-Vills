@@ -84,7 +84,7 @@
             type="button"
             class="text-[#BD6F22] hover:underline flex items-center gap-1 text-sm"
         >
-            View Applicants
+            View
             <span class="bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5">
                 {{ $job->applications_count }}
             </span>
