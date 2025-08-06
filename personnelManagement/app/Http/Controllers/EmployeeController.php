@@ -29,20 +29,16 @@ class EmployeeController extends Controller
         ]);
     }
 
-    // Performance Evaluation view for hrStaff
-   public function performanceEvaluation()
+  public function performanceEvaluation()
 {
     $jobs = Job::all();
 
-    // Applicants ready for evaluation (with training scheduled)
-    $applicants = Application::with(['user', 'trainingSchedule'])
-        ->where('status', 'scheduled_for_training')
-        ->whereHas('trainingSchedule', function ($query) {
-            $query->where('status', 'scheduled');
-        })
+    // Fetch all applicants who have a training schedule, regardless of status
+    $applicants = Application::with(['user', 'trainingSchedule', 'evaluation'])
+        ->whereHas('trainingSchedule') // anyone with training scheduled
         ->get();
 
-    // Employees already hired
+    // Fetch employees if needed
     $employees = User::where('role', 'employee')
         ->with('job')
         ->get();
@@ -53,5 +49,6 @@ class EmployeeController extends Controller
         'employees' => $employees,
     ]);
 }
+
 
 }

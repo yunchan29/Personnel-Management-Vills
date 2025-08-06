@@ -30,4 +30,10 @@ class TrainingEvaluation extends Model
     {
         return $this->belongsTo(User::class, 'evaluated_by');
     }
+
+    public function evaluation()
+{
+    return $this->hasOne(\App\Models\TrainingEvaluation::class);
+}
+
 }

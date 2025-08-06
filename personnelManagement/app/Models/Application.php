@@ -49,4 +49,9 @@ class Application extends Model
     {
         return $this->hasOne(TrainingSchedule::class);
     }
+    public function evaluation()
+{
+    return $this->hasOne(\App\Models\TrainingEvaluation::class);
+}
+
 }
