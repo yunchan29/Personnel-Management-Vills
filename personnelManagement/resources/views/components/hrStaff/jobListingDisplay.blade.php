@@ -4,16 +4,16 @@
     x-data="{
         expanded: false,
         jobId: {{ $job->id }},
-        jobTitle: {{ Js::from($job->title) }},
-        company: {{ Js::from($job->company) }}
+        jobTitle: {{ Js::from($job->job_title) }},
+        company: {{ Js::from($job->company_name) }}
     }"
     class="bg-white border rounded-lg shadow-sm p-6 flex flex-col justify-between"
 >
     {{-- Header --}}
     <div class="flex justify-between items-start mb-4">
         <div>
-            <h4 class="text-lg font-semibold text-[#BD6F22]">{{ $job->title }}</h4>
-            <p class="text-sm text-gray-700">{{ $job->company }}</p>
+            <h4 class="text-lg font-semibold text-[#BD6F22]">{{ $job->job_title }}</h4>
+            <p class="text-sm text-gray-700">{{ $job->company_name }}</p>
         </div>
         <div class="text-right text-xs text-gray-500 leading-tight">
             <p>Last Posted: {{ $job->created_at->diffForHumans() }}</p>
@@ -77,8 +77,14 @@
                 selectedJobTitle = jobTitle;
                 selectedCompany = company;
                 tab = 'evaluation';
+
                 $nextTick(() => {
-                    $refs.evaluationSection?.scrollIntoView({ behavior: 'smooth' });
+                    setTimeout(() => {
+                        const target = $root.$refs.evaluationSection;
+                        if (target?.scrollIntoView) {
+                            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }, 300);
                 });
             "
             type="button"

@@ -12,7 +12,7 @@ class EmployeeController extends Controller
     // Employee list view
     public function index()
     {
-        $role = auth()->user()->role; // 'hrAdmin' or 'hrStaff'
+        $role = auth()->user()->role; 
 
         $jobs = Job::all();
 
@@ -30,25 +30,28 @@ class EmployeeController extends Controller
     }
 
     // Performance Evaluation view for hrStaff
-    public function performanceEvaluation()
-    {
-        $jobs = Job::all();
+   public function performanceEvaluation()
+{
+    $jobs = Job::all();
 
-        // Applicants ready for evaluation (with training schedule)
-        $applicants = Application::with(['user', 'trainingSchedule'])
-            ->where('status', 'interview_passed') // or 'training_done' depending on your logic
-            ->whereHas('trainingSchedule')
-            ->get();
+    // Applicants ready for evaluation (with training scheduled)
+    $applicants = Application::with(['user', 'trainingSchedule'])
+        ->where('status', 'scheduled_for_training')
+        ->whereHas('trainingSchedule', function ($query) {
+            $query->where('status', 'scheduled');
+        })
+        ->get();
 
-        // Employees already hired
-        $employees = User::where('role', 'employee')
-            ->with('job')
-            ->get();
+    // Employees already hired
+    $employees = User::where('role', 'employee')
+        ->with('job')
+        ->get();
 
-        return view('hrStaff.perfEval', [
-            'jobs' => $jobs,
-            'applicants' => $applicants,
-            'employees' => $employees,
-        ]);
-    }
+    return view('hrStaff.perfEval', [
+        'jobs' => $jobs,
+        'applicants' => $applicants,
+        'employees' => $employees,
+    ]);
+}
+
 }
