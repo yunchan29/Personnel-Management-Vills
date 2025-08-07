@@ -16,39 +16,40 @@ class EmployeeController extends Controller
 
         $jobs = Job::all();
 
-        // Fetch only employees with job_id assigned, eager load the job
-        $groupedEmployees = User::where('role', 'employee')
+        // Fetch employees with job assignments
+        $employees = User::where('role', 'employee')
             ->whereNotNull('job_id')
             ->with('job')
-            ->get()
-            ->groupBy('job_id');
+            ->get();
+
+        // Group employees by job_id
+        $groupedEmployees = $employees->groupBy('job_id');
 
         return view("$role.employees", [
             'jobs' => $jobs,
+            'employees' => $employees, // ✅ Add this so $employees is defined
             'groupedEmployees' => $groupedEmployees,
         ]);
     }
 
-  public function performanceEvaluation()
-{
-    $jobs = Job::all();
+    public function performanceEvaluation()
+    {
+        $jobs = Job::all();
 
-    // Fetch all applicants who have a training schedule, regardless of status
-    $applicants = Application::with(['user', 'trainingSchedule', 'evaluation'])
-        ->whereHas('trainingSchedule') // anyone with training scheduled
-        ->get();
+        // Fetch all applicants who have a training schedule
+        $applicants = Application::with(['user', 'trainingSchedule', 'evaluation'])
+            ->whereHas('trainingSchedule')
+            ->get();
 
-    // Fetch employees if needed
-    $employees = User::where('role', 'employee')
-        ->with('job')
-        ->get();
+        // Fetch employees if needed
+        $employees = User::where('role', 'employee')
+            ->with('job')
+            ->get();
 
-    return view('hrStaff.perfEval', [
-        'jobs' => $jobs,
-        'applicants' => $applicants,
-        'employees' => $employees,
-    ]);
-}
-
-
+        return view('hrStaff.perfEval', [
+            'jobs' => $jobs,
+            'applicants' => $applicants,
+            'employees' => $employees,
+        ]);
+    }
 }
