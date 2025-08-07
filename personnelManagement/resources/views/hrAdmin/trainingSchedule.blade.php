@@ -106,10 +106,10 @@
     <!-- Set Training Modal -->
     @include('components.hrAdmin.modals.setTraining')
 
-    <!-- Profile Modals -->
-    @foreach ($applications as $application)
-        @include('components.hrAdmin.modals.profile', ['application' => $application])
-    @endforeach
+@foreach ($applications as $application)
+    @include('components.hrAdmin.modals.profile', ['user' => $application->user])
+@endforeach
+
 
 
     <!-- ✅ Feedback Toast -->

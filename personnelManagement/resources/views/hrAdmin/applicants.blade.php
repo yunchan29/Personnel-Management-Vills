@@ -138,9 +138,12 @@
     @include('components.hrAdmin.modals.resume')
     @include('components.hrAdmin.modals.statusConfirmation')
 
-    @foreach ($applications as $application)
-        @include('components.hrAdmin.modals.profile', ['application' => $application])
-    @endforeach
+@foreach ($applications as $application)
+    @include('components.hrAdmin.modals.profile', ['user' => $application->user])
+@endforeach
+
+
+
 
 </div>
 

@@ -131,8 +131,9 @@
     @include('components.hrAdmin.modals.statusConfirmation')
 
     @foreach ($applications as $application)
-        @include('components.hrAdmin.modals.profile', ['application' => $application])
-    @endforeach
+    @include('components.hrAdmin.modals.profile', ['user' => $application->user])
+@endforeach
+
 
     <!-- Filter Toggle -->
     <div class="flex justify-center mb-4">
