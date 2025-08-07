@@ -10,6 +10,7 @@
         </button>
 
         <div x-data="{ tab: 'profile' }" class="flex flex-col md:flex-row gap-6">
+            <!-- Sidebar -->
             <div class="flex justify-center md:justify-start flex-shrink-0 w-full md:w-auto">
                 <div class="flex flex-col items-center text-center">
                     <img src="{{ $application->user->profile_picture ? asset('storage/' . $application->user->profile_picture) : asset('images/default.png') }}"
@@ -21,7 +22,9 @@
                 </div>
             </div>
 
+            <!-- Main Content -->
             <div class="flex-1">
+                <!-- Tabs -->
                 <div class="flex space-x-6 border-b mb-4 text-sm font-medium">
                     <button @click="tab = 'profile'"
                             :class="tab === 'profile' ? 'border-b-2 border-[#BD6F22] text-[#BD6F22]' : ''"
@@ -29,8 +32,12 @@
                     <button @click="tab = 'work'"
                             :class="tab === 'work' ? 'border-b-2 border-[#BD6F22] text-[#BD6F22]' : ''"
                             class="pb-2">Work Experience</button>
+                    <button @click="tab = 'files'"
+                            :class="tab === 'files' ? 'border-b-2 border-[#BD6F22] text-[#BD6F22]' : ''"
+                            class="pb-2">201 Files</button>
                 </div>
 
+                <!-- Tab Contents -->
                 <div x-show="tab === 'profile'" x-cloak>
                     @include('components.hrAdmin.applicantProfile', ['user' => $application->user])
                 </div>
@@ -39,6 +46,9 @@
                         'experiences' => $application->user->workExperiences,
                         'user' => $application->user
                     ])
+                </div>
+                <div x-show="tab === 'files'" x-cloak>
+                    @include('components.hrAdmin.applicant201', ['user' => $application->user])
                 </div>
             </div>
         </div>
