@@ -84,22 +84,38 @@
         x-transition:enter-end="opacity-100 translate-y-0"
         class="space-y-6"
     >
-        {{-- Search --}}
-        <div class="flex items-center mb-6">
-            <label for="search" class="mr-4 font-medium text-sm block">Search Position</label>
-            <input 
-                type="text"
-                id="search"
-                name="search"
-                x-model="search"
-                class="flex-1 border border-gray-300 rounded-md p-2 text-sm"
-                placeholder="Enter job title..."
-            >
-            <button class="ml-4 bg-[#BD9168] text-white px-6 py-2 rounded-md hover:bg-[#a37654] transition text-sm flex items-center gap-2">
-                <img src="{{ asset('images/Search2.png') }}" alt="Search" class="h-4 w-4">
-                <span>Search</span>
-            </button>
-        </div>
+        {{-- Search + Sort --}}
+<div class="flex items-center mb-6 gap-4">
+    {{-- Search --}}
+    <div class="flex items-center flex-1">
+        <label for="search" class="mr-4 font-medium text-sm block">Search Position</label>
+        <input 
+            type="text"
+            id="search"
+            name="search"
+            x-model="search"
+            class="flex-1 border border-gray-300 rounded-md p-2 text-sm"
+            placeholder="Enter job title..."
+        >
+    </div>
+
+    {{-- Sort --}}
+    <form method="GET" action="{{ route('hrAdmin.application') }}" class="flex items-center">
+        <label for="sort" class="mr-2 font-medium text-sm">Sort By</label>
+        <select 
+            name="sort" 
+            id="sort" 
+            class="border border-gray-300 rounded-md p-2 text-sm"
+            onchange="this.form.submit()"
+        >
+            <option value="latest" {{ request('sort') === 'latest' ? 'selected' : '' }}>Latest</option>
+            <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Oldest</option>
+            <option value="position_asc" {{ request('sort') === 'position_asc' ? 'selected' : '' }}>Position (A–Z)</option>
+            <option value="position_desc" {{ request('sort') === 'position_desc' ? 'selected' : '' }}>Position (Z–A)</option>
+        </select>
+    </form>
+</div>
+
 
         {{-- Job Listings --}}
         @forelse($jobs as $job)

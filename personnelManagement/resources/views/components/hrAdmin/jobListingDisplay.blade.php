@@ -4,6 +4,9 @@
     class="mt-10 grid gap-6 sm:grid-cols-1 md:grid-cols-2 items-start"
 >
     @forelse($jobs as $job)
+        @php
+            $isExpired = \Carbon\Carbon::now()->gt(\Carbon\Carbon::parse($job->apply_until));
+        @endphp
         <div 
             x-data="{ 
                 id: {{ $job->id }},
@@ -25,8 +28,15 @@
                 }
             }"
             x-init="init"
-            class="bg-white border rounded-lg shadow-sm p-6 flex flex-col justify-between transition-all duration-300"
+            class="bg-white border rounded-lg shadow-sm p-6 flex flex-col justify-between transition-all duration-300 relative {{ $isExpired ? 'opacity-50' : '' }}"
         >
+            {{-- Expired Label --}}
+            @if($isExpired)
+                <span class="absolute top-2 right-2 bg-red-200 text-red-800 text-xs px-2 py-1 rounded-full">
+                    Expired
+                </span>
+            @endif
+
             {{-- Header --}}
             <div class="flex justify-between items-start mb-4">
                 <div>

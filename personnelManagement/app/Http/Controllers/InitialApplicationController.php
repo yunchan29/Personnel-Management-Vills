@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -16,10 +15,38 @@ use Illuminate\Support\Facades\Mail;
 
 class InitialApplicationController extends Controller
 {
-    // View all jobs and all applications
-    public function index()
+    // View all jobs and all applications with search & sort
+    public function index(Request $request)
     {
-        $jobs = Job::withCount('applications')->get();
+        // Jobs query
+        $jobsQuery = Job::withCount('applications');
+
+        // Search jobs by title if search is provided
+        if ($request->filled('search')) {
+            $jobsQuery->where('job_title', 'like', '%' . $request->search . '%');
+        }
+
+        // Sort logic
+        switch ($request->sort) {
+            case 'latest':
+                $jobsQuery->orderBy('created_at', 'desc');
+                break;
+            case 'oldest':
+                $jobsQuery->orderBy('created_at', 'asc');
+                break;
+            case 'position_asc':
+                $jobsQuery->orderBy('job_title', 'asc');
+                break;
+            case 'position_desc':
+                $jobsQuery->orderBy('job_title', 'desc');
+                break;
+            default:
+                $jobsQuery->orderBy('created_at', 'desc');
+        }
+
+        $jobs = $jobsQuery->get();
+
+        // Applications query (always latest)
         $applications = Application::with('user', 'job')->latest()->get();
 
         return view('hrAdmin.application', compact('jobs', 'applications'));
@@ -31,24 +58,20 @@ class InitialApplicationController extends Controller
         $job = Job::findOrFail($jobId);
         $jobs = Job::withCount('applications')->get();
 
-        // All applicants for the job (all statuses)
         $applications = Application::with(['user', 'job', 'interview', 'trainingSchedule'])
             ->where('job_id', $jobId)
             ->get();
 
-        // Applicants approved or for interview
         $approvedApplicants = Application::with(['user', 'job', 'trainingSchedule'])
             ->where('job_id', $jobId)
             ->whereIn('status', ['approved', 'for_interview'])
             ->get();
 
-        // Applicants interviewed or scheduled for training
         $interviewApplicants = Application::with(['user', 'job', 'trainingSchedule'])
             ->where('job_id', $jobId)
             ->whereIn('status', ['interviewed', 'scheduled_for_training'])
             ->get();
 
-        // Applicants pending evaluation
         $forTrainingApplicants = Application::with(['user', 'job', 'trainingSchedule'])
             ->where('job_id', $jobId)
             ->where('status', 'for_evaluation')
@@ -59,8 +82,6 @@ class InitialApplicationController extends Controller
             'applications' => $applications,
             'selectedJob' => $job,
             'selectedTab' => 'applicants',
-
-            // Passed to Blade
             'approvedApplicants' => $approvedApplicants,
             'interviewApplicants' => $interviewApplicants,
             'forTrainingApplicants' => $forTrainingApplicants,
@@ -70,10 +91,8 @@ class InitialApplicationController extends Controller
     // Approve or decline an application
     public function updateApplicationStatus(Request $request, $id)
     {
-        // Load related user and job for email sending
         $application = Application::with(['user', 'job'])->findOrFail($id);
 
-        // ✅ Status validation
         $validated = $request->validate([
             'status' => 'required|string|in:approved,declined,interviewed,for_interview,trained,fail_interview'
         ]);
@@ -82,38 +101,25 @@ class InitialApplicationController extends Controller
         $application->status = $validated['status'];
         $application->save();
 
-        // ✅ Restore interview completion logic
         if ($validated['status'] === 'interviewed') {
-            $updated = DB::table('interviews')
+            DB::table('interviews')
                 ->where('application_id', $application->id)
                 ->update(['status' => 'completed']);
-
-            if (!$updated) {
-                logger()->warning("Interview update failed for application_id: {$application->id}");
-            }
         }
 
-        // ✅ Send Emails based on status change
         if ($oldStatus !== $application->status) {
             switch ($application->status) {
                 case 'approved':
-                    Mail::to($application->user->email)
-                        ->send(new ApprovedLetterMail($application));
+                    Mail::to($application->user->email)->send(new ApprovedLetterMail($application));
                     break;
-
                 case 'declined':
-                    Mail::to($application->user->email)
-                        ->send(new DeclinedLetterMail($application));
+                    Mail::to($application->user->email)->send(new DeclinedLetterMail($application));
                     break;
-
                 case 'interviewed':
-                    Mail::to($application->user->email)
-                        ->send(new PassInterviewMail($application)); // <-- new
+                    Mail::to($application->user->email)->send(new PassInterviewMail($application));
                     break;
-
                 case 'fail_interview':
-                    Mail::to($application->user->email)
-                        ->send(new FailInterviewMail($application)); // <-- new
+                    Mail::to($application->user->email)->send(new FailInterviewMail($application));
                     break;
             }
         }
@@ -125,6 +131,4 @@ class InitialApplicationController extends Controller
             'application_id' => $application->id,
         ]);
     }
-
-
 }

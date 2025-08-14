@@ -11,39 +11,39 @@ use Illuminate\Support\Facades\DB;
 
 class JobController extends Controller
 {
-   public function store(Request $request)
-{
-    $validated = $request->validate([
-        'job_title' => 'required|string|max:255',
-        'company_name' => 'required|string|max:255',
-        'job_industry' => 'required|string|max:255',
-        'location' => 'required|string|max:255',
-        'vacancies' => 'required|integer|min:1',
-        'apply_until' => 'required|date',
-        'qualifications' => 'nullable|string',
-        'additional_info' => 'nullable|string',
-    ]);
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'job_title' => 'required|string|max:255',
+            'company_name' => 'required|string|max:255',
+            'job_industry' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'vacancies' => 'required|integer|min:1',
+            'apply_until' => 'required|date',
+            'qualifications' => 'nullable|string',
+            'additional_info' => 'nullable|string',
+        ]);
 
-    if (!empty($validated['qualifications'])) {
-        $validated['qualifications'] = collect(preg_split('/\r\n|\r|\n/', $validated['qualifications']))
-            ->map(fn ($line) => trim($line))
-            ->filter()
-            ->values()
-            ->all();
+        if (!empty($validated['qualifications'])) {
+            $validated['qualifications'] = collect(preg_split('/\r\n|\r|\n/', $validated['qualifications']))
+                ->map(fn($line) => trim($line))
+                ->filter()
+                ->values()
+                ->all();
+        }
+
+        if (!empty($validated['additional_info'])) {
+            $validated['additional_info'] = collect(preg_split('/\r\n|\r|\n/', $validated['additional_info']))
+                ->map(fn($line) => trim($line))
+                ->filter()
+                ->values()
+                ->all();
+        }
+
+        Job::create($validated);
+
+        return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job posted successfully!');
     }
-
-    if (!empty($validated['additional_info'])) {
-        $validated['additional_info'] = collect(preg_split('/\r\n|\r|\n/', $validated['additional_info']))
-            ->map(fn ($line) => trim($line))
-            ->filter()
-            ->values()
-            ->all();
-    }
-
-    Job::create($validated);
-
-    return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job posted successfully!');
-}
 
     public function index(Request $request)
     {
@@ -76,6 +76,7 @@ class JobController extends Controller
     }
 
 
+
     public function show($id)
     {
         $job = Job::findOrFail($id);
@@ -88,7 +89,7 @@ class JobController extends Controller
         return view('jobPostingEdit', compact('job'));
     }
 
-   public function update(Request $request, $id)
+    public function update(Request $request, $id)
     {
         $validated = $request->validate([
             'job_title' => 'required|string|max:255',
@@ -103,7 +104,7 @@ class JobController extends Controller
 
         if (!empty($validated['qualifications'])) {
             $validated['qualifications'] = collect(preg_split('/\r\n|\r|\n/', $validated['qualifications']))
-                ->map(fn ($item) => trim($item))
+                ->map(fn($item) => trim($item))
                 ->filter()
                 ->values()
                 ->all();
@@ -111,7 +112,7 @@ class JobController extends Controller
 
         if (!empty($validated['additional_info'])) {
             $validated['additional_info'] = collect(preg_split('/\r\n|\r|\n/', $validated['additional_info']))
-                ->map(fn ($item) => trim($item))
+                ->map(fn($item) => trim($item))
                 ->filter()
                 ->values()
                 ->all();
@@ -123,7 +124,6 @@ class JobController extends Controller
         return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job updated successfully!');
     }
 
-    // Delete a job posting
     public function destroy($id)
     {
         $job = Job::findOrFail($id);
@@ -131,5 +131,4 @@ class JobController extends Controller
 
         return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job deleted successfully.');
     }
-
 }
