@@ -20,7 +20,7 @@
                     <tr
                         data-applicant-id="{{ $application->id }}"
                         data-status="{{ $application->status }}"
-                        x-show="(showAll || (!['approved', 'interviewed'].includes('{{ $application->status }}'))) && !removedApplicants.includes({{ $application->id }})"
+                        x-show="(showAll || (!['approved', 'interviewed', 'for_interview', 'scheduled_for_training','trained', 'hired'].includes('{{ $application->status }}'))) && !removedApplicants.includes({{ $application->id }})"
                         x-transition:enter="transition ease-out duration-500"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"
@@ -80,6 +80,22 @@
                                     disabled>
                                     Approved
                                 </button>
+                            @elseif($application->status === 'for_interview')
+                                <span class="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full transition-colors duration-300">
+                                    For Interview
+                                </span>
+                            @elseif($application->status === 'scheduled_for_training')
+                                <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full transition-colors duration-300">
+                                    Scheduled for Training
+                                </span>     
+                            @elseif($application->status === 'declined')
+                                <span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full transition-colors duration-300">
+                                    Declined
+                                </span>
+                            @elseif($application->status === 'hired')
+                             <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300">
+                                    Hired
+                                </span>
                             @else
                                 <button
                                     @click="confirmStatus('approved', {{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}', '{{ $application->status }}')"

@@ -106,24 +106,35 @@
                 </p>
             </div>
 
-            <div class="flex flex-col items-end gap-2 mt-4">
-                <span class="inline-block text-white text-sm px-4 py-2 rounded" style="background-color: #DD6161">
-                    {{ ucfirst($application->status ?? 'To Review') }}
-                </span>
+           <div class="flex flex-col items-end gap-2 mt-4">
+    @php
+        $statusLabels = [
+            'For_interview'           => 'For Interview',
+            'scheduled_for_training'  => 'Scheduled for Training',
+        ];
 
-                <form action="{{ route('applicant.application.delete', $application->id) }}" method="POST" class="delete-application-form">
-                    @csrf
-                    @method('DELETE')
-                    <button type="button" class="deleteApplicationBtn text-red-500 hover:text-red-700 transition mt-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 
-                                  00-1-1h-4a1 1 0 00-1 1v3m5 0H6" />
-                        </svg>
-                    </button>
-                </form>
-            </div>
+        $displayStatus = $statusLabels[$application->status]
+            ?? ucfirst(str_replace('_', ' ', $application->status ?? 'To Review'));
+    @endphp
+
+    <span class="inline-block text-white text-sm px-4 py-2 rounded" style="background-color: #DD6161">
+        {{ $displayStatus }}
+    </span>
+
+    <form action="{{ route('applicant.application.delete', $application->id) }}" method="POST" class="delete-application-form">
+        @csrf
+        @method('DELETE')
+        <button type="button" class="deleteApplicationBtn text-red-500 hover:text-red-700 transition mt-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 
+                      00-1-1h-4a1 1 0 00-1 1v3m5 0H6" />
+            </svg>
+        </button>
+    </form>
+</div>
+
         </div>
         @empty
         <p class="text-sm text-gray-600 mt-6 col-span-2">
