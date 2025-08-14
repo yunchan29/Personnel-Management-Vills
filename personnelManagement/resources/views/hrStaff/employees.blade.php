@@ -106,7 +106,8 @@
                                             <th class="py-4 px-6">Name</th>
                                             <th class="py-4 px-6">Company</th>
                                             <th class="py-4 px-6">Resume</th>
-                                            <th class="py-4 px-6">201 File</th>
+                                            <th class="py-4 px-6">Profile</th>
+                                            <th class="py-4 px-6">Duration</th>
                                             <th class="py-4 px-6">Start</th>
                                             <th class="py-4 px-6">End</th>
                                         </tr>
@@ -126,6 +127,17 @@
                                                         View
                                                     </a>
                                                 </td>
+                                      <td class="py-4 px-6">
+    <select 
+        class="bg-white text-gray-700 border border-gray-300 text-sm font-medium px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-[#BD6F22] transition"
+    >
+        <option value="" disabled selected>Set Duration</option>
+        <option value="6months">6 Months</option>
+        <option value="1year">1 Year</option>
+    </select>
+</td>
+
+
                                                 <td class="py-4 px-6 text-lg">{{ $employee->start_date ?? '—' }}</td>
                                                 <td class="py-4 px-6 text-lg">{{ $employee->end_date ?? '—' }}</td>
                                             </tr>
