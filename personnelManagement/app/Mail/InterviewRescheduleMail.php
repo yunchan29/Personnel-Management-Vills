@@ -21,7 +21,7 @@ class InterviewRescheduleMail extends Mailable
     public function build()
     {
         return $this->subject('Interview Rescheduled for ' . ($this->interview->application->job->job_title ?? 'Your Application'))
-                    ->view('emails.intervew_reschedule')
+                    ->view('emails.interview_reschedule')
                     ->with([
                         'interview' => $this->interview
                     ]);

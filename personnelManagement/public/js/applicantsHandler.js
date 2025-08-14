@@ -28,8 +28,6 @@ document.addEventListener('alpine:init', () => {
         showAll: false,
 
         init() {
-            console.log('Running init()...');
-
             setTimeout(() => {
                 this.applicants = Array.from(document.querySelectorAll('tr[data-applicant-id]')).map(row => ({
                     id: parseInt(row.dataset.applicantId),
@@ -42,8 +40,6 @@ document.addEventListener('alpine:init', () => {
                     training: row.dataset.trainingRange || '',
                     element: row
                 }));
-
-                console.log('Applicants loaded:', this.applicants);
             }, 50);
         },
 
@@ -75,6 +71,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         async submitStatusChange() {
+            this.loading = true;
             try {
                 const response = await fetch(`/hrAdmin/applications/${this.selectedApplicant.id}/status`, {
                     method: 'POST',
@@ -99,10 +96,11 @@ document.addEventListener('alpine:init', () => {
 
                 const label = {
                     approved: 'Approved',
-                    interviewed: 'Passed',
                     declined: 'Failed',
                     for_interview: 'Scheduled for Interview',
-                    trained: 'Trained'
+                    interviewed: 'Interview Passed',
+                    fail_interview: 'Interview Failed',
+                    trained: 'Trained',
                 }[this.statusAction] || 'Updated';
 
                this.feedbackMessage = `Applicant ${label} successfully.`;
@@ -114,7 +112,7 @@ document.addEventListener('alpine:init', () => {
                     location.reload();
                 }, 2500);
 
-                if (['interviewed', 'declined', 'trained'].includes(this.statusAction)) {
+                if (['interviewed', 'declined', 'trained', 'fail_interview'].includes(this.statusAction)) {
                     setTimeout(() => this.removedApplicants.push(result.application_id), 300);
                 }
 
@@ -124,6 +122,8 @@ document.addEventListener('alpine:init', () => {
 
             } catch (error) {
                 alert('Error: ' + error.message);
+            } finally {
+                this.loading = false;
             }
         },
 
@@ -237,8 +237,6 @@ document.addEventListener('alpine:init', () => {
                 proceed();
             }
         },
-
-
 
         openSetTraining(applicantId, fullName, range = '') {
             this.selectedApplicantId = applicantId;

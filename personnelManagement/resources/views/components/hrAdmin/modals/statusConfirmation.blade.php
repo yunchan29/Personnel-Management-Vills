@@ -44,15 +44,36 @@
                     <!-- Pass / Fail for Interview Page -->
                     <template x-if="pageContext === 'interview'">
                         <div class="flex gap-3">
-                            <button
-                                @click="statusAction = 'interviewed'; submitStatusChange()"
-                                class="px-4 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700">
-                                Pass
+                            <button 
+                                @click="statusAction = 'interviewed'; submitStatusChange()" 
+                                :disabled="loading" 
+                                class="px-4 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                                <template x-if="loading && statusAction === 'interviewed'">
+                                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                    </svg>
+                                </template>
+                                <span x-text="loading && statusAction === 'interviewed' ? 'Processing...' : 'Pass'"></span>
                             </button>
-                            <button
-                                @click="statusAction = 'declined'; submitStatusChange()"
-                                class="px-4 py-2 text-sm rounded bg-red-600 text-white hover:bg-red-700">
-                                Fail
+
+                            <button 
+                                @click="statusAction = 'fail_interview'; submitStatusChange()" 
+                                :disabled="loading" 
+                                class="px-4 py-2 text-sm rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                                <template x-if="loading && statusAction === 'declined'">
+                                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                    </svg>
+                                </template>
+                                <span x-text="loading && statusAction === 'declined' ? 'Processing...' : 'Fail'"></span>
                             </button>
                         </div>
                     </template>
@@ -60,15 +81,36 @@
                     <!-- Approve / Decline for Applicants Page -->
                     <template x-if="pageContext !== 'interview'">
                         <div class="flex gap-3">
-                            <button
-                                @click="statusAction = 'approved'; submitStatusChange()"
-                                class="px-4 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700">
-                                Approve
+                            <button 
+                                @click="statusAction = 'approved'; submitStatusChange()" 
+                                :disabled="loading" 
+                                class="px-4 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                                <template x-if="loading && statusAction === 'approved'">
+                                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                    </svg>
+                                </template>
+                                <span x-text="loading && statusAction === 'approved' ? 'Processing...' : 'Approve'"></span>
                             </button>
-                            <button
-                                @click="statusAction = 'declined'; submitStatusChange()"
-                                class="px-4 py-2 text-sm rounded bg-red-600 text-white hover:bg-red-700">
-                                Disapprove
+
+                            <button 
+                                @click="statusAction = 'declined'; submitStatusChange()" 
+                                :disabled="loading" 
+                                class="px-4 py-2 text-sm rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                                <template x-if="loading && statusAction === 'declined'">
+                                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                    </svg>
+                                </template>
+                                <span x-text="loading && statusAction === 'declined' ? 'Processing...' : 'Disapprove'"></span>
                             </button>
                         </div>
                     </template>

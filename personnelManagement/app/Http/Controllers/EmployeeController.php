@@ -14,7 +14,7 @@ class EmployeeController extends Controller
     {
         $role = auth()->user()->role; 
 
-        $jobs = Job::all();
+        $jobs = Job::withCount('applications')->get();
 
         // Fetch employees with job assignments
         $employees = User::where('role', 'employee')
@@ -34,14 +34,12 @@ class EmployeeController extends Controller
 
     public function performanceEvaluation()
     {
-        $jobs = Job::all();
+        $jobs = Job::withCount('applications')->get();
 
-        // Fetch all applicants who have a training schedule
         $applicants = Application::with(['user', 'trainingSchedule', 'evaluation'])
             ->whereHas('trainingSchedule')
             ->get();
 
-        // Fetch employees if needed
         $employees = User::where('role', 'employee')
             ->with('job')
             ->get();

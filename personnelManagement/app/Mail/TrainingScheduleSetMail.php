@@ -20,8 +20,14 @@ class TrainingScheduleSetMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Your Training Schedule')
-                    ->view('emails.training_schedule_set')
-                    ->with(['schedule' => $this->schedule]);
+    // Ensure related application is loaded
+    $this->schedule->load('application.user', 'application.job');
+
+    return $this->subject('Your Training Schedule')
+                ->view('emails.training_schedule_set')
+                ->with([
+                    'schedule'    => $this->schedule,
+                    'application' => $this->schedule->application
+                ]);
     }
 }

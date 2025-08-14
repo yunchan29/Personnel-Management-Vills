@@ -20,8 +20,15 @@ class TrainingScheduleRescheduledMail extends Mailable
 
     public function build()
     {
+
+    // Ensure related application is loaded
+    $this->schedule->load('application.user', 'application.job');
+
         return $this->subject('Training Rescheduled')
                     ->view('emails.training_schedule_rescheduled')
-                    ->with(['schedule' => $this->schedule]);
+                    ->with([
+                        'schedule'    => $this->schedule,
+                        'application' => $this->schedule->application
+                    ]);
     }
 }

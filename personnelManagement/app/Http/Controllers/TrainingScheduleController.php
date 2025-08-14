@@ -37,6 +37,8 @@ class TrainingScheduleController extends Controller
                 'scheduled_at' => now(),
                 'status' => 'rescheduled',
             ]);
+            
+            $existingSchedule->load('application.user', 'application.job');
 
             Mail::to($application->user->email)->send(
                 new TrainingScheduleRescheduledMail($existingSchedule)
@@ -53,6 +55,9 @@ class TrainingScheduleController extends Controller
                 'remarks' => null,
                 'status' => 'scheduled',
             ]);
+
+            // Load relationships for email
+            $newSchedule->load('application.user', 'application.job');
 
             Mail::to($application->user->email)->send(
                 new TrainingScheduleSetMail($newSchedule)

@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use App\Models\TrainingEvaluation;
 use App\Models\Application;
 use App\Models\User;
+use App\Mail\PassedEvaluationMail;
+use App\Mail\FailedEvaluationMail;
 
 class EvaluationController extends Controller
 {
@@ -45,6 +48,8 @@ class EvaluationController extends Controller
                 ]
             );
 
+            $user = $application->user;
+
             // ✅ Update application status if passed
             if ($validated['result'] === 'passed') {
                 $application->status = 'hired';
@@ -57,7 +62,34 @@ class EvaluationController extends Controller
                     $user->job_id = $application->job_id;
                     $user->save();
                 }
+                // Send passed email
+                Mail::to($user->email)->send(
+                new PassedEvaluationMail(
+                    $user,
+                    $application,
+                    $validated['knowledge_score'],
+                    $validated['skill_score'],
+                    $validated['participation_score'],
+                    $validated['professionalism_score'],
+                    $totalScore
+                )
+            );
+
+            }else {
+                // If failed, keep status as is but send fail email
+                Mail::to($user->email)->send(
+                new FailedEvaluationMail(
+                    $user,
+                    $application,
+                    $validated['knowledge_score'],
+                    $validated['skill_score'],
+                    $validated['participation_score'],
+                    $validated['professionalism_score'],
+                    $totalScore
+                    )
+                );
             }
+
         });
 
         return redirect()->back()->with('success', 'Evaluation submitted successfully.');
