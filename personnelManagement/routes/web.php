@@ -18,7 +18,7 @@ use App\Http\Controllers\InterviewController;
 use App\Http\Controllers\TrainingScheduleController;
 use App\Http\Controllers\InitialApplicationController;
 use App\Http\Controllers\EvaluationController;
-
+use App\Http\Controllers\DashboardChartController;
 
 //temporary ulit HAHAHAHH sorry
 Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
@@ -112,8 +112,8 @@ Route::prefix('employee')->name('employee.')->middleware('auth')->group(function
 // ✅ HRadmin-related routes with auth middleware
 Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function () {
 
-    // Dashboard
-    Route::get('/dashboard', fn() => view('hrAdmin.dashboard'))->name('dashboard');
+// Dashboard (with chart data passed directly)
+Route::get('/dashboard', [DashboardChartController::class, 'index'])->name('dashboard');
 
     // Profile Management
     Route::get('/profile', [UserController::class, 'showHrAdmin'])->name('profile');
