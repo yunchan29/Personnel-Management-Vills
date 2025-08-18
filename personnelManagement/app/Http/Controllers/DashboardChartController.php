@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\LeaveForm;
 
 class DashboardChartController extends Controller
 {
@@ -81,6 +82,20 @@ class DashboardChartController extends Controller
         }
 
         // ==============================
+        // LEAVE FORMS (group by status)
+        // ==============================
+        $leaveCounts = LeaveForm::select('status', DB::raw('COUNT(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        // Normalize leave data (support both string + numeric status codes, always return integers)
+        $leaveData = [
+            'pending'  => (int)($leaveCounts['Pending'] ?? $leaveCounts[0] ?? 0),
+            'approved' => (int)($leaveCounts['Approved'] ?? $leaveCounts[1] ?? 0),
+            'rejected' => (int)($leaveCounts['Declined'] ?? $leaveCounts[2] ?? 0),
+        ];
+
+        // ==============================
         // Final Chart Data
         // ==============================
         $chartData = [
@@ -100,6 +115,6 @@ class DashboardChartController extends Controller
             'employees'  => DB::table('users')->where('role', 'employee')->count(),
         ];
 
-        return view('hrAdmin.dashboard', compact('chartData', 'stats'));
+        return view('hrAdmin.dashboard', compact('chartData', 'stats', 'leaveData'));
     }
 }

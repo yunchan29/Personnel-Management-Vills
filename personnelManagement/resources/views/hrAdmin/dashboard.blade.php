@@ -30,34 +30,41 @@
 
   <!-- Charts Section -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <div class="lg:col-span-2 bg-white p-4 rounded-md shadow-md border border-gray-200">
-      <!-- Chart Tabs -->
+    <!-- Line Chart -->
+    <div class="lg:col-span-2 bg-white p-4 rounded-md shadow-md border border-gray-200 h-80 flex flex-col">
       <div class="flex items-center mb-4 space-x-4">
         <button class="chart-tab active-tab" data-type="job">Jobs Posted</button>
         <button class="chart-tab" data-type="applicants">Applicants</button>
         <button class="chart-tab" data-type="employee">Employees</button>
       </div>
-      <canvas id="lineChart" height="100"></canvas>
+      <div class="flex-1">
+        <canvas id="lineChart"></canvas>
+      </div>
     </div>
 
     <!-- Pie Chart -->
-    <div class="bg-white p-4 rounded-md shadow-md border border-gray-200">
-      <canvas id="pieChart" height="200"></canvas>
-      <div class="flex justify-center space-x-6 mt-4 text-sm">
-        <div class="flex items-center space-x-2">
-          <span class="w-3 h-3 rounded-full" style="background-color: #d97706;"></span>
+    <div class="bg-white p-4 rounded-md shadow-md border border-gray-200 flex flex-col">
+      <h1 class="font-semibold text-lg mb-2">Leave forms</h1>
+      <div class="flex-1 relative h-64">
+        <canvas id="pieChart" class="absolute inset-0 w-full h-full"></canvas>
+      </div>
+
+      <!-- Custom Legend -->
+      <div class="flex justify-center space-x-10 mt-6 text-sm">
+        <div class="flex flex-col items-center">
+          <span class="w-3 h-3 rounded-full mb-1" style="background-color: #e6c8a7;"></span>
           <span>Pending</span>
-          <span class="font-bold">20</span>
+          <span class="font-bold text-base" id="pending-count">{{ $leaveData['pending'] ?? 0 }}</span>
         </div>
-        <div class="flex items-center space-x-2">
-          <span class="w-3 h-3 rounded-full" style="background-color: #f59e0b;"></span>
+        <div class="flex flex-col items-center">
+          <span class="w-3 h-3 rounded-full mb-1" style="background-color: #d6a15b;"></span>
           <span>Approved</span>
-          <span class="font-bold">8</span>
+          <span class="font-bold text-base" id="approved-count">{{ $leaveData['approved'] ?? 0 }}</span>
         </div>
-        <div class="flex items-center space-x-2">
-          <span class="w-3 h-3 rounded-full" style="background-color: #b45309;"></span>
+        <div class="flex flex-col items-center">
+          <span class="w-3 h-3 rounded-full mb-1" style="background-color: #a85a18;"></span>
           <span>Rejected</span>
-          <span class="font-bold">12</span>
+          <span class="font-bold text-base" id="rejected-count">{{ $leaveData['rejected'] ?? 0 }}</span>
         </div>
       </div>
     </div>
@@ -66,100 +73,6 @@
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    let lineChart;
-
-    // Chart data from Laravel
-    const data = @json($chartData);
-
-    const ctx = document.getElementById('lineChart').getContext('2d');
-
-    // Generate datasets dynamically with style
-    function generateDatasets(type) {
-        return Object.keys(data[type]).map((company, index) => ({
-            label: company,
-            data: data[type][company],
-            tension: 0.4,
-            fill: false,
-            borderWidth: 2,
-            borderColor: `hsl(${index * 60}, 70%, 50%)`,
-            borderDash: index === 1 ? [6, 4] : [], // dashed for 2nd dataset
-            pointRadius: 0 // cleaner lines
-        }));
-    }
-
-    // Default chart
-    lineChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: data.labels,
-            datasets: generateDatasets('job')
-        },
-        options: {
-            responsive: true,
-            plugins: { 
-                legend: { 
-                    display: true,
-                    labels: {
-                        usePointStyle: true,
-                        pointStyle: 'line',
-                        color: '#4b5563',
-                        font: { size: 14 }
-                    },
-                    onClick: (e) => e.stopPropagation() // prevent crossing out datasets
-                } 
-            },
-            interaction: {
-                intersect: false,
-                mode: 'index'
-            },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#9ca3af' }
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: { color: '#f3f4f6' },
-                    ticks: { color: '#9ca3af' }
-                }
-            }
-        }
-    });
-
-    // Update chart
-    function updateChart(type) {
-        document.querySelectorAll('.chart-tab').forEach(b => b.classList.remove('active-tab'));
-        document.querySelector(`.chart-tab[data-type="${type}"]`)?.classList.add('active-tab');
-
-        lineChart.data.datasets = generateDatasets(type);
-        lineChart.update();
-    }
-
-    document.querySelectorAll('.chart-tab').forEach(btn =>
-        btn.addEventListener('click', () => updateChart(btn.dataset.type))
-    );
-
-    document.querySelectorAll('.stat-card').forEach(card =>
-        card.addEventListener('click', () => updateChart(card.dataset.type))
-    );
-
-    // Static Pie Chart
-    new Chart(document.getElementById('pieChart'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Pending', 'Approved', 'Rejected'],
-            datasets: [{
-                data: [20, 8, 12],
-                backgroundColor: ['#d97706', '#f59e0b', '#b45309']
-            }]
-        },
-        options: { responsive: true, plugins: { legend: { display: false } } }
-    });
-});
-</script>
 
 <style>
 .chart-tab {
@@ -183,5 +96,132 @@ document.addEventListener('DOMContentLoaded', function () {
   transform: translateY(-3px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
+#pieChart {
+  width: 100% !important;
+  height: 100% !important;
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    let lineChart;
+
+    // Debug: check what PHP sends
+    const data = @json($chartData ?? []);
+    const leaveData = @json($leaveData ?? ['pending'=>0, 'approved'=>0, 'rejected'=>0]);
+    console.log("Chart Data:", data);
+    console.log("Leave Data:", leaveData);
+
+    /* ---------------- Line Chart ---------------- */
+    const ctx = document.getElementById('lineChart')?.getContext('2d');
+
+    function generateDatasets(type) {
+        return Object.keys(data[type] ?? {}).map((company, index) => ({
+            label: company,
+            data: data[type][company],
+            tension: 0.4,
+            fill: false,
+            borderWidth: 2,
+            borderColor: `hsl(${index * 70}, 70%, 50%)`,
+            borderDash: index % 2 === 1 ? [6, 4] : [],
+            pointRadius: 3,
+            pointHoverRadius: 6
+        }));
+    }
+
+    function initLineChart(type = 'job') {
+        return new Chart(ctx, {
+            type: 'line',
+            data: { labels: data.labels ?? [], datasets: generateDatasets(type) },
+            options: {
+                responsive: true,
+                plugins: { 
+                    legend: { 
+                        display: true, 
+                        labels: { usePointStyle: true, pointStyle: 'line', color: '#374151', font: { size: 13 } }, 
+                        onClick: (e) => e.stopPropagation() 
+                    },
+                    tooltip: { 
+                        backgroundColor: '#111827', 
+                        titleColor: '#f9fafb', 
+                        bodyColor: '#f9fafb', 
+                        padding: 10, 
+                        borderColor: '#374151', 
+                        borderWidth: 1 
+                    }
+                },
+                interaction: { intersect: false, mode: 'index' },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#6b7280' } },
+                    y: { beginAtZero: true, grid: { color: '#e5e7eb' }, ticks: { color: '#6b7280' } }
+                }
+            }
+        });
+    }
+
+    if (ctx) {
+        lineChart = initLineChart();
+
+        function updateChart(type) {
+            document.querySelectorAll('.chart-tab').forEach(b => b.classList.remove('active-tab'));
+            document.querySelector(`.chart-tab[data-type="${type}"]`)?.classList.add('active-tab');
+            lineChart.destroy();
+            lineChart = initLineChart(type);
+        }
+
+        document.querySelectorAll('.chart-tab').forEach(btn =>
+            btn.addEventListener('click', () => updateChart(btn.dataset.type))
+        );
+        document.querySelectorAll('.stat-card').forEach(card =>
+            card.addEventListener('click', () => updateChart(card.dataset.type))
+        );
+    }
+
+    /* ---------------- Pie Chart ---------------- */
+    const pieCanvas = document.getElementById('pieChart');
+    if (pieCanvas) {
+        const pieCtx = pieCanvas.getContext('2d');
+        const leaveLabels = ['Pending','Approved','Rejected'];
+        const leaveCounts = [
+            leaveData.pending ?? 0,
+            leaveData.approved ?? 0,
+            leaveData.rejected ?? 0
+        ];
+
+        // Update counts in DOM
+        document.getElementById('pending-count').textContent = leaveCounts[0];
+        document.getElementById('approved-count').textContent = leaveCounts[1];
+        document.getElementById('rejected-count').textContent = leaveCounts[2];
+
+        new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: leaveLabels,
+                datasets: [{
+                    data: leaveCounts,
+                    backgroundColor: ['#e6c8a7','#d6a15b','#a85a18'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { 
+                        callbacks: {
+                            label: function(ctx){
+                                const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+                                const val = ctx.raw;
+                                const pct = total ? ((val/total)*100).toFixed(1) : 0;
+                                return `${ctx.label}: ${val} (${pct}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
 @endsection
