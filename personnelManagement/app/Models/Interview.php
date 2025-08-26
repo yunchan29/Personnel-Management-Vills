@@ -12,6 +12,8 @@ class Interview extends Model
         'application_id',
         'user_id',
         'scheduled_by',
+        'start_time',
+        'end_time',
         'scheduled_at',
         'rescheduled_at',
         'status',

@@ -1,6 +1,7 @@
 <div x-show="showInterviewModal" x-transition x-cloak
      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg w-full max-w-md p-6 shadow-xl relative">
+        <!-- Close button -->
         <button @click="showInterviewModal = false"
             class="absolute top-3 right-4 text-gray-500 hover:text-red-500 text-xl font-bold">
             &times;
@@ -10,6 +11,7 @@
             Set Interview for <span x-text="interviewApplicant?.name"></span>
         </h2>
 
+        <!-- Interview Date -->
         <label class="block text-sm font-medium mb-1">Interview Date</label>
         <input
             type="date"
@@ -18,9 +20,23 @@
             class="w-full mb-4 p-2 border rounded"
         />
 
-        <label class="block text-sm font-medium mb-1">Interview Time</label>
-        <input type="time" x-model="interviewTime" class="w-full mb-4 p-2 border rounded">
+        <!-- Start Time -->
+        <label class="block text-sm font-medium mb-1">Start Time</label>
+        <input
+            type="time"
+            x-model="interviewStartTime"
+            class="w-full mb-4 p-2 border rounded"
+        />
 
+        <!-- End Time -->
+        <label class="block text-sm font-medium mb-1">End Time</label>
+        <input
+            type="time"
+            x-model="interviewEndTime"
+            class="w-full mb-4 p-2 border rounded"
+        />
+
+        <!-- Action buttons -->
         <div class="flex justify-end gap-3">
             <button @click="submitInterviewDate"
                 :disabled="loading"
@@ -36,7 +52,6 @@
                 </template>
                 <span x-text="loading ? 'Processing...' : 'Confirm'"></span>
             </button>
-
         </div>
     </div>
 </div>
