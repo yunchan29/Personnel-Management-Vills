@@ -60,7 +60,7 @@
                         <td class="py-3 px-4">
                             @if($application->user->active_status === 'Active')
                                 <button
-                                    @click="openProfile({{ $application->id }})"
+                                    @click="openProfile({{ $application->user->id }})"
                                     class="border border-[#BD6F22] text-[#BD6F22] text-sm font-medium h-8 px-3 rounded hover:bg-[#BD6F22] hover:text-white">
                                     View
                                 </button>
