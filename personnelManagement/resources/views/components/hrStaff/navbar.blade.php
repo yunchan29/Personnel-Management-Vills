@@ -17,28 +17,31 @@
 
     <!-- User Dropdown -->
     @auth
+    @php
+        $role = Auth::user()->role;
+        $profileRoutes = [
+            'applicant' => route('applicant.profile'),
+            'employee' => route('employee.profile'),
+            'hrAdmin' => route('hrAdmin.profile'),
+            'hrAdmin' => route('hrAdmin.profile'),
+        ];
+        $roleText = $role === 'hrAdmin' ? 'HR Admin' : ($role === 'hrStaff' ? 'HR Staff' : '');
+    @endphp
     <div class="mt-2 sm:mt-0 flex justify-center sm:justify-end">
         <x-dropdown align="right" width="48">
             <x-slot name="trigger">
-                <button class="flex items-center text-sm rounded-full focus:outline-none">
+                <button class="flex items-center text-sm rounded-full focus:outline-none gap-x-2">
                     <img class="h-9 w-9 rounded-full object-cover border-2 border-white"
                          src="{{ Auth::user()->profile_picture_url }}"
                          alt="{{ Auth::user()->name }}"
                          onerror="this.onerror=null; this.src='/images/defaultAvatar.png';">
+                    @if($roleText)
+                        <span class="text-white font-medium">{{ $roleText }}</span>
+                    @endif
                 </button>
             </x-slot>
 
             <x-slot name="content">
-                @php
-                    $role = Auth::user()->role;
-                    $profileRoutes = [
-                        'applicant' => route('applicant.profile'),
-                        'employee' => route('employee.profile'),
-                        'hrAdmin' => route('hrAdmin.profile'),
-                        'hrAdmin' => route('hrAdmin.profile'),
-                    ];
-                @endphp
-
                 <x-dropdown-link href="{{ $profileRoutes[$role] ?? '#' }}">
                     Profile
                 </x-dropdown-link>

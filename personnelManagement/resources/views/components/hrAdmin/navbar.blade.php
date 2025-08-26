@@ -15,44 +15,46 @@
         <div id="datetime" class="text-xs sm:text-sm font-medium text-white mt-1 sm:mt-0 sm:ml-6 text-center sm:text-left whitespace-nowrap"></div>
     </div>
 
-    <!-- User Dropdown -->
-    @auth
-    <div class="mt-2 sm:mt-0 flex justify-center sm:justify-end">
-        <x-dropdown align="right" width="48">
-            <x-slot name="trigger">
-                <button class="flex items-center text-sm rounded-full focus:outline-none">
-                    <img class="h-9 w-9 rounded-full object-cover border-2 border-white"
-                         src="{{ Auth::user()->profile_picture_url }}"
-                         alt="{{ Auth::user()->name }}"
-                         onerror="this.onerror=null; this.src='/images/defaultAvatar.png';">
-                </button>
-            </x-slot>
+   <!-- User Dropdown -->
+@auth
+<div class="mt-2 sm:mt-0 flex justify-center sm:justify-end">
+    <x-dropdown align="right" width="48">
+        <x-slot name="trigger">
+            <button class="flex items-center text-sm rounded-full focus:outline-none gap-x-2">
+                <img class="h-9 w-9 rounded-full object-cover border-2 border-white"
+                     src="{{ Auth::user()->profile_picture_url }}"
+                     alt="{{ Auth::user()->name }}"
+                     onerror="this.onerror=null; this.src='/images/defaultAvatar.png';">
+                <span class="text-white font-medium">HR Admin</span>
+            </button>
+        </x-slot>
 
-            <x-slot name="content">
-                @php
-                    $role = Auth::user()->role;
-                    $profileRoutes = [
-                        'applicant' => route('applicant.profile'),
-                        'employee' => route('employee.profile'),
-                        'hrAdmin' => route('hrAdmin.profile'),
-                    ];
-                @endphp
+        <x-slot name="content">
+            @php
+                $role = Auth::user()->role;
+                $profileRoutes = [
+                    'applicant' => route('applicant.profile'),
+                    'employee' => route('employee.profile'),
+                    'hrAdmin' => route('hrAdmin.profile'),
+                ];
+            @endphp
 
-                <x-dropdown-link href="{{ $profileRoutes[$role] ?? '#' }}">
-                    Profile
+            <x-dropdown-link href="{{ $profileRoutes[$role] ?? '#' }}">
+                Profile
+            </x-dropdown-link>
+
+            <form method="POST" action="/logout" class="m-0 p-0">
+                @csrf
+                <x-dropdown-link href="/logout" 
+                    onclick="event.preventDefault(); this.closest('form').submit();">
+                    Log Out
                 </x-dropdown-link>
+            </form>
+        </x-slot>
+    </x-dropdown>
+</div>
+@endauth
 
-                <form method="POST" action="/logout" class="m-0 p-0">
-                    @csrf
-                    <x-dropdown-link href="/logout" 
-                        onclick="event.preventDefault(); this.closest('form').submit();">
-                        Log Out
-                    </x-dropdown-link>
-                </form>
-            </x-slot>
-        </x-dropdown>
-    </div>
-    @endauth
 </nav>
 
 <!-- Date/Time Script -->
