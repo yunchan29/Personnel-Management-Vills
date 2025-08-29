@@ -5,6 +5,7 @@
     'location',
     'qualifications',
     'addinfo',
+    'vacancies',
     'lastPosted',
     'deadline',
     'hasResume',
@@ -53,6 +54,11 @@
     }" 
     class="w-full border rounded-lg shadow-sm p-6 bg-white space-y-4 transition-all duration-300 relative"
 >
+
+ <!-- Vacancies Badge -->
+    <span class="absolute top-4 right-4 bg-[#BD6F22] text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
+        {{ $vacancies }} Vacanc{{ $vacancies > 1 ? 'ies' : 'y' }}
+    </span> 
     <!-- Top Row -->
     <div class="flex justify-between items-start gap-4 flex-wrap">
         <!-- Date Info -->

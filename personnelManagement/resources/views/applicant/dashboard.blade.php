@@ -43,6 +43,7 @@
                 :deadline="\Carbon\Carbon::parse($job->apply_until)->format('F d, Y')"
                 :hasResume="!is_null($resume) && !empty($resume->resume)"
                 :hasApplied="in_array($job->id, $appliedJobIds)"
+                :vacancies="$job->vacancies"
             />
         </div>
     @empty
