@@ -1,4 +1,4 @@
-<nav class="sticky top-0 z-50 bg-[#BD9168] shadow-md px-6 py-2 flex flex-col sm:flex-row sm:justify-between sm:items-center text-white">
+<nav class="sticky top-0 z-50 bg-[#673b11] shadow-md px-6 py-2 flex flex-col sm:flex-row sm:justify-between sm:items-center text-white">
     <!-- Logo & Date/Time Group -->
     <div class="flex flex-col sm:flex-row sm:items-center w-full sm:w-auto">
         <!-- Logo Row -->

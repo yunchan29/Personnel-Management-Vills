@@ -148,6 +148,11 @@ Route::get('/dashboard', [DashboardChartController::class, 'index'])->name('dash
     // 201 Files: Government IDs and Licenses
     Route::get('/files', fn() => view('hrAdmin.files'))->name('files');
 
+   Route::get('/archive', function () {
+    return view('hrAdmin.archive');
+})->name('archive');
+
+
     // Leave Form
     Route::get('/leave-forms', [LeaveFormController::class, 'index'])->name('leaveForm');
     Route::post('/leave-forms', [LeaveFormController::class, 'store'])->name('leaveForms.store');

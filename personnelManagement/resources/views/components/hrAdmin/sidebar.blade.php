@@ -18,7 +18,9 @@
                 
                 ['img' => 'leaveForm.png', 'label' => 'Leave Forms', 'route' => 'hrAdmin.leaveForm'],
                 ['img' => 'employees.png', 'label' => 'Employees', 'route' => 'hrAdmin.employees'],
+                ['img' => 'archive.png', 'label' => 'Archive', 'route' => 'hrAdmin.archive'],
                 ['img' => 'settings.png', 'label' => 'Settings', 'route' => 'hrAdmin.settings'],
+               
             ];
         @endphp
 

@@ -20,7 +20,7 @@ class Application extends Model
     ];
 
     protected $casts = [
-        'licenses' => 'array',
+        'licenses' => 'array', 
         'interview_schedule' => 'datetime',
         'reviewed_at' => 'datetime',
     ];
@@ -55,3 +55,6 @@ class Application extends Model
 }
 
 }
+
+
+
