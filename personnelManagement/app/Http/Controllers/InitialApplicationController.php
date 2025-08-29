@@ -68,41 +68,45 @@ class InitialApplicationController extends Controller
 }
 
 
-    // View applicants related to a specific job
-    public function viewApplicants($jobId)
-    {
-        $job = Job::findOrFail($jobId);
-        $jobs = Job::withCount('applications')->get();
+   public function viewApplicants($jobId)
+{
+    $job = Job::findOrFail($jobId);
+    $jobs = Job::withCount('applications')->get();
 
-        $applications = Application::with(['user', 'job', 'interview', 'trainingSchedule'])
-            ->where('job_id', $jobId)
-            ->get();
+    $applications = Application::with(['user', 'job', 'interview', 'trainingSchedule'])
+        ->where('job_id', $jobId)
+        ->get();
 
-        $approvedApplicants = Application::with(['user', 'job', 'trainingSchedule'])
-            ->where('job_id', $jobId)
-            ->whereIn('status', ['approved', 'for_interview'])
-            ->get();
+    $approvedApplicants = Application::with(['user', 'job', 'trainingSchedule'])
+        ->where('job_id', $jobId)
+        ->whereIn('status', ['approved', 'for_interview'])
+        ->get();
 
-        $interviewApplicants = Application::with(['user', 'job', 'trainingSchedule'])
-            ->where('job_id', $jobId)
-            ->whereIn('status', ['interviewed', 'scheduled_for_training'])
-            ->get();
+    $interviewApplicants = Application::with(['user', 'job', 'trainingSchedule'])
+        ->where('job_id', $jobId)
+        ->whereIn('status', ['interviewed', 'scheduled_for_training'])
+        ->get();
 
-        $forTrainingApplicants = Application::with(['user', 'job', 'trainingSchedule'])
-            ->where('job_id', $jobId)
-            ->where('status', 'for_evaluation')
-            ->get();
+    $forTrainingApplicants = Application::with(['user', 'job', 'trainingSchedule'])
+        ->where('job_id', $jobId)
+        ->where('status', 'for_evaluation')
+        ->get();
 
-        return view('hrAdmin.application', [
-            'jobs' => $jobs,
-            'applications' => $applications,
-            'selectedJob' => $job,
-            'selectedTab' => 'applicants',
-            'approvedApplicants' => $approvedApplicants,
-            'interviewApplicants' => $interviewApplicants,
-            'forTrainingApplicants' => $forTrainingApplicants,
-        ]);
-    }
+    // ✅ Add this line
+    $companies = Job::select('company_name')->distinct()->pluck('company_name');
+
+    return view('hrAdmin.application', [
+        'jobs' => $jobs,
+        'applications' => $applications,
+        'selectedJob' => $job,
+        'selectedTab' => 'applicants',
+        'approvedApplicants' => $approvedApplicants,
+        'interviewApplicants' => $interviewApplicants,
+        'forTrainingApplicants' => $forTrainingApplicants,
+        'companies' => $companies, // ✅ Pass it to the view
+    ]);
+}
+
 
     // Approve or decline an application
     public function updateApplicationStatus(Request $request, $id)
