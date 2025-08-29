@@ -46,34 +46,42 @@ class JobController extends Controller
     }
 
     public function index(Request $request)
-    {
-        $query = Job::withCount('applications');
+{
+    $query = Job::withCount('applications');
 
-        // Search by job title / position
-        if ($request->filled('search')) {
-            $query->where('job_title', 'like', '%' . $request->search . '%');
-        }
-
-        // Sort logic
-        switch ($request->sort) {
-            case 'latest':
-                $query->orderBy('created_at', 'desc');
-                break;
-            case 'oldest':
-                $query->orderBy('created_at', 'asc');
-                break;
-            case 'position_asc':
-                $query->orderBy('job_title', 'asc');
-                break;
-            case 'position_desc':
-                $query->orderBy('job_title', 'desc');
-                break;
-        }
-
-        $jobs = $query->get();
-
-        return view('hrAdmin.jobPosting', compact('jobs'));
+    // 🔍 Search by job title / position
+    if ($request->filled('search')) {
+        $query->where('job_title', 'like', '%' . $request->search . '%');
     }
+
+    // 🏢 Filter by company name
+    if ($request->filled('company_name')) {
+        $query->where('company_name', $request->company_name);
+    }
+
+    // 🔃 Sort logic
+    switch ($request->sort) {
+        case 'latest':
+            $query->orderBy('created_at', 'desc');
+            break;
+        case 'oldest':
+            $query->orderBy('created_at', 'asc');
+            break;
+        case 'position_asc':
+            $query->orderBy('job_title', 'asc');
+            break;
+        case 'position_desc':
+            $query->orderBy('job_title', 'desc');
+            break;
+    }
+
+    $jobs = $query->get();
+
+    // 🏢 Distinct company list for filter dropdown
+    $companies = Job::select('company_name')->distinct()->pluck('company_name');
+
+    return view('hrAdmin.jobPosting', compact('jobs', 'companies'));
+}
 
 
 

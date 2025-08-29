@@ -15,42 +15,58 @@ use Illuminate\Support\Facades\Mail;
 
 class InitialApplicationController extends Controller
 {
-    // View all jobs and all applications with search & sort
-    public function index(Request $request)
-    {
-        // Jobs query
-        $jobsQuery = Job::withCount('applications');
+  public function index(Request $request)
+{
+    // Jobs query
+    $jobsQuery = Job::withCount('applications');
 
-        // Search jobs by title if search is provided
-        if ($request->filled('search')) {
-            $jobsQuery->where('job_title', 'like', '%' . $request->search . '%');
-        }
-
-        // Sort logic
-        switch ($request->sort) {
-            case 'latest':
-                $jobsQuery->orderBy('created_at', 'desc');
-                break;
-            case 'oldest':
-                $jobsQuery->orderBy('created_at', 'asc');
-                break;
-            case 'position_asc':
-                $jobsQuery->orderBy('job_title', 'asc');
-                break;
-            case 'position_desc':
-                $jobsQuery->orderBy('job_title', 'desc');
-                break;
-            default:
-                $jobsQuery->orderBy('created_at', 'desc');
-        }
-
-        $jobs = $jobsQuery->get();
-
-        // Applications query (always latest)
-        $applications = Application::with('user', 'job')->latest()->get();
-
-        return view('hrAdmin.application', compact('jobs', 'applications'));
+    // 🔎 Search jobs by title
+    if ($request->filled('search')) {
+        $jobsQuery->where('job_title', 'like', '%' . $request->search . '%');
     }
+
+    // 🏢 Filter by company name
+    if ($request->filled('company_name')) {
+        $jobsQuery->where('company_name', $request->company_name);
+    }
+
+    // 🔃 Sort logic
+    switch ($request->sort) {
+        case 'latest':
+            $jobsQuery->orderBy('created_at', 'desc');
+            break;
+        case 'oldest':
+            $jobsQuery->orderBy('created_at', 'asc');
+            break;
+        case 'position_asc':
+            $jobsQuery->orderBy('job_title', 'asc');
+            break;
+        case 'position_desc':
+            $jobsQuery->orderBy('job_title', 'desc');
+            break;
+        default:
+            $jobsQuery->orderBy('created_at', 'desc');
+    }
+
+    $jobs = $jobsQuery->get();
+
+    // Applications (always latest, but filtered if company_name is selected)
+    $applicationsQuery = Application::with('user', 'job')->latest();
+
+    if ($request->filled('company_name')) {
+        $applicationsQuery->whereHas('job', function ($q) use ($request) {
+            $q->where('company_name', $request->company_name);
+        });
+    }
+
+    $applications = $applicationsQuery->get();
+
+    // 📌 Distinct companies for filter dropdown
+    $companies = Job::select('company_name')->distinct()->pluck('company_name');
+
+    return view('hrAdmin.application', compact('jobs', 'applications', 'companies'));
+}
+
 
     // View applicants related to a specific job
     public function viewApplicants($jobId)

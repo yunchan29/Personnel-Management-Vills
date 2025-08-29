@@ -8,70 +8,106 @@
     @if($jobs->isNotEmpty())
         <!-- Search and Add Button Row -->
         <div class="flex flex-col md:flex-row md:justify-between gap-4 mb-6">
-            <!-- Sort Icon + Search Form -->
-            <form method="GET" action="{{ route('hrAdmin.jobPosting') }}" class="flex w-full md:flex-1 items-center gap-2" x-data="{ open: false }">
-                
-                <!-- Sort Icon + Dropdown -->
-                <div class="relative">
-                    <button 
-                        type="button"
-                        @click="open = !open"
-                        class="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-[#BD6F22] hover:text-[#a65e1d] transition"
-                        title="Sort Options"
-                    >
-                        <!-- Sort Icon -->
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M3 10h14M3 16h10" />
-                        </svg>
-                    </button>
+ <form method="GET" action="{{ route('hrAdmin.jobPosting') }}" class="flex w-full md:flex-1 items-center gap-2" x-data="{ open: false }">
 
-                    <!-- Sort Dropdown -->
-                    <div 
-                        x-show="open" 
-                        @click.away="open = false"
-                        x-transition
-                        class="absolute z-10 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-md"
-                    >
-                        @php
-                            $sortOptions = [
-                                'latest' => 'Latest',
-                                'oldest' => 'Oldest',
-                                'position_asc' => 'Position A-Z',
-                                'position_desc' => 'Position Z-A',
-                            ];
-                        @endphp
+    <!-- Filters dropdown (company + sort) -->
+    <div class="relative">
+        <button 
+            type="button"
+            @click="open = !open"
+            class="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-[#BD6F22] hover:text-[#a65e1d] transition"
+            title="Filters"
+        >
+            <!-- Filter Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M3 10h14M3 16h10" />
+            </svg>
+        </button>
 
-                        @foreach($sortOptions as $value => $label)
-                            <button 
-                                type="submit"
-                                name="sort"
-                                value="{{ $value }}"
-                                class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 {{ request('sort') === $value ? 'bg-gray-100 font-semibold' : '' }}"
-                            >
-                                {{ $label }}
-                            </button>
+        <!-- Dropdown panel -->
+        <div 
+            x-show="open" 
+            @click.away="open = false"
+            x-transition
+            class="absolute z-50 mt-2 w-72 bg-white border border-gray-200 rounded-md shadow-lg"
+            style="display: none;"
+        >
+            <div class="p-4">
+                {{-- Company (single-select radios) --}}
+                <div>
+                    <p class="font-medium text-sm mb-2">Company</p>
+
+                    <div class="max-h-40 overflow-auto space-y-1">
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="company_name" value="" {{ request('company_name') === null || request('company_name') === '' ? 'checked' : '' }}>
+                            <span class="text-sm">All Companies</span>
+                        </label>
+
+                        @foreach($companies as $company)
+                            <label class="flex items-center space-x-2">
+                                <input type="radio" name="company_name" value="{{ $company }}" {{ request('company_name') === $company ? 'checked' : '' }}>
+                                <span class="text-sm truncate">{{ $company }}</span>
+                            </label>
                         @endforeach
                     </div>
                 </div>
 
-                <!-- Search Bar + Button (No Gap) -->
-                <div class="flex w-full">
-                    <input 
-                        type="text" 
-                        name="search"
-                        value="{{ request('search') }}"
-                        placeholder="Search Position" 
-                        class="w-full border border-gray-300 rounded-l-md py-2 px-4 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]"
-                    >
-
-                    <button 
-                        type="submit"
-                        class="bg-[#BD6F22] text-white px-4 py-2 rounded-r-md hover:bg-[#a65e1d] transition"
-                    >
-                        Search
-                    </button>
+                {{-- Sort --}}
+                <div class="mt-4">
+                    <p class="font-medium text-sm mb-2">Sort</p>
+                    <div class="space-y-1">
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="sort" value="latest" {{ request('sort') === 'latest' || request('sort') === null ? 'checked' : '' }}>
+                            <span class="text-sm">Latest</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="sort" value="oldest" {{ request('sort') === 'oldest' ? 'checked' : '' }}>
+                            <span class="text-sm">Oldest</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="sort" value="position_asc" {{ request('sort') === 'position_asc' ? 'checked' : '' }}>
+                            <span class="text-sm">Position (A–Z)</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="sort" value="position_desc" {{ request('sort') === 'position_desc' ? 'checked' : '' }}>
+                            <span class="text-sm">Position (Z–A)</span>
+                        </label>
+                    </div>
                 </div>
-            </form>
+
+                {{-- Buttons --}}
+                <div class="mt-4 flex items-center justify-between">
+                    <div class="flex gap-2">
+                        <button type="submit" class="bg-[#BD6F22] text-white px-3 py-1 rounded-md text-sm hover:bg-[#a65e1d]">
+                            Apply
+                        </button>
+                        <a href="{{ route('hrAdmin.jobPosting') }}" class="border border-gray-300 px-3 py-1 rounded-md text-sm">Clear</a>
+                    </div>
+
+                    <button type="button" @click="open = false" class="text-sm text-gray-500 hover:text-gray-700">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search input + submit -->
+    <div class="flex w-full">
+        <input 
+            type="text" 
+            name="search"
+            value="{{ request('search') }}"
+            placeholder="Search Position" 
+            class="w-full border border-gray-300 rounded-l-md py-2 px-4 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]"
+        >
+
+        <button 
+            type="submit"
+            class="bg-[#BD6F22] text-white px-4 py-2 rounded-r-md hover:bg-[#a65e1d] transition"
+        >
+            Search
+        </button>
+    </div>
+</form>
 
             <!-- Add Job Advertisement Button -->
             <div class="flex-shrink-0">

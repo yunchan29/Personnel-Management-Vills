@@ -14,9 +14,8 @@ document.addEventListener('alpine:init', () => {
 
         showInterviewModal: false,
         interviewApplicant: null,
-        interviewEndTime: '',
-        interviewStartTime: '',
-        interviewDate:'',
+        interviewDate: '',
+        interviewTime: '',
 
         showTrainingModal: false,
         trainingApplicant: null,
@@ -128,52 +127,39 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-       openSetInterview(applicationId, name, userId, rawStart = '', rawEnd = '') {
-    this.interviewApplicant = {
-        application_id: applicationId,
-        user_id: userId,
-        name: name
-    };
+        openSetInterview(applicationId, name, userId, rawInterviewDate = '') {
+            this.interviewApplicant = {
+                application_id: applicationId,
+                user_id: userId,
+                name: name
+            };
 
-    const [dateS, timeS] = rawStart ? rawStart.split(' ') : ['', ''];
-    const [dateE, timeE] = rawEnd ? rawEnd.split(' ') : ['', ''];
+            const [date, time] = rawInterviewDate.split(' ');
+            this.interviewDate = date || '';
+            this.interviewTime = time || '';
 
-    this.interviewDate = dateS || '';
-    this.interviewStartTime = timeS || '';
-    this.interviewEndTime = timeE || '';
+            // ✅ Store original for comparison
+            this.originalDate = date || '';
+            this.originalTime = time || '';
 
-    // ✅ Store originals for comparison
-    this.originalDate = dateS || '';
-    this.originalStartTime = timeS || '';
-    this.originalEndTime = timeE || '';
-
-    this.showInterviewModal = true;
-},
+            this.showInterviewModal = true;
+        },
 
 
-      async submitInterviewDate() {
-    if (!this.interviewDate || !this.interviewStartTime || !this.interviewEndTime) {
-        alert('Please select date, start time, and end time.');
+async submitInterviewDate() {
+    if (!this.interviewDate || !this.interviewStartTime) {
+        alert('Please select both date and time.');
         return;
     }
 
-    const startDateTime = `${this.interviewDate} ${this.interviewStartTime}`;
-    const endDateTime   = `${this.interviewDate} ${this.interviewEndTime}`;
+    const interviewDateTime = `${this.interviewDate} ${this.interviewStartTime}`;
+    const originalDateTime = `${this.originalDate} ${this.originalTime}`;
 
-    const originalStart = this.originalDate && this.originalStartTime
-        ? `${this.originalDate} ${this.originalStartTime}` : null;
-    const originalEnd = this.originalDate && this.originalEndTime
-        ? `${this.originalDate} ${this.originalEndTime}` : null;
-
-    console.log('Original Start:', originalStart);
-    console.log('Original End:', originalEnd);
-    console.log('New Start:', startDateTime);
-    console.log('New End:', endDateTime);
+    console.log('Original:', originalDateTime);
+    console.log('New:', interviewDateTime);
 
     // ✅ Check if no changes were made
-    if (originalStart && originalEnd &&
-        startDateTime === originalStart &&
-        endDateTime === originalEnd) {
+    if (this.originalDate && this.originalTime && interviewDateTime === originalDateTime) {
         this.feedbackMessage = 'No changes were made to the interview schedule.';
         this.feedbackVisible = true;
         setTimeout(() => this.feedbackVisible = false, 3000);
@@ -181,7 +167,8 @@ document.addEventListener('alpine:init', () => {
         return; // 🚫 Skip API call
     }
 
-    const isReschedule = originalStart && originalEnd;
+    // ✅ Define isReschedule AFTER the check
+    const isReschedule = this.originalDate && this.originalTime;
 
     this.loading = true;
 
@@ -196,8 +183,7 @@ document.addEventListener('alpine:init', () => {
                 body: JSON.stringify({
                     application_id: this.interviewApplicant.application_id,
                     user_id: this.interviewApplicant.user_id,
-                    start_time: startDateTime,
-                    end_time: endDateTime,
+                    scheduled_at: interviewDateTime,
                     is_reschedule: isReschedule,
                 })
             });
@@ -208,21 +194,18 @@ document.addEventListener('alpine:init', () => {
             // ✅ Update row attributes
             const row = document.querySelector(`tr[data-applicant-id='${this.interviewApplicant.application_id}']`);
             if (row) {
-                row.setAttribute('data-interview-start', startDateTime);
-                row.setAttribute('data-interview-end', endDateTime);
+                row.setAttribute('data-interview-date', interviewDateTime);
                 row.setAttribute('data-status', 'for_interview');
             }
 
-            // ✅ Update applicant list
+            // ✅ Update local applicants array
             const index = this.applicants.findIndex(a => a.id === this.interviewApplicant.application_id);
             if (index !== -1) {
                 this.applicants[index].status = 'for_interview';
                 this.applicants = [...this.applicants];
             }
 
-            this.feedbackMessage = isReschedule
-                ? 'Interview rescheduled successfully!'
-                : 'Interview scheduled successfully!';
+            this.feedbackMessage = 'Interview date set successfully!';
             this.feedbackVisible = true;
             setTimeout(() => {
                 this.feedbackVisible = false;
@@ -230,7 +213,6 @@ document.addEventListener('alpine:init', () => {
             }, 3000);
 
             this.showInterviewModal = false;
-
         } catch (error) {
             alert('Error: ' + error.message);
         } finally {
@@ -238,6 +220,7 @@ document.addEventListener('alpine:init', () => {
         }
     };
 
+    // ✅ Confirm reschedule
     if (isReschedule) {
         Swal.fire({
             title: "You're about to reschedule",
@@ -258,6 +241,7 @@ document.addEventListener('alpine:init', () => {
         proceed();
     }
 },
+
 
 
         openSetTraining(applicantId, fullName, range = '') {
