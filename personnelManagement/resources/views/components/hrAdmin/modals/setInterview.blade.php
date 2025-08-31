@@ -24,13 +24,12 @@
         <label class="block text-sm font-medium mb-1">Interview Time</label>
         <div class="flex gap-2 mb-4">
             <!-- Hours -->
-            <select x-model="interviewHour" class="flex-1 p-2 border rounded">
+            <select x-model.number="interviewTime" class="flex-1 p-2 border rounded">
                 <template x-for="h in 12" :key="h">
-                    <option :value="h" x-text="h"></option>
+                    <option :value="h" x-text="h"></option>  <!-- value is numeric -->
                 </template>
             </select>
 
-            <!-- AM/PM -->
             <select x-model="interviewPeriod" class="w-24 p-2 border rounded">
                 <option value="AM">AM</option>
                 <option value="PM">PM</option>

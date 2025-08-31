@@ -79,11 +79,19 @@
                                 @click="openSetTraining(
                                     $el.dataset.id,
                                     $el.dataset.name,
-                                    $el.dataset.range
+                                    $el.dataset.range,
+                                    {
+                                        start_time: $el.dataset.startTime,
+                                        end_time: $el.dataset.endTime,
+                                        location: $el.dataset.location
+                                    }
                                 )"
                                 data-id="{{ $application->id }}"
                                 data-name="{{ $fullName }}"
                                 data-range="{{ $trainingRange }}"
+                                data-start-time="{{ $application->trainingSchedule->start_time ?? '' }}"
+                                data-end-time="{{ $application->trainingSchedule->end_time ?? '' }}"
+                                data-location="{{ $application->trainingSchedule->location ?? '' }}"
                                 class="text-white text-sm font-medium h-8 px-3 rounded whitespace-nowrap
                                     {{ $application->trainingSchedule ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-blue-600 hover:bg-blue-700' }}"
                             >

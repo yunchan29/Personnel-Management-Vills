@@ -98,62 +98,59 @@
             placeholder="Enter job title..."
         >
     </div>
+    {{-- Filters --}}
+    <div x-data="{ open: false }" class="relative">
+        <button type="button" 
+            @click="open = !open" 
+            class="border border-gray-300 rounded-md px-4 py-2 text-sm bg-white">
+            Filters ▾
+        </button>
 
-<div x-data="{ open: false }" class="relative">
-    <button type="button" 
-        @click="open = !open" 
-        class="border border-gray-300 rounded-md px-4 py-2 text-sm bg-white">
-        Filters ▾
-    </button>
+        <div x-show="open" 
+            @click.away="open = false"
+            class="absolute mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
 
-    <div x-show="open" 
-        @click.away="open = false"
-        class="absolute mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+            <form method="GET" action="{{ route('hrAdmin.application') }}" class="space-y-3">
+                
+                {{-- Company --}}
+                <div>
+                    <p class="font-medium text-sm mb-1">Company</p>
+                    @foreach($companies as $company)
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="company_name[]" value="{{ $company }}"
+                                {{ collect(request('company_name'))->contains($company) ? 'checked' : '' }}>
+                            <span class="text-sm">{{ $company }}</span>
+                        </label>
+                    @endforeach
+                </div>
 
-        <form method="GET" action="{{ route('hrAdmin.application') }}" class="space-y-3">
-            
-            {{-- Company --}}
-            <div>
-                <p class="font-medium text-sm mb-1">Company</p>
-                @foreach($companies as $company)
+                {{-- Sort --}}
+                <div>
+                    <p class="font-medium text-sm mb-1">Sort</p>
                     <label class="flex items-center space-x-2">
-                        <input type="checkbox" name="company_name[]" value="{{ $company }}"
-                            {{ collect(request('company_name'))->contains($company) ? 'checked' : '' }}>
-                        <span class="text-sm">{{ $company }}</span>
+                        <input type="radio" name="sort" value="latest" {{ request('sort') === 'latest' ? 'checked' : '' }}>
+                        <span class="text-sm">Latest</span>
                     </label>
-                @endforeach
-            </div>
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="sort" value="oldest" {{ request('sort') === 'oldest' ? 'checked' : '' }}>
+                        <span class="text-sm">Oldest</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="sort" value="position_asc" {{ request('sort') === 'position_asc' ? 'checked' : '' }}>
+                        <span class="text-sm">Position (A–Z)</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="sort" value="position_desc" {{ request('sort') === 'position_desc' ? 'checked' : '' }}>
+                        <span class="text-sm">Position (Z–A)</span>
+                    </label>
+                </div>
 
-            {{-- Sort --}}
-            <div>
-                <p class="font-medium text-sm mb-1">Sort</p>
-                <label class="flex items-center space-x-2">
-                    <input type="radio" name="sort" value="latest" {{ request('sort') === 'latest' ? 'checked' : '' }}>
-                    <span class="text-sm">Latest</span>
-                </label>
-                <label class="flex items-center space-x-2">
-                    <input type="radio" name="sort" value="oldest" {{ request('sort') === 'oldest' ? 'checked' : '' }}>
-                    <span class="text-sm">Oldest</span>
-                </label>
-                <label class="flex items-center space-x-2">
-                    <input type="radio" name="sort" value="position_asc" {{ request('sort') === 'position_asc' ? 'checked' : '' }}>
-                    <span class="text-sm">Position (A–Z)</span>
-                </label>
-                <label class="flex items-center space-x-2">
-                    <input type="radio" name="sort" value="position_desc" {{ request('sort') === 'position_desc' ? 'checked' : '' }}>
-                    <span class="text-sm">Position (Z–A)</span>
-                </label>
-            </div>
-
-            <button type="submit" class="mt-2 bg-blue-500 text-white px-4 py-1 rounded-md text-sm">
-                Apply
-            </button>
-        </form>
+                <button type="submit" class="mt-2 bg-blue-500 text-white px-4 py-1 rounded-md text-sm">
+                    Apply
+                </button>
+            </form>
+        </div>
     </div>
-</div>
-
-
-
 </div>
 
 

@@ -8,6 +8,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Carbon\Carbon;
 
 class TrainingScheduleSetMail extends Mailable
 {
@@ -26,8 +27,12 @@ class TrainingScheduleSetMail extends Mailable
     return $this->subject('Your Training Schedule')
                 ->view('emails.training_schedule_set')
                 ->with([
-                    'schedule'    => $this->schedule,
-                    'application' => $this->schedule->application
+                    'application' => $this->schedule->application, // 👈 add this
+                    'startDate'   => $this->schedule->start_date->format('m/d/Y'),
+                    'endDate'     => $this->schedule->end_date->format('m/d/Y'),
+                    'startTime'   => Carbon::parse($this->schedule->start_time)->format('g:i A'),
+                    'endTime'     => Carbon::parse($this->schedule->end_time)->format('g:i A'),
+                    'location'    => $this->schedule->location,
                 ]);
     }
 }
