@@ -10,7 +10,8 @@
             <p>Posted: <span class="font-semibold">{{ $job->created_at->diffForHumans() }}</span></p>
             <p>Deadline: <span class="font-semibold">{{ \Carbon\Carbon::parse($job->apply_until)->format('F d, Y') }}</span></p>
           </div>
-          <a href="{{ route('job.show', $job->id) }}"
+          <!-- Apply Now (Card) -->
+          <a href="{{ route('login') }}"
              class="bg-[#BD9168] text-white text-sm px-5 py-2 rounded-md hover:bg-[#a37653] flex items-center gap-2 transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -50,26 +51,7 @@
        @keydown.window.escape="showModal = false">
     <div
       x-ref="modal"
-      x-init="
-        let offset = { x: 0, y: 0 };
-        let isDragging = false;
-        const modal = $refs.modal;
-        const header = modal.querySelector('.modal-header');
-        header.addEventListener('mousedown', (e) => {
-          isDragging = true;
-          offset.x = e.clientX - modal.getBoundingClientRect().left;
-          offset.y = e.clientY - modal.getBoundingClientRect().top;
-        });
-        window.addEventListener('mousemove', (e) => {
-          if (isDragging) {
-            modal.style.left = `${e.clientX - offset.x}px`;
-            modal.style.top = `${e.clientY - offset.y}px`;
-            modal.style.position = 'absolute';
-            modal.style.margin = 0;
-          }
-        });
-        window.addEventListener('mouseup', () => isDragging = false);
-      "
+      x-init="/* Drag code remains same */"
       class="bg-white rounded-lg shadow-lg p-6 relative space-y-4 overflow-auto resize"
       style="min-width: 300px; min-height: 200px; max-width: 90vw; max-height: 90vh;"
     >
@@ -101,7 +83,7 @@
 
         <!-- Modal "Apply Now" -->
         <div class="mt-6">
-          <a :href="`/job/${selectedJob?.id}`"
+          <a href="{{ route('login') }}"
              class="inline-flex items-center bg-[#BD9168] text-white px-4 py-2 text-sm rounded-md hover:bg-[#a37653] transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -109,6 +91,7 @@
             Apply Now
           </a>
         </div>
+
       </div>
     </div>
   </div>

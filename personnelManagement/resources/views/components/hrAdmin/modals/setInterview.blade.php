@@ -1,6 +1,7 @@
 <div x-show="showInterviewModal" x-transition x-cloak
      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg w-full max-w-md p-6 shadow-xl relative">
+        <!-- Close button -->
         <button @click="showInterviewModal = false"
             class="absolute top-3 right-4 text-gray-500 hover:text-red-500 text-xl font-bold">
             &times;

@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Mail;
 
 class InterviewController extends Controller
 {
-
     public function store(Request $request)
     {
         $validated = $request->validate([

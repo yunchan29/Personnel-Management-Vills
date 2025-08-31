@@ -45,24 +45,26 @@
             Overall Score: <span x-text="totalScore + '/100'"></span>
         </div>
 
-        <div class="mb-6">
-            <label class="block font-medium text-sm mb-1">Result</label>
-            <div class="flex items-center space-x-3">
-                <input type="text" x-model="result" readonly class="border border-gray-300 bg-gray-100 rounded px-3 py-2 w-full" />
-                <template x-if="result === 'Passed'">
-                    <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-green-500 text-white">Passed</span>
-                </template>
-                <template x-if="result === 'Failed'">
-                    <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-red-500 text-white">Failed</span>
-                </template>
-            </div>
+       <div class="mb-6">
+    <label class="block font-medium text-sm mb-1">Result</label>
+    <div class="flex items-center">
+        <div class="ml-auto">
+            <template x-if="result === 'Passed'">
+                <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-green-500 text-white">Passed</span>
+            </template>
+            <template x-if="result === 'Failed'">
+                <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-red-500 text-white">Failed</span>
+            </template>
         </div>
+    </div>
+</div>
+
 
         <div class="text-sm text-gray-700 border-t pt-4 mt-4">
             <p class="font-medium mb-2">Scoring and Interpretation:</p>
             <div class="grid grid-cols-2 gap-2">
                 <div>70 – 100</div><div>Passed</div>
-                <div>60 and below</div><div>Failed</div>
+                <div>69 and below</div><div>Failed</div>
             </div>
         </div>
 
