@@ -16,16 +16,81 @@ document.addEventListener('alpine:init', () => {
         interviewApplicant: null,
         interviewDate: '',
         interviewTime: '',
+        interviewPeriod: 'PM',
+
+        originalNormalizedDT: '',
 
         showTrainingModal: false,
         trainingApplicant: null,
         trainingPicker: null,
 
+        // 🟢 Training schedule defaults
+        trainingStartHour: '',
+        trainingStartPeriod: '',
+        trainingEndHour: '',
+        trainingEndPeriod: '',
+        trainingLocation: '',
+
+        // originals to compare later
+        originalTrainingDateRange: '',
+        originalTrainingTimeStart: '',
+        originalTrainingTimeEnd: '',
+        originalTrainingLocation: '',
+
+
+        // 🟢 Applicant name/id defaults so bindings won’t error
+        selectedApplicantId: null,
+        selectedApplicantName: '',
+
         applicants: [],
         removedApplicants: [],
+        selectedApplicants: [],
         feedbackMessage: '',
         feedbackVisible: false,
         showAll: false,
+
+
+        // Convert interview set time to 12-hour format
+        to24h(hour12, period) {
+            let h = parseInt(hour12, 10);
+            if (period === 'AM') {
+                if (h === 12) h = 0;      // 12 AM -> 00
+            } else { // PM
+                if (h !== 12) h += 12;    // 1 PM -> 13 ... 11 PM -> 23
+            }
+            return h;
+        },
+
+        // Function converter para sa time ng training schedule
+        to12h(hour24) {
+            let period = hour24 >= 12 ? 'PM' : 'AM';
+            let hour12 = hour24 % 12;
+            if (hour12 === 0) hour12 = 12;
+            return { hour12, period };
+        },
+
+        formatDisplay(hour, period) {
+            return `${hour}:00 ${period}`;
+        },
+
+        //Converts Training Start/End time to 24-hour format for backend
+        formatTime(timeStr) {
+            // expects something like "7 AM" or "12 PM"
+            if (!timeStr) return null;
+
+            const [hourStr, period] = timeStr.split(" ");
+            let hour = parseInt(hourStr, 10);
+
+            if (period.toUpperCase() === "PM" && hour !== 12) {
+                hour += 12;
+            }
+            if (period.toUpperCase() === "AM" && hour === 12) {
+                hour = 0;
+            }
+
+            return `${hour.toString().padStart(2, "0")}:00:00`; 
+        },
+
 
         init() {
             setTimeout(() => {
@@ -46,6 +111,48 @@ document.addEventListener('alpine:init', () => {
 
         filteredApplicants() {
             return this.applicants.filter(applicant => this.showAll || !applicant.training);
+        },
+
+        toggleSelectAll(event) {
+            if (event.target.checked) {
+                this.selectedApplicants = Array.from(
+                    document.querySelectorAll('tbody input[type=checkbox]')
+                ).map(cb => cb.value);
+            } else {
+                this.selectedApplicants = [];
+            }
+        },
+
+        async bulkApprove() {
+            try {
+                const response = await fetch("{{ route('applications.bulkUpdateStatus') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": document.querySelector('meta[name=csrf-token]').content
+                    },
+                    body: JSON.stringify({
+                        ids: this.selectedApplicants,
+                        status: 'approved'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.feedbackMessage = data.message;
+                    this.feedbackVisible = true;
+
+                    // remove approved applicants from table
+                    this.selectedApplicants.forEach(id => {
+                        document.querySelector(`[data-applicant-id="${id}"]`).remove();
+                    });
+
+                    this.selectedApplicants = [];
+                }
+            } catch (error) {
+                console.error(error);
+            }
         },
 
         openResume(url) {
@@ -127,84 +234,101 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        openSetInterview(applicationId, name, userId, rawInterviewDate = '') {
-            this.interviewApplicant = {
-                application_id: applicationId,
-                user_id: userId,
-                name: name
-            };
+        openSetInterview(applicationId, name, userId, scheduledAt = '') {
+            this.interviewApplicant = { application_id: applicationId, user_id: userId, name: name };
 
-            const [date, time] = rawInterviewDate.split(' ');
-            this.interviewDate = date || '';
-            this.interviewTime = time || '';
+            if (scheduledAt) {
+                const [datePart, timePartRaw = '00:00:00'] = scheduledAt.split(' ');
+                const timePart = timePartRaw.split(/[.\+Z]/)[0]; // strip fractions/timezone
+                const hour24Str = timePart.split(':')[0];
+                const hour24 = parseInt(hour24Str, 10);
 
-            // ✅ Store original for comparison
-            this.originalDate = date || '';
-            this.originalTime = time || '';
+                let hour12 = hour24 % 12;
+                hour12 = hour12 === 0 ? 12 : hour12;
+                const period = hour24 < 12 ? 'AM' : 'PM';
+
+                this.interviewDate = datePart;
+                this.interviewTime = hour12;     // number
+                this.interviewPeriod = period;
+
+                this.originalNormalizedDT = `${this.interviewDate} ${String(hour24).padStart(2,'0')}:00:00`;
+            } else {
+                this.interviewDate = '';
+                this.interviewTime = 12;  // default
+                this.interviewPeriod = 'PM';
+                this.originalNormalizedDT = '';
+            }
 
             this.showInterviewModal = true;
         },
 
+        async submitInterviewDate() {
+        if (!this.interviewDate || !this.interviewTime || !this.interviewPeriod) {
+            alert('Please select both date and time.');
+            return;
+        }
 
-async submitInterviewDate() {
-    if (!this.interviewDate || !this.interviewStartTime) {
-        alert('Please select both date and time.');
-        return;
-    }
+        // build NEW normalized datetime: Y-m-d HH:00:00
+        const hour24 = this.to24h(this.interviewTime, this.interviewPeriod);
+        const newNormalizedDT = `${this.interviewDate} ${hour24}:00:00`;
 
-    const interviewDateTime = `${this.interviewDate} ${this.interviewStartTime}`;
-    const originalDateTime = `${this.originalDate} ${this.originalTime}`;
+        const originalNormalizedDT = this.originalNormalizedDT || '';
 
-    console.log('Original:', originalDateTime);
-    console.log('New:', interviewDateTime);
+        console.log('Original:', originalNormalizedDT);
+        console.log('New:', newNormalizedDT);
 
-    // ✅ Check if no changes were made
-    if (this.originalDate && this.originalTime && interviewDateTime === originalDateTime) {
-        this.feedbackMessage = 'No changes were made to the interview schedule.';
-        this.feedbackVisible = true;
-        setTimeout(() => this.feedbackVisible = false, 3000);
-        this.showInterviewModal = false;
-        return; // 🚫 Skip API call
-    }
+        // ✅ No-change guard (compare normalized strings)
+        if (originalNormalizedDT && newNormalizedDT === originalNormalizedDT) {
+            this.feedbackMessage = 'No changes were made to the interview schedule.';
+            this.feedbackVisible = true;
+            setTimeout(() => (this.feedbackVisible = false), 3000);
+            this.showInterviewModal = false;
+            return; // 🚫 Skip API call
+        }
 
-    // ✅ Define isReschedule AFTER the check
-    const isReschedule = this.originalDate && this.originalTime;
+        const isReschedule = !!originalNormalizedDT;
+        this.loading = true;
 
-    this.loading = true;
-
-    const proceed = async () => {
-        try {
+        const proceed = async () => {
+            try {
             const response = await fetch(`/hrAdmin/interviews`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document
+                    .querySelector('meta[name="csrf-token"]')
+                    .getAttribute('content'),
                 },
                 body: JSON.stringify({
-                    application_id: this.interviewApplicant.application_id,
-                    user_id: this.interviewApplicant.user_id,
-                    scheduled_at: interviewDateTime,
-                    is_reschedule: isReschedule,
-                })
+                application_id: this.interviewApplicant.application_id,
+                user_id: this.interviewApplicant.user_id,
+                scheduled_at: newNormalizedDT,   // send full normalized datetime
+                is_reschedule: isReschedule,     // optional; backend derives anyway
+                }),
             });
 
             if (!response.ok) throw new Error('Failed to set interview date');
-            const result = await response.json();
+            await response.json();
 
-            // ✅ Update row attributes
-            const row = document.querySelector(`tr[data-applicant-id='${this.interviewApplicant.application_id}']`);
+            // update DOM row
+            const row = document.querySelector(
+                `tr[data-applicant-id='${this.interviewApplicant.application_id}']`
+            );
             if (row) {
-                row.setAttribute('data-interview-date', interviewDateTime);
+                row.setAttribute('data-interview-date', newNormalizedDT);
                 row.setAttribute('data-status', 'for_interview');
             }
 
-            // ✅ Update local applicants array
-            const index = this.applicants.findIndex(a => a.id === this.interviewApplicant.application_id);
+            // update local list
+            const index = this.applicants.findIndex(
+                (a) => a.id === this.interviewApplicant.application_id
+            );
             if (index !== -1) {
                 this.applicants[index].status = 'for_interview';
                 this.applicants = [...this.applicants];
             }
 
+            // feedback
             this.feedbackMessage = 'Interview date set successfully!';
             this.feedbackVisible = true;
             setTimeout(() => {
@@ -213,126 +337,169 @@ async submitInterviewDate() {
             }, 3000);
 
             this.showInterviewModal = false;
-        } catch (error) {
+            } catch (error) {
             alert('Error: ' + error.message);
-        } finally {
+            } finally {
             this.loading = false;
-        }
-    };
+            }
+        };
 
-    // ✅ Confirm reschedule
-    if (isReschedule) {
-        Swal.fire({
+        if (isReschedule) {
+            Swal.fire({
             title: "You're about to reschedule",
             text: "Do you want to continue?",
             icon: "warning",
             showCancelButton: true,
             confirmButtonColor: "#BD6F22",
             cancelButtonColor: "#d33",
-            confirmButtonText: "Yes, reschedule"
-        }).then(result => {
+            confirmButtonText: "Yes, reschedule",
+            }).then((result) => {
             if (result.isConfirmed) {
                 proceed();
             } else {
                 this.loading = false;
             }
-        });
-    } else {
-        proceed();
-    }
-},
+            });
+        } else {
+            proceed();
+        }
+        },
 
-
-
-        openSetTraining(applicantId, fullName, range = '') {
+        openSetTraining(applicantId, fullName, range = '', schedule = null) {
             this.selectedApplicantId = applicantId;
             this.selectedApplicantName = fullName;
-            this.selectedTrainingDateRange = range;
 
-            // Normalize the original training range to MM/DD/YYYY - MM/DD/YYYY format
+            // --- normalize date range
+            this.selectedTrainingDateRange = '';
+            this.originalTrainingDateRange = '';
             if (range && range.includes(' - ')) {
+                this.selectedTrainingDateRange = range.trim();
+
                 const [startRaw, endRaw] = range.split(' - ').map(d => new Date(d.trim()));
-                const formatDate = (date) => {
-                    const mm = String(date.getMonth() + 1).padStart(2, '0');
-                    const dd = String(date.getDate()).padStart(2, '0');
-                    const yyyy = date.getFullYear();
+                const fmt = (d) => {
+                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                    const dd = String(d.getDate()).padStart(2, '0');
+                    const yyyy = d.getFullYear();
                     return `${mm}/${dd}/${yyyy}`;
                 };
-                this.originalTrainingDateRange = `${formatDate(startRaw)} - ${formatDate(endRaw)}`;
-            } else {
-                this.originalTrainingDateRange = '';
+                this.originalTrainingDateRange = `${fmt(startRaw)} - ${fmt(endRaw)}`;
             }
 
+            // --- prefill time
+            if (schedule?.start_time && schedule?.end_time) {
+                const [startHour24] = schedule.start_time.split(':');
+                const [endHour24]   = schedule.end_time.split(':');
+
+                const start = this.to12h(parseInt(startHour24, 10));
+                const end   = this.to12h(parseInt(endHour24, 10));
+
+                this.trainingStartHour   = start.hour12;
+                this.trainingStartPeriod = start.period;
+
+                this.trainingEndHour     = end.hour12;
+                this.trainingEndPeriod   = end.period;
+            } else {
+                this.trainingStartHour = '8';
+                this.trainingStartPeriod = 'AM';
+                this.trainingEndHour = '5';
+                this.trainingEndPeriod = 'PM';
+            }
+
+            // --- prefill location ✅
+            this.trainingLocation = schedule?.location ?? '';
+
+            // --- show modal AFTER state is set
             this.showTrainingModal = true;
-            console.log('Received range:', range);
-            console.log('Normalized originalTrainingDateRange:', this.originalTrainingDateRange);
 
+            // --- init/update Litepicker
             this.$nextTick(() => {
-                setTimeout(() => {
-                    const ref = this.$refs.trainingDateRange;
-                    if (!ref) {
-                        console.warn("trainingDateRange input not found");
-                        return;
-                    }
+                const ref = this.$refs.trainingDateRange;
+                if (!ref) return console.warn("trainingDateRange input not found");
 
-                    const [start, end] = (range && range.includes(' - ')) ? range.split(' - ') : [null, null];
+                const [start, end] = (this.selectedTrainingDateRange && this.selectedTrainingDateRange.includes(' - '))
+                    ? this.selectedTrainingDateRange.split(' - ')
+                    : [null, null];
 
-                    if (!this.trainingPicker) {
-                        this.trainingPicker = new Litepicker({
-                            element: ref,
-                            singleMode: false,
-                            format: 'MM/DD/YYYY',
-                            numberOfMonths: 2,
-                            numberOfColumns: 2,
-                            autoApply: true,
-                            startDate: start,
-                            endDate: end,
-                        });
-                        console.log("Picker initialized with:", start, end);
+                if (!this.trainingPicker) {
+                    this.trainingPicker = new Litepicker({
+                        element: ref,
+                        singleMode: false,
+                        format: 'MM/DD/YYYY',
+                        numberOfMonths: 2,
+                        numberOfColumns: 2,
+                        autoApply: true,
+                        startDate: start,
+                        endDate: end,
+                        minDate: new Date(),
+                    });
+                } else {
+                    if (start && end) {
+                        this.trainingPicker.setDateRange(start, end, true);
                     } else {
-                        if (start && end) {
-                            this.trainingPicker.setDateRange(start, end, true);
-                            console.log("Date range set:", start, end);
-                        } else {
-                            this.trainingPicker.clearSelection();
-                        }
+                        this.trainingPicker.clearSelection();
                     }
-                }, 50);
+
+                    this.trainingPicker.setOptions({
+                        minDate: new Date(),
+                    });
+                }
             });
         },
 
-
         async submitTrainingSchedule() {
             const selectedRange = this.$refs.trainingDateRange.value?.trim();
+            const trainingTimeStart = `${this.trainingStartHour} ${this.trainingStartPeriod}`;
+            const trainingTimeEnd   = `${this.trainingEndHour} ${this.trainingEndPeriod}`;
+            const trainingLocation  = (this.trainingLocation || '').trim();
 
+            // -------------------------------
+            // Basic validations
+            // -------------------------------
             if (!selectedRange || !selectedRange.includes(' - ')) {
-                await Swal.fire({
+                return Swal.fire({
                     icon: 'error',
                     title: 'Invalid Input',
-                    text: 'Please select a valid training date range.',
+                    text: 'Please select a valid training date range.'
                 });
-                return;
             }
 
+            if (!trainingLocation) {
+                return Swal.fire({
+                    icon: 'error',
+                    title: 'Missing Location',
+                    text: 'Please enter the training location.'
+                });
+            }
+
+            // -------------------------------
+            // Date parsing + validation
+            // -------------------------------
             const [newStartStr, newEndStr] = selectedRange.split(' - ').map(s => s.trim());
             const newStart = new Date(newStartStr);
-            const newEnd = new Date(newEndStr);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            const newEnd   = new Date(newEndStr);
+            const today    = new Date(); today.setHours(0, 0, 0, 0);
 
             if (isNaN(newStart) || isNaN(newEnd) || newStart < today || newEnd < today) {
-                await Swal.fire({
+                return Swal.fire({
                     icon: 'error',
                     title: 'Invalid Date Range',
-                    text: 'The training schedule must be set to future dates.',
+                    text: 'The training schedule must be set to future dates.'
                 });
-                return;
             }
 
+            // -------------------------------
+            // Check if same as original
+            // -------------------------------
             let isSameAsOriginal = false;
             if (this.originalTrainingDateRange && this.originalTrainingDateRange.includes(' - ')) {
-                const [originalStartStr, originalEndStr] = this.originalTrainingDateRange.split(' - ').map(d => d.trim());
-                isSameAsOriginal = (newStartStr === originalStartStr && newEndStr === originalEndStr);
+                const [oStart, oEnd] = this.originalTrainingDateRange.split(' - ').map(d => d.trim());
+                isSameAsOriginal = (
+                    newStartStr       === oStart &&
+                    newEndStr         === oEnd &&
+                    trainingTimeStart === (this.originalTrainingTimeStart   || '') &&
+                    trainingTimeEnd   === (this.originalTrainingTimeEnd     || '') &&
+                    trainingLocation  === (this.originalTrainingLocation    || '')
+                );
             }
 
             if (isSameAsOriginal) {
@@ -343,10 +510,9 @@ async submitInterviewDate() {
                 return;
             }
 
-            const isReschedule = !!this.originalTrainingDateRange;
-
-            this.loading = true;
-
+            // -------------------------------
+            // Proceed function (save changes)
+            // -------------------------------
             const proceed = async () => {
                 try {
                     const response = await fetch(`/hrAdmin/training-schedule/${this.selectedApplicantId}`, {
@@ -356,21 +522,35 @@ async submitInterviewDate() {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         },
                         body: JSON.stringify({
-                            training_schedule: selectedRange
+                            start_date : newStartStr,
+                            end_date   : newEndStr,
+                            start_time : this.formatTime(trainingTimeStart), // e.g. "07:00:00"
+                            end_time   : this.formatTime(trainingTimeEnd),   // e.g. "17:00:00"
+                            location   : trainingLocation
                         })
                     });
 
                     if (!response.ok) throw new Error('Failed to set training schedule');
-
                     const result = await response.json();
 
+                    // update DOM row
                     const row = document.querySelector(`tr[data-applicant-id='${this.selectedApplicantId}']`);
-                    if (row) row.setAttribute('data-training-range', selectedRange);
+                    if (row) {
+                        row.setAttribute('data-training-range', selectedRange);
+                        row.setAttribute('data-training-time', `${trainingTimeStart} - ${trainingTimeEnd}`);
+                        row.setAttribute('data-training-location', trainingLocation);
+                    }
 
+                    // update reactive applicants list
                     const index = this.applicants.findIndex(a => a.id === this.selectedApplicantId);
                     if (index !== -1) {
-                        this.applicants[index].training = selectedRange;
-                        this.applicants[index].status = 'scheduled_for_training';
+                        this.applicants[index] = {
+                            ...this.applicants[index],
+                            training: selectedRange,
+                            training_time: `${trainingTimeStart} - ${trainingTimeEnd}`,
+                            training_location: trainingLocation,
+                            status: 'scheduled_for_training'
+                        };
                         this.applicants = [...this.applicants];
                     }
 
@@ -386,10 +566,20 @@ async submitInterviewDate() {
                 }
             };
 
+            // -------------------------------
+            // Reschedule confirmation
+            // -------------------------------
+            this.loading = true;
+            const isReschedule = !!this.originalTrainingDateRange;
+
             if (isReschedule) {
                 const result = await Swal.fire({
                     title: "You're about to reschedule",
-                    html: `New training date range:<br><strong>${selectedRange}</strong><br><br>Do you want to continue?`,
+                    html: `
+                        New training date range: <br><strong>${selectedRange}</strong><br>
+                        Time: <strong>${trainingTimeStart} - ${trainingTimeEnd}</strong><br>
+                        Location: <strong>${trainingLocation}</strong><br><br>
+                        Do you want to continue?`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#BD6F22',
@@ -397,14 +587,12 @@ async submitInterviewDate() {
                     confirmButtonText: 'Yes, reschedule'
                 });
 
-                if (result.isConfirmed) {
-                    this.loading = true; // 🔄 show loading after confirm click
-                    proceed();
-                }
+                if (result.isConfirmed) proceed();
+                else this.loading = false;
             } else {
-                this.loading = true; // normal schedule, show loading immediately
                 proceed();
             }
-        }
+        },
+
     }));
 });

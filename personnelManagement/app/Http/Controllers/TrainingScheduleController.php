@@ -16,47 +16,44 @@ class TrainingScheduleController extends Controller
     public function setTrainingDate(Request $request, $id)
     {
         $request->validate([
-            'training_schedule' => 'required|string',
+            'start_date' => 'required|date',
+            'end_date'   => 'required|date|after_or_equal:start_date',
+            'start_time' => 'required|date_format:H:i:s',
+            'end_time'   => 'required|date_format:H:i:s',
+            'location'   => 'required|string|max:255',
         ]);
 
         $application = Application::with(['user', 'trainingSchedule'])->findOrFail($id);
 
-        // Parse the date range (MM/DD/YYYY - MM/DD/YYYY)
-        [$start, $end] = explode(' - ', $request->training_schedule);
-        $startDate = Carbon::createFromFormat('m/d/Y', trim($start));
-        $endDate = Carbon::createFromFormat('m/d/Y', trim($end));
+        $startDate = Carbon::parse($request->start_date);
+        $endDate   = Carbon::parse($request->end_date);
+
+        $data = [
+            'start_date'   => $startDate,
+            'end_date'     => $endDate,
+            'start_time'   => $request->start_time, // already in 24h format
+            'end_time'     => $request->end_time,
+            'location'     => $request->location,
+            'scheduled_by' => auth()->id(),
+        ];
 
         $existingSchedule = $application->trainingSchedule;
 
         if ($existingSchedule) {
-            // Reschedule
-            $existingSchedule->update([
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-                'scheduled_by' => auth()->id(),
-                'scheduled_at' => now(),
-                'status' => 'rescheduled',
-            ]);
-            
+            $existingSchedule->update(array_merge($data, ['status' => 'rescheduled']));
             $existingSchedule->load('application.user', 'application.job');
 
             Mail::to($application->user->email)->send(
                 new TrainingScheduleRescheduledMail($existingSchedule)
             );
         } else {
-            // Initial schedule
-            $newSchedule = TrainingSchedule::create([
+            $newSchedule = TrainingSchedule::create(array_merge($data, [
                 'application_id' => $application->id,
-                'user_id' => $application->user_id,
-                'scheduled_by' => auth()->id(),
-                'scheduled_at' => now(),
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-                'remarks' => null,
-                'status' => 'scheduled',
-            ]);
+                'user_id'        => $application->user_id,
+                'remarks'        => null,
+                'status'         => 'scheduled'
+            ]));
 
-            // Load relationships for email
             $newSchedule->load('application.user', 'application.job');
 
             Mail::to($application->user->email)->send(
@@ -64,10 +61,14 @@ class TrainingScheduleController extends Controller
             );
         }
 
-        // Update application status
         $application->status = 'scheduled_for_training';
         $application->save();
 
-        return response()->json(['message' => 'Training schedule set successfully.']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Training schedule set successfully.'
+        ]);
+
+
     }
 }

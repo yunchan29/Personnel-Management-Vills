@@ -28,8 +28,9 @@
                The new training schedule is as follows:
             </p>
             <ul>
-                <li><strong>Start Date:</strong> {{ \Carbon\Carbon::parse($schedule->start_date)->format('F j, Y') }}</li>
-                <li><strong>End Date:</strong> {{ \Carbon\Carbon::parse($schedule->end_date)->format('F j, Y') }}</li>
+                <li><strong>Training Date:</strong> {{ $startDate }} - {{ $endDate }}</li>
+                <li><strong>Training Time:</strong> {{ $startTime }} - {{ $endTime }}</li>
+                <li><strong>Location:</strong> {{ $location }}</li>
             </ul>
         </td>
         </tr>

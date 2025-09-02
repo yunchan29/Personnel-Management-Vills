@@ -119,17 +119,17 @@
                 @if($application->user->active_status === 'Active')
                     <div class="flex gap-2">
                         <button
-                            @click="openSetInterview(
-                                {{ $application->id }},
-                                '{{ $application->user->first_name }} {{ $application->user->last_name }}',
-                                {{ $application->user_id }},
-                                '{{ optional($application->interview)?->start_date ?? '' }}',
-                                '{{ optional($application->interview)?->end_date ?? '' }}'
-                            )"
-                            class="bg-blue-600 text-white text-sm font-medium h-8 px-3 rounded hover:bg-blue-700 disabled:opacity-50"
-                            :disabled="['interviewed', 'declined'].includes(applicants.find(a => a.id === {{ $application->id }})?.status)">
-                            Interview
+                          @click="openSetInterview(
+                              {{ $application->id }},
+                              '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+                              {{ $application->user_id }},
+                              '{{ optional($application->interview)?->scheduled_at ?? '' }}'
+                          )"
+                          class="bg-blue-600 text-white text-sm font-medium h-8 px-3 rounded hover:bg-blue-700 disabled:opacity-50"
+                          :disabled="['interviewed', 'declined'].includes(applicants.find(a => a.id === {{ $application->id }})?.status)">
+                          Interview
                         </button>
+
                         <button
                             @click="openStatusModal({{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}')"
                             class="bg-green-600 text-white text-sm font-medium h-8 px-3 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"

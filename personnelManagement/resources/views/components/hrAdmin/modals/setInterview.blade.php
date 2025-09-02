@@ -11,7 +11,7 @@
             Set Interview for <span x-text="interviewApplicant?.name"></span>
         </h2>
 
-        <!-- Interview Date -->
+        <!-- Date -->
         <label class="block text-sm font-medium mb-1">Interview Date</label>
         <input
             type="date"
@@ -20,23 +20,23 @@
             class="w-full mb-4 p-2 border rounded"
         />
 
-        <!-- Start Time -->
-        <label class="block text-sm font-medium mb-1">Start Time</label>
-        <input
-            type="time"
-            x-model="interviewStartTime"
-            class="w-full mb-4 p-2 border rounded"
-        />
+        <!-- Time -->
+        <label class="block text-sm font-medium mb-1">Interview Time</label>
+        <div class="flex gap-2 mb-4">
+            <!-- Hours -->
+            <select x-model.number="interviewTime" class="flex-1 p-2 border rounded">
+                <template x-for="h in 12" :key="h">
+                    <option :value="h" x-text="h"></option>  <!-- value is numeric -->
+                </template>
+            </select>
 
-        <!-- End Time -->
-        <label class="block text-sm font-medium mb-1">End Time</label>
-        <input
-            type="time"
-            x-model="interviewEndTime"
-            class="w-full mb-4 p-2 border rounded"
-        />
+            <select x-model="interviewPeriod" class="w-24 p-2 border rounded">
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+            </select>
+        </div>
 
-        <!-- Action buttons -->
+        <!-- Confirm button -->
         <div class="flex justify-end gap-3">
             <button @click="submitInterviewDate"
                 :disabled="loading"

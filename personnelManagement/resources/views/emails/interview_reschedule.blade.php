@@ -23,7 +23,7 @@
               <h3 style="margin:20px 0 12px; font-size:18px; color:#0f172a;"><strong>New Interview Schedule:</strong></h3>
 
               <p style="margin:0 0 8px; font-size:16px;">📅 Date: <strong>{{ \Carbon\Carbon::parse($interview->scheduled_at)->format('F j, Y') }}</strong></p>  
-              <p style="margin:0 0 16px; font-size:16px;">🕙 Time: <strong>{{ \Carbon\Carbon::parse($interview->scheduled_at)->format('h:i A') }}</strong></p>  
+              <p style="margin:0 0 16px; font-size:16px;">🕙 Time: <strong>{{ \Carbon\Carbon::parse($interview->scheduled_at)->format('h:i A') }} - 5:00 PM</strong></p>  
         </td>
       </tr>
   </table>

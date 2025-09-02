@@ -12,11 +12,22 @@ class TrainingSchedule extends Model
     protected $fillable = [
         'application_id',
         'user_id',
-        'scheduled_by',
         'start_date',
         'end_date',
-        'status',
+        'start_time',
+        'end_time',
+        'location',
         'remarks',
+        'status',
+        'scheduled_by',
+        'scheduled_at'
+    ];
+
+    protected $casts = [
+        'start_date' => 'date',    // ok lang, date talaga
+        'end_date'   => 'date',
+        'start_time' => 'string',  // oras lang, wag i-convert to Carbon
+        'end_time'   => 'string',
     ];
 
     public function application()

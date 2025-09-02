@@ -1,4 +1,5 @@
 
+
 <div 
     x-show="showTrainingModal" 
     x-transition.opacity 
@@ -26,19 +27,79 @@
 
         <!-- Date Range Input -->
         <div class="mb-5">
-            <label for="training_schedule" class="block font-medium text-sm text-gray-700">Training Schedule</label>
+            <label for="training_schedule" class="block font-medium text-sm text-gray-700">Training Schedule:</label>
             <input
-            type="text"
-            x-ref="trainingDateRange"
-            id="training_schedule"
-            name="training_schedule"
-            class="form-input rounded-md shadow-sm mt-1 block w-full"
-            placeholder="MM/DD/YYYY - MM/DD/YYYY"
-            value="{{ old('training_schedule', optional($application->trainingSchedule)->start_date && optional($application->trainingSchedule)->end_date ? \Carbon\Carbon::parse($application->trainingSchedule->start_date)->format('m/d/Y') . ' - ' . \Carbon\Carbon::parse($application->trainingSchedule->end_date)->format('m/d/Y') : '') }}"
-            autocomplete="off"
+                type="text"
+                x-ref="trainingDateRange"
+                id="training_schedule"
+                name="training_schedule"
+                class="form-input rounded-md shadow-sm mt-1 block w-full"
+                placeholder="MM/DD/YYYY - MM/DD/YYYY"
+                autocomplete="off"
             />
         </div>
 
+        <!-- Location Input -->
+        <div class="mb-5">
+            <label for="training_location" class="block font-medium text-sm text-gray-700">Location:</label>
+            <input
+                type="text"
+                id="training_location"
+                x-model="trainingLocation"
+                class="form-input rounded-md shadow-sm mt-1 block w-full"
+                placeholder="Enter training location"
+            />
+        </div>
+
+        <!-- Time Range Input -->
+        <div class="mb-5">
+            <label class="block font-medium text-sm text-gray-700">Training Time</label>
+            <div class="flex items-center gap-2">
+                <!-- Start Time -->
+                <div class="flex items-center gap-2 w-full">
+                    <select 
+                        x-model="trainingStartHour"
+                        class="form-select rounded-md shadow-sm w-full border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                        <option value="" disabled selected hidden>Hour</option>
+                        <template x-for="h in 12" :key="h">
+                            <option :value="String(h)" x-text="h"></option>
+                        </template>
+                    </select>
+                    <select 
+                        x-model="trainingStartPeriod"
+                        class="form-select rounded-md shadow-sm border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                        <option value="" disabled selected hidden>AM/PM</option>
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                </div>
+
+                <span class="text-gray-500">to</span>
+
+                <!-- End Time -->
+                <div class="flex items-center gap-2 w-full">
+                    <select 
+                        x-model="trainingEndHour"
+                        class="form-select rounded-md shadow-sm w-full border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                        <option value="" disabled selected hidden>Hour</option>
+                        <template x-for="h in 12" :key="h">
+                            <option :value="String(h)" x-text="h"></option>
+                        </template>
+                    </select>
+                    <select 
+                        x-model="trainingEndPeriod"
+                        class="form-select rounded-md shadow-sm border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                        <option value="" disabled selected hidden>AM/PM</option>
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                </div>
+            </div>
+        </div>
 
         <!-- Buttons -->
         <div class="flex justify-end gap-2 mt-6">
