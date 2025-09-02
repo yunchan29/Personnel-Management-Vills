@@ -239,6 +239,10 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function (
     Route::post('/leave-forms/{id}/approve', [LeaveFormController::class, 'approve'])->name('leaveForms.approve');
     Route::post('/leave-forms/{id}/decline', [LeaveFormController::class, 'decline'])->name('leaveForms.decline');
 
+     Route::get('/archive', function () {
+    return view('hrAdmin.archive');
+})->name('archive');
+
     // Settings / Change Password
     Route::get('/settings', function () {
         return view('hrStaff.settings');
