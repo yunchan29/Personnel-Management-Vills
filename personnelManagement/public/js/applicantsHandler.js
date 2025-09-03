@@ -235,6 +235,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         openSetInterview(applicationId, name, userId, scheduledAt = '') {
+              console.log("Scheduled At received:", scheduledAt); // 👈 check this
             this.interviewApplicant = { application_id: applicationId, user_id: userId, name: name };
 
             if (scheduledAt) {
@@ -252,26 +253,35 @@ document.addEventListener('alpine:init', () => {
                 this.interviewPeriod = period;
 
                 this.originalNormalizedDT = `${this.interviewDate} ${String(hour24).padStart(2,'0')}:00:00`;
-            } else {
-                this.interviewDate = '';
-                this.interviewTime = 12;  // default
-                this.interviewPeriod = 'PM';
+         } else {
+                this.interviewDate = '';       // still no date pre-selected
+                this.interviewTime = 8;        // default to 8
+                this.interviewPeriod = 'AM';   // default to AM
                 this.originalNormalizedDT = '';
-            }
-
+        }
             this.showInterviewModal = true;
         },
 
-        async submitInterviewDate() {
-        if (!this.interviewDate || !this.interviewTime || !this.interviewPeriod) {
-            alert('Please select both date and time.');
-            return;
+       async submitInterviewDate() {
+    if (!this.interviewDate || !this.interviewTime || !this.interviewPeriod) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Missing Information',
+            text: 'Please select both date and time before continuing.',
+            confirmButtonColor: '#BD6F22',
+        });
+        return;
+    }
+    
+       const hour24 = this.to24h(this.interviewTime, this.interviewPeriod);
+
+        // ✅ Restrict strictly to 8 AM – 5 PM
+        if (hour24 < 8 || hour24 > 17) {
+         alert('Interview must be scheduled between 8:00 AM and 5:00 PM.');
+        return;
         }
 
-        // build NEW normalized datetime: Y-m-d HH:00:00
-        const hour24 = this.to24h(this.interviewTime, this.interviewPeriod);
         const newNormalizedDT = `${this.interviewDate} ${hour24}:00:00`;
-
         const originalNormalizedDT = this.originalNormalizedDT || '';
 
         console.log('Original:', originalNormalizedDT);

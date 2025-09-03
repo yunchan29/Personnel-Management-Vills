@@ -20,21 +20,27 @@
             class="w-full mb-4 p-2 border rounded"
         />
 
-        <!-- Time -->
-        <label class="block text-sm font-medium mb-1">Interview Time</label>
-        <div class="flex gap-2 mb-4">
-            <!-- Hours -->
-            <select x-model.number="interviewTime" class="flex-1 p-2 border rounded">
-                <template x-for="h in 12" :key="h">
-                    <option :value="h" x-text="h"></option>  <!-- value is numeric -->
-                </template>
-            </select>
+         <!-- Time -->
+         <label class="block text-sm font-medium mb-1">Interview Time</label>
+         <div class="flex gap-2 mb-4">
 
-            <select x-model="interviewPeriod" class="w-24 p-2 border rounded">
-                <option value="AM">AM</option>
-                <option value="PM">PM</option>
-            </select>
-        </div>
+         <!-- Hours -->
+         <select x-model.number="interviewTime" class="flex-1 p-2 border rounded">
+         <!-- Show 8–11 if AM, show 1–5 if PM -->
+         <template x-for="h in (interviewPeriod === 'AM' ? [8,9,10,11] : [1,2,3,4,5])" :key="h">
+         <option :value="h" x-text="h"></option>
+         </template>
+        </select>
+
+        <!-- AM/PM -->
+
+         <select x-model="interviewPeriod" class="w-24 p-2 border rounded">
+          <option value="AM">AM</option>
+          <option value="PM">PM</option>
+         </select>
+
+
+</div>
 
         <!-- Confirm button -->
         <div class="flex justify-end gap-3">

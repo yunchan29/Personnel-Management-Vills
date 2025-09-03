@@ -33,93 +33,95 @@
             <x-hrStaff.jobListingDisplay :job="$job" />
         @endforeach
     </div>
+    
+<!-- Evaluation Tab -->
+<div x-ref="evaluationSection" x-show="tab === 'evaluation'" x-transition x-cloak>
+    <template x-if="selectedJobId">
+        <div class="bg-white rounded-lg shadow-lg">
 
-    <!-- Evaluation Tab -->
-    <div x-ref="evaluationSection" x-show="tab === 'evaluation'" x-transition x-cloak class="overflow-x-auto">
-        <template x-if="selectedJobId">
-            <div class="bg-white p-6 rounded-lg shadow-lg mt-0">
+        <!-- Currently Evaluating Notice -->
+<div 
+    x-data="{ showNotice: true }"
+    x-show="showNotice"
+    x-transition
+class="mb-4 bg-blue-100 border border-blue-300 text-blue-800 px-4 py-3 rounded-lg flex justify-between items-center"
+>
+    <span>
+        You are currently evaluating applicants for:
+        <strong class="text-[#1E3A8A]" x-text="selectedJobTitle"></strong> 
+        <span class="text-gray-500">—</span> 
+        <strong class="text-[#BD6F22]" x-text="selectedCompany"></strong>
+    </span>
 
-                <!-- Job Evaluation Reminder -->
-                <div class="mb-6 text-gray-700 text-base">
-                    <span class="font-medium text-gray-800">Currently evaluating:</span>
-                    <span class="text-[#BD6F22] font-semibold" x-text="selectedJobTitle"></span>
-                    <span class="text-gray-500">at</span>
-                    <span class="text-[#BD6F22] font-semibold" x-text="selectedCompany"></span>
-                </div>
+    <button @click="showNotice = false" class="text-sm text-blue-600 hover:underline">Dismiss</button>
+</div>
 
-                <!-- Evaluation Table -->
-                <table class="min-w-full text-sm text-left text-gray-700">
-                    <thead class="border-b font-semibold bg-gray-50">
-                        <tr>
-                            <th class="py-3 px-4">Name</th>
-                            <th class="py-3 px-4">Start</th>
-                            <th class="py-3 px-4">End</th>
-                            <th class="py-3 px-4">Action</th>
-                            <th class="py-3 px-4">Progress</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($applicants as $applicant)
-                            <tr 
-                                x-show="shouldShow({{ $applicant->job_id }}, {{ $applicant->evaluation ? 'true' : 'false' }})"
-                                class="border-b hover:bg-gray-50"
-                            >
-                                <!-- Name -->
-                                <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
-                                    <span class="inline-block w-3 h-3 rounded-full {{ $applicant->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
-                                    {{ $applicant->user->full_name }}
-                                </td>
 
-                                <!-- Start -->
-                                <td class="py-3 px-4 whitespace-nowrap">
-                                    {{ $applicant->trainingSchedule->start_date ?? '-' }}
-                                </td>
+ <!-- Evaluation Table -->
+<div class="overflow-x-auto px-6 pb-4">
+    <table class="min-w-full text-sm text-left text-gray-700">
+        <thead class="border-b font-semibold bg-gray-50">
+            <tr>
+                <th class="py-3 px-4">Name</th>
+                <th class="py-3 px-4">Start</th>
+                <th class="py-3 px-4">End</th>
+                <th class="py-3 px-4">Action</th>
+                <th class="py-3 px-4">Progress</th>
+            </tr>
+        </thead>
+        
+        <tbody>
+    @forelse ($applicants as $applicant)
+        <tr 
+            x-show="shouldShow({{ $applicant->job_id }}, {{ $applicant->evaluation ? 'true' : 'false' }})"
+            class="border-b hover:bg-gray-50"
+        >
+            <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
+                <span class="inline-block w-3 h-3 rounded-full {{ $applicant->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
+                {{ $applicant->user->full_name }}
+            </td>
+            <td class="py-3 px-4 whitespace-nowrap">{{ $applicant->trainingSchedule->start_date ?? '-' }}</td>
+            <td class="py-3 px-4 whitespace-nowrap">{{ $applicant->trainingSchedule->end_date ?? '-' }}</td>
+            <td class="py-3 px-4 whitespace-nowrap">
+                <button 
+                    @click="openModal('{{ $applicant->user->full_name }}', {{ $applicant->id }})"
+                    class="bg-[#BD6F22] hover:bg-[#a55f1d] text-white text-sm font-medium h-8 px-3 rounded shadow"
+                >
+                    Evaluate
+                </button>
+            </td>
+            <td class="py-3 px-4 whitespace-nowrap">
+                @if ($applicant->evaluation)
+                    <span class="text-xs px-2 py-1 rounded-full font-semibold text-white 
+                        {{ strtolower($applicant->evaluation->result) === 'passed' ? 'bg-green-500' : 'bg-red-500' }}">
+                        {{ strtolower($applicant->evaluation->result) === 'passed' ? 'Hired' : 'Failed' }}
+                    </span>
+                @else
+                    <span class="text-sm text-gray-400 italic">Pending</span>
+                @endif
+            </td>
+        </tr>
+    @empty
+        <tr>
+            <td colspan="5" class="text-center py-6 text-gray-500 italic">
+                No applicants yet
+            </td>
+        </tr>
+    @endforelse
+</tbody>
 
-                                <!-- End -->
-                                <td class="py-3 px-4 whitespace-nowrap">
-                                    {{ $applicant->trainingSchedule->end_date ?? '-' }}
-                                </td>
+    </table>
+</div>
 
-                                <!-- Evaluate Button -->
-                                <td class="py-3 px-4 whitespace-nowrap">
-                                    <button 
-                                        @click="openModal('{{ $applicant->user->full_name }}', {{ $applicant->id }})"
-                                        class="bg-[#BD6F22] hover:bg-[#a55f1d] text-white text-sm font-medium h-8 px-3 rounded shadow"
-                                    >
-                                        Evaluate
-                                    </button>
-                                </td>
-
-                                <!-- Progress -->
-                                <td class="py-3 px-4 whitespace-nowrap">
-                                    @if ($applicant->evaluation)
-                                      <span class="text-xs px-2 py-1 rounded-full font-semibold text-white 
-    {{ strtolower($applicant->evaluation->result) === 'passed' ? 'bg-green-500' : 'bg-red-500' }}">
-    {{ strtolower($applicant->evaluation->result) === 'passed' ? 'Hired' : 'Failed' }}
-</span>
-
-                                    @else
-                                        <span class="text-sm text-gray-400 italic">Pending</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-
-                <!-- Show All Toggle -->
-                <div class="mt-4 flex justify-end">
-                    <button
-                        @click="showAll = !showAll"
-                        class="text-sm text-[#BD6F22] hover:underline focus:outline-none"
-                    >
-                        <span x-text="showAll ? 'Hide Evaluated' : 'Show All'"></span>
-                    </button>
-                </div>
-
-            </div>
-        </template>
-    </div>
+<!-- Show All Toggle (centered) -->
+<div class="flex justify-center px-6 pb-4">
+    <button
+        @click="showAll = !showAll"
+        class="text-sm text-[#BD6F22] hover:underline focus:outline-none"
+    >
+        <span x-text="showAll ? 'Hide Evaluated' : 'Show All'"></span>
+    </button>
+</div>
 
     <!-- Evaluation Modal -->
     <x-hrStaff.evaluationModal />

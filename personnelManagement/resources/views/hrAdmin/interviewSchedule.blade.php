@@ -39,39 +39,14 @@
             <!-- Company -->
             <td class="py-3 px-4 whitespace-nowrap">{{ $application->job->company_name ?? 'N/A' }}</td>
 
-          <td class="py-3 px-4 whitespace-nowrap"
-    x-data="{
-        start: '{{ optional($application->interview)?->start_time }}',
-        end: '{{ optional($application->interview)?->end_time }}',
-        scheduleText: '',
-        update() {
-            if (!this.start || !this.end) {
-                this.scheduleText = 'Not Set';
-                return;
-            }
-            let s = new Date(this.start.replace(' ', 'T'));
-            let e = new Date(this.end.replace(' ', 'T'));
-            if (isNaN(s) || isNaN(e)) {
-                this.scheduleText = 'Invalid Date';
-                return;
-            }
-            this.scheduleText = s.toLocaleString('en-US', {
-                month:'short', day:'2-digit', year:'numeric',
-                hour:'2-digit', minute:'2-digit', hour12:true
-            }) + ' - ' + e.toLocaleTimeString('en-US', {
-                hour:'2-digit', minute:'2-digit', hour12:true
-            });
-        }
-    }"
-    x-init="
-        update();
-        setInterval(() => { update(); }, 60000);
-    "
->
-    <span x-text="scheduleText"></span>
-</td>
-
-
+          <!-- Interview Schedule -->
+           <td class="py-3 px-4 whitespace-nowrap">
+           @if(optional($application->interview)?->scheduled_at)
+          {{ \Carbon\Carbon::parse($application->interview->scheduled_at)->format('M d, Y h:i A') }}
+           @else
+           Not Set
+           @endif
+           </td>
             <!-- Resume -->
             <td class="py-3 px-4">
                 @if($application->user->active_status === 'Active' && $application->resume_snapshot)
@@ -89,8 +64,9 @@
             <!-- Profile -->
             <td class="py-3 px-4">
                 @if($application->user->active_status === 'Active')
-                    <button @click="openProfile({{ $application->id }})"
-                        class="border border-[#BD6F22] text-[#BD6F22] text-sm font-medium h-8 px-3 rounded hover:bg-[#BD6F22] hover:text-white">
+                    <button 
+                        @click="openProfile({{ $application->user->id }})"
+                        class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
                         View
                     </button>
                 @else
@@ -98,37 +74,59 @@
                 @endif
             </td>
 
-            <!-- Status -->
-            <td class="py-3 px-4">
-                <template x-if="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'interviewed'">
-                    <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300">Passed</span>
-                </template>
-                <template x-if="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'declined'">
-                    <span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full transition-colors duration-300">Failed</span>
-                </template>
-                <template x-if="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'for_interview'">
-                    <span class="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full transition-colors duration-300">For Interview</span>
-                </template>
-                <template x-if="!['interviewed','declined','for_interview'].includes(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}')">
-                    <span class="text-xs bg-gray-200 text-gray-800 px-2 py-1 rounded-full transition-colors duration-300">Pending</span>
-                </template>
-            </td>
+<!-- Status -->
+<td class="py-3 px-4">
+    <!-- Passed -->
+    <template x-if="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'interviewed'">
+        <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
+            Passed
+        </span>
+    </template>
+
+    <!-- Failed -->
+    <template x-if="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'declined'">
+        <span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
+            Failed
+        </span>
+    </template>
+
+    <!-- For Interview -->
+    <template x-if="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'for_interview'">
+        <span class="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
+            For Interview
+        </span>
+    </template>
+
+    <!-- Pending -->
+    <template x-if="!['interviewed','declined','for_interview'].includes(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}')">
+        <span class="text-xs bg-gray-200 text-gray-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
+            Pending
+        </span>
+    </template>
+</td>
 
             <!-- Action -->
             <td class="py-3 px-4">
                 @if($application->user->active_status === 'Active')
                     <div class="flex gap-2">
-                        <button
-                          @click="openSetInterview(
-                              {{ $application->id }},
-                              '{{ $application->user->first_name }} {{ $application->user->last_name }}',
-                              {{ $application->user_id }},
-                              '{{ optional($application->interview)?->scheduled_at ?? '' }}'
-                          )"
-                          class="bg-blue-600 text-white text-sm font-medium h-8 px-3 rounded hover:bg-blue-700 disabled:opacity-50"
-                          :disabled="['interviewed', 'declined'].includes(applicants.find(a => a.id === {{ $application->id }})?.status)">
-                          Interview
-                        </button>
+            <button
+            @click="openSetInterview(
+            {{ $application->id }},
+           '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+            {{ $application->user_id }},
+           '{{ optional($application->interview)?->scheduled_at ? \Carbon\Carbon::parse($application->interview->scheduled_at)->format('Y-m-d H:i:s') : '' }}'
+             )"
+             class="bg-blue-600 text-white text-sm font-medium h-8 px-3 rounded hover:bg-blue-700 disabled:opacity-50"
+           :disabled="['interviewed', 'declined'].includes(applicants.find(a => a.id === {{ $application->id }})?.status)"
+           >
+           <span>
+           @if(optional($application->interview)?->scheduled_at)
+            Reschedule
+           @else
+            Interview
+            @endif
+          </span>
+            </button>
 
                         <button
                             @click="openStatusModal({{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}')"

@@ -1,4 +1,3 @@
-
 <div x-data="applicantsHandler()" x-init="init()" class="relative">
 
     <!-- Applicants Table -->
@@ -10,16 +9,14 @@
                     <th class="py-3 px-4">Position</th>
                     <th class="py-3 px-4">Company</th>
                     <th class="py-3 px-4">Applied On</th>
-                    <th class="py-3 px-4">Resume</th>
-                    <th class="py-3 px-4">Profile</th>
                     <th class="py-3 px-4">Training Schedule</th>
+                    <th class="py-3 px-4">Training Time</th>
+                    <th class="py-3 px-4">Location</th>
                     <th class="py-3 px-4">Action</th>
                 </tr>
             </thead>
             <tbody>
-
                 @forelse ($applications as $application)
-
                     @php
                         $fullName = $application->user->first_name . ' ' . $application->user->last_name;
                         $training = $application->trainingSchedule;
@@ -35,33 +32,30 @@
                         data-applicant-id="{{ $application->id }}"
                         data-status="{{ $application->status }}"
                         data-training-range="{{ $trainingRange }}"
-                        x-cloack
-                        x-show="(showAll || '{{ $application->training_schedule }}' === '') && ['interviewed', 'scheduled_for_training'].includes('{{ $application->status }}') && !removedApplicants.includes({{ $application->id }})"
+                        x-cloak
+                        x-show="(showAll || '{{ $application->training_schedule }}' === '') 
+                                && ['interviewed', 'scheduled_for_training'].includes('{{ $application->status }}') 
+                                && !removedApplicants.includes({{ $application->id }})"
                         class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out"
                     >
+                        <!-- Name -->
                         <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
-                            <span class="inline-block w-3 h-3 rounded-full {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
+                            <span class="inline-block w-3 h-3 rounded-full 
+                                {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}">
+                            </span>
                             {{ $application->user->first_name }} {{ $application->user->last_name }}
                         </td>
+
+                        <!-- Position + Company -->
                         <td class="py-3 px-4">{{ $application->job->job_title ?? 'N/A' }}</td>
                         <td class="py-3 px-4">{{ $application->job->company_name ?? 'N/A' }}</td>
-                        <td class="py-3 px-4 italic">{{ \Carbon\Carbon::parse($application->created_at)->format('F d, Y') }}</td>
-                        <td class="py-3 px-4">
-                            @if ($application->resume_snapshot)
-                                <button @click="openResume('{{ asset('storage/' . $application->resume_snapshot) }}')"
-                                        class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
-                                    View
-                                </button>
-                            @else
-                                <span class="text-gray-500 italic">None</span>
-                            @endif
+
+                        <!-- Applied On -->
+                        <td class="py-3 px-4 italic">
+                            {{ \Carbon\Carbon::parse($application->created_at)->format('F d, Y') }}
                         </td>
-                        <td class="py-3 px-4">
-                            <button @click="openProfile({{ $application->id }})"
-                                    class="border border-[#BD6F22] text-[#BD6F22] text-sm font-medium h-8 px-3 rounded hover:bg-[#BD6F22] hover:text-white whitespace-nowrap">
-                                View
-                            </button>
-                        </td>
+
+                        <!-- Training Schedule -->
                         <td class="py-3 px-4 text-sm text-gray-700">
                             @if ($application->trainingSchedule)
                                 <span>
@@ -73,6 +67,24 @@
                                 <span class="text-gray-400 italic">None</span>
                             @endif
                         </td>
+
+                        <!-- Training Time -->
+                        <td class="py-3 px-4 text-sm text-gray-700">
+                            @if ($application->trainingSchedule && $application->trainingSchedule->start_time && $application->trainingSchedule->end_time)
+                                {{ \Carbon\Carbon::parse($application->trainingSchedule->start_time)->format('h:i A') }}
+                                -
+                                {{ \Carbon\Carbon::parse($application->trainingSchedule->end_time)->format('h:i A') }}
+                            @else
+                                <span class="text-gray-400 italic">None</span>
+                            @endif
+                        </td>
+
+                        <!-- Location -->
+                        <td class="py-3 px-4 text-sm text-gray-700">
+                            {{ $application->trainingSchedule->location ?? 'N/A' }}
+                        </td>
+
+                        <!-- Action -->
                         <td class="py-3 px-4">
                             <button
                                 x-data
@@ -93,8 +105,7 @@
                                 data-end-time="{{ $application->trainingSchedule->end_time ?? '' }}"
                                 data-location="{{ $application->trainingSchedule->location ?? '' }}"
                                 class="text-white text-sm font-medium h-8 px-3 rounded whitespace-nowrap
-                                    {{ $application->trainingSchedule ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-blue-600 hover:bg-blue-700' }}"
-                            >
+                                    {{ $application->trainingSchedule ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-blue-600 hover:bg-blue-700' }}">
                                 {{ $application->trainingSchedule ? 'Reschedule' : 'Set Training' }}
                             </button>
                         </td>
@@ -107,6 +118,11 @@
             </tbody>
         </table>
     </div>
+
+    <!-- ✅ Only keep Set Training Modal -->
+    @include('components.hrAdmin.modals.setTraining')
+
+</div>
 
     <!-- Resume Modal -->
     @include('components.hrAdmin.modals.resume')

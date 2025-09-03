@@ -44,6 +44,9 @@
                         <td class="py-3 px-4 italic whitespace-nowrap">
                             {{ \Carbon\Carbon::parse($application->created_at)->format('F d, Y') }}
                         </td>
+
+                          <!-- Resume -->
+                        
                         <td class="py-3 px-4">
                             @if($application->user->active_status === 'Active' && $application->resume_snapshot)
                                 <button
@@ -57,17 +60,23 @@
                                 <span class="text-gray-500 italic">None</span>
                             @endif
                         </td>
+
+                           <!-- Profile -->
+
                         <td class="py-3 px-4">
                             @if($application->user->active_status === 'Active')
                                 <button
                                     @click="openProfile({{ $application->user->id }})"
-                                    class="border border-[#BD6F22] text-[#BD6F22] text-sm font-medium h-8 px-3 rounded hover:bg-[#BD6F22] hover:text-white">
+                                    class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
                                     View
                                 </button>
                             @else
                                 <span class="text-gray-400 italic">Inactive</span>
                             @endif
                         </td>
+
+                        <!-- Action -->
+                         
                         <td class="py-3 px-4">
                             @if($application->user->active_status === 'Active')
                                 @if($application->status === 'interviewed')

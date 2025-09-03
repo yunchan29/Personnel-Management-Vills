@@ -195,11 +195,11 @@
                 class="mb-4 bg-blue-100 border border-blue-300 text-blue-800 px-4 py-3 rounded-lg flex justify-between items-center"
             >
                <span>
-    You are currently viewing applicants for: 
-    <strong class="text-[#1E3A8A]">{{ $selectedJob->company_name }}</strong> 
-    <span class="text-gray-500">—</span> 
-    <strong class="text-[#BD6F22]">{{ $selectedJob->job_title }}</strong>
-</span>
+              You are currently viewing applicants for: 
+              <strong class="text-[#1E3A8A]">{{ $selectedJob->company_name }}</strong> 
+              <span class="text-gray-500">—</span> 
+              <strong class="text-[#BD6F22]">{{ $selectedJob->job_title }}</strong>
+               </span>
 
                 <button @click="showNotice = false" class="text-sm text-blue-600 hover:underline">Dismiss</button>
             </div>
@@ -212,6 +212,7 @@
             <p class="text-gray-500 text-center">No applicants selected yet.</p>
         @endif
     </div>
+    
 
     {{-- Interview Schedule Tab --}}
     <div 
