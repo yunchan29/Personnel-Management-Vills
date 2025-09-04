@@ -20,195 +20,108 @@
     $licensesData = old('licenses', optional($file201)->licenses ?: []);
 @endphp
 
-<form method="POST" action="{{ route('applicant.files.store') }}"
-      x-data="licenseForm({{ Js::from($licensesData) }})"
-      x-init="initLicenses()">
+<form method="POST" action="{{ route('applicant.files.store') }}" enctype="multipart/form-data"
+    x-data="{
+        ...licenseForm({{ Js::from($licensesData) }}),
+        activeTab: 'licenses',
+
+        documents: [{ type: '', file: null }],
+            documentTypes: [
+                'Barangay Clearance',
+                'NBI Clearance',
+                'Police Clearance',
+                'Medical Certificate',
+                'Birth Certificate'
+            ],
+            addDocument() {
+                this.documents.push({ type: '', file: null });
+            },
+            removeDocument(index) {
+                this.documents.splice(index, 1);
+            }
+        }"
+      x-init="initLicenses()"
+>
     @csrf
 
     <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">My 201 files</h1>
 
-    <div class="border-t border-gray-300 pt-4">
-        <!-- Government Documents -->
+    <!-- Government Documents -->
+    <div class="border-t border-gray-300 pt-4 mb-6">
         <h3 class="text-lg font-semibold text-[#BD6F22] mb-3">Government Documents</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <div>
-                <label for="sss_number" class="block text-sm font-medium text-gray-700 mb-1">SSS number:</label>
-                <input id="sss_number" type="text" name="sss_number"
-                    value="{{ old('sss_number', $file201->sss_number ?? '') }}"
-                    maxlength="9"
-                    pattern="\d{9}"
-                    inputmode="numeric"
-                    oninput="this.value = this.value.replace(/\D/g, '').slice(0,9);"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
-                @error('sss_number') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
-            </div>
-
-            <div>
-                <label for="philhealth_number" class="block text-sm font-medium text-gray-700 mb-1">Philhealth number:</label>
-                <input id="philhealth_number" type="text" name="philhealth_number"
-                    value="{{ old('philhealth_number', $file201->philhealth_number ?? '') }}"
-                    maxlength="12"
-                    pattern="\d{12}"
-                    inputmode="numeric"
-                    oninput="this.value = this.value.replace(/\D/g, '').slice(0,12);"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
-                @error('philhealth_number') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
-            </div>
-
-            <div>
-                <label for="pagibig_number" class="block text-sm font-medium text-gray-700 mb-1">Pag-Ibig number:</label>
-                <input id="pagibig_number" type="text" name="pagibig_number"
-                    value="{{ old('pagibig_number', $file201->pagibig_number ?? '') }}"
-                    maxlength="12"
-                    pattern="\d{12}"
-                    inputmode="numeric"
-                    oninput="this.value = this.value.replace(/\D/g, '').slice(0,12);"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
-                @error('pagibig_number') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
-            </div>
-
-            <div>
-                <label for="tin_id_number" class="block text-sm font-medium text-gray-700 mb-1">Tin ID number:</label>
-                <input id="tin_id_number" type="text" name="tin_id_number"
-                    value="{{ old('tin_id_number', $file201->tin_id_number ?? '') }}"
-                    maxlength="12"
-                    pattern="\d{9,12}"
-                    inputmode="numeric"
-                    oninput="this.value = this.value.replace(/\D/g, '').slice(0,12);"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
-                @error('tin_id_number') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
-            </div>
-        </div>
-
-        <!-- Licenses / Certifications -->
-        <h3 class="text-lg font-semibold text-[#BD6F22] mb-3">Licenses / Certifications</h3>
-
-        <!-- Tab Navigation -->
-        <div class="flex overflow-x-auto gap-2 mb-4 whitespace-nowrap">
-            <template x-for="(license, index) in licenses" :key="index">
-                <button type="button"
-                    @click="selectedTab = index"
-                    :class="selectedTab === index ? 'bg-[#BD6F22] text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'"
-                    class="px-4 py-2 rounded-md text-sm font-medium transition">
-                    License #<span x-text="index + 1"></span>
-                </button>
-            </template>
-        </div>
-
-        <!-- Slide-In License Form -->
-        <div class="relative h-auto min-h-[320px] overflow-hidden">
-            <template x-for="(license, index) in licenses" :key="index">
-                <div x-show="selectedTab === index"
-                    x-transition:enter="transition transform duration-500"
-                    x-transition:enter-start="opacity-0 translate-x-full"
-                    x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition transform duration-300 absolute inset-0"
-                    x-transition:leave-start="opacity-100 translate-x-0"
-                    x-transition:leave-end="opacity-0 -translate-x-full"
-                    class="space-y-4 border-t border-gray-200 pt-4 absolute inset-0 bg-white"
-                    x-cloak>
-                    <div class="flex items-center justify-between">
-                        <h4 class="text-md font-semibold text-gray-700">
-                            Editing License / Certification #<span x-text="index + 1"></span>
-                        </h4>
-                        <button type="button"
-                            class="text-red-600 text-sm hover:underline"
-                            x-show="licenses.length > 1"
-                            @click="removeLicense(index)">
-                            Remove
-                        </button>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">License / Certification</label>
-                        <input type="text"
-                            :name="'licenses['+index+'][name]'"
-                            x-model.lazy="license.name"
-                            @input.debounce.300ms="updateField()"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">License / Certification number</label>
-                        <input type="text"
-                            :name="'licenses['+index+'][number]'"
-                            x-model.lazy="license.number"
-                            @input.debounce.300ms="updateField()"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Date Taken</label>
-                        <input type="date"
-                            :name="'licenses['+index+'][date]'"
-                            x-model.lazy="license.date"
-                            @input.debounce.300ms="updateField()"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
-                    </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            @foreach(['sss_number' => 9, 'philhealth_number' => 12, 'pagibig_number' => 12, 'tin_id_number' => 12] as $field => $max)
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ ucwords(str_replace('_', ' ', $field)) }}:
+                    </label>
+                    <input type="text" name="{{ $field }}"
+                           value="{{ old($field, $file201->$field ?? '') }}"
+                           maxlength="{{ $max }}"
+                           pattern="\d{9,{{ $max }}}"
+                           inputmode="numeric"
+                           oninput="this.value = this.value.replace(/\D/g, '').slice(0,{{ $max }});"
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
                 </div>
-            </template>
+            @endforeach
         </div>
+    </div>
 
-        <!-- License Summary -->
-        <div class="mt-6">
-            <h4 class="text-md font-semibold text-[#BD6F22] mb-2">Summary of License / Certification Names</h4>
-            <ul class="list-disc list-inside text-sm text-gray-800" x-show="licenses.length > 0">
-                <template x-for="(license, index) in licenses" :key="index">
-                    <li x-show="license.name" x-text="license.name"></li>
-                </template>
-            </ul>
-        </div>
-
-        <!-- Add Button -->
-        <button type="button"
-            @click="addLicense()"
-            class="mt-6 bg-[#BD6F22] hover:bg-[#a75f1c] text-white font-semibold px-4 py-2 rounded-md transition">
-            Add New
-        </button>
-
-        <!-- Save Button -->
-        <div class="mt-4">
-            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-md transition">
-                Save
+    <!-- Tabs -->
+    <div class="mb-4">
+        <div class="flex space-x-4 border-b pb-2">
+            <button type="button"
+                    @click="activeTab = 'licenses'"
+                    :class="activeTab === 'licenses' ? 'text-[#BD6F22] border-b-2 border-[#BD6F22]' : 'text-gray-600'"
+                    class="pb-1 text-sm font-semibold">
+                Licenses / Certifications
+            </button>
+            <button type="button"
+                    @click="activeTab = 'files'"
+                    :class="activeTab === 'files' ? 'text-[#BD6F22] border-b-2 border-[#BD6F22]' : 'text-gray-600'"
+                    class="pb-1 text-sm font-semibold">
+                Additional Files
             </button>
         </div>
     </div>
+
+    <!-- Tab Content -->
+    <div>
+        <x-applicant.licenses :licensesData="$licensesData" />
+        <x-applicant.other_files :otherFiles="$otherFiles" />
+    </div>
+
+    <!-- Final Save Button -->
+    <div class="mt-6 text-right">
+        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-md transition">
+            Save
+        </button>
+    </div>
 </form>
 
-<!-- Alpine Component -->
+<!-- Alpine Script -->
 <script>
 function licenseForm(initialLicenses = []) {
     return {
         licenses: [],
         selectedTab: 0,
-
         initLicenses() {
-            const saved = localStorage.getItem('licensesData');
-            this.licenses = saved
-                ? JSON.parse(saved)
-                : (initialLicenses.length > 0 ? initialLicenses : [{ name: '', number: '', date: '' }]);
+            this.licenses = initialLicenses.length
+                ? initialLicenses
+                : [{ name: '', number: '', date: '' }];
         },
-
         addLicense() {
-            if (this.licenses.length >= 10) {
-                alert('Maximum of 10 licenses allowed.');
-                return;
-            }
             this.licenses.push({ name: '', number: '', date: '' });
             this.selectedTab = this.licenses.length - 1;
-            this.updateField();
         },
-
         removeLicense(index) {
             this.licenses.splice(index, 1);
             if (this.selectedTab >= this.licenses.length) {
                 this.selectedTab = this.licenses.length - 1;
             }
-            this.updateField();
         },
-
-        updateField() {
-            localStorage.setItem('licensesData', JSON.stringify(this.licenses));
-        }
-    }
+        updateField() {}
+    };
 }
 </script>
-
 @endsection
