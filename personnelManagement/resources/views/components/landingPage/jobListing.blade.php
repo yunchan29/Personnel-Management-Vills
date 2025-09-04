@@ -32,12 +32,24 @@
             </svg>
             <p>{{ $job->location }}</p>
           </div>
+   <!-- See more button -->
+<button
+  @click="
+    selectedJob = {
+      job_title: @js($job->job_title),
+      company_name: @js($job->company_name),
+      location: @js($job->location),
+      qualifications: @js($job->qualifications ?? []),
+      posted: @js($job->created_at->diffForHumans()),
+      deadline: @js(\Carbon\Carbon::parse($job->apply_until)->format('F d, Y'))
+    };
+    showModal = true
+  "
+  class="mt-2 text-sm text-[#BD9168] hover:underline focus:outline-none font-medium">
+  See More
+</button>
 
-          <!-- See More Button -->
-          <button @click="selectedJob = {{ $job->toJson() }}; showModal = true"
-                  class="mt-2 text-sm text-[#BD9168] hover:underline focus:outline-none font-medium">
-            See More
-          </button>
+
         </div>
       </div>
     @empty
@@ -46,8 +58,8 @@
   </div>
 
   <!-- Modal -->
-  <div x-show="showModal" x-transition x-cloak
-       class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 px-4"
+    <div x-show="showModal" x-transition x-cloak
+     class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 px-4"
        @keydown.window.escape="showModal = false">
     <div
       x-ref="modal"
@@ -57,7 +69,7 @@
     >
 
       <!-- Drag Handle -->
-      <div class="modal-header cursor-move flex justify-between items-center mb-2">
+      <div class="modal-header cursor-move flex justify-between items-center mb-0">
         <h2 class="text-xl font-bold text-[#BD9168]" x-text="selectedJob?.job_title"></h2>
         <button @click="showModal = false"
                 class="text-gray-500 hover:text-gray-700 text-2xl leading-none">
@@ -67,7 +79,8 @@
 
       <div>
         <p class="text-base font-medium text-gray-800" x-text="selectedJob?.company_name"></p>
-        <p class="text-sm text-gray-600 mb-3" x-text="'Location: ' + selectedJob?.location"></p>
+       <p class="text-sm text-gray-600" x-text="'Location: ' + selectedJob?.location"></p>
+      </div>
 
         <div class="mt-3">
           <p class="font-semibold text-sm text-gray-800">Qualifications:</p>
@@ -82,7 +95,7 @@
         </div>
 
         <!-- Modal "Apply Now" -->
-        <div class="mt-6">
+          <div class="flex items-center justify-end gap-6 mt-4">
           <a href="{{ route('login') }}"
              class="inline-flex items-center bg-[#BD9168] text-white px-4 py-2 text-sm rounded-md hover:bg-[#a37653] transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -90,8 +103,11 @@
             </svg>
             Apply Now
           </a>
-        </div>
-
+          <!-- Posted -->
+ <div class="flex flex-col text-sm text-gray-600">
+    <p>Posted: <span class="font-semibold" x-text="selectedJob?.posted"></span></p>
+    <p>Deadline: <span class="font-semibold" x-text="selectedJob?.deadline"></span></p>
+  </div>
       </div>
     </div>
   </div>
