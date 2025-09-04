@@ -70,8 +70,8 @@ class="mb-4 bg-blue-100 border border-blue-300 text-blue-800 px-4 py-3 rounded-l
             </tr>
         </thead>
         
-        <tbody>
-    @forelse ($applicants as $applicant)
+     <tbody>
+    @foreach ($applicants as $applicant)
         <tr 
             x-show="shouldShow({{ $applicant->job_id }}, {{ $applicant->evaluation ? 'true' : 'false' }})"
             class="border-b hover:bg-gray-50"
@@ -101,13 +101,14 @@ class="mb-4 bg-blue-100 border border-blue-300 text-blue-800 px-4 py-3 rounded-l
                 @endif
             </td>
         </tr>
-    @empty
-        <tr>
-            <td colspan="5" class="text-center py-6 text-gray-500 italic">
-                No applicants yet
-            </td>
-        </tr>
-    @endforelse
+    @endforeach
+
+    <!-- "No applicants" row -->
+    <tr x-show="!document.querySelectorAll('tbody tr[style*=\'display: table-row\']').length">
+        <td colspan="5" class="text-center py-6 text-gray-500 italic">
+            No applicants yet
+        </td>
+    </tr>
 </tbody>
 
     </table>
