@@ -24,18 +24,30 @@
         </button>
     </div>
 
-    <!-- Job Listings -->
-    <div x-show="tab === 'job_postings'" x-transition>
-        @foreach ($jobs as $job)
-            @php
-                $pendingApplicants = $applicants->where('job_id', $job->id)
-                    ->where(fn($app) => !$app->evaluation || $app->status != 'hired');
-            @endphp
-            @if ($pendingApplicants->isNotEmpty())
-                <x-hrStaff.jobListingDisplay :job="$job" />
-            @endif
+ <!-- Job Listings -->
+<div x-show="tab === 'job_postings'" x-transition>
+    @php
+        $jobsWithPending = $jobs->filter(function($job) use ($applicants) {
+            return $applicants->filter(function($app) use ($job) {
+                return $app->job_id === $job->id
+                       && !$app->evaluation
+                       && $app->status !== 'hired';
+            })->isNotEmpty();
+        });
+    @endphp
+
+    @if ($jobsWithPending->isNotEmpty())
+        @foreach ($jobsWithPending as $job)
+            <x-hrStaff.jobListingDisplay :job="$job" />
         @endforeach
-    </div>
+    @else
+        <div class="text-center py-6 text-gray-500 italic">
+            No pending applicants for any job postings.
+        </div>
+    @endif
+</div>
+
+
 
     <!-- Evaluation Tab -->
     <div x-ref="evaluationSection" x-show="tab === 'evaluation'" x-transition x-cloak>
