@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reset Password</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet">
+     <!-- Favicon -->
+    <link rel="icon" href="{{ asset('images/villslogo3.png') }}" type="image/png">
 </head>
 <body class="bg-[#EFE8E0] min-h-screen flex items-center justify-center font-sans">
 

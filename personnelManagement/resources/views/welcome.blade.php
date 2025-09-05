@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>VillsPMS</title>
-
+  <!-- Favicon -->
+    <link rel="icon" href="{{ asset('images/villslogo3.png') }}" type="image/png">
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
