@@ -7,6 +7,7 @@
      <!-- Favicon -->
     <link rel="icon" href="{{ asset('images/villslogo3.png') }}" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Alata&display=swap" rel="stylesheet">
