@@ -7,12 +7,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Models\TrainingEvaluation;
 use App\Models\Application;
+use App\Models\Job;
 use App\Models\User;
 use App\Mail\PassedEvaluationMail;
 use App\Mail\FailedEvaluationMail;
 
 class EvaluationController extends Controller
 {
+    /**
+     * Submit evaluation for an applicant
+     */
     public function store(Request $request, $applicationId)
     {
         // ✅ Validate form inputs
@@ -24,14 +28,13 @@ class EvaluationController extends Controller
             'result' => 'required|in:passed,failed',
         ]);
 
-        $application = Application::with('user')->findOrFail($applicationId);
+        $application = Application::with('user', 'job')->findOrFail($applicationId);
 
         $totalScore = $validated['knowledge_score']
                     + $validated['skill_score']
                     + $validated['participation_score']
                     + $validated['professionalism_score'];
 
-        // ✅ Wrap everything in a transaction for safety
         DB::transaction(function () use ($application, $validated, $totalScore) {
             // ✅ Create or update evaluation
             TrainingEvaluation::updateOrCreate(
@@ -49,49 +52,75 @@ class EvaluationController extends Controller
             );
 
             $user = $application->user;
+            $job = $application->job;
 
-            // ✅ Update application status if passed
             if ($validated['result'] === 'passed') {
-                $application->status = 'hired';
+                // ✅ Update application status to "passed" (manual promotion will set "hired")
+                $application->status = 'passed';
                 $application->save();
 
-                // ✅ Promote applicant to employee
-                $user = $application->user;
-                if ($user->role !== 'employee') {
-                    $user->role = 'employee';
-                    $user->job_id = $application->job_id;
-                    $user->save();
-                }
-                // Send passed email
-                Mail::to($user->email)->send(
-                new PassedEvaluationMail(
-                    $user,
-                    $application,
-                    $validated['knowledge_score'],
-                    $validated['skill_score'],
-                    $validated['participation_score'],
-                    $validated['professionalism_score'],
-                    $totalScore
-                )
-            );
+                // 🔽 Decrement job vacancies
+                if ($job && $job->vacancies > 0) {
+                    $job->vacancies -= 1;
 
-            }else {
-                // If failed, keep status as is but send fail email
+                    // Optional: close job if no vacancies left
+                    if ($job->vacancies <= 0) {
+                        $job->status = 'closed';
+                    }
+
+                    $job->save();
+                }
+
+                // ✅ Send passed email
                 Mail::to($user->email)->send(
-                new FailedEvaluationMail(
-                    $user,
-                    $application,
-                    $validated['knowledge_score'],
-                    $validated['skill_score'],
-                    $validated['participation_score'],
-                    $validated['professionalism_score'],
-                    $totalScore
+                    new PassedEvaluationMail(
+                        $user,
+                        $application,
+                        $validated['knowledge_score'],
+                        $validated['skill_score'],
+                        $validated['participation_score'],
+                        $validated['professionalism_score'],
+                        $totalScore
+                    )
+                );
+            } else {
+                // ✅ If failed, keep status as is but send fail email
+                Mail::to($user->email)->send(
+                    new FailedEvaluationMail(
+                        $user,
+                        $application,
+                        $validated['knowledge_score'],
+                        $validated['skill_score'],
+                        $validated['participation_score'],
+                        $validated['professionalism_score'],
+                        $totalScore
                     )
                 );
             }
-
         });
 
         return redirect()->back()->with('success', 'Evaluation submitted successfully.');
+    }
+
+    /**
+     * Promote an applicant to employee manually via "Add" button
+     */
+    public function promoteApplicant($applicationId)
+    {
+        $application = Application::with('user', 'job')->findOrFail($applicationId);
+        $user = $application->user;
+
+        // Only promote if not already an employee
+        if ($user->role !== 'employee') {
+            $user->role = 'employee';
+            $user->job_id = $application->job_id;
+            $user->save();
+        }
+
+        // Mark application as hired
+        $application->status = 'hired';
+        $application->save();
+
+        return redirect()->back()->with('success', "{$user->full_name} has been promoted to employee.");
     }
 }

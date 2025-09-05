@@ -19,6 +19,7 @@ use App\Http\Controllers\TrainingScheduleController;
 use App\Http\Controllers\InitialApplicationController;
 use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\DashboardChartController;
+use App\Http\Controllers\ReportController; // Add this line for ReportController
 
 //temporary ulit HAHAHAHH sorry
 Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
@@ -112,8 +113,8 @@ Route::prefix('employee')->name('employee.')->middleware('auth')->group(function
 // ✅ HRadmin-related routes with auth middleware
 Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function () {
 
-// Dashboard (with chart data passed directly)
-Route::get('/dashboard', [DashboardChartController::class, 'index'])->name('dashboard');
+    // Dashboard (with chart data passed directly)
+    Route::get('/dashboard', [DashboardChartController::class, 'index'])->name('dashboard');
 
     // Profile Management
     Route::get('/profile', [UserController::class, 'showHrAdmin'])->name('profile');
@@ -125,6 +126,10 @@ Route::get('/dashboard', [DashboardChartController::class, 'index'])->name('dash
     Route::get('/viewApplication', [InitialApplicationController::class, 'index'])->name('viewApplication');
     Route::get('/viewApplicants/{id}', [InitialApplicationController::class, 'viewApplicants'])->name('viewApplicants');
     Route::get('/job/{id}/applicants', [InitialApplicationController::class, 'viewApplicants'])->name('applicants');
+    // Reports
+    Route::get('/reports/applicants/{format}', [ReportController::class, 'applicants'])
+    ->name('reports.applicants');
+
 
     // Interview Scheduling 
     Route::get('/interviews', [InterviewController::class, 'index'])->name('interviews.index');
@@ -150,7 +155,7 @@ Route::get('/dashboard', [DashboardChartController::class, 'index'])->name('dash
 
    Route::get('/archive', function () {
     return view('hrAdmin.archive');
-})->name('archive');
+    })->name('archive');
 
 
     // Leave Form
@@ -238,6 +243,10 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function (
     Route::delete('/leave-forms/{id}', [LeaveFormController::class, 'destroy'])->name('leaveForms.destroy');
     Route::post('/leave-forms/{id}/approve', [LeaveFormController::class, 'approve'])->name('leaveForms.approve');
     Route::post('/leave-forms/{id}/decline', [LeaveFormController::class, 'decline'])->name('leaveForms.decline');
+
+    // Manual promotion from applicant to employee
+Route::post('/evaluation/promote/{application}', [EvaluationController::class, 'promoteApplicant'])
+    ->name('evaluation.promote');
 
      Route::get('/archive', function () {
     return view('hrAdmin.archive');

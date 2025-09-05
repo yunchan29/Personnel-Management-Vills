@@ -12,7 +12,7 @@ class EmployeeController extends Controller
     // Employee list view
     public function index()
     {
-        $role = auth()->user()->role; 
+        $role = auth()->user()->role;
 
         $jobs = Job::withCount('applications')->get();
 
@@ -27,27 +27,38 @@ class EmployeeController extends Controller
 
         return view("$role.employees", [
             'jobs' => $jobs,
-            'employees' => $employees, // ✅ Add this so $employees is defined
+            'employees' => $employees,
             'groupedEmployees' => $groupedEmployees,
         ]);
     }
 
-    public function performanceEvaluation()
-    {
-        $jobs = Job::withCount('applications')->get();
+public function performanceEvaluation()
+{
+    // Fetch jobs that have at least one applicant pending evaluation or not yet hired
+    $jobs = Job::whereHas('applications', function($query) {
+        $query->where(function($q) {
+            $q->whereDoesntHave('evaluation')
+              ->orWhere('status', '!=', 'hired');
+        });
+    })->with(['applications' => function($query) {
+        $query->whereHas('trainingSchedule'); // optional if you only evaluate scheduled trainings
+    }])->get();
 
-        $applicants = Application::with(['user', 'trainingSchedule', 'evaluation'])
-            ->whereHas('trainingSchedule')
-            ->get();
+    $applicants = Application::with(['user', 'job', 'evaluation'])
+        ->whereHas('trainingSchedule')
+        ->get();
 
-        $employees = User::where('role', 'employee')
-            ->with('job')
-            ->get();
+    $employees = User::where('role', 'employee')
+        ->with('job')
+        ->get();
 
-        return view('hrStaff.perfEval', [
-            'jobs' => $jobs,
-            'applicants' => $applicants,
-            'employees' => $employees,
-        ]);
-    }
+    return view('hrStaff.perfEval', [
+        'jobs' => $jobs,
+        'applicants' => $applicants,
+        'employees' => $employees,
+    ]);
+}
+
+
+
 }

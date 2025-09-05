@@ -456,153 +456,178 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
-        async submitTrainingSchedule() {
-            const selectedRange = this.$refs.trainingDateRange.value?.trim();
-            const trainingTimeStart = `${this.trainingStartHour} ${this.trainingStartPeriod}`;
-            const trainingTimeEnd   = `${this.trainingEndHour} ${this.trainingEndPeriod}`;
-            const trainingLocation  = (this.trainingLocation || '').trim();
+async submitTrainingSchedule() {
+    const selectedRange = this.$refs.trainingDateRange.value?.trim();
+    const trainingTimeStart = `${this.trainingStartHour} ${this.trainingStartPeriod}`;
+    const trainingTimeEnd   = `${this.trainingEndHour} ${this.trainingEndPeriod}`;
+    const trainingLocation  = (this.trainingLocation || '').trim();
 
-            // -------------------------------
-            // Basic validations
-            // -------------------------------
-            if (!selectedRange || !selectedRange.includes(' - ')) {
-                return Swal.fire({
-                    icon: 'error',
-                    title: 'Invalid Input',
-                    text: 'Please select a valid training date range.'
-                });
+    // -------------------------------
+    // Basic validations
+    // -------------------------------
+    if (!selectedRange || !selectedRange.includes(' - ')) {
+        return Swal.fire({
+            icon: 'error',
+            title: 'Invalid Input',
+            text: 'Please select a valid training date range.'
+        });
+    }
+
+    if (!trainingLocation) {
+        return Swal.fire({
+            icon: 'error',
+            title: 'Missing Location',
+            text: 'Please enter the training location.'
+        });
+    }
+
+    // -------------------------------
+    // Date parsing
+    // -------------------------------
+    const [newStartStr, newEndStr] = selectedRange.split(' - ').map(s => s.trim());
+    const newStart = new Date(newStartStr);
+    const newEnd   = new Date(newEndStr);
+    const today    = new Date(); today.setHours(0, 0, 0, 0);
+
+    // -------------------------------
+    // Determine if date range actually changed
+    // -------------------------------
+    let datesChanged = true;
+    if (this.originalTrainingDateRange && this.originalTrainingDateRange.includes(' - ')) {
+        const [oStartStr, oEndStr] = this.originalTrainingDateRange.split(' - ').map(d => d.trim());
+        const oStart = new Date(oStartStr);
+        const oEnd   = new Date(oEndStr);
+
+        datesChanged = (newStart.getTime() !== oStart.getTime()) || 
+                       (newEnd.getTime()   !== oEnd.getTime());
+    }
+
+    // -------------------------------
+    // Validate ONLY if dates changed
+    // -------------------------------
+    if (datesChanged) {
+        if (isNaN(newStart) || isNaN(newEnd) || newStart < today || newEnd < today) {
+            return Swal.fire({
+                icon: 'error',
+                title: 'Invalid Date Range',
+                text: 'The training schedule must be set to future dates.'
+            });
+        }
+    }
+
+    // -------------------------------
+    // Check if same as original
+    // -------------------------------
+    let isSameAsOriginal = false;
+    if (this.originalTrainingDateRange && this.originalTrainingDateRange.includes(' - ')) {
+        const [oStart, oEnd] = this.originalTrainingDateRange.split(' - ').map(d => d.trim());
+        isSameAsOriginal = (
+            newStartStr       === oStart &&
+            newEndStr         === oEnd &&
+            trainingTimeStart === (this.originalTrainingTimeStart   || '') &&
+            trainingTimeEnd   === (this.originalTrainingTimeEnd     || '') &&
+            trainingLocation  === (this.originalTrainingLocation    || '')
+        );
+    }
+
+    if (isSameAsOriginal) {
+        this.feedbackMessage = 'No changes were made to the training schedule.';
+        this.feedbackVisible = true;
+        this.showTrainingModal = false;
+
+        setTimeout(() => this.feedbackVisible = false, 3000);
+        return;
+    }
+
+    // -------------------------------
+    // Proceed function (save changes)
+    // -------------------------------
+    const proceed = async () => {
+        try {
+            const response = await fetch(`/hrAdmin/training-schedule/${this.selectedApplicantId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    start_date : newStartStr,
+                    end_date   : newEndStr,
+                    start_time : this.formatTime(trainingTimeStart),
+                    end_time   : this.formatTime(trainingTimeEnd),
+                    location   : trainingLocation
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to set training schedule');
+            const result = await response.json();
+
+            // update DOM row
+            const row = document.querySelector(`tr[data-applicant-id='${this.selectedApplicantId}']`);
+            if (row) {
+                row.setAttribute('data-training-range', selectedRange);
+                row.setAttribute('data-training-time', `${trainingTimeStart} - ${trainingTimeEnd}`);
+                row.setAttribute('data-training-location', trainingLocation);
             }
 
-            if (!trainingLocation) {
-                return Swal.fire({
-                    icon: 'error',
-                    title: 'Missing Location',
-                    text: 'Please enter the training location.'
-                });
+            // update reactive applicants list
+            const index = this.applicants.findIndex(a => a.id === this.selectedApplicantId);
+            if (index !== -1) {
+                this.applicants[index] = {
+                    ...this.applicants[index],
+                    training: selectedRange,
+                    training_time: `${trainingTimeStart} - ${trainingTimeEnd}`,
+                    training_location: trainingLocation,
+                    status: 'scheduled_for_training'
+                };
+                this.applicants = [...this.applicants];
             }
 
-            // -------------------------------
-            // Date parsing + validation
-            // -------------------------------
-            const [newStartStr, newEndStr] = selectedRange.split(' - ').map(s => s.trim());
-            const newStart = new Date(newStartStr);
-            const newEnd   = new Date(newEndStr);
-            const today    = new Date(); today.setHours(0, 0, 0, 0);
+            // ✅ Show toast for both first-time and reschedule
+            this.feedbackMessage = result.message || 'Training schedule saved successfully!';
+            this.feedbackVisible = true;
+            this.showTrainingModal = false;
 
-            if (isNaN(newStart) || isNaN(newEnd) || newStart < today || newEnd < today) {
-                return Swal.fire({
-                    icon: 'error',
-                    title: 'Invalid Date Range',
-                    text: 'The training schedule must be set to future dates.'
-                });
-            }
+            // let toast display first, then reload
+            setTimeout(() => this.feedbackVisible = false, 3000); // hide after 3s
+            setTimeout(() => location.reload(), 3500); // reload after toast fades out
 
-            // -------------------------------
-            // Check if same as original
-            // -------------------------------
-            let isSameAsOriginal = false;
-            if (this.originalTrainingDateRange && this.originalTrainingDateRange.includes(' - ')) {
-                const [oStart, oEnd] = this.originalTrainingDateRange.split(' - ').map(d => d.trim());
-                isSameAsOriginal = (
-                    newStartStr       === oStart &&
-                    newEndStr         === oEnd &&
-                    trainingTimeStart === (this.originalTrainingTimeStart   || '') &&
-                    trainingTimeEnd   === (this.originalTrainingTimeEnd     || '') &&
-                    trainingLocation  === (this.originalTrainingLocation    || '')
-                );
-            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        } finally {
+            this.loading = false;
+        }
+    };
 
-            if (isSameAsOriginal) {
-                this.feedbackMessage = 'No changes were made to the training schedule.';
-                this.feedbackVisible = true;
-                setTimeout(() => this.feedbackVisible = false, 3000);
-                this.showTrainingModal = false;
-                return;
-            }
+    // -------------------------------
+    // Reschedule confirmation
+    // -------------------------------
+    this.loading = true;
+    const isReschedule = !!this.originalTrainingDateRange;
 
-            // -------------------------------
-            // Proceed function (save changes)
-            // -------------------------------
-            const proceed = async () => {
-                try {
-                    const response = await fetch(`/hrAdmin/training-schedule/${this.selectedApplicantId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        },
-                        body: JSON.stringify({
-                            start_date : newStartStr,
-                            end_date   : newEndStr,
-                            start_time : this.formatTime(trainingTimeStart), // e.g. "07:00:00"
-                            end_time   : this.formatTime(trainingTimeEnd),   // e.g. "17:00:00"
-                            location   : trainingLocation
-                        })
-                    });
+    if (isReschedule) {
+        const result = await Swal.fire({
+            title: "You're about to reschedule",
+            html: `
+                New training date range: <br><strong>${selectedRange}</strong><br>
+                Time: <strong>${trainingTimeStart} - ${trainingTimeEnd}</strong><br>
+                Location: <strong>${trainingLocation}</strong><br><br>
+                Do you want to continue?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#BD6F22',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, reschedule'
+        });
 
-                    if (!response.ok) throw new Error('Failed to set training schedule');
-                    const result = await response.json();
+        if (result.isConfirmed) proceed();
+        else this.loading = false;
+    } else {
+        proceed();
+    }
+},
 
-                    // update DOM row
-                    const row = document.querySelector(`tr[data-applicant-id='${this.selectedApplicantId}']`);
-                    if (row) {
-                        row.setAttribute('data-training-range', selectedRange);
-                        row.setAttribute('data-training-time', `${trainingTimeStart} - ${trainingTimeEnd}`);
-                        row.setAttribute('data-training-location', trainingLocation);
-                    }
 
-                    // update reactive applicants list
-                    const index = this.applicants.findIndex(a => a.id === this.selectedApplicantId);
-                    if (index !== -1) {
-                        this.applicants[index] = {
-                            ...this.applicants[index],
-                            training: selectedRange,
-                            training_time: `${trainingTimeStart} - ${trainingTimeEnd}`,
-                            training_location: trainingLocation,
-                            status: 'scheduled_for_training'
-                        };
-                        this.applicants = [...this.applicants];
-                    }
-
-                    this.feedbackMessage = result.message || 'Training schedule set successfully!';
-                    this.feedbackVisible = true;
-                    setTimeout(() => location.reload(), 2000);
-                    this.showTrainingModal = false;
-
-                } catch (error) {
-                    alert('Error: ' + error.message);
-                } finally {
-                    this.loading = false;
-                }
-            };
-
-            // -------------------------------
-            // Reschedule confirmation
-            // -------------------------------
-            this.loading = true;
-            const isReschedule = !!this.originalTrainingDateRange;
-
-            if (isReschedule) {
-                const result = await Swal.fire({
-                    title: "You're about to reschedule",
-                    html: `
-                        New training date range: <br><strong>${selectedRange}</strong><br>
-                        Time: <strong>${trainingTimeStart} - ${trainingTimeEnd}</strong><br>
-                        Location: <strong>${trainingLocation}</strong><br><br>
-                        Do you want to continue?`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#BD6F22',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes, reschedule'
-                });
-
-                if (result.isConfirmed) proceed();
-                else this.loading = false;
-            } else {
-                proceed();
-            }
-        },
 
     }));
 });
