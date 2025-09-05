@@ -245,12 +245,12 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function (
     Route::post('/leave-forms/{id}/decline', [LeaveFormController::class, 'decline'])->name('leaveForms.decline');
 
     // Manual promotion from applicant to employee
-Route::post('/evaluation/promote/{application}', [EvaluationController::class, 'promoteApplicant'])
+    Route::post('/evaluation/promote/{application}', [EvaluationController::class, 'promoteApplicant'])
     ->name('evaluation.promote');
 
      Route::get('/archive', function () {
-    return view('hrAdmin.archive');
-})->name('archive');
+    return view('hrStaff.archive');
+    })->name('archive');
 
     // Settings / Change Password
     Route::get('/settings', function () {
