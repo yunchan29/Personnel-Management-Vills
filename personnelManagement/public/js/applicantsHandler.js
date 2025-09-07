@@ -123,36 +123,77 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        async bulkApprove() {
-            try {
-                const response = await fetch("{{ route('applications.bulkUpdateStatus') }}", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": document.querySelector('meta[name=csrf-token]').content
-                    },
-                    body: JSON.stringify({
-                        ids: this.selectedApplicants,
-                        status: 'approved'
-                    })
-                });
+        async bulkAction(status) {
+            if (this.selectedApplicants.length === 0) return;
 
-                const data = await response.json();
+            const actionText = status === "approved" ? "Approve" : "Decline";
+            const swalIcon   = status === "approved" ? "question" : "warning";
 
-                if (data.success) {
-                    this.feedbackMessage = data.message;
-                    this.feedbackVisible = true;
+            Swal.fire({
+                title: `${actionText} ${this.selectedApplicants.length} applicants?`,
+                text: status === "approved"
+                    ? "They will receive an approval email."
+                    : "They will receive a decline email.",
+                icon: swalIcon,
+                showCancelButton: true,
+                confirmButtonText: `
+                    <span class="flex items-center gap-2">
+                        <svg class="animate-spin h-4 w-4 hidden" id="bulk-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                        Confirm
+                    </span>
+                `,
+                cancelButtonText: "Cancel",
+                preConfirm: async () => {
+                    document.getElementById("bulk-spinner").classList.remove("hidden");
 
-                    // remove approved applicants from table
-                    this.selectedApplicants.forEach(id => {
-                        document.querySelector(`[data-applicant-id="${id}"]`).remove();
-                    });
+                    try {
+                        const response = await fetch(window.bulkApproveUrl, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": document.querySelector('meta[name=csrf-token]').content
+                            },
+                            body: JSON.stringify({
+                                ids: this.selectedApplicants,
+                                status: status
+                            })
+                        });
 
-                    this.selectedApplicants = [];
+                        const data = await response.json();
+                        if (!data.success) throw new Error(data.message || "Failed");
+
+                        // ✅ remove rows
+                        this.selectedApplicants.forEach(id => {
+                            document.querySelector(`[data-applicant-id="${id}"]`).remove();
+                        });
+                        this.selectedApplicants = [];
+
+                        // ✅ show your toast feedback
+                        this.feedbackMessage = data.message || `Applicants ${status} successfully.`;
+                        this.feedbackVisible = true;
+                        setTimeout(() => { 
+                            this.feedbackVisible = false;
+                            window.location.reload(); 
+                        }, 3000);
+
+                        return data;
+                    } catch (err) {
+                        Swal.showValidationMessage(err.message);
+                    }
                 }
-            } catch (error) {
-                console.error(error);
-            }
+
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire(
+                        actionText + "d!",
+                        `${result.value.message}`,
+                        "success"
+                    );
+                }
+            });
         },
 
         openResume(url) {
@@ -263,15 +304,15 @@ document.addEventListener('alpine:init', () => {
         },
 
        async submitInterviewDate() {
-    if (!this.interviewDate || !this.interviewTime || !this.interviewPeriod) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Missing Information',
-            text: 'Please select both date and time before continuing.',
-            confirmButtonColor: '#BD6F22',
-        });
-        return;
-    }
+        if (!this.interviewDate || !this.interviewTime || !this.interviewPeriod) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Information',
+                text: 'Please select both date and time before continuing.',
+                confirmButtonColor: '#BD6F22',
+            });
+            return;
+        }
     
        const hour24 = this.to24h(this.interviewTime, this.interviewPeriod);
 

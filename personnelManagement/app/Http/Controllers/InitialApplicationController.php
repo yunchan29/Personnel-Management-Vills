@@ -12,6 +12,7 @@ use App\Mail\DeclinedLetterMail;
 use App\Mail\PassInterviewMail;
 use App\Mail\FailInterviewMail;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 
 class InitialApplicationController extends Controller
 {
@@ -149,6 +150,52 @@ class InitialApplicationController extends Controller
             'message' => 'Application status updated successfully.',
             'status' => $application->status,
             'application_id' => $application->id,
+        ]);
+    }
+
+    // Bulk approve applications
+    public function bulkUpdateStatus(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ids' => 'required|array',
+            'ids.*' => 'exists:applications,id',
+            'status' => 'required|string|in:approved,declined'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+
+        // ✅ Only fetch applications whose current status is different
+        $applications = Application::with(['user', 'job'])
+            ->whereIn('id', $validated['ids'])
+            ->where('status', '!=', $validated['status'])
+            ->get();
+
+        foreach ($applications as $application) {
+            $application->status = $validated['status'];
+            $application->save();
+
+            switch ($application->status) {
+                case 'approved':
+                    Mail::to($application->user->email)->send(new ApprovedLetterMail($application));
+                    break;
+                case 'declined':
+                    Mail::to($application->user->email)->send(new DeclinedLetterMail($application));
+                    break;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $applications->count() . ' applications updated successfully.',
+            'status' => $validated['status'],
+            'ids' => $applications->pluck('id'), // ✅ return only actually updated IDs
         ]);
     }
 }

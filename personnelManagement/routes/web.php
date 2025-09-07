@@ -137,6 +137,9 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
 
     // Application Approval
     Route::post('/applications/{id}/status', [InitialApplicationController::class, 'updateApplicationStatus'])->name('applications.updateStatus');
+    Route::post('/applications/bulk-status', [InitialApplicationController::class, 'bulkUpdateStatus'])->name('applications.bulkUpdateStatus');
+
+
 
     // Training Schedule
     Route::post('/applications/{id}/training-date', [TrainingScheduleController::class, 'setTrainingDate'])->name('applications.setTrainingDate');

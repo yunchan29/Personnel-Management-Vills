@@ -19,7 +19,7 @@ class ApprovedLetterMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Congratulations! Your Application is Approved')
+        return $this->subject('Application Update')
                     ->view('emails.applications.approved');
     }
 }

@@ -26,7 +26,7 @@ class ReportController extends Controller
     $applications = $query->get();
 
     if ($format === 'pdf') {
-        $pdf = \PDF::loadView('reports.applicants', [
+        $pdf = Pdf::loadView('reports.applicants', [
             'applications' => $applications,
             'status' => $status,
             'range' => $range,

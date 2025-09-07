@@ -188,21 +188,29 @@
         x-transition:enter-end="opacity-100 translate-y-0"
     >
         @if(isset($selectedJob) && isset($applications))
-            <div 
-                x-data="{ showNotice: true }"
-                x-show="showNotice"
-                x-transition
-                class="mb-4 bg-blue-100 border border-blue-300 text-blue-800 px-4 py-3 rounded-lg flex justify-between items-center"
-            >
-               <span>
-              You are currently viewing applicants for: 
-              <strong class="text-[#1E3A8A]">{{ $selectedJob->company_name }}</strong> 
-              <span class="text-gray-500">—</span> 
-              <strong class="text-[#BD6F22]">{{ $selectedJob->job_title }}</strong>
-               </span>
+        <div 
+            x-data="{ showNotice: true }"
+            x-show="showNotice"
+            x-transition
+            x-cloak
+            class="mb-4 bg-blue-100 border border-blue-300 text-blue-800 px-4 py-3 rounded-lg flex justify-between items-center"
+            x-if="showNotice"
+        >
+            <span>
+                You are viewing applicants for: 
+                <strong class="text-[#1E3A8A]">{{ $selectedJob->company_name }}</strong> 
+                <span class="text-gray-500">—</span> 
+                <strong class="text-[#BD6F22]">{{ $selectedJob->job_title }}</strong>
+            </span>
 
-                <button @click="showNotice = false" class="text-sm text-blue-600 hover:underline">Dismiss</button>
-            </div>
+            <button 
+                @click="showNotice = false" 
+                class="text-sm text-blue-600 hover:underline"
+            >
+                Dismiss
+            </button>
+        </div>
+
 
             @include('hrAdmin.applicants', [
                 'applications' => $applications,
