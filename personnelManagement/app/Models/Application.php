@@ -17,12 +17,14 @@ class Application extends Model
         'tin_id_number',
         'pagibig_number',
         'status',
+        'is_archived', // ✅ for archiving
     ];
 
     protected $casts = [
         'licenses' => 'array', 
         'interview_schedule' => 'datetime',
         'reviewed_at' => 'datetime',
+        'is_archived' => 'boolean', // ✅ for archiving
     ];
 
     public function job()

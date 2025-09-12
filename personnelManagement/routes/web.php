@@ -19,7 +19,8 @@ use App\Http\Controllers\TrainingScheduleController;
 use App\Http\Controllers\InitialApplicationController;
 use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\DashboardChartController;
-use App\Http\Controllers\ReportController; // Add this line for ReportController
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ArchiveController; 
 
 //temporary ulit HAHAHAHH sorry
 Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
@@ -156,9 +157,10 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
     // 201 Files: Government IDs and Licenses
     Route::get('/files', fn() => view('hrAdmin.files'))->name('files');
 
-   Route::get('/archive', function () {
-    return view('hrAdmin.archive');
-    })->name('archive');
+  Route::get('/archive', [ArchiveController::class, 'index'])->name('archive.index');
+  Route::post('/archive/{id}/restore', [ArchiveController::class, 'restore'])->name('archive.restore');
+  Route::delete('/archive/{id}', [ArchiveController::class, 'destroy'])->name('archive.destroy');
+
 
 
     // Leave Form
@@ -251,10 +253,7 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function (
     Route::post('/evaluation/promote/{application}', [EvaluationController::class, 'promoteApplicant'])
     ->name('evaluation.promote');
 
-     Route::get('/archive', function () {
-    return view('hrStaff.archive');
-    })->name('archive');
-
+   
     // Settings / Change Password
     Route::get('/settings', function () {
         return view('hrStaff.settings');
