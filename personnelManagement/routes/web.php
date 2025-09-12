@@ -253,7 +253,10 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function (
     Route::post('/evaluation/promote/{application}', [EvaluationController::class, 'promoteApplicant'])
     ->name('evaluation.promote');
 
-   
+      Route::get('/archive', function () {
+    return view('hrStaff.archive');
+    })->name('archive');
+    
     // Settings / Change Password
     Route::get('/settings', function () {
         return view('hrStaff.settings');
