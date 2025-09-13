@@ -38,11 +38,13 @@ class File201Controller extends Controller
         'licenses.*.number' => 'nullable|string|max:255',
         'licenses.*.date' => 'nullable|date',
         'additional_documents' => 'nullable|array',
-        'additional_documents.*.type' => 'required_with:additional_documents.*.file|string|max:255',
-        'additional_documents.*.file' => 'required_with:additional_documents.*.type|file|mimes:pdf|max:2048',
+        'additional_documents.*.type' => 'nullable|string|max:255',
+        'additional_documents.*.file' => 'nullable|file|mimes:pdf|max:2048',
+
+        
     ]);
 
-    File201::updateOrCreate(
+    File201::updateOrCreate( 
         ['user_id' => auth()->id()],
         [
             'sss_number' => $validated['sss_number'] ?? null,
