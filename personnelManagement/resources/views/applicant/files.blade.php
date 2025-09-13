@@ -46,29 +46,32 @@ x-data="{
       x-init="initLicenses()"
 >
     @csrf
-
+    
     <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">My 201 files</h1>
 
-    <!-- Government Documents -->
-    <div class="border-t border-gray-300 pt-4 mb-6">
-        <h3 class="text-lg font-semibold text-[#BD6F22] mb-3">Government Documents</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            @foreach(['sss_number' => 9, 'philhealth_number' => 12, 'pagibig_number' => 12, 'tin_id_number' => 12] as $field => $max)
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        {{ ucwords(str_replace('_', ' ', $field)) }}:
-                    </label>
-                    <input type="text" name="{{ $field }}"
-                           value="{{ old($field, $file201->$field ?? '') }}"
-                           maxlength="{{ $max }}"
-                           pattern="\d{9,{{ $max }}}"
-                           inputmode="numeric"
-                           oninput="this.value = this.value.replace(/\D/g, '').slice(0,{{ $max }});"
-                           class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
-                </div>
-            @endforeach
-        </div>
+   <!-- Government Documents -->
+<div class="border-t border-gray-300 pt-4 mb-6">
+    <h3 class="text-lg font-semibold text-[#BD6F22] mb-3">Government Documents</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        @foreach(['sss_number' => 9, 'philhealth_number' => 12, 'pagibig_number' => 12, 'tin_id_number' => 12] as $field => $max)
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    {{ ucwords(str_replace('_', ' ', $field)) }}:
+                </label>
+                <input 
+                    type="text" 
+                    name="{{ $field }}"
+                    value="{{ old($field, $file201->$field ?? '') }}"
+                    maxlength="{{ $max }}"
+                    inputmode="numeric"
+                    oninput="this.value = this.value.replace(/\D/g, '').slice(0,{{ $max }});"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 
+                           focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+            </div>
+        @endforeach
     </div>
+</div>
+
 
     <!-- Tabs -->
     <div class="mb-4">

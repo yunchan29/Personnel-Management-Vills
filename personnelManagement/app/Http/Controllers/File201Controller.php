@@ -53,9 +53,7 @@ class File201Controller extends Controller
         ]
     );
 
-    // 🚫 REMOVE this line (it deletes everything!)
-    // OtherFile::where('user_id', auth()->id())->delete();
-
+ 
     if ($request->has('additional_documents')) {
         foreach ($request->additional_documents as $index => $doc) {
             if (isset($doc['file']) && $request->file("additional_documents.$index.file")) {
