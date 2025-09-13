@@ -27,51 +27,60 @@ class File201Controller extends Controller
      * Store or update the 201 file.
      */
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'sss_number' => 'nullable|string|max:50',
-            'philhealth_number' => 'nullable|string|max:50',
-            'pagibig_number' => 'nullable|string|max:50',
-            'tin_id_number' => 'nullable|string|max:50',
-            'licenses' => 'nullable|array',
-            'licenses.*.name' => 'nullable|string|max:255',
-            'licenses.*.number' => 'nullable|string|max:255',
-            'licenses.*.date' => 'nullable|date',
-            'additional_documents' => 'nullable|array',
-            'additional_documents.*.type' => 'required|string|max:255',
-            'additional_documents.*.file' => 'required|file|mimes:pdf|max:2048',
-        ]);
+{
+    $validated = $request->validate([
+        'sss_number' => 'nullable|string|max:50',
+        'philhealth_number' => 'nullable|string|max:50',
+        'pagibig_number' => 'nullable|string|max:50',
+        'tin_id_number' => 'nullable|string|max:50',
+        'licenses' => 'nullable|array',
+        'licenses.*.name' => 'nullable|string|max:255',
+        'licenses.*.number' => 'nullable|string|max:255',
+        'licenses.*.date' => 'nullable|date',
+        'additional_documents' => 'nullable|array',
+        'additional_documents.*.type' => 'required_with:additional_documents.*.file|string|max:255',
+        'additional_documents.*.file' => 'required_with:additional_documents.*.type|file|mimes:pdf|max:2048',
+    ]);
 
-        File201::updateOrCreate(
-            ['user_id' => auth()->id()],
-            [
-                'sss_number' => $validated['sss_number'] ?? null,
-                'philhealth_number' => $validated['philhealth_number'] ?? null,
-                'pagibig_number' => $validated['pagibig_number'] ?? null,
-                'tin_id_number' => $validated['tin_id_number'] ?? null,
-                'licenses' => $validated['licenses'] ?? [],
-            ]
-        );
+    File201::updateOrCreate(
+        ['user_id' => auth()->id()],
+        [
+            'sss_number' => $validated['sss_number'] ?? null,
+            'philhealth_number' => $validated['philhealth_number'] ?? null,
+            'pagibig_number' => $validated['pagibig_number'] ?? null,
+            'tin_id_number' => $validated['tin_id_number'] ?? null,
+            'licenses' => $validated['licenses'] ?? [],
+        ]
+    );
 
-        OtherFile::where('user_id', auth()->id())->delete();
+    // 🚫 REMOVE this line (it deletes everything!)
+    // OtherFile::where('user_id', auth()->id())->delete();
 
-        if ($request->has('additional_documents')) {
+    if ($request->has('additional_documents')) {
         foreach ($request->additional_documents as $index => $doc) {
             if (isset($doc['file']) && $request->file("additional_documents.$index.file")) {
                 $uploadedFile = $request->file("additional_documents.$index.file");
                 $filePath = $uploadedFile->store('other_documents', 'public');
 
-                OtherFile::create([
-                    'user_id' => auth()->id(),
-                    'type' => $doc['type'],
-                    'file_path' => $filePath,
-                ]);
+                // ✅ Prevent duplicate type uploads
+                $alreadyExists = OtherFile::where('user_id', auth()->id())
+                    ->where('type', $doc['type'])
+                    ->exists();
+
+                if (!$alreadyExists) {
+                    OtherFile::create([
+                        'user_id'   => auth()->id(),
+                        'type'      => $doc['type'],
+                        'file_path' => $filePath,
+                    ]);
+                }
             }
         }
     }
 
-        return redirect()->back()->with('success', '201 file saved successfully!');
-    }
+    return redirect()->back()->with('success', '201 file saved successfully!');
+}
+
 
     public function destroy($id)
     {

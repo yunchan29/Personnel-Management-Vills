@@ -21,25 +21,28 @@
 @endphp
 
 <form method="POST" action="{{ route('applicant.files.store') }}" enctype="multipart/form-data"
-    x-data="{
-        ...licenseForm({{ Js::from($licensesData) }}),
-        activeTab: 'licenses',
+x-data="{
+    ...licenseForm({{ Js::from($licensesData) }}),
+    activeTab: 'licenses',
+    documents: [{ type: '', file: null }],
+    documentTypes: [
+        'Barangay Clearance',
+        'NBI Clearance',
+        'Police Clearance',
+        'Medical Certificate',
+        'Birth Certificate'
+    ],
+    usedTypes: {{ Js::from($otherFiles->pluck('type')) }},
+    addDocument() {
+        if (this.documents.length < this.documentTypes.length) {
+            this.documents.push({ type: '', file: null });
+        }
+    },
+    removeDocument(index) {
+        this.documents.splice(index, 1);
+    }
+}"
 
-        documents: [{ type: '', file: null }],
-            documentTypes: [
-                'Barangay Clearance',
-                'NBI Clearance',
-                'Police Clearance',
-                'Medical Certificate',
-                'Birth Certificate'
-            ],
-            addDocument() {
-                this.documents.push({ type: '', file: null });
-            },
-            removeDocument(index) {
-                this.documents.splice(index, 1);
-            }
-        }"
       x-init="initLicenses()"
 >
     @csrf
