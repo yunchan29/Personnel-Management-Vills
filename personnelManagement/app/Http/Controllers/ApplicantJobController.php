@@ -11,33 +11,31 @@ use App\Models\User;
 class ApplicantJobController extends Controller
 {
     /* Show applicant dashboard with latest job listings. */
-    public function dashboard(Request $request)
-    {
-        $user = auth()->user();
-        $resume = $user->resume ?? null;
+   public function dashboard(Request $request)
+{
+    $user = auth()->user();
+    $resume = $user->resume ?? null;
 
-        // ✅ Use only user's preferred industry if NOT manually filtered
-        $rawIndustry = $request->query('industry');
-        $industry = $request->has('industry') ? $rawIndustry : ($user->job_industry ?? null);
+    // ✅ Use only user's preferred industry if NOT manually filtered
+    $rawIndustry = $request->query('industry');
+    $industry = $request->has('industry') ? $rawIndustry : ($user->job_industry ?? null);
 
-        // If manually cleared (e.g. `?industry=`), force it to null
-        if ($request->has('industry') && $rawIndustry === '') {
-            $industry = null;
-        }
-
-        $jobs = Job::latest()
-            ->when($industry, fn($query) => $query->where('job_industry', $industry))
-            ->get();
-
-        $appliedJobIds = Application::where('user_id', $user->id)
-            ->pluck('job_id')
-            ->toArray();
-
-        return view('applicant.dashboard', compact('jobs', 'resume', 'appliedJobIds', 'industry'));
+    // If manually cleared (e.g. `?industry=`), force it to null
+    if ($request->has('industry') && $rawIndustry === '') {
+        $industry = null;
     }
 
+    $jobs = Job::latest()
+        ->whereDate('apply_until', '>=', \Carbon\Carbon::today()) // 👈 filter expired jobs
+        ->when($industry, fn($query) => $query->where('job_industry', $industry))
+        ->get();
 
+    $appliedJobIds = Application::where('user_id', $user->id)
+        ->pluck('job_id')
+        ->toArray();
 
+    return view('applicant.dashboard', compact('jobs', 'resume', 'appliedJobIds', 'industry'));
+}
     /* Apply to a specific job. */
     public function apply(Request $request, Job $job)
     {
