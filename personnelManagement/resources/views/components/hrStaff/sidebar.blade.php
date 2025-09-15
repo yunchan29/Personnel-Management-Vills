@@ -17,7 +17,7 @@
                 ['img' => 'briefcase.png', 'label' => 'Performance Evaluation', 'route' => 'hrStaff.perfEval'],
                 
                 ['img' => 'leaveForm.png', 'label' => 'Leave Forms', 'route' => 'hrStaff.leaveForm'],
-                ['img' => 'archive.png', 'label' => 'Archive', 'route' => 'hrStaff.archive'],
+                ['img' => 'archive.png', 'label' => 'Archive', 'route' => 'hrStaff.archive.index'],
                 ['img' => 'settings.png', 'label' => 'Settings', 'route' => 'hrStaff.settings'],
             ];
         @endphp

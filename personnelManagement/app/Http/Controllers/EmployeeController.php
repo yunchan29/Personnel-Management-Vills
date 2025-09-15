@@ -34,20 +34,27 @@ class EmployeeController extends Controller
 
 public function performanceEvaluation()
 {
-    // Fetch jobs that have at least one applicant pending evaluation or not yet hired
+    // Fetch jobs that have at least one applicant pending evaluation, not yet hired, and not archived
     $jobs = Job::whereHas('applications', function($query) {
         $query->where(function($q) {
             $q->whereDoesntHave('evaluation')
               ->orWhere('status', '!=', 'hired');
-        });
-    })->with(['applications' => function($query) {
-        $query->whereHas('trainingSchedule'); // optional if you only evaluate scheduled trainings
-    }])->get();
+        })
+        ->where('is_archived', false); // 👈 exclude archived applicants
+    })
+    ->with(['applications' => function($query) {
+        $query->whereHas('trainingSchedule')
+              ->where('is_archived', false); // 👈 also exclude archived here
+    }])
+    ->get();
 
+    // Applicants (only those with training schedule & not archived)
     $applicants = Application::with(['user', 'job', 'evaluation'])
         ->whereHas('trainingSchedule')
+        ->where('is_archived', false) // 👈 exclude archived
         ->get();
 
+    // Employees
     $employees = User::where('role', 'employee')
         ->with('job')
         ->get();
@@ -58,7 +65,6 @@ public function performanceEvaluation()
         'employees' => $employees,
     ]);
 }
-
 
 
 }

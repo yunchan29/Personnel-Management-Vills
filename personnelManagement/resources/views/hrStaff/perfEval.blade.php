@@ -129,9 +129,18 @@
                                                     Add
                                                 </button>
                                             </form>
-                                            <button class="bg-gray-400 text-white text-sm font-medium h-8 px-3 rounded shadow">
-                                                Archive
-                                            </button>
+                                       <form action="{{ route('hrStaff.archive.store', $applicant->id) }}" method="POST" class="inline archive-form">
+    @csrf
+    <button 
+        type="submit"
+        class="bg-gray-400 text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-gray-500"
+    >
+        Archive
+    </button>
+</form>
+
+
+
                                         @endif
                                     </td>
                                 </tr>
@@ -165,6 +174,7 @@
 
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
 function evaluationModal(applicants) {
     return {
@@ -265,4 +275,42 @@ function evaluationModal(applicants) {
         }
     };
 }
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Archive confirmation
+    document.querySelectorAll('.archive-form').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Archive Applicant?',
+                text: "This applicant will be moved to the archive list.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#6B7280',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, archive!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+
+    // Success Toast
+    @if(session('success'))
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: "{{ session('success') }}",
+            showConfirmButton: false,
+            timer: 2500,
+            timerProgressBar: true
+        });
+    @endif
+});
 </script>

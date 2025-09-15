@@ -21,7 +21,7 @@ use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\DashboardChartController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ArchiveController; 
-
+use App\Http\Controllers\StaffArchiveController;
 //temporary ulit HAHAHAHH sorry
 Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
 
@@ -253,10 +253,11 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function (
     Route::post('/evaluation/promote/{application}', [EvaluationController::class, 'promoteApplicant'])
     ->name('evaluation.promote');
 
-      Route::get('/archive', function () {
-    return view('hrStaff.archive');
-    })->name('archive');
-    
+    Route::get('/archive', [StaffArchiveController::class, 'index'])->name('archive.index');
+    Route::post('/archive/{id}', [StaffArchiveController::class, 'store'])->name('archive.store');
+    Route::put('/archive/{id}/restore', [StaffArchiveController::class, 'restore'])->name('archive.restore');
+    Route::delete('/archive/{id}', [StaffArchiveController::class, 'destroy'])->name('archive.destroy');
+
     // Settings / Change Password
     Route::get('/settings', function () {
         return view('hrStaff.settings');
