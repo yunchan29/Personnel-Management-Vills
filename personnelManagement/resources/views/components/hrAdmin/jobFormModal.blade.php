@@ -9,6 +9,10 @@
         get isEdit() {
             return !!this.job.id;
         },
+        get isExpired() {
+            if (!this.job.apply_until) return false;
+            return new Date(this.job.apply_until) < new Date().setHours(0,0,0,0);
+        },
         confirmDelete(id) {
             Swal.fire({
                 title: 'Are you sure?',
@@ -71,14 +75,18 @@
                     <div>
                         <label for="job_title" class="block font-medium mb-1">Job Title</label>
                         <input type="text" name="job_title" id="job_title" 
-                            class="w-full border border-gray-300 rounded-md px-3 py-2" 
-                            :value="job.job_title || ''" required>
+                            class="w-full p-2 border rounded disabled:opacity-60 disabled:cursor-not-allowed"
+                            :value="job.job_title || ''" 
+                            :disabled="isExpired"
+                            required>
                     </div>
                     <div>
                         <label for="company_name" class="block font-medium mb-1">Company</label>
                         <input type="text" name="company_name" id="company_name" 
-                            class="w-full border border-gray-300 rounded-md px-3 py-2" 
-                            :value="job.company_name || ''" required>
+                            class="w-full p-2 border rounded disabled:opacity-60 disabled:cursor-not-allowed"
+                            :value="job.company_name || ''" 
+                            :disabled="isExpired"
+                            required>
                     </div>
                     <div>
                         <label for="vacancies" class="block font-medium mb-1">Number of Vacancies</label>
@@ -103,8 +111,9 @@
                 <div class="space-y-4">
                     <div>
                         <label for="job_industry" class="block mb-1 font-medium">Job Industry</label>
-                        <select name="job_industry" id="job_industry" class="w-full p-2 border rounded">
-                            <option value="">-- Select Job Industry --</option>
+                        <select name="job_industry" id="job_industry"  class="w-full p-2 border rounded disabled:opacity-60 disabled:cursor-not-allowed" 
+                         :disabled="isExpired">
+                         <option value="">-- Select Job Industry --</option>
                             @foreach([
                                 "Accounting", "Administration", "Architecture", "Arts and Design",
                                 "Automotive", "Banking and Finance", "Business Process Outsourcing (BPO)",
@@ -131,14 +140,18 @@
                     <div>
                         <label for="location" class="block font-medium mb-1">Location</label>
                         <input type="text" name="location" id="location" 
-                            class="w-full border border-gray-300 rounded-md px-3 py-2" 
-                            :value="job.location || ''" required>
+                            class="w-full p-2 border rounded disabled:opacity-60 disabled:cursor-not-allowed"
+                            :value="job.location || ''" 
+                            :disabled="isExpired"
+                            required>
                     </div>
                     <div>
                         <label for="apply_until" class="block font-medium mb-1">Apply until</label>
                         <input type="date" name="apply_until" id="apply_until" 
                             class="w-full border border-gray-300 rounded-md px-3 py-2" 
-                            :value="job.apply_until || ''" required>
+                            :value="job.apply_until || ''"
+                            :min="new Date().toISOString().split('T')[0]"
+                            required>
                     </div>
                     <div>
                         <label for="additional_info" class="block font-medium mb-1">Additional Information</label>
@@ -153,9 +166,10 @@
                 </div>
             </div>
 
-            <div class="flex justify-between items-center mt-6 flex-wrap gap-3">
-                {{-- Delete Button (only in Edit mode) --}}
-                <template x-if="isEdit">
+            <div class="flex justify-end items-center mt-6 flex-wrap gap-3">
+
+                {{-- Delete Button (only if not expired) --}}
+                <template x-if="isEdit && !isExpired">
                     <form 
                         :id="`delete-form-${job.id}`"
                         :action="`/hrAdmin/jobPosting/${job.id}`" 
