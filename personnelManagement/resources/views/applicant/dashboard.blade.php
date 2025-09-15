@@ -31,22 +31,22 @@
 @endif
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     @forelse($jobs as $job)
-        <div class="p-4 rounded-lg shadow-md">
-            <x-applicant.job-card 
-                :jobId="$job->id"
-                :title="$job->job_title"
-                :company="$job->company_name"
-                :location="$job->location"
-                :qualifications="$job->qualifications"
-                :addinfo="$job->additional_info"
-                :lastPosted="$job->created_at->diffForHumans()"
-                :deadline="\Carbon\Carbon::parse($job->apply_until)->format('F d, Y')"
-                :hasResume="!is_null($resume) && !empty($resume->resume)"
-                :hasApplied="in_array($job->id, $appliedJobIds)"
-                :vacancies="$job->vacancies"
-            />
-        </div>
-    @empty
+    <div class="p-4 rounded-lg shadow-md">
+    <x-applicant.job-card 
+        :jobId="$job->id"
+        :title="$job->job_title"
+        :company="$job->company_name"
+        :location="$job->location"
+        :qualifications="$job->qualifications"
+        :addinfo="$job->additional_info"
+        :lastPosted="$job->created_at->diffForHumans()"
+        :deadline="\Carbon\Carbon::parse($job->apply_until)->format('F d, Y')"
+        :hasResume="!is_null($resume) && !empty($resume->resume)"
+        :hasApplied="in_array($job->id, $appliedJobIds)"
+        :vacancies="$job->vacancies"
+    />
+    </div>
+@empty
         <p class="text-gray-500">No job openings available at the moment.</p>
     @endforelse
 </div>

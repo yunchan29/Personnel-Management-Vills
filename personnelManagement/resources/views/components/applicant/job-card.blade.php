@@ -9,7 +9,8 @@
     'lastPosted',
     'deadline',
     'hasResume',
-    'hasApplied' => false
+    'hasApplied' => false,
+    'hasTrainingOrPassed' => false,
 ])
 
 <div 
@@ -90,69 +91,42 @@
             </div>
         </div>
 
-        <!-- Apply Button and Date Info (expanded view) -->
-        <div x-show="showDetails" x-transition class="flex items-center gap-4 text-sm text-gray-500 self-end">
-            <!-- Apply Button -->
-            <div x-data>
-                @if ($hasResume)
-                    <button 
-                        :disabled="hasApplied"
-                        @click.prevent="apply()"
-                        :class="hasApplied ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#BD6F22] hover:bg-[#a75d1c]'"
-                        class="text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
-                    >
-                        <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply" x-show="!hasApplied">
-                        <span x-text="hasApplied ? 'Applied' : 'Apply Now'"></span>
-                    </button>
-                @else
-                    <button 
-                        @click="window.location.href = '{{ route('applicant.application') }}'" 
-                        class="bg-gray-400 text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
-                    >
-                        <img src="/images/leaveForm.png" class="w-4 h-4" alt="Apply">
-                        Upload Resume
-                    </button>
-                @endif
-            </div>
-
-            <!-- Date Info -->
-            <div>
-                <p>Last Posted: {{ $lastPosted }}</p>
-                <p>Apply until: {{ $deadline }}</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Apply Button (collapsed view) -->
-    <div 
-        x-show="!showDetails" 
-        x-transition 
-        class="absolute left-6 top-1/2 -translate-y-1/2"
-    >
-        <div x-data>
-            @if ($hasResume)
-                <button 
-                    :disabled="hasApplied"
-                    @click.prevent="apply()"
-                    :class="hasApplied ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#BD6F22] hover:bg-[#a75d1c]'"
-                    class="text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
-                >
-                    <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply" x-show="!hasApplied">
-                    <span x-text="hasApplied ? 'Applied' : 'Apply Now'"></span>
-                </button>
-            @else
-                <button 
-                    @click="window.location.href = '{{ route('applicant.application') }}'" 
-                    class="bg-[#BD6F22] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
-                >
-                    <img src="/images/leaveForm.png" class="w-4 h-4" alt="Apply">
-                    Upload Resume
-                </button>
-            @endif
-        </div>
-    </div>
-
-    <!-- See More/See Less -->
+   <!-- Apply Button and Date Info (expanded view) -->
+<div x-show="showDetails" x-transition class="flex items-center gap-4 text-sm text-gray-500 self-end">
+    <!-- Apply Button -->
+     
+    @if ($hasTrainingOrPassed) 
+        <button 
+            disabled
+            class="bg-gray-400 text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium cursor-not-allowed"
+        >
+            <img src="/images/mousepointer.png" class="w-4 h-4 opacity-50" alt="Apply">
+            <span>Training Scheduled / Passed</span>
+        </button>
+    @elseif ($hasResume)
+        <button 
+            :disabled="hasApplied"
+            @click.prevent="apply()"
+            :class="hasApplied 
+                ? 'bg-gray-400 cursor-not-allowed text-white' 
+                : 'bg-[#BD6F22] hover:bg-[#a75d1c] text-white'"
+            class="px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
+        >
+            <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply" x-show="!hasApplied">
+            <span x-text="hasApplied ? 'Applied' : 'Apply Now'"></span>
+        </button>
+    @else
+        <button 
+            @click="window.location.href = '{{ route('applicant.application') }}'" 
+            class="bg-[#BD6F22] text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
+        >
+            <img src="/images/leaveForm.png" class="w-4 h-4" alt="Apply">
+            <span>Upload Resume</span>
+        </button>
+    @endif
+</div>
+</div>
+  <!-- See More/See Less -->
     <div class="text-center" x-show="!showDetails">
         <button 
             @click="showDetails = !showDetails" 
