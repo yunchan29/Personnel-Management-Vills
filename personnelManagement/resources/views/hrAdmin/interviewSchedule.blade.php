@@ -2,9 +2,27 @@
 
   <!-- Applicants Table -->
   <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg">
+    <!-- Mass Interview Button -->
+    <div class="flex gap-2 mb-4">
+        <!-- Mass Schedule -->
+        <button @click="openBulk('bulk')"
+            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Set Mass Interview
+        </button>
+
+        <!-- Mass Reschedule -->
+        <button @click="openBulk('bulk-reschedule')"
+            class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">
+            Mass Reschedule
+        </button>
+    </div>
+
     <table class="min-w-full text-sm text-left text-gray-700">
       <thead class="border-b font-semibold bg-gray-50">
         <tr>
+          <th class="py-3 px-4">
+            <input type="checkbox" @click="toggleSelectAll($event)">
+          </th>
           <th class="py-3 px-4">Name</th>
           <th class="py-3 px-4">Position</th>
           <th class="py-3 px-4">Company</th>
@@ -26,6 +44,19 @@
                     && (showAll || '{{ $application->interview_date }}' === '') 
                     && !removedApplicants.includes({{ $application->id }})"
             class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out">
+
+            <td class="py-3 px-4">
+              <input 
+                  type="checkbox"
+                  class="applicant-checkbox"
+                  :value="JSON.stringify({
+                      application_id: {{ $application->id }},
+                      user_id: {{ $application->user_id }},
+                      has_schedule: {{ $application->interview ? 'true' : 'false' }}
+                  })"
+                  x-model="selectedApplicants"
+              >
+            </td>
 
             <!-- Name -->
             <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
@@ -74,59 +105,34 @@
                 @endif
             </td>
 
-<!-- Status -->
-<td class="py-3 px-4">
-    <!-- Passed -->
-    <template x-if="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'interviewed'">
-        <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-            Passed
-        </span>
-    </template>
-
-    <!-- Failed -->
-    <template x-if="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'declined'">
-        <span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-            Failed
-        </span>
-    </template>
-
-    <!-- For Interview -->
-    <template x-if="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'for_interview'">
-        <span class="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-            For Interview
-        </span>
-    </template>
-
-    <!-- Pending -->
-    <template x-if="!['interviewed','declined','for_interview'].includes(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}')">
-        <span class="text-xs bg-gray-200 text-gray-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-            Pending
-        </span>
-    </template>
-</td>
-
+            <!-- Status -->
+            <td class="py-3 px-4">
+                <template x-if="statusMap[applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}']">
+                    <span 
+                        class="text-xs px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap"
+                        :class="statusMap[applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}'].class"
+                        x-text="statusMap[applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}'].label"
+                    ></span>
+                </template>
+            </td>
+            
             <!-- Action -->
             <td class="py-3 px-4">
                 @if($application->user->active_status === 'Active')
                     <div class="flex gap-2">
-            <button
-            @click="openSetInterview(
-            {{ $application->id }},
-           '{{ $application->user->first_name }} {{ $application->user->last_name }}',
-            {{ $application->user_id }},
-           '{{ optional($application->interview)?->scheduled_at ? \Carbon\Carbon::parse($application->interview->scheduled_at)->format('Y-m-d H:i:s') : '' }}'
-             )"
-             class="bg-blue-600 text-white text-sm font-medium h-8 px-3 rounded hover:bg-blue-700 disabled:opacity-50"
-           :disabled="['interviewed', 'declined'].includes(applicants.find(a => a.id === {{ $application->id }})?.status)"
-           >
-           <span>
-           @if(optional($application->interview)?->scheduled_at)
-            Reschedule
-           @else
-            Interview
-            @endif
-          </span>
-            </button>
+                        <button
+                            @click="openSetInterview(
+                              {{ $application->id }},
+                              '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+                              {{ $application->user_id }},
+                              '{{ optional($application->interview)?->scheduled_at ? \Carbon\Carbon::parse($application->interview->scheduled_at)->format('Y-m-d H:i:s') : '' }}'
+                            )"
+                            class="bg-blue-600 text-white text-sm font-medium h-8 px-3 rounded hover:bg-blue-700 disabled:opacity-50"
+                            :disabled="['interviewed','declined'].includes(applicants.find(a => a.id === {{ $application->id }})?.status)"
+                        >
+                          <span x-text="'{{ optional($application->interview)?->scheduled_at ? 'Reschedule' : 'Interview' }}'"></span>
+                        </button>
+
 
                         <button
                             @click="openStatusModal({{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}')"

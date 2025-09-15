@@ -7,12 +7,34 @@
             &times;
         </button>
 
+        <!-- Dynamic Modal Title -->
         <h2 class="text-lg font-semibold text-[#BD6F22] mb-4">
-            Set Interview for <span x-text="interviewApplicant?.name"></span>
+            <template x-if="interviewMode === 'single'">
+                <span>Set Interview for <span x-text="interviewApplicant?.name"></span></span>
+            </template>
+
+            <template x-if="interviewMode === 'bulk'">
+                <span>Set Interview for <span x-text="selectedApplicants.length"></span> applicants</span>
+            </template>
+
+            <template x-if="interviewMode === 'reschedule'">
+                <span>Reschedule Interview for <span x-text="interviewApplicant?.name"></span></span>
+            </template>
+
+            <template x-if="interviewMode === 'bulk-reschedule'">
+                <span>Mass Reschedule for <span x-text="selectedApplicants.length"></span> applicants</span>
+            </template>
         </h2>
 
         <!-- Date -->
-        <label class="block text-sm font-medium mb-1">Interview Date</label>
+        <label class="block text-sm font-medium mb-1">
+            <template x-if="interviewMode.includes('reschedule')">
+                <span>Set New Date</span>
+            </template>
+            <template x-if="!interviewMode.includes('reschedule')">
+                <span>Interview Date</span>
+            </template>
+        </label>
         <input
             type="date"
             x-model="interviewDate"
@@ -20,27 +42,29 @@
             class="w-full mb-4 p-2 border rounded"
         />
 
-         <!-- Time -->
-         <label class="block text-sm font-medium mb-1">Interview Time</label>
-         <div class="flex gap-2 mb-4">
+        <!-- Time -->
+        <label class="block text-sm font-medium mb-1">
+            <template x-if="interviewMode.includes('reschedule')">
+                <span>Set New Time</span>
+            </template>
+            <template x-if="!interviewMode.includes('reschedule')">
+                <span>Interview Start</span>
+            </template>
+        </label>
+        <div class="flex gap-2 mb-4">
+            <!-- Hours -->
+            <select x-model.number="interviewTime" class="flex-1 p-2 border rounded">
+                <template x-for="h in (interviewPeriod === 'AM' ? [8,9,10,11] : [1,2,3,4,5])" :key="h">
+                    <option :value="h" x-text="h"></option>
+                </template>
+            </select>
 
-         <!-- Hours -->
-         <select x-model.number="interviewTime" class="flex-1 p-2 border rounded">
-         <!-- Show 8–11 if AM, show 1–5 if PM -->
-         <template x-for="h in (interviewPeriod === 'AM' ? [8,9,10,11] : [1,2,3,4,5])" :key="h">
-         <option :value="h" x-text="h"></option>
-         </template>
-        </select>
-
-        <!-- AM/PM -->
-
-         <select x-model="interviewPeriod" class="w-24 p-2 border rounded">
-          <option value="AM">AM</option>
-          <option value="PM">PM</option>
-         </select>
-
-
-</div>
+            <!-- AM/PM -->
+            <select x-model="interviewPeriod" class="w-24 p-2 border rounded">
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+            </select>
+        </div>
 
         <!-- Confirm button -->
         <div class="flex justify-end gap-3">
@@ -56,7 +80,13 @@
                             d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                     </svg>
                 </template>
-                <span x-text="loading ? 'Processing...' : 'Confirm'"></span>
+                <span 
+                    x-text="loading 
+                        ? 'Processing...' 
+                        : (interviewMode.includes('reschedule') 
+                            ? 'Reschedule' 
+                            : 'Confirm')">
+                </span>
             </button>
         </div>
     </div>

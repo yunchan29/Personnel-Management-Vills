@@ -5,6 +5,9 @@
         <table class="min-w-full text-sm text-left text-gray-700">
             <thead class="border-b font-semibold bg-gray-50">
                 <tr>
+                    <th class="py-3 px-4">
+                        <input type="checkbox" @click="toggleSelectAll($event)">
+                    </th>
                     <th class="py-3 px-4">Name</th>
                     <th class="py-3 px-4">Position</th>
                     <th class="py-3 px-4">Company</th>
@@ -38,6 +41,11 @@
                                 && !removedApplicants.includes({{ $application->id }})"
                         class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out"
                     >
+
+                        <td class="py-3 px-4">
+                        <input type="checkbox" value="{{ $application->id }}" x-model="selectedApplicants">
+                        </td>
+
                         <!-- Name -->
                         <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
                             <span class="inline-block w-3 h-3 rounded-full 

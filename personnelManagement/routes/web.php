@@ -135,12 +135,13 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
     // Interview Scheduling 
     Route::get('/interviews', [InterviewController::class, 'index'])->name('interviews.index');
     Route::post('/interviews', [InterviewController::class, 'store'])->name('interviews.store');
+    Route::post('/interviews/bulk', [InterviewController::class, 'bulkStore'])->name('interviews.bulk');
+    Route::post('/interviews/bulk-reschedule', [InterviewController::class, 'bulkReschedule'])->name('interviews.bulkReschedule');
+
 
     // Application Approval
     Route::post('/applications/{id}/status', [InitialApplicationController::class, 'updateApplicationStatus'])->name('applications.updateStatus');
     Route::post('/applications/bulk-status', [InitialApplicationController::class, 'bulkUpdateStatus'])->name('applications.bulkUpdateStatus');
-
-
 
     // Training Schedule
     Route::post('/applications/{id}/training-date', [TrainingScheduleController::class, 'setTrainingDate'])->name('applications.setTrainingDate');
