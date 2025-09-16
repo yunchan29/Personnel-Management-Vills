@@ -169,8 +169,13 @@
                         class="border-b hover:bg-gray-50"
                     >            
                         <td class="py-3 px-4">
-                            <input type="checkbox" value="{{ $application->id }}" x-model="selectedApplicants">
+                           <input type="checkbox"
+                            class="applicant-checkbox"
+                            :value="JSON.stringify({ id: {{ $application->id }}, name: '{{ $application->user->first_name }}' })"
+                            :checked="selectedApplicants.some(a => a.id === {{ $application->id }})"
+                            @change="toggleItem($event, {{ $application->id }})">
                         </td>
+
                         <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
                             <span class="inline-block w-3 h-3 rounded-full {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
                             {{ $application->user->first_name . ' ' . $application->user->last_name }}
@@ -247,15 +252,15 @@
                                 </span>
                             @else
                           <button
-    @click="confirmStatus(
-        '{{ $application->status === 'approved' ? 'declined' : 'approved' }}',
-        {{ $application->id }},
-        '{{ $application->user->first_name }} {{ $application->user->last_name }}',
-        '{{ $application->status }}'
-    )"
-    class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
-    {{ $application->status === 'approved' ? 'Disapprove (Archive)' : 'Approve' }}
-</button>
+                            @click="confirmStatus(
+                                '{{ $application->status === 'approved' ? 'declined' : 'approved' }}',
+                                {{ $application->id }},
+                                '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+                                '{{ $application->status }}'
+                            )"
+                            class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
+                            {{ $application->status === 'approved' ? 'Disapprove (Archive)' : 'Approve' }}
+                          </button>
 
 
                             @endif

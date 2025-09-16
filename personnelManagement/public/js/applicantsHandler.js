@@ -117,32 +117,48 @@ document.addEventListener('alpine:init', () => {
         default: { label: 'Pending', class: 'bg-gray-200 text-gray-800' },
         },
 
-
         filteredApplicants() {
             return this.applicants.filter(applicant => this.showAll || !applicant.training);
         },
 
-        // 🔹 Check/uncheck all
-        toggleSelectAll(event) {
+        getLocalCheckboxes() {
+            return Array.from(this.$el.querySelectorAll('.applicant-checkbox'));
+        },
+
+        // 🔹 Toggle master checkbox
+        toggleSelectAll(event, checkboxClass = '.applicant-checkbox', arrayName = 'selectedApplicants') {
             const checked = event.target.checked;
+            const checkboxes = Array.from(document.querySelectorAll(checkboxClass))
+                .filter(cb => cb.closest('[x-data]') === event.target.closest('[x-data]')); // 🔹 only in THIS component
+
             if (checked) {
-                this.selectedApplicants = Array.from(
-                    document.querySelectorAll('.applicant-checkbox')
-                ).map(cb => JSON.parse(cb.value));
+                this[arrayName] = checkboxes.map(cb => JSON.parse(cb.value)); // ✅ always full object
             } else {
-                this.selectedApplicants = [];
+                this[arrayName] = [];
             }
         },
 
-        // 🔹 Helper for master checkbox
-        isAllSelected() {
-            return this.selectedApplicants.length > 0 &&
-                   this.selectedApplicants.length === this.applicants.length;
+        toggleItem(event, id, arrayName = 'selectedApplicants') {
+            const value = JSON.parse(event.target.value);
+            const index = this[arrayName].findIndex(a => a.application_id === value.application_id);
+
+            if (event.target.checked && index === -1) {
+                this[arrayName].push(value);
+            } else if (!event.target.checked && index !== -1) {
+                this[arrayName].splice(index, 1);
+            }
         },
 
-        isIndeterminate() {
-            return this.selectedApplicants.length > 0 &&
-                   this.selectedApplicants.length < this.applicants.length;
+        // 🔹 Helper for master checkbox visual state
+        isAllSelected(arrayName = 'selectedApplicants') {
+            return this[arrayName].length > 0 &&
+                   this[arrayName].length === this.getLocalCheckboxes().length;
+        },
+
+        isIndeterminate(arrayName = 'selectedApplicants') {
+            const len = this[arrayName].length;
+            const total = this.getLocalCheckboxes().length;
+            return len > 0 && len < total;
         },
 
         async bulkAction(status) {
@@ -322,15 +338,38 @@ document.addEventListener('alpine:init', () => {
         },
 
         // ---- open for bulk (just passes selectedApplicants)
-        openBulk(type = 'bulk') {
-        if (!this.selectedApplicants.length) {
-            Swal.fire("No applicants selected", "", "warning");
-            return;
-        }
-        this.interviewMode = type; // 'bulk' or 'bulk-reschedule'
-        this.interviewApplicant = null;
-        this.resetInterviewForm();
-        this.showInterviewModal = true;
+        async openBulk(type = 'bulk') {
+            if (!this.selectedApplicants.length) {
+                Swal.fire("No applicants selected", "", "warning");
+                return;
+            }
+
+            if (type === 'bulk-reschedule') {
+                // 🔹 Reschedule mode → block those without schedule
+                const unscheduled = this.selectedApplicants.filter(a => !a.has_schedule);
+                if (unscheduled.length) {
+                    Swal.fire({
+                        icon: 'warning',
+                        html: `Please set an interview date first for Applicants: <br><b>${unscheduled.map(a => a.name).join(', ')}</b>`,
+                    });
+                    return;
+                }
+            } else if (type === 'bulk') {
+                // 🔹 New schedule mode → block those who already have a schedule
+                const alreadyScheduled = this.selectedApplicants.filter(a => a.has_schedule);
+                if (alreadyScheduled.length) {
+                    Swal.fire({
+                        icon: 'warning',
+                        html: `These Applicants already have interview schedules: <br><b>${alreadyScheduled.map(a => a.name).join(', ')}</b>`,
+                    });
+                    return;
+                }
+            }
+
+            this.interviewMode = type; // 'bulk' or 'bulk-reschedule'
+            this.interviewApplicant = null;
+            this.resetInterviewForm();
+            this.showInterviewModal = true;
         },
 
         resetInterviewForm() {
@@ -353,7 +392,7 @@ document.addEventListener('alpine:init', () => {
             return;
         }
 
-        const newNormalizedDT = `${this.interviewDate} ${hour24}:00:00`;
+        const newNormalizedDT = `${this.interviewDate} ${String(hour24).padStart(2,'0')}:00:00`;
         this.loading = true;
 
         try {
@@ -398,11 +437,13 @@ document.addEventListener('alpine:init', () => {
 
             const payload = {
                 applicants: this.selectedApplicants.map(a => ({
-                application_id: a.application_id,
-                user_id: a.user_id
+                    application_id: a.application_id,
+                    user_id: a.user_id
                 })),
-                scheduled_at: datetime,
+                scheduled_at: datetime, // 🔥 at root level
             };
+
+            console.log("Payload bulk:", JSON.stringify(payload, null, 2));
 
             const response = await fetch(url, {
                 method: 'POST',

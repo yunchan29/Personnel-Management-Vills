@@ -5,14 +5,18 @@
     <!-- Mass Interview Button -->
     <div class="flex gap-2 mb-4">
         <!-- Mass Schedule -->
-        <button @click="openBulk('bulk')"
-            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        <button 
+            @click="openBulk('bulk')"
+            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="selectedApplicants.length <= 1">
             Set Mass Interview
         </button>
 
         <!-- Mass Reschedule -->
-        <button @click="openBulk('bulk-reschedule')"
-            class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">
+        <button 
+            @click="openBulk('bulk-reschedule')"
+            class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="selectedApplicants.length <= 1">
             Mass Reschedule
         </button>
     </div>
@@ -46,16 +50,18 @@
             class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out">
 
             <td class="py-3 px-4">
-              <input 
-                  type="checkbox"
-                  class="applicant-checkbox"
-                  :value="JSON.stringify({
-                      application_id: {{ $application->id }},
-                      user_id: {{ $application->user_id }},
-                      has_schedule: {{ $application->interview ? 'true' : 'false' }}
-                  })"
-                  x-model="selectedApplicants"
-              >
+                <input 
+                    type="checkbox"
+                    class="applicant-checkbox"
+                    :value="JSON.stringify({
+                        application_id: {{ $application->id }},
+                        user_id: {{ $application->user_id }},
+                        name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+                        has_schedule: {{ $application->interview ? 'true' : 'false' }}
+                    })"
+                    :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
+                    @change="toggleItem($event, {{ $application->id }})"
+                />
             </td>
 
             <!-- Name -->
@@ -107,12 +113,32 @@
 
             <!-- Status -->
             <td class="py-3 px-4">
-                <template x-if="statusMap[applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}']">
-                    <span 
-                        class="text-xs px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap"
-                        :class="statusMap[applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}'].class"
-                        x-text="statusMap[applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}'].label"
-                    ></span>
+                <!-- Passed -->
+                <template x-if="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'interviewed'">
+                    <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
+                        Passed
+                    </span>
+                </template>
+
+                <!-- Failed -->
+                <template x-if="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'declined'">
+                    <span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
+                        Failed
+                    </span>
+                </template>
+
+                <!-- For Interview -->
+                <template x-if="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'for_interview'">
+                    <span class="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
+                        For Interview
+                    </span>
+                </template>
+
+                <!-- Pending -->
+                <template x-if="!['interviewed','declined','for_interview'].includes(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}')">
+                    <span class="text-xs bg-gray-200 text-gray-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
+                        Pending
+                    </span>
                 </template>
             </td>
             
