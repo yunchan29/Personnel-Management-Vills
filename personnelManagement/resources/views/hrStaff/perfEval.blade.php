@@ -99,140 +99,149 @@
 
                 <!-- Evaluation Table -->
                 <div class="overflow-x-auto px-6 pb-4">
-                    <table class="min-w-full text-sm text-left text-gray-700">
-                        <thead class="border-b font-semibold bg-gray-50">
-                            <tr>
-                                <th class="py-3 px-4">Name</th>
-                                <th class="py-3 px-4">Job Position</th>
-                                <th class="py-3 px-4">Company</th>
-                                <th class="py-3 px-4">Status</th>
-                                <th class="py-3 px-4">Action</th>
-                                <th class="py-3 px-4">Contract</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($applicants->sortBy(fn($app) => $app->evaluation || $app->status === 'hired') as $applicant)
-                                <tr 
-                                    x-show="shouldShow({{ $applicant->job_id }}, '{{ $applicant->status }}')"
-                                    class="border-b hover:bg-gray-50"
-                                >
-                                    <!-- Name -->
-                                    <td class="py-3 px-4 font-medium whitespace-nowrap">
-                                        {{ $applicant->user->full_name }}
-                                    </td>
+                 <table class="min-w-full text-sm text-left text-gray-700 align-middle">
+    <thead class="border-b font-semibold bg-gray-50">
+        <tr>
+            <th class="py-3 px-4">Name</th>
+            <th class="py-3 px-4">Job Position</th>
+            <th class="py-3 px-4">Company</th>
+            <th class="py-3 px-4">Status</th>
+            <th class="py-3 px-4">Action</th>
+            <th class="py-3 px-4">Contract</th>
+            <th class="py-3 px-4">Promote</th>
+            <th class="py-3 px-4">Archive</th>
+              
+        </tr>
+    </thead>
+    <tbody>
+        @forelse ($applicants->sortBy(fn($app) => $app->evaluation || $app->status === 'hired') as $applicant)
+            <tr 
+                x-show="shouldShow({{ $applicant->job_id }}, '{{ $applicant->status }}')"
+                class="border-b hover:bg-gray-50"
+            >
+                <!-- Name -->
+                <td class="py-3 px-4 align-middle font-medium whitespace-nowrap">
+                    {{ $applicant->user->full_name }}
+                </td>
 
-                                    <!-- Job Position -->
-                                    <td class="py-3 px-4 whitespace-nowrap">
-                                        {{ $applicant->job->job_title ?? '—' }}
-                                    </td>
+                <!-- Job Position -->
+                <td class="py-3 px-4 align-middle whitespace-nowrap">
+                    {{ $applicant->job->job_title ?? '—' }}
+                </td>
 
-                                    <!-- Company -->
-                                    <td class="py-3 px-4 whitespace-nowrap">
-                                        {{ $applicant->job->company_name ?? '—' }}
-                                    </td>
+                <!-- Company -->
+                <td class="py-3 px-4 align-middle whitespace-nowrap">
+                    {{ $applicant->job->company_name ?? '—' }}
+                </td>
 
-                                   <!-- Status + Score -->
-<td class="py-3 px-4 whitespace-nowrap">
-    @if($applicant->evaluation)
-        @php
-            $score = $applicant->evaluation->total_score ?? 0;
-        @endphp
+                <!-- Status + Score -->
+                <td class="py-3 px-4 align-middle whitespace-nowrap">
+                    @if($applicant->evaluation)
+                        @php
+                            $score = $applicant->evaluation->total_score ?? 0;
+                        @endphp
 
-        @if($score >= 70)
-            <span class="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded">
-                Passed ({{ $score }}/100)
-            </span>
-        @else
-            <span class="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded">
-                Failed ({{ $score }}/100)
-            </span>
-        @endif
-    @else
-        <span class="px-2 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded">
-            Pending
-        </span>
-    @endif
-</td>
+                        @if($score >= 70)
+                            <span class="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded">
+                                Passed ({{ $score }}/100)
+                            </span>
+                        @else
+                            <span class="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded">
+                                Failed ({{ $score }}/100)
+                            </span>
+                        @endif
+                    @else
+                        <span class="px-2 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded">
+                            Pending
+                        </span>
+                    @endif
+                </td>
+
+                <!-- Action -->
+                <td class="py-3 px-4 align-middle whitespace-nowrap text-left">
+                    @if($applicant->status === 'hired')
+                        <span class="text-gray-500 font-medium italic">Already Hired</span>
+                    @elseif($applicant->evaluation)
+                        <button 
+                            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium h-8 px-3 rounded shadow"
+                            @click="openModal(
+                                @json($applicant->user->full_name),
+                                {{ $applicant->id }},
+                                true,
+                                {
+                                    knowledge_score: {{ $applicant->evaluation->knowledge_score ?? 0 }},
+                                    skill_score: {{ $applicant->evaluation->skill_score ?? 0 }},
+                                    participation_score: {{ $applicant->evaluation->participation_score ?? 0 }},
+                                    professionalism_score: {{ $applicant->evaluation->professionalism_score ?? 0 }}
+                                }
+                            )"
+                        >
+                            View Evaluation
+                        </button>
+                    @else
+                        <button 
+                            class="bg-[#BD6F22] hover:bg-[#a55f1d] text-white text-sm font-medium h-8 px-3 rounded shadow"
+                            @click="openModal(
+                                {{ Js::from($applicant->user->full_name) }},
+                                {{ Js::from($applicant->id) }},
+                                false,
+                                null
+                            )"
+                        >
+                            Evaluate
+                        </button>
+                    @endif
+                </td>
+
+                <!-- Contract -->
+                <td class="py-3 px-4 align-middle whitespace-nowrap text-left">
+                    @if($applicant->status !== 'hired')
+                        <button class="bg-green-600 text-white text-sm font-medium h-8 px-3 rounded shadow">
+                            Set Contract
+                        </button>
+                    @endif
+                </td>
+
+                <!-- Promote -->
+                <td class="py-3 px-4 align-middle whitespace-nowrap text-left">
+                    @if($applicant->status !== 'hired')
+                        <form method="POST" action="{{ route('hrStaff.evaluation.promote', $applicant->id) }}">
+                            @csrf
+                            <button type="button"
+                                class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow"
+                                @click="confirmPromotion($event, {{ $applicant->id }}, '{{ $applicant->user->full_name }}')">
+                                Add
+                            </button>
+                        </form>
+                    @endif
+                </td>
+
+                <!-- Archive -->
+                <td class="py-3 px-4 align-middle whitespace-nowrap text-left">
+                    @if($applicant->status !== 'hired')
+                        <form action="{{ route('hrStaff.archive.store', $applicant->id) }}" method="POST">
+                            @csrf
+                            <button 
+                                type="submit"
+                                class="bg-gray-400 text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-gray-500"
+                            >
+                                Archive
+                            </button>
+                        </form>
+                    @endif
+                </td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="8" class="text-center py-6 text-gray-500 italic">
+                    No applicants yet.
+                </td>
+            </tr>
+        @endforelse
+    </tbody>
+</table>
 
 
-                                    <!-- Action -->
-                                    <td class="py-3 px-4 align-middle whitespace-nowrap">
-                                        <div class="flex space-x-2">
-                                            {{-- Already hired --}}
-                                            @if($applicant->status === 'hired')
-                                                <span class="text-gray-500 font-medium italic">Already Hired</span>
-
-                                            {{-- Has evaluation --}}
-                                            @elseif($applicant->evaluation)
-                                                <button 
-                                                    class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium h-8 px-3 rounded shadow"
-                                                    @click="openModal(
-                                                        @json($applicant->user->full_name),
-                                                        {{ $applicant->id }},
-                                                        true,
-                                                        {
-                                                            knowledge_score: {{ $applicant->evaluation->knowledge_score ?? 0 }},
-                                                            skill_score: {{ $applicant->evaluation->skill_score ?? 0 }},
-                                                            participation_score: {{ $applicant->evaluation->participation_score ?? 0 }},
-                                                            professionalism_score: {{ $applicant->evaluation->professionalism_score ?? 0 }}
-                                                        }
-                                                    )"
-                                                >
-                                                    View Evaluation
-                                                </button>
-
-                                            {{-- No evaluation --}}
-                                            @else
-                                                <button 
-                                                    class="bg-[#BD6F22] hover:bg-[#a55f1d] text-white text-sm font-medium h-8 px-3 rounded shadow"
-                                                    @click="openModal(
-                                                        {{ Js::from($applicant->user->full_name) }},
-                                                        {{ Js::from($applicant->id) }},
-                                                        false,
-                                                        null
-                                                    )"
-                                                >
-                                                    Evaluate
-                                                </button>
-                                            @endif
-                                        </div>
-                                    </td>
-
-                                    <!-- Contract & Archive -->
-                                    <td class="py-3 px-4 align-middle whitespace-nowrap">
-                                        @if($applicant->status !== 'hired')
-                                            <button class="bg-green-600 text-white text-sm font-medium h-8 px-3 rounded shadow mr-2">
-                                                Set Contract
-                                            </button>
-                                            <form class="inline-block" method="POST" action="{{ route('hrStaff.evaluation.promote', $applicant->id) }}">
-                                                @csrf
-                                                <button type="button"
-                                                    class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow mr-2"
-                                                    @click="confirmPromotion($event, {{ $applicant->id }}, '{{ $applicant->user->full_name }}')">
-                                                    Add
-                                                </button>
-                                            </form>
-                                            <form action="{{ route('hrStaff.archive.store', $applicant->id) }}" method="POST" class="inline archive-form">
-                                                @csrf
-                                                <button 
-                                                    type="submit"
-                                                    class="bg-gray-400 text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-gray-500"
-                                                >
-                                                    Archive
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" class="text-center py-6 text-gray-500 italic">
-                                        No applicants yet.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
                 </div>
 
                 <div class="flex justify-center px-6 pb-4">
