@@ -111,8 +111,7 @@
     $statusLabels = [
         'For_interview'           => 'For Interview',
         'scheduled_for_training'  => 'Scheduled for Training',
-        'passed'                  => 'Training Passed',
-        'failed'                  => 'Failed',
+        'training_passed'         => 'Training Passed',
     ];
 
     $displayStatus = $statusLabels[$application->status]
