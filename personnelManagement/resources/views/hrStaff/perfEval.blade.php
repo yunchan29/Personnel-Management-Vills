@@ -91,10 +91,10 @@
                                         {{ $applicant->user->full_name }}
                                     </td>
                                     <td class="py-3 px-4 whitespace-nowrap">
-                                        {{ $applicant->job->title ?? '—' }}
+                                        {{ $applicant->job->job_title ?? '—' }}
                                     </td>
                                     <td class="py-3 px-4 whitespace-nowrap">
-                                        {{ $applicant->job->company ?? '—' }}
+                                        {{ $applicant->job->company_name ?? '—' }}
                                     </td>
                                     <td class="py-3 px-4 align-middle whitespace-nowrap">
                                         @if($applicant->status === 'hired')
