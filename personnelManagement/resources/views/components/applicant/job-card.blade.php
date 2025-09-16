@@ -17,8 +17,9 @@
     x-data="{
         showDetails: false,
         hasApplied: {{ $hasApplied ? 'true' : 'false' }},
+        hasTrainingOrPassed: {{ $hasTrainingOrPassed ? 'true' : 'false' }},
         apply() {
-            if (this.hasApplied) return; // Prevent duplicate application
+            if (this.hasApplied || this.hasTrainingOrPassed) return; // Block if applied or training passed 
 
             Swal.fire({ 
                 title: 'Are you sure?', 
@@ -95,23 +96,26 @@
 <div x-show="showDetails" x-transition class="flex items-center gap-4 text-sm text-gray-500 self-end">
     <!-- Apply Button -->
      
-    @if ($hasTrainingOrPassed) 
+        @if ($hasTrainingOrPassed) 
         <button 
-            disabled
-            class="bg-gray-400 text-white px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium cursor-not-allowed"
-        >
-            <img src="/images/mousepointer.png" class="w-4 h-4 opacity-50" alt="Apply">
-            <span>Training Scheduled / Passed</span>
+        :disabled="hasTrainingOrPassed"
+         @click.prevent="apply()"
+         :class="hasTrainingOrPassed 
+                ? 'bg-gray-400 cursor-not-allowed text-white' 
+                : 'bg-[#BD6F22] hover:bg-[#a75d1c] text-white'"
+           class="px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition">
+            <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply" x-show="!hasTrainingOrPassed">
+            <span x-text="hasTrainingOrPassed ? 'Apply' : 'Apply Now'"></span>
         </button>
-    @elseif ($hasResume)
+
+        @elseif ($hasResume)
         <button 
             :disabled="hasApplied"
             @click.prevent="apply()"
             :class="hasApplied 
                 ? 'bg-gray-400 cursor-not-allowed text-white' 
                 : 'bg-[#BD6F22] hover:bg-[#a75d1c] text-white'"
-            class="px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition"
-        >
+            class="px-6 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition">
             <img src="/images/mousepointer.png" class="w-4 h-4" alt="Apply" x-show="!hasApplied">
             <span x-text="hasApplied ? 'Applied' : 'Apply Now'"></span>
         </button>
@@ -124,6 +128,7 @@
             <span>Upload Resume</span>
         </button>
     @endif
+
 </div>
 </div>
   <!-- See More/See Less -->

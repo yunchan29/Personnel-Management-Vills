@@ -28,12 +28,13 @@
 <div x-show="tab === 'job_postings'" x-transition>
     @php
         $jobsWithPending = $jobs->filter(function($job) use ($applicants) {
-            return $applicants->filter(function($app) use ($job) {
-                return $app->job_id === $job->id
-                       && !$app->evaluation
-                       && $app->status !== 'hired';
-            })->isNotEmpty();
-        });
+        return $applicants->filter(function($app) use ($job) {
+        return $app->job_id === $job->id
+               && ($app->evaluation === null || $app->evaluation->result === 'passed')
+               && $app->status !== 'hired';
+      })->isNotEmpty();
+  });
+
     @endphp
 
     @if ($jobsWithPending->isNotEmpty())

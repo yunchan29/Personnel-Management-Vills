@@ -26,16 +26,16 @@ class ApplicantJobController extends Controller
     }
 
     $jobs = Job::latest()
-        ->whereDate('apply_until', '>=', \Carbon\Carbon::today()) // 👈 filter expired jobs
-        ->when($industry, fn($query) => $query->where('job_industry', $industry))
-        ->get();
+    ->where('apply_until', '>=', now()) // compare full datetime
+    ->when($industry, fn($query) => $query->where('job_industry', $industry))
+    ->get();
 
     $appliedJobIds = Application::where('user_id', $user->id)
         ->pluck('job_id')
         ->toArray();
 
     $hasTrainingOrPassed = Application::where('user_id', $user->id)
-         ->whereIn('status', ['scheduled_for_training', 'training_passed'])
+         ->whereIn('status', ['scheduled_for_training', 'passed'])
          ->exists();
 
     return view('applicant.dashboard', compact(
@@ -81,7 +81,7 @@ class ApplicantJobController extends Controller
 
     // ❌ Rule 1: Block ALL applications if applicant already scheduled for training
     $hasTrainingOrPassed = Application::where('user_id', $user->id)
-    ->whereIn('status', ['scheduled_for_training', 'training_passed'])
+    ->whereIn('status', ['scheduled_for_training', 'passed'])
     ->exists();
 
     if ($hasTrainingOrPassed) {
