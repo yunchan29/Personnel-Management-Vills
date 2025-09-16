@@ -36,15 +36,36 @@
                 </button>
               </form>
 
-              {{-- Delete Form --}}
-              <form action="{{ route('hrStaff.archive.destroy', $application->id) }}" method="POST" class="delete-form">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
-                  Delete
-                </button>
-              </form>
-            </td>
+        <td class="py-3 px-4 italic">
+    @if($application->evaluation && $application->evaluation->result === 'failed')
+        Failed Evaluation
+    @else
+        Manually Archived
+    @endif
+</td>
+
+<td class="py-3 px-4 flex gap-3">
+    {{-- Only allow restore for manually archived passed applicants --}}
+    @if(!$application->evaluation || ($application->evaluation->result === 'passed'))
+        <form action="{{ route('hrStaff.archive.restore', $application->id) }}" method="POST" class="restore-form">
+            @csrf
+            @method('PUT')
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">
+                Restore
+            </button>
+        </form>
+    @endif
+
+    {{-- Delete Form (always allowed) --}}
+    <form action="{{ route('hrStaff.archive.destroy', $application->id) }}" method="POST" class="delete-form">
+        @csrf
+        @method('DELETE')
+        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
+            Delete
+        </button>
+    </form>
+</td>
+
           </tr>
         @empty
           <tr>

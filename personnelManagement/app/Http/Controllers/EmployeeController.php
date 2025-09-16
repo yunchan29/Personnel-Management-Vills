@@ -34,24 +34,40 @@ class EmployeeController extends Controller
 
 public function performanceEvaluation()
 {
-    // Fetch jobs that have at least one applicant pending evaluation, not yet hired, and not archived
+    // Jobs with applicants (pending or passed, not failed, not archived)
     $jobs = Job::whereHas('applications', function($query) {
-        $query->where(function($q) {
-            $q->whereDoesntHave('evaluation')
-              ->orWhere('status', '!=', 'hired');
-        })
-        ->where('is_archived', false); // 👈 exclude archived applicants
+        $query->whereHas('trainingSchedule')
+              ->where('is_archived', false)
+              ->where(function ($q) {
+                  $q->whereDoesntHave('evaluation') // not yet evaluated
+                    ->orWhereHas('evaluation', function ($sub) {
+                        $sub->where('result', 'passed'); // keep passed
+                    });
+              });
     })
     ->with(['applications' => function($query) {
         $query->whereHas('trainingSchedule')
-              ->where('is_archived', false); // 👈 also exclude archived here
+              ->where('is_archived', false)
+              ->where(function ($q) {
+                  $q->whereDoesntHave('evaluation')
+                    ->orWhereHas('evaluation', function ($sub) {
+                        $sub->where('result', 'passed');
+                    });
+              })
+              ->with(['user', 'evaluation']);
     }])
     ->get();
 
-    // Applicants (only those with training schedule & not archived)
+    // Applicants (pending or passed, not archived)
     $applicants = Application::with(['user', 'job', 'evaluation'])
         ->whereHas('trainingSchedule')
-        ->where('is_archived', false) // 👈 exclude archived
+        ->where('is_archived', false)
+        ->where(function ($q) {
+            $q->whereDoesntHave('evaluation')
+              ->orWhereHas('evaluation', function ($sub) {
+                  $sub->where('result', 'passed');
+              });
+        })
         ->get();
 
     // Employees
@@ -59,11 +75,7 @@ public function performanceEvaluation()
         ->with('job')
         ->get();
 
-    return view('hrStaff.perfEval', [
-        'jobs' => $jobs,
-        'applicants' => $applicants,
-        'employees' => $employees,
-    ]);
+    return view('hrStaff.perfEval', compact('jobs', 'applicants', 'employees'));
 }
 
 

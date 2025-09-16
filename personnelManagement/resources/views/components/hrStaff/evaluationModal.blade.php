@@ -13,7 +13,7 @@
         :action="`{{ route('hrStaff.evaluations.store', ':id') }}`.replace(':id', selectedApplicationId)"
         class="bg-white rounded-lg p-6 w-full max-w-2xl"
         @click.away="showModal = false"
-        @submit.prevent="submitEvaluation">
+       x-ref="evaluationForm">
 
         @csrf
 
@@ -77,7 +77,8 @@
             </button>
             
             <template x-if="!alreadyEvaluated">
-                <button type="submit"
+                <button type="button"
+                @click="submitEvaluation"y
                     class="bg-[#BD6F22] hover:bg-[#a55f1d] text-white px-4 py-2 rounded">
                     Submit
                 </button>
