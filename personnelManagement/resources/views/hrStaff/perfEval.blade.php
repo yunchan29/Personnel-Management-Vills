@@ -131,24 +131,29 @@
                                         {{ $applicant->job->company_name ?? '—' }}
                                     </td>
 
-                                    <!-- Status + Score -->
-                                    <td class="py-3 px-4 whitespace-nowrap">
-                                        @if($applicant->evaluation)
-                                            @if($applicant->evaluation->result === 'passed')
-                                                <span class="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded">
-                                                    Passed ({{ $applicant->evaluation->total_score ?? '0' }}/100)
-                                                </span>
-                                            @else
-                                                <span class="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded">
-                                                    Failed ({{ $applicant->evaluation->total_score ?? '0' }}/100)
-                                                </span>
-                                            @endif
-                                        @else
-                                            <span class="px-2 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded">
-                                                Pending
-                                            </span>
-                                        @endif
-                                    </td>
+                                   <!-- Status + Score -->
+<td class="py-3 px-4 whitespace-nowrap">
+    @if($applicant->evaluation)
+        @php
+            $score = $applicant->evaluation->total_score ?? 0;
+        @endphp
+
+        @if($score >= 70)
+            <span class="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded">
+                Passed ({{ $score }}/100)
+            </span>
+        @else
+            <span class="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded">
+                Failed ({{ $score }}/100)
+            </span>
+        @endif
+    @else
+        <span class="px-2 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded">
+            Pending
+        </span>
+    @endif
+</td>
+
 
                                     <!-- Action -->
                                     <td class="py-3 px-4 align-middle whitespace-nowrap">
