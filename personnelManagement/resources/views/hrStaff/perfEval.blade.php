@@ -7,26 +7,6 @@
     <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">Training Evaluation</h1>
     <hr class="border-t border-gray-300 mb-6">
 
-    <!-- View Toggle Pills -->
-    <div class="flex justify-center mb-6">
-        <div class="inline-flex rounded-full border border-gray-300 bg-gray-100 p-1">
-            <a href="{{ route('hrStaff.perfEval', ['view' => 'pending']) }}"
-                class="px-4 py-1 text-sm font-medium rounded-full transition
-                       {{ $viewType === 'pending' 
-                            ? 'bg-[#BD6F22] text-white shadow' 
-                            : 'text-gray-600 hover:text-[#BD6F22]' }}">
-                Pending
-            </a>
-            <a href="{{ route('hrStaff.perfEval', ['view' => 'all']) }}"
-                class="px-4 py-1 text-sm font-medium rounded-full transition
-                       {{ $viewType === 'all' 
-                            ? 'bg-[#BD6F22] text-white shadow' 
-                            : 'text-gray-600 hover:text-[#BD6F22]' }}">
-                All
-            </a>
-        </div>
-    </div>
-
     <!-- Tabs -->
     <div class="flex space-x-8 text-sm font-medium text-gray-600 border-b border-gray-300 mb-6">
         <button 
@@ -46,37 +26,23 @@
         </button>
     </div>
 
-    <!-- Job Listings -->
-<div x-show="tab === 'job_postings'" x-transition>
-    @php
-        if ($viewType === 'all') {
-            // All jobs that still have applicants (controller already filtered archived)
-            $jobsToShow = $jobs;
-        } else {
-            // Pending only (same filter as before)
-            $jobsToShow = $jobs->filter(function($job) use ($applicants) {
-                return $applicants->filter(function($app) use ($job) {
-                    return $app->job_id === $job->id
-                           && !$app->evaluation
-                           && $app->status !== 'hired';
-                })->isNotEmpty();
-            });
-        }
-    @endphp
+        <!-- Job Listings -->
+        <div x-show="tab === 'job_postings'" x-transition>
+            @php
+                // Always show all jobs (controller already filtered archived ones)
+                $jobsToShow = $jobs;
+            @endphp
 
-    @if ($jobsToShow->isNotEmpty())
-        @foreach ($jobsToShow as $job)
-            <x-hrStaff.jobListingDisplay :job="$job" />
-        @endforeach
-    @else
-        <div class="text-center py-6 text-gray-500 italic">
-            {{ $viewType === 'all' 
-                ? 'No applicants available for any job postings.' 
-                : 'No pending applicants for any job postings.' }}
+            @if ($jobsToShow->isNotEmpty())
+                @foreach ($jobsToShow as $job)
+                    <x-hrStaff.jobListingDisplay :job="$job" />
+                @endforeach
+            @else
+                <div class="text-center py-6 text-gray-500 italic">
+                    No applicants available for any job postings.
+                </div>
+            @endif
         </div>
-    @endif
-</div>
-
 
     <!-- Evaluation Tab -->
     <div x-show="tab === 'evaluation'" x-transition x-cloak>

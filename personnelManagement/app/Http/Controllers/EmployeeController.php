@@ -34,80 +34,54 @@ class EmployeeController extends Controller
 
 public function performanceEvaluation(Request $request)
 {
-    $viewType = $request->query('view', 'pending'); // default = pending
-
-    if ($viewType === 'all') {
-        // Jobs (all with applications that are not archived)
-        $jobs = Job::whereHas('applications', function ($query) {
-                $query->whereHas('trainingSchedule')
-                      ->where('is_archived', false);
-            })
-            ->with(['applications' => function ($query) {
-                $query->whereHas('trainingSchedule')
-                      ->where('is_archived', false)
-                      ->with(['user', 'evaluation']);
-            }])
-            ->get();
-
-        // Applicants (all not archived)
-        $applicants = Application::with(['user', 'job', 'evaluation'])
-            ->whereHas('trainingSchedule')
-            ->where('is_archived', false)
-            ->get();
-
-        // Employees (all)
-        $employees = User::where('role', 'employee')
-            ->with('job')
-            ->get();
-
-    } else {
-        // === PENDING (default) ===
-        $jobs = Job::whereHas('applications', function($query) {
-                $query->whereHas('trainingSchedule')
-                      ->where('is_archived', false)
-                      ->where(function ($q) {
-                          $q->whereDoesntHave('evaluation') // pending
-                            ->orWhereHas('evaluation', function ($sub) {
-                                $sub->where('result', 'passed'); // keep passed
-                            });
-                      });
-            })
-            ->with(['applications' => function($query) {
-                $query->whereHas('trainingSchedule')
-                      ->where('is_archived', false)
-                      ->where(function ($q) {
-                          $q->whereDoesntHave('evaluation')
-                            ->orWhereHas('evaluation', function ($sub) {
-                                $sub->where('result', 'passed');
-                            });
-                      })
-                      ->with(['user', 'evaluation']);
-            }])
-            ->get();
-
-        $applicants = Application::with(['user', 'job', 'evaluation'])
-            ->whereHas('trainingSchedule')
-            ->where('is_archived', false)
-            ->where(function ($q) {
-                $q->whereDoesntHave('evaluation')
-                  ->orWhereHas('evaluation', function ($sub) {
-                      $sub->where('result', 'passed');
+    // Jobs: must have at least one qualifying application (not archived, training schedule)
+    $jobs = Job::whereHas('applications', function ($query) {
+            $query->whereHas('trainingSchedule')
+                  ->where('is_archived', false)
+                  ->where(function ($q) {
+                      $q->whereDoesntHave('evaluation') // no evaluation yet
+                        ->orWhereHas('evaluation', function ($sub) {
+                            $sub->where('result', 'passed'); // passed evaluation
+                        });
                   });
-            })
-            ->get();
+        })
+        ->with(['applications' => function ($query) {
+            $query->whereHas('trainingSchedule')
+                  ->where('is_archived', false)
+                  ->where(function ($q) {
+                      $q->whereDoesntHave('evaluation')
+                        ->orWhereHas('evaluation', function ($sub) {
+                            $sub->where('result', 'passed');
+                        });
+                  })
+                  ->with(['user', 'evaluation']);
+        }])
+        ->get();
 
-        $employees = User::where('role', 'employee')
-            ->with('job')
-            ->get();
-    }
+    // Applicants: must have training schedule, not archived, and meet same eval conditions
+    $applicants = Application::with(['user', 'job', 'evaluation'])
+        ->whereHas('trainingSchedule')
+        ->where('is_archived', false)
+        ->where(function ($q) {
+            $q->whereDoesntHave('evaluation')
+              ->orWhereHas('evaluation', function ($sub) {
+                  $sub->where('result', 'passed');
+              });
+        })
+        ->get();
+
+    // Employees: all employees
+    $employees = User::where('role', 'employee')
+        ->with('job')
+        ->get();
 
     return view('hrStaff.perfEval', [
-        'jobs' => $jobs,
+        'jobs'       => $jobs,
         'applicants' => $applicants,
-        'employees' => $employees,
-        'viewType' => $viewType, // pass to blade so we know which toggle is active
+        'employees'  => $employees,
     ]);
 }
+
 
 
 }
