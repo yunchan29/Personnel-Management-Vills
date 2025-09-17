@@ -124,40 +124,42 @@
                 </td>
 
                 <!-- Action -->
-                <td class="py-3 px-4 align-middle whitespace-nowrap text-left">
-                    @if($applicant->status === 'hired')
-                        <span class="text-gray-500 font-medium italic">Already Hired</span>
-                    @elseif($applicant->evaluation)
-                        <button 
-                            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium h-8 px-3 rounded shadow"
-                            @click="openModal(
-                                @json($applicant->user->full_name),
-                                {{ $applicant->id }},
-                                true,
-                                {
-                                    knowledge_score: {{ $applicant->evaluation->knowledge_score ?? 0 }},
-                                    skill_score: {{ $applicant->evaluation->skill_score ?? 0 }},
-                                    participation_score: {{ $applicant->evaluation->participation_score ?? 0 }},
-                                    professionalism_score: {{ $applicant->evaluation->professionalism_score ?? 0 }}
-                                }
-                            )"
-                        >
-                            View Evaluation
-                        </button>
-                    @else
-                        <button 
-                            class="bg-[#BD6F22] hover:bg-[#a55f1d] text-white text-sm font-medium h-8 px-3 rounded shadow"
-                            @click="openModal(
-                                {{ Js::from($applicant->user->full_name) }},
-                                {{ Js::from($applicant->id) }},
-                                false,
-                                null
-                            )"
-                        >
-                            Evaluate
-                        </button>
-                    @endif
-                </td>
+<td class="py-3 px-4 align-middle whitespace-nowrap text-left">
+    @if($applicant->evaluation)
+        <button 
+            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium h-8 px-3 rounded shadow"
+            @click="openModal(
+                @json($applicant->user->full_name),
+                {{ $applicant->id }},
+                true,
+                {
+                    knowledge_score: {{ $applicant->evaluation->knowledge_score ?? 0 }},
+                    skill_score: {{ $applicant->evaluation->skill_score ?? 0 }},
+                    participation_score: {{ $applicant->evaluation->participation_score ?? 0 }},
+                    professionalism_score: {{ $applicant->evaluation->professionalism_score ?? 0 }}
+                }
+            )"
+        >
+            View Evaluation
+        </button>
+        @if($applicant->status === 'hired')
+            <span class="ml-2 text-gray-500 italic">(Already Hired)</span>
+        @endif
+    @else
+        <button 
+            class="bg-[#BD6F22] hover:bg-[#a55f1d] text-white text-sm font-medium h-8 px-3 rounded shadow"
+            @click="openModal(
+                {{ Js::from($applicant->user->full_name) }},
+                {{ Js::from($applicant->id) }},
+                false,
+                null
+            )"
+        >
+            Evaluate
+        </button>
+    @endif
+</td>
+
 
                 <!-- Contract -->
                 <td class="py-3 px-4 align-middle whitespace-nowrap text-left">
@@ -257,9 +259,13 @@ function evaluationModal(applicants) {
         totalScore: 0,
         result: '',
 
-        shouldShow(jobId, status) {
-            return this.showAll || status !== 'hired';
-        },
+       shouldShow(jobId, status) {
+    // Prevent applicants from other jobs from showing
+    if (jobId !== this.selectedJobId) return false;
+
+    // Show all including hired OR only non-hired
+    return this.showAll || status !== 'hired';
+},
 
         openModal(employeeName, applicationId, evaluated = false, previousScores = null) {
             this.selectedEmployee = employeeName;
