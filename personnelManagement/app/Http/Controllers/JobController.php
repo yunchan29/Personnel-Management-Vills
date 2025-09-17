@@ -98,39 +98,54 @@ class JobController extends Controller
     }
 
     public function update(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'job_title' => 'required|string|max:255',
-            'company_name' => 'required|string|max:255',
-            'job_industry' => 'required|string|max:255',
-            'location' => 'required|string|max:255',
-            'vacancies' => 'required|integer|min:1',
-            'apply_until' => 'required|date',
+{
+    $job = Job::findOrFail($id);
+
+    // If expired → only require fields you allow editing
+    if ($job->apply_until < now()) {
+        $rules = [
+            'vacancies'   => 'required|integer|min:1',
+            'apply_until' => 'required|date|after_or_equal:today',
+        ];
+    } else {
+        // Normal validation for active jobs
+        $rules = [
+            'job_title'      => 'required|string|max:255',
+            'company_name'   => 'required|string|max:255',
+            'job_industry'   => 'required|string|max:255',
+            'location'       => 'required|string|max:255',
+            'vacancies'      => 'required|integer|min:1',
+            'apply_until'    => 'required|date',
             'qualifications' => 'nullable|string',
-            'additional_info' => 'nullable|string',
-        ]);
-
-        if (!empty($validated['qualifications'])) {
-            $validated['qualifications'] = collect(preg_split('/\r\n|\r|\n/', $validated['qualifications']))
-                ->map(fn($item) => trim($item))
-                ->filter()
-                ->values()
-                ->all();
-        }
-
-        if (!empty($validated['additional_info'])) {
-            $validated['additional_info'] = collect(preg_split('/\r\n|\r|\n/', $validated['additional_info']))
-                ->map(fn($item) => trim($item))
-                ->filter()
-                ->values()
-                ->all();
-        }
-
-        $job = Job::findOrFail($id);
-        $job->update($validated);
-
-        return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job updated successfully!');
+            'additional_info'=> 'nullable|string',
+        ];
     }
+
+    $validated = $request->validate($rules);
+
+    // Transform qualifications / additional info if present
+    if (!empty($validated['qualifications'])) {
+        $validated['qualifications'] = collect(preg_split('/\r\n|\r|\n/', $validated['qualifications']))
+            ->map(fn($item) => trim($item))
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    if (!empty($validated['additional_info'])) {
+        $validated['additional_info'] = collect(preg_split('/\r\n|\r|\n/', $validated['additional_info']))
+            ->map(fn($item) => trim($item))
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    $job->update($validated);
+
+    return redirect()->route('hrAdmin.jobPosting')
+        ->with('success', 'Job updated successfully!');
+}
+
 
     public function destroy($id)
     {
