@@ -258,9 +258,13 @@ function evaluationModal(applicants) {
         totalScore: 0,
         result: '',
 
-        shouldShow(jobId, status) {
-            return this.showAll || status !== 'hired';
-        },
+       shouldShow(jobId, status) {
+    // Prevent applicants from other jobs from showing
+    if (jobId !== this.selectedJobId) return false;
+
+    // Show all including hired OR only non-hired
+    return this.showAll || status !== 'hired';
+},
 
         openModal(employeeName, applicationId, evaluated = false, previousScores = null) {
               console.log("evaluated:", evaluated);
