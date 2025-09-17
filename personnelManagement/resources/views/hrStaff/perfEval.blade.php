@@ -82,7 +82,7 @@
     <tbody>
         @forelse ($applicants->sortBy(fn($app) => $app->evaluation || $app->status === 'hired') as $applicant)
             <tr 
-                x-show="shouldShow({{ $applicant->job_id }}, '{{ $applicant->status }}')"
+               x-show="shouldShow('{{ $applicant->job_id }}', '{{ $applicant->status }}')"
                 class="border-b hover:bg-gray-50"
             >
                 <!-- Name -->
@@ -131,18 +131,18 @@
                         <button 
                             class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium h-8 px-3 rounded shadow"
                             @click="openModal(
-                                @json($applicant->user->full_name),
-                                {{ $applicant->id }},
-                                true,
-                                {
-                                    knowledge_score: {{ $applicant->evaluation->knowledge_score ?? 0 }},
-                                    skill_score: {{ $applicant->evaluation->skill_score ?? 0 }},
-                                    participation_score: {{ $applicant->evaluation->participation_score ?? 0 }},
-                                    professionalism_score: {{ $applicant->evaluation->professionalism_score ?? 0 }}
-                                }
-                            )"
-                        >
-                            View Evaluation
+                            {{ Js::from($applicant->user->full_name) }},
+                            {{ Js::from($applicant->id) }},
+                            true,
+                            {{ Js::from([
+                                'knowledge_score' => $applicant->evaluation->knowledge ?? 0,
+                                'skill_score' => $applicant->evaluation->skill ?? 0,
+                                'participation_score' => $applicant->evaluation->participation ?? 0,
+                                'professionalism_score' => $applicant->evaluation->professionalism ?? 0
+                            ]) }}
+                        )"
+
+                        > View Evaluation
                         </button>
                     @else
                         <button 
@@ -232,6 +232,7 @@
 
 <script>
 function evaluationModal(applicants) {
+
     return {
         tab: 'job_postings',
         selectedJobId: null,
@@ -262,6 +263,8 @@ function evaluationModal(applicants) {
         },
 
         openModal(employeeName, applicationId, evaluated = false, previousScores = null) {
+              console.log("evaluated:", evaluated);
+              console.log("previousScores argument:", previousScores);
             this.selectedEmployee = employeeName;
             this.selectedApplicationId = applicationId;
             this.showModal = true;
