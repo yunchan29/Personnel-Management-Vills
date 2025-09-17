@@ -140,25 +140,25 @@
                                     ]) }}
                                 )"
                             >
-            View Evaluation
-        </button>
-        @if($applicant->status === 'hired')
-            <span class="ml-2 text-gray-500 italic">(Already Hired)</span>
-        @endif
-    @else
-        <button 
-            class="bg-[#BD6F22] hover:bg-[#a55f1d] text-white text-sm font-medium h-8 px-3 rounded shadow"
-            @click="openModal(
-                {{ Js::from($applicant->user->full_name) }},
-                {{ Js::from($applicant->id) }},
-                false,
-                null
-            )"
-        >
-            Evaluate
-        </button>
-    @endif
-</td>
+                                        View Evaluation
+                                    </button>
+                                    @if($applicant->status === 'hired')
+                                        <span class="ml-2 text-gray-500 italic">(Already Hired)</span>
+                                    @endif
+                                @else
+                                    <button 
+                                        class="bg-[#BD6F22] hover:bg-[#a55f1d] text-white text-sm font-medium h-8 px-3 rounded shadow"
+                                        @click="openModal(
+                                            {{ Js::from($applicant->user->full_name) }},
+                                            {{ Js::from($applicant->id) }},
+                                            false,
+                                            null
+                                        )"
+                                    >
+                                        Evaluate
+                                    </button>
+                                @endif
+                            </td>
 
 
                                     <!-- Contract -->
