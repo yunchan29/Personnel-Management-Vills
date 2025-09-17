@@ -19,6 +19,14 @@
             :disabled="selectedApplicants.length <= 1">
             Mass Reschedule
         </button>
+
+        <!-- Mass Manage -->
+        <button 
+            @click="openBulkStatusModal()"
+            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="selectedApplicants.length <= 1">
+            Mass Manage
+        </button>
     </div>
 
     <table class="min-w-full text-sm text-left text-gray-700">
@@ -45,7 +53,7 @@
             data-interview-end="{{ optional($application->interview)?->end_date ? \Carbon\Carbon::parse($application->interview->end_date)->format('Y-m-d H:i') : '' }}"
             data-status="{{ $application->status }}"
             x-show="(['approved', 'for_interview', 'interviewed', 'declined'].includes('{{ $application->status }}')) 
-                    && (showAll || '{{ $application->interview_date }}' === '') 
+                    && (showAll || '{{ optional($application->interview)?->scheduled_at }}' === '') 
                     && !removedApplicants.includes({{ $application->id }})"
             class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out">
 

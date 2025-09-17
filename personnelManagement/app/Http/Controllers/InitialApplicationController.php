@@ -160,9 +160,9 @@ $application->save();
     public function bulkUpdateStatus(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'ids' => 'required|array',
+            'ids' => 'required|array',   // match frontend
             'ids.*' => 'exists:applications,id',
-            'status' => 'required|string|in:approved,declined'
+            'status' => 'required|string|in:approved,declined,interviewed,fail_interview,for_interview,trained'
         ]);
 
         if ($validator->fails()) {
@@ -180,22 +180,40 @@ $application->save();
             ->get();
 
         foreach ($applications as $application) {
+            $oldStatus = $application->status;
             $application->status = $validated['status'];
             $application->save();
 
-            switch ($application->status) {
-                case 'approved':
-                    Mail::to($application->user->email)->send(new ApprovedLetterMail($application));
-                    break;
+            // 🔔 Sync interview record if interviewed
+            if ($validated['status'] === 'interviewed') {
+                DB::table('interviews')
+                    ->where('application_id', $application->id)
+                    ->update(['status' => 'completed']);
+            }
 
-                case 'declined':
-                    Mail::to($application->user->email)->send(new DeclinedLetterMail($application));
+            // 🔔 Send mails and archive rules
+            if ($oldStatus !== $application->status) {
+                switch ($application->status) {
+                    case 'approved':
+                        Mail::to($application->user->email)->send(new ApprovedLetterMail($application));
+                        break;
 
-                    // ✅ Archive user when declined (bulk)
-                   $application->is_archived = true;
-$application->save();
+                    case 'declined':
+                        Mail::to($application->user->email)->send(new DeclinedLetterMail($application));
+                        $application->is_archived = true;
+                        $application->save();
+                        break;
 
-                    break;
+                    case 'interviewed': // Pass
+                        Mail::to($application->user->email)->send(new PassInterviewMail($application));
+                        break;
+
+                    case 'fail_interview': // Fail
+                        Mail::to($application->user->email)->send(new FailInterviewMail($application));
+                        $application->is_archived = true;
+                        $application->save();
+                        break;
+                }
             }
         }
 

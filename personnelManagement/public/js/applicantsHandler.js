@@ -12,6 +12,9 @@ document.addEventListener('alpine:init', () => {
         statusAction: '',
         selectedApplicant: null,
 
+        showBulkStatusModal: false,
+        bulkStatusAction: '',
+
         showInterviewModal: false,
         interviewMode: 'single',
         interviewApplicant: null,
@@ -161,6 +164,66 @@ document.addEventListener('alpine:init', () => {
             return len > 0 && len < total;
         },
 
+        // For maramihag pass/fail sa interview modal
+        openBulkStatusModal() {
+            if (!this.selectedApplicants.length) {
+                Swal.fire("No applicants selected", "", "warning");
+                return;
+            }
+            this.showBulkStatusModal = true;
+        },
+
+        // Status change for mass pass/fail status change 
+        async submitBulkStatusChange() {
+            if (!this.selectedApplicants.length) {
+                Swal.fire("No applicants selected", "", "warning");
+                return;
+            }
+            
+            this.loading = true;
+
+            // extract application_id lang
+            const ids = this.selectedApplicants.map(app => app.application_id);
+
+            fetch('/hrAdmin/applications/bulk-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                },
+                body: JSON.stringify({
+                    ids: ids,
+                    status: this.bulkStatusAction
+                })
+            })
+            .then(response => response.json())
+            .then(res => {
+                if (res.success) {
+                    // ✅ Greenlist feedback
+                    this.feedbackMessage = res.message || `Applicants ${this.bulkStatusAction} successfully.`;
+                    this.feedbackVisible = true;
+
+                    // auto-hide toast after 3s
+                    setTimeout(() => {
+                        this.feedbackVisible = false;
+                        location.reload();
+                    }, 3000);
+
+                    this.fetchApplicants?.();
+                    this.showBulkStatusModal = false;
+                } else {
+                    Swal.fire("Error", res.errors ? JSON.stringify(res.errors) : "Something went wrong", "error");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire("Error", "Request failed", "error");
+            })
+            .finally(() => {
+                this.loading = false;
+            });
+        },
+        
         async bulkAction(status) {
             if (this.selectedApplicants.length === 0) return;
 
@@ -256,61 +319,64 @@ document.addEventListener('alpine:init', () => {
             this.showStatusModal = true;
         },
 
-        async submitStatusChange() {
-            this.loading = true;
-            try {
-                const response = await fetch(`/hrAdmin/applications/${this.selectedApplicant.id}/status`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({ status: this.statusAction })
-                });
-
-                if (!response.ok) throw new Error('Failed to update status');
-                const result = await response.json();
-
-                const row = document.querySelector(`tr[data-applicant-id='${result.application_id}']`);
-                if (row) row.setAttribute('data-status', this.statusAction);
-
-                const index = this.applicants.findIndex(a => a.id === result.application_id);
-                if (index !== -1) {
-                    this.applicants[index].status = this.statusAction;
-                    this.applicants = [...this.applicants];
-                }
-
-                const label = {
-                    approved: 'Approved',
-                    declined: 'Failed',
-                    for_interview: 'Scheduled for Interview',
-                    interviewed: 'Interview Passed',
-                    fail_interview: 'Interview Failed',
-                    trained: 'Trained',
-                }[this.statusAction] || 'Updated';
-
-               this.feedbackMessage = `Applicant ${label} successfully.`;
-               this.feedbackVisible = true;
-
-                // Wait 2.5 seconds, then reload the page
-                setTimeout(() => {
-                    this.feedbackVisible = false;
-                    location.reload();
-                }, 2500);
-
-                if (['interviewed', 'declined', 'trained', 'fail_interview'].includes(this.statusAction)) {
-                    setTimeout(() => this.removedApplicants.push(result.application_id), 300);
-                }
-
-                this.selectedApplicant = null;
-                this.statusAction = '';
-                this.showStatusModal = false;
-
-            } catch (error) {
-                alert('Error: ' + error.message);
-            } finally {
-                this.loading = false;
+        async submitBulkStatusChange() {
+            if (!this.selectedApplicants.length) {
+                Swal.fire("No applicants selected", "", "warning");
+                return;
             }
+
+            // ✅ Check kung lahat may interview_date (o interview set field)
+            const withoutInterview = this.selectedApplicants.filter(app => !app.interview_date);
+
+            if (withoutInterview.length > 0) {
+                Swal.fire({
+                    icon: "warning",
+                    title: "Some applicants have no interview set",
+                    text: "Please schedule an interview before managing their status.",
+                });
+                return; // ⛔ stop execution
+            }
+
+            this.loading = true;
+
+            // extract application_id lang
+            const ids = this.selectedApplicants.map(app => app.application_id);
+
+            fetch('/hrAdmin/applications/bulk-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                },
+                body: JSON.stringify({
+                    ids: ids,
+                    status: this.bulkStatusAction
+                })
+            })
+            .then(response => response.json())
+            .then(res => {
+                if (res.success) {
+                    this.feedbackMessage = res.message || `Applicants ${this.bulkStatusAction} successfully.`;
+                    this.feedbackVisible = true;
+
+                    setTimeout(() => {
+                        this.feedbackVisible = false;
+                        location.reload();
+                    }, 3000);
+
+                    this.fetchApplicants?.();
+                    this.showBulkStatusModal = false;
+                } else {
+                    Swal.fire("Error", res.errors ? JSON.stringify(res.errors) : "Something went wrong", "error");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire("Error", "Request failed", "error");
+            })
+            .finally(() => {
+                this.loading = false;
+            });
         },
 
         // ---- open for single applicant
