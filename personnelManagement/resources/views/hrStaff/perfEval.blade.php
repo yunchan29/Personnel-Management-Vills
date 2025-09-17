@@ -121,23 +121,25 @@
                                         @endif
                                     </td>
 
-                                   <!-- Action -->
-<td class="py-3 px-4 align-middle whitespace-nowrap text-left">
-    @if($applicant->evaluation)
-        <button 
-            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium h-8 px-3 rounded shadow"
-            @click="openModal(
-                {{ Js::from($applicant->user->full_name) }},
-                {{ Js::from($applicant->id) }},
-                true,
-                {{ Js::from([
-                    'knowledge_score' => $applicant->evaluation->knowledge ?? 0,
-                    'skill_score' => $applicant->evaluation->skill ?? 0,
-                    'participation_score' => $applicant->evaluation->participation ?? 0,
-                    'professionalism_score' => $applicant->evaluation->professionalism ?? 0
-                ]) }}
-            )"
-        >
+                     <!-- Action -->
+               <td class="py-3 px-4 align-middle whitespace-nowrap text-left">
+                    @if($applicant->status === 'hired')
+                        <span class="text-gray-500 font-medium italic">Already Hired</span>
+                    @elseif($applicant->evaluation)
+                            <button 
+                                class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium h-8 px-3 rounded shadow"
+                                @click="openModal(
+                                    {{ Js::from($applicant->user->full_name) }},
+                                    {{ Js::from($applicant->id) }},
+                                    true,
+                                    {{ Js::from([
+                                        'knowledge_score' => $applicant->evaluation->knowledge ?? 0,
+                                        'skill_score' => $applicant->evaluation->skill ?? 0,
+                                        'participation_score' => $applicant->evaluation->participation ?? 0,
+                                        'professionalism_score' => $applicant->evaluation->professionalism ?? 0
+                                    ]) }}
+                                )"
+                            >
             View Evaluation
         </button>
         @if($applicant->status === 'hired')
