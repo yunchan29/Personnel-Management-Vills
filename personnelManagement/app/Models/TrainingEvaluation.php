@@ -32,8 +32,8 @@ class TrainingEvaluation extends Model
     }
 
     public function evaluation()
-{
-    return $this->hasOne(\App\Models\TrainingEvaluation::class);
-}
+    {
+        return $this->hasOne(\App\Models\TrainingEvaluation::class);
+    }
 
 }
