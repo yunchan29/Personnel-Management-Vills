@@ -8,6 +8,16 @@ document.addEventListener('alpine:init', () => {
         showProfile: false,
         activeProfileId: null,
 
+        selectedApplicantId: null,
+        selectedApplicantName: '',
+
+        applicants: [],
+        removedApplicants: [],
+        selectedApplicants: [],
+        feedbackMessage: '',
+        feedbackVisible: false,
+        showAll: false,
+
         showStatusModal: false,
         statusAction: '',
         selectedApplicant: null,
@@ -24,9 +34,7 @@ document.addEventListener('alpine:init', () => {
 
         originalNormalizedDT: '',
 
-        showTrainingModal: false,
-        trainingApplicant: null,
-        trainingPicker: null,
+
 
         // 🟢 Training schedule defaults
         trainingStartHour: '',
@@ -42,18 +50,9 @@ document.addEventListener('alpine:init', () => {
         originalTrainingTimeEnd: '',
         originalTrainingLocation: '',
 
-
-        // 🟢 Applicant name/id defaults so bindings won’t error
-        selectedApplicantId: null,
-        selectedApplicantName: '',
-
-        applicants: [],
-        removedApplicants: [],
-        selectedApplicants: [],
-        feedbackMessage: '',
-        feedbackVisible: false,
-        showAll: false,
-
+        showTrainingModal: false,
+        trainingApplicant: null,
+        trainingPicker: null,
 
         // Convert interview set time to 12-hour format
         to24h(hour12, period) {
@@ -125,58 +124,58 @@ document.addEventListener('alpine:init', () => {
             return this.applicants.filter(applicant => this.showAll || !applicant.training);
         },
 
-        // Master checkbox visual states (scoped)
+        // Master checkbox visual states 
         getLocalCheckboxes(checkboxClass = '.applicant-checkbox') {
             return Array.from(this.$root.querySelectorAll(checkboxClass));
         },
 
-toggleSelectAll(event) {
-    const masterChecked = event.target.checked;
+        // Checkbox function
+        toggleSelectAll(event) {
+            const masterChecked = event.target.checked;
 
-    // Get all non-disabled checkboxes in table
-    const checkboxes = document.querySelectorAll('.applicant-checkbox:not(:disabled)');
+            // Get all non-disabled checkboxes in table
+            const checkboxes = document.querySelectorAll('.applicant-checkbox:not(:disabled)');
 
-    if (masterChecked) {
-        // Add all to selectedApplicants
-        this.selectedApplicants = [...checkboxes].map(cb => JSON.parse(cb.value));
-    } else {
-        // Clear all
-        this.selectedApplicants = [];
-    }
+            if (masterChecked) {
+                // Add all to selectedApplicants
+                this.selectedApplicants = [...checkboxes].map(cb => JSON.parse(cb.value));
+            } else {
+                // Clear all
+                this.selectedApplicants = [];
+            }
 
-    this.$nextTick(() => this.syncMasterCheckbox());
-},
+            this.$nextTick(() => this.syncMasterCheckbox());
+        },
 
-updateMasterCheckbox() {
-    const master = this.$refs.masterCheckbox;
-    if (!master) return;
+        updateMasterCheckbox() {
+            const master = this.$refs.masterCheckbox;
+            if (!master) return;
 
-    if (this.selectedApplicants.length === 0) {
-        master.indeterminate = false;
-        master.checked = false;
-    } else if (this.selectedApplicants.length === this.applicants.length) {
-        master.indeterminate = false;
-        master.checked = true;
-    } else {
-        master.indeterminate = true;
-        master.checked = false;
-    }
-},
+            if (this.selectedApplicants.length === 0) {
+                master.indeterminate = false;
+                master.checked = false;
+            } else if (this.selectedApplicants.length === this.applicants.length) {
+                master.indeterminate = false;
+                master.checked = true;
+            } else {
+                master.indeterminate = true;
+                master.checked = false;
+            }
+        },
 
-        // Individual checkbox click
-toggleItem(event, id) {
-    const checked = event.target.checked;
-    const value = JSON.parse(event.target.value);
+                // Individual checkbox click
+        toggleItem(event, id) {
+            const checked = event.target.checked;
+            const value = JSON.parse(event.target.value);
 
-    if (checked) {
-        this.selectedApplicants.push(value);
-    } else {
-        this.selectedApplicants = this.selectedApplicants.filter(a => a.application_id !== id && a.id !== id);
-    }
+            if (checked) {
+                this.selectedApplicants.push(value);
+            } else {
+                this.selectedApplicants = this.selectedApplicants.filter(a => a.application_id !== id && a.id !== id);
+            }
 
-    this.updateMasterCheckbox(); // 👈 dito na siya
-},
-
+            this.updateMasterCheckbox(); // 👈 dito na siya
+        },
 
         // 🔹 Helper for master checkbox visual state
         isAllSelected() {

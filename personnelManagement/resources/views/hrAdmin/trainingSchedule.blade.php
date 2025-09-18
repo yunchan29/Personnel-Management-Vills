@@ -22,15 +22,14 @@
         <table class="min-w-full text-sm text-left text-gray-700">
             <thead class="border-b font-semibold bg-gray-50">
                 <tr>
-<th class="py-3 px-4">
-  <input 
-    type="checkbox" 
-    x-ref="masterCheckbox"
-    @change="toggleSelectAll($event)"
-    :checked="selectedApplicants.length === applicants.length && applicants.length > 0"
-  >
-</th>
-
+                    <th class="py-3 px-4">
+                    <input 
+                        type="checkbox" 
+                        x-ref="masterCheckbox"
+                        @change="toggleSelectAll($event)"
+                        :checked="selectedApplicants.length === applicants.length && applicants.length > 0"
+                    >
+                    </th>
                     <th class="py-3 px-4">Name</th>
                     <th class="py-3 px-4">Position</th>
                     <th class="py-3 px-4">Company</th>
@@ -65,24 +64,22 @@
                             class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out"
                         >
 
-<td class="py-3 px-4">
-  <input 
-    type="checkbox"
-    class="applicant-checkbox"
-    :value="JSON.stringify({
-        application_id: {{ $application->id }},
-        user_id: {{ $application->user_id }},
-        name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
-        has_schedule: {{ $application->interview ? 'true' : 'false' }},
-        has_training: {{ $application->trainingSchedule ? 'true' : 'false' }}
-    })"
-    :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
-    :disabled="{{ $application->trainingSchedule ? 'true' : 'false' }}"
-    @change="toggleItem($event, {{ $application->id }}); updateMasterCheckbox()"
-  />
-</td>
-
-
+                        <td class="py-3 px-4">
+                        <input 
+                            type="checkbox"
+                            class="applicant-checkbox"
+                            :value="JSON.stringify({
+                                application_id: {{ $application->id }},
+                                user_id: {{ $application->user_id }},
+                                name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+                                has_schedule: {{ $application->interview ? 'true' : 'false' }},
+                                has_training: {{ $application->trainingSchedule ? 'true' : 'false' }}
+                            })"
+                            :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
+                            :disabled="{{ $application->trainingSchedule ? 'true' : 'false' }}"
+                            @change="toggleItem($event, {{ $application->id }}); updateMasterCheckbox()"
+                        />
+                        </td>
 
                         <!-- Name -->
                         <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
