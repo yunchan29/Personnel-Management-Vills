@@ -34,6 +34,7 @@ document.addEventListener('alpine:init', () => {
         trainingEndHour: '',
         trainingEndPeriod: '',
         trainingLocation: '',
+        trainingMode: 'single',
 
         // originals to compare later
         originalTrainingDateRange: '',
@@ -124,44 +125,69 @@ document.addEventListener('alpine:init', () => {
             return this.applicants.filter(applicant => this.showAll || !applicant.training);
         },
 
-        getLocalCheckboxes() {
-            return Array.from(this.$el.querySelectorAll('.applicant-checkbox'));
+        // Master checkbox visual states (scoped)
+        getLocalCheckboxes(checkboxClass = '.applicant-checkbox') {
+            return Array.from(this.$root.querySelectorAll(checkboxClass));
         },
 
-        // 🔹 Toggle master checkbox
-        toggleSelectAll(event, checkboxClass = '.applicant-checkbox', arrayName = 'selectedApplicants') {
-            const checked = event.target.checked;
-            const checkboxes = Array.from(document.querySelectorAll(checkboxClass))
-                .filter(cb => cb.closest('[x-data]') === event.target.closest('[x-data]')); // 🔹 only in THIS component
+toggleSelectAll(event) {
+    const masterChecked = event.target.checked;
 
-            if (checked) {
-                this[arrayName] = checkboxes.map(cb => JSON.parse(cb.value)); // ✅ always full object
-            } else {
-                this[arrayName] = [];
-            }
-        },
+    // Get all non-disabled checkboxes in table
+    const checkboxes = document.querySelectorAll('.applicant-checkbox:not(:disabled)');
 
-        toggleItem(event, id, arrayName = 'selectedApplicants') {
-            const value = JSON.parse(event.target.value);
-            const index = this[arrayName].findIndex(a => a.application_id === value.application_id);
+    if (masterChecked) {
+        // Add all to selectedApplicants
+        this.selectedApplicants = [...checkboxes].map(cb => JSON.parse(cb.value));
+    } else {
+        // Clear all
+        this.selectedApplicants = [];
+    }
 
-            if (event.target.checked && index === -1) {
-                this[arrayName].push(value);
-            } else if (!event.target.checked && index !== -1) {
-                this[arrayName].splice(index, 1);
-            }
-        },
+    this.$nextTick(() => this.syncMasterCheckbox());
+},
+
+updateMasterCheckbox() {
+    const master = this.$refs.masterCheckbox;
+    if (!master) return;
+
+    if (this.selectedApplicants.length === 0) {
+        master.indeterminate = false;
+        master.checked = false;
+    } else if (this.selectedApplicants.length === this.applicants.length) {
+        master.indeterminate = false;
+        master.checked = true;
+    } else {
+        master.indeterminate = true;
+        master.checked = false;
+    }
+},
+
+        // Individual checkbox click
+toggleItem(event, id) {
+    const checked = event.target.checked;
+    const value = JSON.parse(event.target.value);
+
+    if (checked) {
+        this.selectedApplicants.push(value);
+    } else {
+        this.selectedApplicants = this.selectedApplicants.filter(a => a.application_id !== id && a.id !== id);
+    }
+
+    this.updateMasterCheckbox(); // 👈 dito na siya
+},
+
 
         // 🔹 Helper for master checkbox visual state
-        isAllSelected(arrayName = 'selectedApplicants') {
-            return this[arrayName].length > 0 &&
-                   this[arrayName].length === this.getLocalCheckboxes().length;
+        isAllSelected() {
+            return this.selectedApplicants.length > 0 &&
+                   this.selectedApplicants.length === this.$root.querySelectorAll('.applicant-checkbox').length;
         },
 
-        isIndeterminate(arrayName = 'selectedApplicants') {
-            const len = this[arrayName].length;
-            const total = this.getLocalCheckboxes().length;
-            return len > 0 && len < total;
+        isIndeterminate() {
+            const total = this.$root.querySelectorAll('.applicant-checkbox').length;
+            return this.selectedApplicants.length > 0 &&
+                   this.selectedApplicants.length < total;
         },
 
         // For maramihag pass/fail sa interview modal
@@ -317,6 +343,66 @@ document.addEventListener('alpine:init', () => {
             this.statusAction = action;
             this.selectedApplicant = { id, name, status: action };
             this.showStatusModal = true;
+        },
+
+        async submitStatusChange() {
+            this.loading = true;
+            try {
+                const response = await fetch(`/hrAdmin/applications/${this.selectedApplicant.id}/status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ status: this.statusAction })
+                });
+
+                if (!response.ok) throw new Error('Failed to update status');
+                const result = await response.json();
+
+                // Update DOM row attribute
+                const row = document.querySelector(`tr[data-applicant-id='${result.application_id}']`);
+                if (row) row.setAttribute('data-status', this.statusAction);
+
+                // Update Alpine/JS array
+                const index = this.applicants.findIndex(a => a.id === result.application_id);
+                if (index !== -1) {
+                    this.applicants[index].status = this.statusAction;
+                    this.applicants = [...this.applicants];
+                }
+
+                // Human-friendly labels
+                const statusLabels = {
+                    interviewed: "marked as interviewed",
+                    declined: "declined",
+                    trained: "marked as trained",
+                    fail_interview: "marked as failed in interview",
+                    hired: "hired"
+                };
+                const label = statusLabels[this.statusAction] || this.statusAction;
+
+                this.feedbackMessage = `Applicant ${label} successfully.`;
+                this.feedbackVisible = true;
+
+                // Auto-hide after 2.5s
+                setTimeout(() => {
+                    this.feedbackVisible = false;
+                    // optional: location.reload();
+                }, 2500);
+
+                if (['interviewed', 'declined', 'trained', 'fail_interview'].includes(this.statusAction)) {
+                    setTimeout(() => this.removedApplicants.push(result.application_id), 300);
+                }
+
+                this.selectedApplicant = null;
+                this.statusAction = '';
+                this.showStatusModal = false;
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                this.loading = false;
+            }
         },
 
         async submitBulkStatusChange() {
@@ -524,9 +610,68 @@ document.addEventListener('alpine:init', () => {
             return response.json();
         },
 
-        openSetTraining(applicantId, fullName, range = '', schedule = null) {
-            this.selectedApplicantId = applicantId;
-            this.selectedApplicantName = fullName;
+        bulkSetTraining() {
+            if (!this.selectedApplicants.length) {
+                Swal.fire("No applicants selected", "", "warning");
+                return;
+            }
+
+            const unscheduled = this.selectedApplicants.filter(id => {
+                const app = this.applicants.find(a => a.id === id);
+                return !app?.training; // has no training
+            });
+
+            const alreadyScheduled = this.selectedApplicants.filter(id => {
+                const app = this.applicants.find(a => a.id === id);
+                return !!app?.training; // has training
+            });
+
+            if (alreadyScheduled.length > 0) {
+                return Swal.fire({
+                    icon: "error",
+                    title: "Invalid Selection",
+                    text: "All selected applicants must have no training yet to proceed with Set Training."
+                });
+            }
+
+            // ✅ proceed to bulk set training
+            this.openSetTraining(null, null, '', null, 'bulk');
+        },
+
+        bulkReschedTraining() {
+            if (!this.selectedApplicants.length) {
+                Swal.fire("No applicants selected", "", "warning");
+                return;
+            }
+
+            const unscheduled = this.selectedApplicants.filter(id => {
+                const app = this.applicants.find(a => a.id === id);
+                return !app?.training;
+            });
+
+            if (unscheduled.length > 0) {
+                return Swal.fire({
+                    icon: "error",
+                    title: "Invalid Selection",
+                    text: "All selected applicants must already have training scheduled to proceed with Reschedule."
+                });
+            }
+
+            // ✅ proceed to bulk resched training
+            this.openSetTraining(null, null, '', null, 'bulk');
+        },
+
+        openSetTraining(applicantId = null, fullName = '', range = '', schedule = null, mode = 'single') {
+            this.trainingMode = mode;
+
+            if(mode === 'single'){
+                this.selectedApplicantId = applicantId;
+                this.selectedApplicantName = fullName;
+            } else{
+                this.selectedApplicantId = null;
+                this.selectedApplicantName = `${this.selectedApplicants.length} applicants`;
+            }
+
 
             // --- normalize date range
             this.selectedTrainingDateRange = '';
@@ -603,6 +748,14 @@ document.addEventListener('alpine:init', () => {
                     });
                 }
             });
+        },
+
+        openBulkSetTraining() {
+            if (!this.selectedApplicants.length) {
+                Swal.fire("No applicants selected", "", "warning");
+                return;
+            }
+            this.openSetTraining(null, null, '', null, 'bulk');
         },
 
         async submitTrainingSchedule() {
@@ -693,53 +846,32 @@ document.addEventListener('alpine:init', () => {
             // -------------------------------
             const proceed = async () => {
                 try {
-                    const response = await fetch(`/hrAdmin/training-schedule/${this.selectedApplicantId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        },
-                        body: JSON.stringify({
-                            start_date : newStartStr,
-                            end_date   : newEndStr,
-                            start_time : this.formatTime(trainingTimeStart),
-                            end_time   : this.formatTime(trainingTimeEnd),
-                            location   : trainingLocation
-                        })
-                    });
-
-                    if (!response.ok) throw new Error('Failed to set training schedule');
-                    const result = await response.json();
-
-                    // update DOM row
-                    const row = document.querySelector(`tr[data-applicant-id='${this.selectedApplicantId}']`);
-                    if (row) {
-                        row.setAttribute('data-training-range', selectedRange);
-                        row.setAttribute('data-training-time', `${trainingTimeStart} - ${trainingTimeEnd}`);
-                        row.setAttribute('data-training-location', trainingLocation);
+                    if (this.trainingMode === 'single') {
+                        await this.saveTrainingForApplicant(this.selectedApplicantId, {
+                            start_date: newStartStr,
+                            end_date: newEndStr,
+                            start_time: this.formatTime(trainingTimeStart),
+                            end_time: this.formatTime(trainingTimeEnd),
+                            location: trainingLocation
+                        });
+                    } else if (this.trainingMode === 'bulk') {
+                        for (let applicantId of this.selectedApplicants) {
+                            await this.saveTrainingForApplicant(applicantId, {
+                                start_date: newStartStr,
+                                end_date: newEndStr,
+                                start_time: this.formatTime(trainingTimeStart),
+                                end_time: this.formatTime(trainingTimeEnd),
+                                location: trainingLocation
+                            });
+                        }
                     }
 
-                    // update reactive applicants list
-                    const index = this.applicants.findIndex(a => a.id === this.selectedApplicantId);
-                    if (index !== -1) {
-                        this.applicants[index] = {
-                            ...this.applicants[index],
-                            training: selectedRange,
-                            training_time: `${trainingTimeStart} - ${trainingTimeEnd}`,
-                            training_location: trainingLocation,
-                            status: 'scheduled_for_training'
-                        };
-                        this.applicants = [...this.applicants];
-                    }
-
-                    // ✅ Show toast for both first-time and reschedule
-                    this.feedbackMessage = result.message || 'Training schedule saved successfully!';
+                    this.feedbackMessage = 'Training schedule saved successfully!';
                     this.feedbackVisible = true;
                     this.showTrainingModal = false;
 
-                    // let toast display first, then reload
-                    setTimeout(() => this.feedbackVisible = false, 3000); // hide after 3s
-                    setTimeout(() => location.reload(), 3500); // reload after toast fades out
+                    setTimeout(() => this.feedbackVisible = false, 3000);
+                    setTimeout(() => location.reload(), 3500);
 
                 } catch (error) {
                     alert('Error: ' + error.message);
@@ -774,6 +906,19 @@ document.addEventListener('alpine:init', () => {
             } else {
                 proceed();
             }
+        },
+
+        async saveTrainingForApplicant(applicantId, payload) {
+            const response = await fetch(`/hrAdmin/training-schedule/${applicantId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error('Failed to set training schedule');
+            return await response.json();
         },
 
     }));

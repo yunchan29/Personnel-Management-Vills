@@ -2,12 +2,35 @@
 
     <!-- Applicants Table -->
     <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg">
+
+        <button 
+            @click="bulkSetTraining"
+            :disabled="selectedApplicants.length <= 1"
+            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+        Set Training
+        </button>
+
+        <button 
+            @click="bulkReschedTraining"
+            :disabled="selectedApplicants.length <= 1"
+            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+        Resched Training
+        </button>
+
         <table class="min-w-full text-sm text-left text-gray-700">
             <thead class="border-b font-semibold bg-gray-50">
                 <tr>
-                    <th class="py-3 px-4">
-                        <input type="checkbox" @click="toggleSelectAll($event)">
-                    </th>
+<th class="py-3 px-4">
+  <input 
+    type="checkbox" 
+    x-ref="masterCheckbox"
+    @change="toggleSelectAll($event)"
+    :checked="selectedApplicants.length === applicants.length && applicants.length > 0"
+  >
+</th>
+
                     <th class="py-3 px-4">Name</th>
                     <th class="py-3 px-4">Position</th>
                     <th class="py-3 px-4">Company</th>
@@ -31,20 +54,35 @@
                         }
                     @endphp
 
-                    <tr
-                        data-applicant-id="{{ $application->id }}"
-                        data-status="{{ $application->status }}"
-                        data-training-range="{{ $trainingRange }}"
-                        x-cloak
-                        x-show="(showAll || '{{ $application->training_schedule }}' === '') 
-                                && ['interviewed', 'scheduled_for_training'].includes('{{ $application->status }}') 
-                                && !removedApplicants.includes({{ $application->id }})"
-                        class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out"
-                    >
+                        <tr
+                            data-applicant-id="{{ $application->id }}"
+                            data-status="{{ $application->status }}"
+                            data-training-range="{{ $trainingRange }}"
+                            x-cloak
+                            x-show="(showAll || '{{ $application->training_schedule }}' === '') 
+                                    && ['interviewed', 'scheduled_for_training'].includes('{{ $application->status }}') 
+                                    && !removedApplicants.includes({{ $application->id }})"
+                            class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out"
+                        >
 
-                        <td class="py-3 px-4">
-                        <input type="checkbox" value="{{ $application->id }}" x-model="selectedApplicants">
-                        </td>
+<td class="py-3 px-4">
+  <input 
+    type="checkbox"
+    class="applicant-checkbox"
+    :value="JSON.stringify({
+        application_id: {{ $application->id }},
+        user_id: {{ $application->user_id }},
+        name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+        has_schedule: {{ $application->interview ? 'true' : 'false' }},
+        has_training: {{ $application->trainingSchedule ? 'true' : 'false' }}
+    })"
+    :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
+    :disabled="{{ $application->trainingSchedule ? 'true' : 'false' }}"
+    @change="toggleItem($event, {{ $application->id }}); updateMasterCheckbox()"
+  />
+</td>
+
+
 
                         <!-- Name -->
                         <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">

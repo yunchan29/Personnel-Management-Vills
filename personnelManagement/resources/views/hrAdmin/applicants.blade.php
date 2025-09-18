@@ -141,9 +141,14 @@
         <table class="min-w-full text-sm text-left text-gray-700">
             <thead class="border-b font-semibold bg-gray-50">
                 <tr>
-                    <th class="py-3 px-4">
-                        <input type="checkbox" @click="toggleSelectAll($event)">
-                    </th>
+<th class="py-3 px-4">
+  <input 
+    type="checkbox" 
+    x-ref="masterCheckbox"
+    @change="toggleSelectAll($event)"
+    :checked="selectedApplicants.length === applicants.length && applicants.length > 0"
+  >
+</th>
                     <th class="py-3 px-4">Name</th>
                     <th class="py-3 px-4">Position</th>
                     <th class="py-3 px-4">Company</th>
@@ -167,14 +172,26 @@
                         x-transition:leave-end="opacity-0 scale-95"
                         @applicant-approved.window="if ($event.detail.id === {{ $application->id }}) removedApplicants.push({{ $application->id }})"
                         class="border-b hover:bg-gray-50"
-                    >            
-                        <td class="py-3 px-4">
-                           <input type="checkbox"
-                            class="applicant-checkbox"
-                            :value="JSON.stringify({ id: {{ $application->id }}, name: '{{ $application->user->first_name }}' })"
-                            :checked="selectedApplicants.some(a => a.id === {{ $application->id }})"
-                            @change="toggleItem($event, {{ $application->id }})">
-                        </td>
+                    >    
+
+<td class="py-3 px-4">
+  <input 
+    type="checkbox"
+    class="applicant-checkbox"
+    :value="JSON.stringify({
+        application_id: {{ $application->id }},
+        user_id: {{ $application->user_id }},
+        name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+        has_schedule: {{ $application->interview ? 'true' : 'false' }},
+        has_training: {{ $application->trainingSchedule ? 'true' : 'false' }}
+    })"
+    :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
+    :disabled="{{ $application->trainingSchedule ? 'true' : 'false' }}"
+    @change="toggleItem($event, {{ $application->id }})"
+  />
+</td>
+
+
 
                         <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
                             <span class="inline-block w-3 h-3 rounded-full {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}"></span>

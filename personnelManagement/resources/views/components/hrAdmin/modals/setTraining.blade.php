@@ -1,5 +1,3 @@
-
-
 <div 
     x-show="showTrainingModal" 
     x-transition.opacity 
@@ -12,27 +10,28 @@
             @click="showTrainingModal = false" 
             class="absolute top-3 right-4 text-gray-400 hover:text-red-500 text-2xl font-bold"
             aria-label="Close"
-        >
-            &times;
-        </button>
+        >&times;</button>
 
         <!-- Modal Title -->
-        <h2 class="text-xl font-bold text-[#BD6F22] mb-2">Set Training Schedule</h2>
+        <h2 class="text-xl font-bold text-[#BD6F22] mb-2"
+            x-text="trainingMode === 'bulk' ? 'Set Training Schedule (Bulk)' : 'Set Training Schedule'"></h2>
 
-        <!-- Applicant Name -->
+        <!-- Applicant(s) Info -->
         <p class="text-sm text-gray-600 mb-5">
-            Setting schedule for: 
-            <span class="font-medium text-gray-800" x-text="selectedApplicantName || 'Applicant'"></span>
+            <template x-if="trainingMode === 'single'">
+                <span>Setting schedule for: <span class="font-medium text-gray-800" x-text="selectedApplicantName"></span></span>
+            </template>
+            <template x-if="trainingMode === 'bulk'">
+                <span>Setting schedule for <span class="font-medium text-gray-800" x-text="selectedApplicants.length"></span> applicants</span>
+            </template>
         </p>
 
         <!-- Date Range Input -->
         <div class="mb-5">
-            <label for="training_schedule" class="block font-medium text-sm text-gray-700">Training Schedule:</label>
+            <label class="block font-medium text-sm text-gray-700">Training Schedule:</label>
             <input
                 type="text"
                 x-ref="trainingDateRange"
-                id="training_schedule"
-                name="training_schedule"
                 class="form-input rounded-md shadow-sm mt-1 block w-full"
                 placeholder="MM/DD/YYYY - MM/DD/YYYY"
                 autocomplete="off"
@@ -41,10 +40,9 @@
 
         <!-- Location Input -->
         <div class="mb-5">
-            <label for="training_location" class="block font-medium text-sm text-gray-700">Location:</label>
+            <label class="block font-medium text-sm text-gray-700">Location:</label>
             <input
                 type="text"
-                id="training_location"
                 x-model="trainingLocation"
                 class="form-input rounded-md shadow-sm mt-1 block w-full"
                 placeholder="Enter training location"
@@ -55,47 +53,29 @@
         <div class="mb-5">
             <label class="block font-medium text-sm text-gray-700">Training Time</label>
             <div class="flex items-center gap-2">
-                <!-- Start Time -->
+                <!-- Start -->
                 <div class="flex items-center gap-2 w-full">
-                    <select 
-                        x-model="trainingStartHour"
-                        class="form-select rounded-md shadow-sm w-full border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                    >
+                    <select x-model="trainingStartHour" class="form-select rounded-md shadow-sm w-full">
                         <option value="" disabled selected hidden>Hour</option>
-                        <template x-for="h in 12" :key="h">
-                            <option :value="String(h)" x-text="h"></option>
-                        </template>
+                        <template x-for="h in 12" :key="h"><option :value="String(h)" x-text="h"></option></template>
                     </select>
-                    <select 
-                        x-model="trainingStartPeriod"
-                        class="form-select rounded-md shadow-sm border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                    >
+                    <select x-model="trainingStartPeriod" class="form-select rounded-md shadow-sm">
                         <option value="" disabled selected hidden>AM/PM</option>
-                        <option value="AM">AM</option>
-                        <option value="PM">PM</option>
+                        <option>AM</option>
+                        <option>PM</option>
                     </select>
                 </div>
-
                 <span class="text-gray-500">to</span>
-
-                <!-- End Time -->
+                <!-- End -->
                 <div class="flex items-center gap-2 w-full">
-                    <select 
-                        x-model="trainingEndHour"
-                        class="form-select rounded-md shadow-sm w-full border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                    >
+                    <select x-model="trainingEndHour" class="form-select rounded-md shadow-sm w-full">
                         <option value="" disabled selected hidden>Hour</option>
-                        <template x-for="h in 12" :key="h">
-                            <option :value="String(h)" x-text="h"></option>
-                        </template>
+                        <template x-for="h in 12" :key="h"><option :value="String(h)" x-text="h"></option></template>
                     </select>
-                    <select 
-                        x-model="trainingEndPeriod"
-                        class="form-select rounded-md shadow-sm border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                    >
+                    <select x-model="trainingEndPeriod" class="form-select rounded-md shadow-sm">
                         <option value="" disabled selected hidden>AM/PM</option>
-                        <option value="AM">AM</option>
-                        <option value="PM">PM</option>
+                        <option>AM</option>
+                        <option>PM</option>
                     </select>
                 </div>
             </div>
@@ -103,24 +83,16 @@
 
         <!-- Buttons -->
         <div class="flex justify-end gap-2 mt-6">
-            <button 
-                @click="showTrainingModal = false" 
-                class="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-100 transition"
-            >
-                Cancel
-            </button>
+            <button @click="showTrainingModal = false" class="px-4 py-2 text-sm rounded-lg border">Cancel</button>
             <button 
                 @click="submitTrainingSchedule"
                 :disabled="loading"
-                class="px-4 py-2 text-sm rounded bg-[#BD6F22] text-white hover:bg-[#a95e1d] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                class="px-4 py-2 text-sm rounded bg-[#BD6F22] text-white hover:bg-[#a95e1d] disabled:opacity-50 flex items-center gap-2"
             >
                 <template x-if="loading">
-                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-                        viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                            stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor"
-                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    <svg class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                     </svg>
                 </template>
                 <span x-text="loading ? 'Processing...' : 'Confirm'"></span>
