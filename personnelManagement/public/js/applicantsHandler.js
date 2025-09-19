@@ -34,8 +34,6 @@ document.addEventListener('alpine:init', () => {
 
         originalNormalizedDT: '',
 
-
-
         // 🟢 Training schedule defaults
         trainingStartHour: '',
         trainingStartPeriod: '',
@@ -124,69 +122,96 @@ document.addEventListener('alpine:init', () => {
             return this.applicants.filter(applicant => this.showAll || !applicant.training);
         },
 
-        // Master checkbox visual states 
-        getLocalCheckboxes(checkboxClass = '.applicant-checkbox') {
-            return Array.from(this.$root.querySelectorAll(checkboxClass));
+        // ✅ Helper: kunin unique ID (application_id or id)
+        getApplicantId(applicant) {
+            const id = applicant.application_id ?? applicant.id;
+            return id;
         },
 
-        // Checkbox function
+        // ✅ Kunin lahat ng local checkboxes (hindi kasama disabled)
+        getLocalCheckboxes(checkboxClass = '.applicant-checkbox:not(:disabled)') {
+            const cbs = Array.from(this.$root.querySelectorAll(checkboxClass));
+            return cbs;
+        },
+
+        // ✅ Master toggle (select all / deselect all)
         toggleSelectAll(event) {
-            const masterChecked = event.target.checked;
+            const isChecked = event.target.checked;
 
-            // Get all non-disabled checkboxes in table
-            const checkboxes = document.querySelectorAll('.applicant-checkbox:not(:disabled)');
+            // ✅ Only get visible checkboxes
+            const visibleCheckboxes = Array.from(document.querySelectorAll('.applicant-checkbox'))
+                .filter(cb => cb.offsetParent !== null); // only visible rows
 
-            if (masterChecked) {
-                // Add all to selectedApplicants
-                this.selectedApplicants = [...checkboxes].map(cb => JSON.parse(cb.value));
-            } else {
-                // Clear all
-                this.selectedApplicants = [];
+            visibleCheckboxes.forEach(cb => {
+                cb.checked = isChecked;
+
+                const data = JSON.parse(cb.value);
+                if (isChecked) {
+                    if (!this.selectedApplicants.some(a => a.application_id === data.application_id)) {
+                        this.selectedApplicants.push(data);
+                    }
+                } else {
+                    this.selectedApplicants = this.selectedApplicants.filter(a => a.application_id !== data.application_id);
+                }
+            });
+        },
+
+        // ✅ Update master checkbox state (per component)
+        updateMasterCheckbox() {
+            const master = this.$root.querySelector('[x-ref="masterCheckbox"]');
+            if (!master) {
+                console.warn('[updateMasterCheckbox] no master checkbox found in this component');
+                return;
             }
 
-            this.$nextTick(() => this.syncMasterCheckbox());
-        },
+            const total = this.getLocalCheckboxes().length;
+            const selected = this.selectedApplicants.length;
 
-        updateMasterCheckbox() {
-            const master = this.$refs.masterCheckbox;
-            if (!master) return;
+            master.indeterminate = false;
+            master.checked = false;
 
-            if (this.selectedApplicants.length === 0) {
-                master.indeterminate = false;
-                master.checked = false;
-            } else if (this.selectedApplicants.length === this.applicants.length) {
-                master.indeterminate = false;
+            if (selected === 0) {
+                return;
+            }
+            if (selected === total) {
                 master.checked = true;
             } else {
                 master.indeterminate = true;
-                master.checked = false;
             }
         },
 
-                // Individual checkbox click
+        // ✅ Toggle single item
         toggleItem(event, id) {
             const checked = event.target.checked;
             const value = JSON.parse(event.target.value);
+            const applicantId = this.getApplicantId(value);
 
             if (checked) {
-                this.selectedApplicants.push(value);
+                if (!this.selectedApplicants.some(a => this.getApplicantId(a) === applicantId)) {
+                    this.selectedApplicants.push(value);  
+                }
             } else {
-                this.selectedApplicants = this.selectedApplicants.filter(a => a.application_id !== id && a.id !== id);
+                this.selectedApplicants = this.selectedApplicants.filter(
+                    a => this.getApplicantId(a) !== applicantId
+                );
             }
 
-            this.updateMasterCheckbox(); // 👈 dito na siya
+            this.updateMasterCheckbox();
         },
 
-        // 🔹 Helper for master checkbox visual state
+        // ✅ Derived states
         isAllSelected() {
-            return this.selectedApplicants.length > 0 &&
-                   this.selectedApplicants.length === this.$root.querySelectorAll('.applicant-checkbox').length;
+            const total = this.getLocalCheckboxes().length;
+            const result = this.selectedApplicants.length > 0 &&
+                        this.selectedApplicants.length === total;
+            return result;
         },
 
         isIndeterminate() {
-            const total = this.$root.querySelectorAll('.applicant-checkbox').length;
-            return this.selectedApplicants.length > 0 &&
-                   this.selectedApplicants.length < total;
+            const total = this.getLocalCheckboxes().length;
+            const result = this.selectedApplicants.length > 0 &&
+                        this.selectedApplicants.length < total;
+            return result;
         },
 
         // For maramihag pass/fail sa interview modal
@@ -405,15 +430,25 @@ document.addEventListener('alpine:init', () => {
         },
 
         async submitBulkStatusChange() {
+            console.log("🚀 [submitBulkStatusChange] triggered");
+
             if (!this.selectedApplicants.length) {
+                console.warn("⚠️ No applicants selected");
                 Swal.fire("No applicants selected", "", "warning");
                 return;
             }
 
-            // ✅ Check kung lahat may interview_date (o interview set field)
-            const withoutInterview = this.selectedApplicants.filter(app => !app.interview_date);
+            console.log("📌 Selected Applicants:", this.selectedApplicants);
+
+            // ✅ Validation using has_schedule instead of interview_date
+            const withoutInterview = this.selectedApplicants.filter(app => !app.has_schedule);
+            const withInterview = this.selectedApplicants.filter(app => app.has_schedule);
+
+            console.log("❌ Applicants without interview:", withoutInterview);
+            console.log("✅ Applicants with interview:", withInterview);
 
             if (withoutInterview.length > 0) {
+                console.warn("⚠️ Validation failed - Some applicants missing interview");
                 Swal.fire({
                     icon: "warning",
                     title: "Some applicants have no interview set",
@@ -423,9 +458,11 @@ document.addEventListener('alpine:init', () => {
             }
 
             this.loading = true;
+            console.log("⏳ Sending bulk status request...");
 
             // extract application_id lang
             const ids = this.selectedApplicants.map(app => app.application_id);
+            console.log("📤 IDs to update:", ids, "→ Status:", this.bulkStatusAction);
 
             fetch('/hrAdmin/applications/bulk-status', {
                 method: 'POST',
@@ -440,6 +477,7 @@ document.addEventListener('alpine:init', () => {
             })
             .then(response => response.json())
             .then(res => {
+                console.log("✅ Server response:", res);
                 if (res.success) {
                     this.feedbackMessage = res.message || `Applicants ${this.bulkStatusAction} successfully.`;
                     this.feedbackVisible = true;
@@ -456,15 +494,16 @@ document.addEventListener('alpine:init', () => {
                 }
             })
             .catch(err => {
-                console.error(err);
+                console.error("❌ Request failed:", err);
                 Swal.fire("Error", "Request failed", "error");
             })
             .finally(() => {
                 this.loading = false;
+                console.log("✅ Bulk status request finished");
             });
         },
 
-        // ---- open for single applicant
+        // open for single applicant
         openSetInterview(applicationId, name, userId, scheduledAt = '') {
             this.interviewMode = 'single';
             this.interviewApplicant = { application_id: applicationId, user_id: userId, name };
@@ -488,7 +527,7 @@ document.addEventListener('alpine:init', () => {
             this.showInterviewModal = true;
         },
 
-        // ---- open for bulk (just passes selectedApplicants)
+        // open for bulk (just passes selectedApplicants)
         async openBulk(type = 'bulk') {
             if (!this.selectedApplicants.length) {
                 Swal.fire("No applicants selected", "", "warning");
@@ -530,7 +569,6 @@ document.addEventListener('alpine:init', () => {
             this.originalNormalizedDT = '';
         },
 
-        // ---- submit handles both
         async submitInterviewDate() {
         if (!this.interviewDate || !this.interviewTime || !this.interviewPeriod) {
             Swal.fire({ icon: 'warning', text: 'Select both date and time.' });
@@ -615,25 +653,22 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            const unscheduled = this.selectedApplicants.filter(id => {
-                const app = this.applicants.find(a => a.id === id);
-                return !app?.training; // has no training
-            });
+            const selectedBoxes = Array.from(document.querySelectorAll('.applicant-checkbox:checked'));
 
-            const alreadyScheduled = this.selectedApplicants.filter(id => {
-                const app = this.applicants.find(a => a.id === id);
-                return !!app?.training; // has training
-            });
+            // Applicants na may training na
+            const alreadyScheduled = selectedBoxes.filter(cb => cb.dataset.hasTraining === "1");
 
             if (alreadyScheduled.length > 0) {
+                const names = alreadyScheduled.map(cb => JSON.parse(cb.value).name).join('<br>');
+
                 return Swal.fire({
                     icon: "error",
                     title: "Invalid Selection",
-                    text: "All selected applicants must have no training yet to proceed with Set Training."
+                    html: `You cannot set training for applicants who already have a schedule:<br><br><strong>${names}</strong>`
                 });
             }
 
-            // ✅ proceed to bulk set training
+            // ✅ lahat walang training, proceed
             this.openSetTraining(null, null, '', null, 'bulk');
         },
 
@@ -643,20 +678,22 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            const unscheduled = this.selectedApplicants.filter(id => {
-                const app = this.applicants.find(a => a.id === id);
-                return !app?.training;
-            });
+            const selectedBoxes = Array.from(document.querySelectorAll('.applicant-checkbox:checked'));
+
+            // Applicants na wala pang training
+            const unscheduled = selectedBoxes.filter(cb => cb.dataset.hasTraining === "0");
 
             if (unscheduled.length > 0) {
+                const names = unscheduled.map(cb => JSON.parse(cb.value).name).join('<br>');
+
                 return Swal.fire({
                     icon: "error",
                     title: "Invalid Selection",
-                    text: "All selected applicants must already have training scheduled to proceed with Reschedule."
+                    html: `You can only reschedule applicants who already have training.<br><br>These applicants have none:<br><strong>${names}</strong>`
                 });
             }
 
-            // ✅ proceed to bulk resched training
+            // ✅ lahat may training, proceed
             this.openSetTraining(null, null, '', null, 'bulk');
         },
 
@@ -846,6 +883,7 @@ document.addEventListener('alpine:init', () => {
             const proceed = async () => {
                 try {
                     if (this.trainingMode === 'single') {
+                        // ✅ Single applicant
                         await this.saveTrainingForApplicant(this.selectedApplicantId, {
                             start_date: newStartStr,
                             end_date: newEndStr,
@@ -854,15 +892,14 @@ document.addEventListener('alpine:init', () => {
                             location: trainingLocation
                         });
                     } else if (this.trainingMode === 'bulk') {
-                        for (let applicantId of this.selectedApplicants) {
-                            await this.saveTrainingForApplicant(applicantId, {
-                                start_date: newStartStr,
-                                end_date: newEndStr,
-                                start_time: this.formatTime(trainingTimeStart),
-                                end_time: this.formatTime(trainingTimeEnd),
-                                location: trainingLocation
-                            });
-                        }
+                        // ✅ Bulk applicants
+                        await this.saveBulkTraining(this.selectedApplicants, {
+                            start_date: newStartStr,
+                            end_date: newEndStr,
+                            start_time: this.formatTime(trainingTimeStart),
+                            end_time: this.formatTime(trainingTimeEnd),
+                            location: trainingLocation
+                        });
                     }
 
                     this.feedbackMessage = 'Training schedule saved successfully!';
@@ -905,6 +942,23 @@ document.addEventListener('alpine:init', () => {
             } else {
                 proceed();
             }
+        },
+
+        async saveBulkTraining(applicantIds, payload) {
+            const response = await fetch(`/hrAdmin/training-schedule/bulk`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    applicants: applicantIds,
+                    ...payload
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to bulk set training schedule');
+            return await response.json();
         },
 
         async saveTrainingForApplicant(applicantId, payload) {

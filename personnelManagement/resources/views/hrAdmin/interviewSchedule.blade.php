@@ -33,13 +33,14 @@
       <thead class="border-b font-semibold bg-gray-50">
         <tr>
 <th class="py-3 px-4">
-  <input 
-    type="checkbox" 
-    x-ref="masterCheckbox"
-    @change="toggleSelectAll($event)"
-    :checked="selectedApplicants.length === applicants.length && applicants.length > 0"
-  >
+<input 
+  type="checkbox" 
+  x-ref="masterCheckbox"
+  @change="toggleSelectAll($event)"
+>
+
 </th>
+
 
           <th class="py-3 px-4">Name</th>
           <th class="py-3 px-4">Position</th>
@@ -72,7 +73,6 @@
         user_id: {{ $application->user_id }},
         name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
         has_schedule: {{ $application->interview ? 'true' : 'false' }},
-        has_training: {{ $application->trainingSchedule ? 'true' : 'false' }}
     })"
     :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
     :disabled="{{ $application->trainingSchedule ? 'true' : 'false' }}"

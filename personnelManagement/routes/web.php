@@ -145,6 +145,9 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function (
 
     // Training Schedule
     Route::post('/applications/{id}/training-date', [TrainingScheduleController::class, 'setTrainingDate'])->name('applications.setTrainingDate');
+    // Training Schedule
+    Route::post('/training-schedule/bulk', [TrainingScheduleController::class, 'bulkSetTraining'])->name('training.schedule.bulk');
+    
 
 
     // Job Posting CRUD

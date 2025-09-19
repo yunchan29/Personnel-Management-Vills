@@ -1,8 +1,6 @@
 <div x-data="applicantsHandler()" x-init="init()" class="relative">
-
     <!-- Applicants Table -->
     <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg">
-
         <button 
             @click="bulkSetTraining"
             :disabled="selectedApplicants.length <= 1"
@@ -23,12 +21,11 @@
             <thead class="border-b font-semibold bg-gray-50">
                 <tr>
                     <th class="py-3 px-4">
-                    <input 
+                        <input 
                         type="checkbox" 
                         x-ref="masterCheckbox"
                         @change="toggleSelectAll($event)"
-                        :checked="selectedApplicants.length === applicants.length && applicants.length > 0"
-                    >
+                        >
                     </th>
                     <th class="py-3 px-4">Name</th>
                     <th class="py-3 px-4">Position</th>
@@ -65,20 +62,20 @@
                         >
 
                         <td class="py-3 px-4">
-                        <input 
-                            type="checkbox"
-                            class="applicant-checkbox"
-                            :value="JSON.stringify({
-                                application_id: {{ $application->id }},
-                                user_id: {{ $application->user_id }},
-                                name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
-                                has_schedule: {{ $application->interview ? 'true' : 'false' }},
-                                has_training: {{ $application->trainingSchedule ? 'true' : 'false' }}
-                            })"
-                            :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
-                            :disabled="{{ $application->trainingSchedule ? 'true' : 'false' }}"
-                            @change="toggleItem($event, {{ $application->id }}); updateMasterCheckbox()"
-                        />
+                            <input 
+                                type="checkbox"
+                                class="applicant-checkbox"
+                                data-has-training="{{ $application->trainingSchedule ? 1 : 0 }}"
+                                :value="JSON.stringify({
+                                    application_id: {{ $application->id }},
+                                    user_id: {{ $application->user_id }},
+                                    name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+                                    has_training: {{ $application->trainingSchedule ? 'true' : 'false' }}
+                                })"
+                                :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
+                                @change="toggleItem($event, {{ $application->id }})"
+                            />
+
                         </td>
 
                         <!-- Name -->
@@ -165,17 +162,15 @@
     <!-- ✅ Only keep Set Training Modal -->
     @include('components.hrAdmin.modals.setTraining')
 
-</div>
-
     <!-- Resume Modal -->
     @include('components.hrAdmin.modals.resume')
 
     <!-- Set Training Modal -->
     @include('components.hrAdmin.modals.setTraining')
 
-@foreach ($applications as $application)
-    @include('components.hrAdmin.modals.profile', ['user' => $application->user])
-@endforeach
+    @foreach ($applications as $application)
+        @include('components.hrAdmin.modals.profile', ['user' => $application->user])
+    @endforeach
 
 
 

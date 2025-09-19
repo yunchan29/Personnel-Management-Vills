@@ -6,9 +6,8 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('interviews', function (Blueprint $table) {
-            // store both date and time in one column
-            $table->timestamp('scheduled_at')->nullable()->after('scheduled_by');
+        Schema::table('applications', function (Blueprint $table) {
+            $table->boolean('is_archived')->default(0);
         });
     }
 
