@@ -13,17 +13,17 @@ class ContractScheduleController extends Controller
     public function store(Request $request, $applicationId)
     {
         $request->validate([
-            'contract_signing_schedule' => 'required|date|after:now',
+            'contract_signing_schedule' => 'required|date|after_or_equal:tomorrow',
         ]);
 
         $application = Application::with('evaluation')->findOrFail($applicationId);
 
-        // Make sure applicant passed evaluation
+        // Ensure applicant passed evaluation
         if (!$application->evaluation || $application->evaluation->result !== 'passed') {
             return redirect()->back()->with('error', 'Applicant must pass training evaluation before setting a contract signing schedule.');
         }
 
-        // Save contract signing schedule directly in applications table
+        // Save schedule
         $application->update([
             'contract_signing_schedule' => $request->contract_signing_schedule,
         ]);
