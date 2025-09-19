@@ -268,7 +268,7 @@
                                 '{{ $application->status }}'
                             )"
                             class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
-                            {{ $application->status === 'approved' ? 'Disapprove (Archive)' : 'Approve' }}
+                            Approve/Dissaprove
                           </button>
 
 

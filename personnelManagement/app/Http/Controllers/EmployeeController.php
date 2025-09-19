@@ -31,7 +31,7 @@ class EmployeeController extends Controller
             'groupedEmployees' => $groupedEmployees,
         ]);
     }
-
+    // Performance Evaluation view  
 public function performanceEvaluation(Request $request)
 {
     // Jobs: must have at least one qualifying application (not archived, training schedule)
