@@ -3,7 +3,7 @@
     <div 
         x-show="requirementsOpen"
         x-cloak
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
         @click.self="closeRequirements()"
         x-data="{
             requiredDocs: [
@@ -18,7 +18,8 @@
             }
         }"
     >
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl p-6 relative">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl sm:max-w-lg md:max-w-2xl lg:max-w-3xl px-4 sm:px-6 py-6 relative max-h-[90vh] overflow-y-auto">
+            
             <!-- Close button -->
             <button 
                 @click="closeRequirements()" 
@@ -28,12 +29,12 @@
             </button>
 
             <!-- Header -->
-            <h2 class="text-xl font-bold text-gray-800 mb-4">
+            <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-4">
                 Requirements for <span x-text="requirementsApplicantName"></span>
             </h2>
 
             <!-- File201 details -->
-            <div class="grid grid-cols-2 gap-4 mb-6 bg-gray-50 p-4 rounded-lg">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 bg-gray-50 p-4 rounded-lg">
                 <template x-for="[label, value] in [
                     ['SSS Number', requirementsFile201?.sss_number ?? '—'],
                     ['PhilHealth Number', requirementsFile201?.philhealth_number ?? '—'],
@@ -42,7 +43,7 @@
                 ]" :key="label">
                     <div>
                         <label class="block text-sm font-medium text-gray-600" x-text="label"></label>
-                        <p class="text-gray-800 font-medium" x-text="value"></p>
+                        <p class="text-gray-800 font-medium break-words" x-text="value"></p>
                     </div>
                 </template>
             </div>
@@ -53,7 +54,7 @@
                 <template x-if="requirementsFile201?.licenses?.length > 0">
                     <ul class="space-y-2">
                         <template x-for="license in requirementsFile201.licenses" :key="license.number">
-                            <li class="bg-gray-50 px-3 py-2 rounded-lg">
+                            <li class="bg-gray-50 px-3 py-2 rounded-lg text-sm sm:text-base">
                                 <span class="font-medium text-[#BD6F22]" x-text="license.name"></span>
                                 - <span x-text="license.number"></span>
                                 (<span x-text="license.date"></span>)
@@ -75,26 +76,30 @@
                 <ul class="space-y-3">
                     <template x-for="doc in requiredDocs" :key="doc">
                         <li 
-                            class="flex items-center justify-between p-3 rounded-lg border"
+                            class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 rounded-lg border transition text-sm sm:text-base"
                             :class="isSubmitted(doc) 
-                                ? 'border-green-300 bg-green-50' 
-                                : 'border-red-300 bg-red-50'"
+                                ? 'border-green-300 bg-green-50 hover:bg-green-100' 
+                                : 'border-red-300 bg-red-50 hover:bg-red-100'"
                         >
-                            <div class="flex items-center space-x-2">
-                                <input 
-                                    type="checkbox" 
-                                    disabled 
-                                    :checked="isSubmitted(doc)"
-                                    class="form-checkbox h-5 w-5"
-                                    :class="isSubmitted(doc) ? 'text-green-600' : 'text-red-600'"
-                                >
+                            <!-- Document name + status -->
+                            <div class="flex flex-col mb-2 sm:mb-0">
                                 <span 
                                     x-text="doc"
+                                    class="font-medium"
                                     :class="isSubmitted(doc) 
-                                        ? 'line-through text-green-700 font-medium' 
-                                        : 'text-red-600 font-medium'"
+                                        ? 'text-green-700' 
+                                        : 'text-red-600'"
                                 ></span>
+                                <span 
+                                    class="text-xs mt-1"
+                                    :class="isSubmitted(doc) 
+                                        ? 'text-green-600 font-semibold' 
+                                        : 'text-red-500 italic'"
+                                    x-text="isSubmitted(doc) ? 'Submitted' : 'Missing'">
+                                </span>
                             </div>
+
+                            <!-- Action -->
                             <template x-if="isSubmitted(doc)">
                                 <a 
                                     :href="'/storage/' + (requirementsOtherFiles.find(f => f.type === doc)?.file_path)" 
@@ -103,9 +108,6 @@
                                 >
                                     View / Download
                                 </a>
-                            </template>
-                            <template x-if="!isSubmitted(doc)">
-                                <span class="text-xs text-red-500 italic">Missing</span>
                             </template>
                         </li>
                     </template>
