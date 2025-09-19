@@ -121,13 +121,13 @@
                 @endif
             </td>
 
-          <!-- Actions -->
+ <!-- Actions -->
 <td class="py-3 px-4 align-middle whitespace-nowrap text-left">
     <div class="flex space-x-2">
-        <!-- Evaluate / View Evaluation -->
+        <!-- Evaluate -->
         <div class="relative group">
             <button 
-                class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300"
+                class="w-10 h-10 flex items-center justify-center rounded-full bg-blue-100 hover:bg-blue-200 ring-2 ring-transparent hover:ring-blue-400 transition-all"
                 @click="openModal(
                     {{ Js::from($applicant->user->full_name) }},
                     {{ Js::from($applicant->id) }},
@@ -140,23 +140,23 @@
                     ] : null) }}
                 )"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-gray-700" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5h6M9 3h6a2 2 0 012 2v14a2 2 0 01-2 2H9a2 2 0 01-2-2V5a2 2 0 012-2z" />
                 </svg>
             </button>
-            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition">
+            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-blue-600 rounded opacity-0 group-hover:opacity-100 transition">
                 {{ $applicant->evaluation ? 'View Evaluation' : 'Evaluate' }}
             </span>
         </div>
 
         <!-- Set Schedule -->
         <div class="relative group">
-            <button class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-gray-700" fill="none" viewBox="0 0 24 24" stroke-width="2">
+            <button class="w-10 h-10 flex items-center justify-center rounded-full bg-purple-100 hover:bg-purple-200 ring-2 ring-transparent hover:ring-purple-400 transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-purple-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
             </button>
-            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition">
+            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-purple-600 rounded opacity-0 group-hover:opacity-100 transition">
                 Set Schedule
             </span>
         </div>
@@ -164,12 +164,12 @@
         <!-- Set Contract -->
         @if($applicant->status !== 'hired')
         <div class="relative group">
-            <button class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-gray-700" fill="none" viewBox="0 0 24 24" stroke-width="2">
+            <button class="w-10 h-10 flex items-center justify-center rounded-full bg-green-100 hover:bg-green-200 ring-2 ring-transparent hover:ring-green-400 transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 11h10M7 15h6m2 6H9a2 2 0 01-2-2V5a2 2 0 012-2h6l6 6v10a2 2 0 01-2 2z" />
                 </svg>
             </button>
-            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition">
+            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-green-600 rounded opacity-0 group-hover:opacity-100 transition">
                 Set Contract
             </span>
         </div>
@@ -178,7 +178,7 @@
         <!-- View Requirements -->
         <div class="relative group">
             <button 
-                class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300"
+                class="w-10 h-10 flex items-center justify-center rounded-full bg-indigo-100 hover:bg-indigo-200 ring-2 ring-transparent hover:ring-indigo-400 transition-all"
                 @click="openRequirements(
                     {{ Js::from($applicant->user->full_name) }},
                     {{ Js::from($applicant->id) }},
@@ -186,11 +186,11 @@
                     {{ Js::from($applicant->job->company_name ?? '') }}
                 )"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-gray-700" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h4l2-2h8l2 2h4v12H3V7z" />
                 </svg>
             </button>
-            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition">
+            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-indigo-600 rounded opacity-0 group-hover:opacity-100 transition">
                 View Requirements
             </span>
         </div>
@@ -202,14 +202,14 @@
             <div class="relative group">
                 <button 
                     type="button"
-                    class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300"
+                    class="w-10 h-10 flex items-center justify-center rounded-full bg-yellow-100 hover:bg-yellow-200 ring-2 ring-transparent hover:ring-yellow-400 transition-all"
                     @click="confirmPromotion($event, {{ $applicant->id }}, '{{ $applicant->user->full_name }}')"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-gray-700" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-yellow-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                     </svg>
                 </button>
-                <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition">
+                <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-yellow-600 rounded opacity-0 group-hover:opacity-100 transition">
                     Promote
                 </span>
             </div>
@@ -223,13 +223,13 @@
             <div class="relative group">
                 <button 
                     type="submit"
-                    class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300"
+                    class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 ring-2 ring-transparent hover:ring-red-400 transition-all"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-gray-700" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.75H3.75m16.5 0A2.25 2.25 0 0021 4.5H3a2.25 2.25 0 00-2.25 2.25m19.5 0v12A2.25 2.25 0 0119.5 21H4.5A2.25 2.25 0 012.25 18.75v-12m9 6h1.5" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-red-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.75H3.75M19.5 21H4.5A2.25 2.25 0 012.25 18.75v-12m19.5 0v12A2.25 2.25 0 0119.5 21zM9 12h6" />
                     </svg>
                 </button>
-                <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition">
+                <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-red-600 rounded opacity-0 group-hover:opacity-100 transition">
                     Archive
                 </span>
             </div>
@@ -237,7 +237,6 @@
         @endif
     </div>
 </td>
-
 
         </tr>
         @empty
