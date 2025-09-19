@@ -149,31 +149,96 @@
             </span>
         </div>
 
-        <!-- Set Schedule -->
-        <div class="relative group">
-            <button class="w-10 h-10 flex items-center justify-center rounded-full bg-purple-100 hover:bg-purple-200 ring-2 ring-transparent hover:ring-purple-400 transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-purple-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-            </button>
-            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-purple-600 rounded opacity-0 group-hover:opacity-100 transition">
-                Set Schedule
-            </span>
-        </div>
+      <!-- Set Schedule -->
+<div x-data="{ open: false }" class="relative group">
+    <!-- Trigger Button -->
+    <button 
+        @click="open = true" 
+        class="w-10 h-10 flex items-center justify-center rounded-full bg-green-100 hover:bg-green-200 ring-2 ring-transparent hover:ring-green-400 transition-all">
+        <!-- Calendar Icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" 
+             class="w-5 h-5 stroke-green-600" 
+             fill="none" viewBox="0 0 24 24" 
+             stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" 
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 
+                     2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 
+                     002 2z"/>
+        </svg>
+    </button>
+    <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-green-600 rounded opacity-0 group-hover:opacity-100 transition">
+        Set Schedule
+    </span>
 
-        <!-- Set Contract -->
-        @if($applicant->status !== 'hired')
-        <div class="relative group">
-            <button class="w-10 h-10 flex items-center justify-center rounded-full bg-green-100 hover:bg-green-200 ring-2 ring-transparent hover:ring-green-400 transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 11h10M7 15h6m2 6H9a2 2 0 01-2-2V5a2 2 0 012-2h6l6 6v10a2 2 0 01-2 2z" />
-                </svg>
-            </button>
-            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-green-600 rounded opacity-0 group-hover:opacity-100 transition">
-                Set Contract
-            </span>
+    <!-- Modal -->
+    <div 
+        x-show="open" 
+        x-cloak 
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+            <!-- Close button -->
+            <button @click="open = false" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">&times;</button>
+            
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">Set Contract Signing</h2>
+
+           <form action="{{ route('hrStaff.contractSchedule.store', $applicant->id) }}" 
+      method="POST" 
+      class="schedule-form">
+    @csrf
+    <label for="contract_signing_schedule" class="block text-sm font-medium text-gray-700">
+        Contract Signing Date & Time
+    </label>
+    <input 
+        type="datetime-local" 
+        id="contract_signing_schedule" 
+        name="contract_signing_schedule" 
+        value="{{ old('contract_signing_schedule', $applicant->contract_signing_schedule ? $applicant->contract_signing_schedule->format('Y-m-d\TH:i') : '') }}"
+        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm" 
+        required>
+
+    <div class="mt-6 flex justify-end space-x-2">
+        <button type="button" @click="open = false" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded">Save</button>
+    </div>
+</form>
+
+@if($applicant->contract_signing_schedule)
+    <form action="{{ route('hrStaff.contractSchedule.destroy', $applicant->id) }}" 
+          method="POST" 
+          class="remove-schedule-form mt-4">
+        @csrf
+        @method('DELETE')
+        <button type="submit" class="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded">
+            Remove Schedule
+        </button>
+    </form>
+@endif
+
         </div>
-        @endif
+    </div>
+</div>
+
+
+       <!-- Set Contract -->
+@if($applicant->status !== 'hired')
+<div class="relative group">
+    <button class="w-10 h-10 flex items-center justify-center rounded-full bg-purple-100 hover:bg-purple-200 ring-2 ring-transparent hover:ring-purple-400 transition-all">
+        <!-- Clipboard/Document Icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" 
+             class="w-5 h-5 stroke-purple-600" 
+             fill="none" viewBox="0 0 24 24" 
+             stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" 
+                  d="M9 2h6a2 2 0 012 2v2h-2V4H9v2H7V4a2 2 0 012-2zM7 8h10v12a2 2 0 01-2 
+                     2H9a2 2 0 01-2-2V8z"/>
+        </svg>
+    </button>
+    <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-purple-600 rounded opacity-0 group-hover:opacity-100 transition">
+        Set Contract
+    </span>
+</div>
+@endif
+
 
         <!-- View Requirements -->
         <div class="relative group">
@@ -237,6 +302,7 @@
         @endif
     </div>
 </td>
+
 
         </tr>
         @empty
@@ -422,6 +488,7 @@ function evaluationModal(applicants) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Archive Confirmation
     document.querySelectorAll('.archive-form').forEach(form => {
         form.addEventListener('submit', function (e) {
             e.preventDefault();
@@ -442,6 +509,49 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // Contract Schedule Save Confirmation
+    document.querySelectorAll('.schedule-form').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Set Contract Schedule?',
+                text: "Do you want to save this contract signing schedule?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#16A34A', // green
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Yes, save!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+
+    // Contract Schedule Remove Confirmation
+    document.querySelectorAll('.remove-schedule-form').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Remove Contract Schedule?',
+                text: "This will clear the applicant's contract signing schedule.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33', // red
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Yes, remove!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+
+    // Success Toast
     @if(session('success'))
         Swal.fire({
             toast: true,
@@ -455,3 +565,4 @@ document.addEventListener('DOMContentLoaded', function () {
     @endif
 });
 </script>
+

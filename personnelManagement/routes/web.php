@@ -246,7 +246,7 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function (
     Route::get('/applicants/{id}/requirements', [File201Controller::class, 'showApplicantFiles'])
         ->name('applicants.requirements');
     Route::get('/requirements/{applicant}', [File201Controller::class, 'showApplicantFiles'])
-    ->name('requirements.show');
+        ->name('requirements.show');
 
     // Evaluations - Submit Evaluation for an Applicant
     Route::post('/evaluations/{application}', [EvaluationController::class, 'store'])
@@ -274,7 +274,13 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function (
         return view('hrStaff.settings');
     })->name('settings');
 
+    // ✅ Contract Signing Schedule Routes
+    Route::post('/contract-schedule/{application}', [\App\Http\Controllers\ContractScheduleController::class, 'store'])
+        ->name('contractSchedule.store');
+    Route::delete('/contract-schedule/{application}', [\App\Http\Controllers\ContractScheduleController::class, 'destroy'])
+        ->name('contractSchedule.destroy');
 });
+
 
 
 

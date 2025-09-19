@@ -18,6 +18,7 @@ class Application extends Model
         'pagibig_number',
         'status',
         'is_archived', // ✅ for archiving
+        'contract_signing_schedule', 
     ];
 
     protected $casts = [
@@ -25,6 +26,7 @@ class Application extends Model
         'interview_schedule' => 'datetime',
         'reviewed_at' => 'datetime',
         'is_archived' => 'boolean', // ✅ for archiving
+        'contract_signing_schedule' => 'datetime',
     ];
 
     public function job()
