@@ -242,6 +242,12 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function (
     // Performance Evaluation Page
     Route::get('/perfEval', [EmployeeController::class, 'performanceEvaluation'])->name('perfEval');
 
+    // ✅ HR Staff - View Applicant Requirements (for requirementsModal in perfEval)
+    Route::get('/applicants/{id}/requirements', [File201Controller::class, 'showApplicantFiles'])
+        ->name('applicants.requirements');
+    Route::get('/requirements/{applicant}', [File201Controller::class, 'showApplicantFiles'])
+    ->name('requirements.show');
+
     // Evaluations - Submit Evaluation for an Applicant
     Route::post('/evaluations/{application}', [EvaluationController::class, 'store'])
         ->name('evaluations.store');
@@ -255,8 +261,9 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function (
 
     // Manual promotion from applicant to employee
     Route::post('/evaluation/promote/{application}', [EvaluationController::class, 'promoteApplicant'])
-    ->name('evaluation.promote');
+        ->name('evaluation.promote');
 
+    // Archive
     Route::get('/archive', [StaffArchiveController::class, 'index'])->name('archive.index');
     Route::post('/archive/{id}', [StaffArchiveController::class, 'store'])->name('archive.store');
     Route::put('/archive/{id}/restore', [StaffArchiveController::class, 'restore'])->name('archive.restore');
@@ -268,7 +275,6 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function (
     })->name('settings');
 
 });
-
 
 
 

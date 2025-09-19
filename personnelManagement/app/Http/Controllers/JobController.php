@@ -101,25 +101,25 @@ class JobController extends Controller
 {
     $job = Job::findOrFail($id);
 
-    // If expired → only require fields you allow editing
-    if ($job->apply_until < now()) {
-        $rules = [
-            'vacancies'   => 'required|integer|min:1',
-            'apply_until' => 'required|date|after_or_equal:today',
-        ];
-    } else {
-        // Normal validation for active jobs
-        $rules = [
-            'job_title'      => 'required|string|max:255',
-            'company_name'   => 'required|string|max:255',
-            'job_industry'   => 'required|string|max:255',
-            'location'       => 'required|string|max:255',
-            'vacancies'      => 'required|integer|min:1',
-            'apply_until'    => 'required|date',
-            'qualifications' => 'nullable|string',
-            'additional_info'=> 'nullable|string',
-        ];
-    }
+    if ($job->apply_until < now()->addDay()->startOfDay()) {
+    // Expired jobs → only allow limited editing
+    $rules = [
+        'vacancies'   => 'required|integer|min:1',
+        'apply_until' => 'required|date|after_or_equal:today',
+    ];
+} else {
+    // Normal validation for active jobs
+    $rules = [
+        'job_title'      => 'required|string|max:255',
+        'company_name'   => 'required|string|max:255',
+        'job_industry'   => 'required|string|max:255',
+        'location'       => 'required|string|max:255',
+        'vacancies'      => 'required|integer|min:1',
+        'apply_until'    => 'required|date',
+        'qualifications' => 'nullable|string',
+        'additional_info'=> 'nullable|string',
+    ];
+}
 
     $validated = $request->validate($rules);
 

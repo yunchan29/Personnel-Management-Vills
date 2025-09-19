@@ -1,8 +1,11 @@
 @extends('layouts.hrStaff')
 
 @section('content')
-<section class="p-6 max-w-6xl mx-auto" 
-         x-data="evaluationModal({{ $applicants }})"
+<section class="p-6 max-w-6xl mx-auto"
+         x-data="{ 
+             ...evaluationModal({{ $applicants }}), 
+             ...requirementsModal() 
+         }"
          x-init="init()">
 
     <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">Training Evaluation</h1>
@@ -64,150 +67,189 @@
 
                 <!-- Evaluation Table -->
                 <div class="overflow-x-auto px-6 pb-4">
-                    <table class="min-w-full text-sm text-left text-gray-700 align-middle">
-                        <thead class="border-b font-semibold bg-gray-50">
-                            <tr>
-                                <th class="py-3 px-4">Name</th>
-                                <th class="py-3 px-4">Job Position</th>
-                                <th class="py-3 px-4">Company</th>
-                                <th class="py-3 px-4">Status</th>
-                                <th class="py-3 px-4">Action</th>
-                                <th class="py-3 px-4">Contract</th>
-                                <th class="py-3 px-4">Promote</th>
-                                <th class="py-3 px-4">Archive</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($applicants->sortBy(fn($app) => $app->evaluation || $app->status === 'hired') as $applicant)
-                                <tr 
-                                    x-show="shouldShow('{{ $applicant->job_id }}', '{{ $applicant->status }}')"
-                                    class="border-b hover:bg-gray-50"
-                                >
-                                    <!-- Name -->
-                                    <td class="py-3 px-4 align-middle font-medium whitespace-nowrap">
-                                        {{ $applicant->user->full_name }}
-                                    </td>
+                   <table class="min-w-full text-sm text-left text-gray-700 align-middle">
+    <thead class="border-b font-semibold bg-gray-50">
+        <tr>
+            <th class="py-3 px-4">Name</th>
+            <th class="py-3 px-4">Job Position</th>
+            <th class="py-3 px-4">Company</th>
+            <th class="py-3 px-4">Status</th>
+            <th class="py-3 px-4">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @forelse ($applicants->sortBy(fn($app) => $app->evaluation || $app->status === 'hired') as $applicant)
+        <tr 
+            x-show="shouldShow('{{ $applicant->job_id }}', '{{ $applicant->status }}')"
+            class="border-b hover:bg-gray-50"
+        >
+            <!-- Name -->
+            <td class="py-3 px-4 align-middle font-medium whitespace-nowrap">
+                {{ $applicant->user->full_name }}
+            </td>
 
-                                    <!-- Job Position -->
-                                    <td class="py-3 px-4 align-middle whitespace-nowrap">
-                                        {{ $applicant->job->job_title ?? '—' }}
-                                    </td>
+            <!-- Job Position -->
+            <td class="py-3 px-4 align-middle whitespace-nowrap">
+                {{ $applicant->job->job_title ?? '—' }}
+            </td>
 
-                                    <!-- Company -->
-                                    <td class="py-3 px-4 align-middle whitespace-nowrap">
-                                        {{ $applicant->job->company_name ?? '—' }}
-                                    </td>
+            <!-- Company -->
+            <td class="py-3 px-4 align-middle whitespace-nowrap">
+                {{ $applicant->job->company_name ?? '—' }}
+            </td>
 
-                                    <!-- Status + Score -->
-                                    <td class="py-3 px-4 align-middle whitespace-nowrap">
-                                        @if($applicant->evaluation)
-                                            @php
-                                                $score = $applicant->evaluation->total_score ?? 0;
-                                            @endphp
+            <!-- Status + Score -->
+            <td class="py-3 px-4 align-middle whitespace-nowrap">
+                @if($applicant->evaluation)
+                    @php
+                        $score = $applicant->evaluation->total_score ?? 0;
+                    @endphp
 
-                                            @if($score >= 70)
-                                                <span class="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded">
-                                                    Passed ({{ $score }}/100)
-                                                </span>
-                                            @else
-                                                <span class="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded">
-                                                    Failed ({{ $score }}/100)
-                                                </span>
-                                            @endif
-                                        @else
-                                            <span class="px-2 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded">
-                                                Pending
-                                            </span>
-                                        @endif
-                                    </td>
+                    @if($score >= 70)
+                        <span class="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded">
+                            Passed ({{ $score }}/100)
+                        </span>
+                    @else
+                        <span class="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded">
+                            Failed ({{ $score }}/100)
+                        </span>
+                    @endif
+                @else
+                    <span class="px-2 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded">
+                        Pending
+                    </span>
+                @endif
+            </td>
 
-                     <!-- Action -->
-               <td class="py-3 px-4 align-middle whitespace-nowrap text-left">
-                    @if($applicant->status === 'hired')
-                        <span class="text-gray-500 font-medium italic">Already Hired</span>
-                    @elseif($applicant->evaluation)
-                            <button 
-                                class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium h-8 px-3 rounded shadow"
-                                @click="openModal(
-                                    {{ Js::from($applicant->user->full_name) }},
-                                    {{ Js::from($applicant->id) }},
-                                    true,
-                                    {{ Js::from([
-                                        'knowledge_score' => $applicant->evaluation->knowledge ?? 0,
-                                        'skill_score' => $applicant->evaluation->skill ?? 0,
-                                        'participation_score' => $applicant->evaluation->participation ?? 0,
-                                        'professionalism_score' => $applicant->evaluation->professionalism ?? 0
-                                    ]) }}
-                                )"
-                            >
-                                        View Evaluation
-                                    </button>
-                                    @if($applicant->status === 'hired')
-                                        <span class="ml-2 text-gray-500 italic">(Already Hired)</span>
-                                    @endif
-                                @else
-                                    <button 
-                                        class="bg-[#BD6F22] hover:bg-[#a55f1d] text-white text-sm font-medium h-8 px-3 rounded shadow"
-                                        @click="openModal(
-                                            {{ Js::from($applicant->user->full_name) }},
-                                            {{ Js::from($applicant->id) }},
-                                            false,
-                                            null
-                                        )"
-                                    >
-                                        Evaluate
-                                    </button>
-                                @endif
-                            </td>
+          <!-- Actions -->
+<td class="py-3 px-4 align-middle whitespace-nowrap text-left">
+    <div class="flex space-x-2">
+        <!-- Evaluate / View Evaluation -->
+        <div class="relative group">
+            <button 
+                class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300"
+                @click="openModal(
+                    {{ Js::from($applicant->user->full_name) }},
+                    {{ Js::from($applicant->id) }},
+                    {{ $applicant->evaluation ? 'true' : 'false' }},
+                    {{ Js::from($applicant->evaluation ? [
+                        'knowledge_score' => $applicant->evaluation->knowledge ?? 0,
+                        'skill_score' => $applicant->evaluation->skill ?? 0,
+                        'participation_score' => $applicant->evaluation->participation ?? 0,
+                        'professionalism_score' => $applicant->evaluation->professionalism ?? 0
+                    ] : null) }}
+                )"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-gray-700" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5h6M9 3h6a2 2 0 012 2v14a2 2 0 01-2 2H9a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                </svg>
+            </button>
+            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition">
+                {{ $applicant->evaluation ? 'View Evaluation' : 'Evaluate' }}
+            </span>
+        </div>
+
+        <!-- Set Schedule -->
+        <div class="relative group">
+            <button class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-gray-700" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            </button>
+            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition">
+                Set Schedule
+            </span>
+        </div>
+
+        <!-- Set Contract -->
+        @if($applicant->status !== 'hired')
+        <div class="relative group">
+            <button class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-gray-700" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 11h10M7 15h6m2 6H9a2 2 0 01-2-2V5a2 2 0 012-2h6l6 6v10a2 2 0 01-2 2z" />
+                </svg>
+            </button>
+            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition">
+                Set Contract
+            </span>
+        </div>
+        @endif
+
+        <!-- View Requirements -->
+        <div class="relative group">
+            <button 
+                class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300"
+                @click="openRequirements(
+                    {{ Js::from($applicant->user->full_name) }},
+                    {{ Js::from($applicant->id) }},
+                    {{ Js::from($applicant->job->job_title ?? '') }},
+                    {{ Js::from($applicant->job->company_name ?? '') }}
+                )"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-gray-700" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h4l2-2h8l2 2h4v12H3V7z" />
+                </svg>
+            </button>
+            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition">
+                View Requirements
+            </span>
+        </div>
+
+        <!-- Promote -->
+        @if($applicant->status !== 'hired')
+        <form method="POST" action="{{ route('hrStaff.evaluation.promote', $applicant->id) }}">
+            @csrf
+            <div class="relative group">
+                <button 
+                    type="button"
+                    class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300"
+                    @click="confirmPromotion($event, {{ $applicant->id }}, '{{ $applicant->user->full_name }}')"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-gray-700" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                </button>
+                <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition">
+                    Promote
+                </span>
+            </div>
+        </form>
+        @endif
+
+        <!-- Archive -->
+        @if($applicant->status !== 'hired')
+        <form action="{{ route('hrStaff.archive.store', $applicant->id) }}" method="POST" class="archive-form">
+            @csrf
+            <div class="relative group">
+                <button 
+                    type="submit"
+                    class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-gray-700" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.75H3.75m16.5 0A2.25 2.25 0 0021 4.5H3a2.25 2.25 0 00-2.25 2.25m19.5 0v12A2.25 2.25 0 0119.5 21H4.5A2.25 2.25 0 012.25 18.75v-12m9 6h1.5" />
+                    </svg>
+                </button>
+                <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition">
+                    Archive
+                </span>
+            </div>
+        </form>
+        @endif
+    </div>
+</td>
 
 
-                                    <!-- Contract -->
-                                    <td class="py-3 px-4 align-middle whitespace-nowrap text-left">
-                                        @if($applicant->status !== 'hired')
-                                            <button class="bg-green-600 text-white text-sm font-medium h-8 px-3 rounded shadow">
-                                                Set Contract
-                                            </button>
-                                        @endif
-                                    </td>
+        </tr>
+        @empty
+        <tr>
+            <td colspan="5" class="text-center py-6 text-gray-500 italic">
+                No applicants yet.
+            </td>
+        </tr>
+        @endforelse
+    </tbody>
+</table>
 
-                                    <!-- Promote -->
-                                    <td class="py-3 px-4 align-middle whitespace-nowrap text-left">
-                                        @if($applicant->status !== 'hired')
-                                            <form method="POST" action="{{ route('hrStaff.evaluation.promote', $applicant->id) }}">
-                                                @csrf
-                                                <button type="button"
-                                                    class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow"
-                                                    @click="confirmPromotion($event, {{ $applicant->id }}, '{{ $applicant->user->full_name }}')">
-                                                    Add
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </td>
-
-                                    <!-- Archive -->
-                                    <td class="py-3 px-4 align-middle whitespace-nowrap text-left">
-                                        @if($applicant->status !== 'hired')
-                                            <form action="{{ route('hrStaff.archive.store', $applicant->id) }}" method="POST" class="archive-form">
-                                                @csrf
-                                                <button 
-                                                    type="submit"
-                                                    class="bg-gray-400 text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-gray-500"
-                                                >
-                                                    Archive
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="8" class="text-center py-6 text-gray-500 italic">
-                                        No applicants yet.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
                 </div>
 
                 <div class="flex justify-center px-6 pb-4">
@@ -221,16 +263,59 @@
 
                 <!-- Evaluation Modal -->
                 <x-hrStaff.evaluationModal />
+
+                <!-- Requirements Modal -->
+                <x-hrStaff.requirementsModal />
+
             </div>
         </template>
     </div>
 </section>
+
 @endsection
 
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+function requirementsModal() {
+    return {
+        requirementsOpen: false,
+        requirementsApplicantName: '',
+        requirementsApplicantId: null,
+        requirementsJobTitle: '',
+        requirementsCompanyName: '',
+        requirementsFile201: null,
+        requirementsOtherFiles: [],
+
+        openRequirements(name, id, jobTitle, company) {
+            this.requirementsOpen = true;
+            this.requirementsApplicantName = name ?? '';
+            this.requirementsApplicantId = id ?? null;
+            this.requirementsJobTitle = jobTitle ?? '';
+            this.requirementsCompanyName = company ?? '';
+
+            fetch(`/hrStaff/requirements/${id}`)
+                .then(res => res.json())
+                .then(data => {
+                    this.requirementsFile201 = data.file201 ?? null;
+                    this.requirementsOtherFiles = data.otherFiles ?? [];
+                })
+                .catch(() => {
+                    this.requirementsFile201 = null;
+                    this.requirementsOtherFiles = [];
+                });
+        },
+
+        closeRequirements() {
+            this.requirementsOpen = false;
+        }
+    }
+}
+
+
+
+
 function evaluationModal(applicants) {
     return {
         tab: 'job_postings',
