@@ -68,16 +68,17 @@
 </div>
 
 </div>
-    <!-- Submit Button -->
-    <div class="mt-6 text-right">
+        <!-- Submit Button -->
+ <div class="mt-6 text-right" x-show="$store.editMode.isEditing">
         <button 
             type="button" 
             onclick="validateAllTabsAndSubmit()"
             class="text-white px-6 py-2 rounded transition" 
             style="background-color: #BD6F22;">
             Save
-        </button>
-    </div>
+    </button>
+</div>
+
 </form>
 
 
@@ -123,7 +124,7 @@ function validateAllTabsAndSubmit() {
     updateFullAddress();
     document.getElementById('profileForm').submit();
 }
-</script>
+
 
 
 <!-- Auto-Fill Full Address Script -->
@@ -178,6 +179,17 @@ function validateAllTabsAndSubmit() {
         setTimeout(updateFullAddress, 300);
     });
 </script>
+
+</script>
+
+    <!-- Alpine.js Store for Edit Mode -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('editMode', {
+                isEditing: false
+            })
+        })
+    </script>
 
 
 <!-- SweetAlert2 for notifications -->

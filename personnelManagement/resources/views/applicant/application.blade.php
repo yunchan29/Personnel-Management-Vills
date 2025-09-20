@@ -80,75 +80,77 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        @forelse($applications ?? [] as $application)
-        <div class="border border-gray-300 rounded-lg shadow-md p-4 flex flex-col justify-between bg-white">
+    @forelse($applications ?? [] as $application)
+        @php
+            $statusLabels = [
+                'For_interview'           => 'For Interview',
+                'scheduled_for_training'  => 'Scheduled for Training',
+                'passed'                  => 'Training Passed',
+                'declined'                => 'Declined',
+                'fail_interview'          => 'Failed Interview',
+            ];
+
+            $displayStatus = $statusLabels[$application->status]
+                ?? ucfirst(str_replace('_', ' ', $application->status ?? 'To Review'));
+
+            $isInactive = in_array($application->status, ['declined', 'fail_interview']);
+        @endphp
+
+        <div class="border border-gray-300 rounded-lg shadow-md p-4 flex flex-col justify-between 
+            {{ $isInactive ? 'bg-gray-100 opacity-70' : 'bg-white' }}">
+            
             <div>
-                <h3 class="text-md font-semibold text-[#BD6F22]">
+                <h3 class="text-md font-semibold {{ $isInactive ? 'text-gray-500' : 'text-[#BD6F22]' }}">
                     {{ $application->job->job_title ?? 'No job title' }}
                 </h3>
-                <p class="text-sm text-black font-semibold">
+                <p class="text-sm font-semibold {{ $isInactive ? 'text-gray-500' : 'text-black' }}">
                     {{ $application->job->company_name ?? 'No company' }}
                 </p>
 
                 @if($application->resume_snapshot)
-                <div class="mt-4">
-                    <a
-                        href="{{ $application->resume_snapshot_url }}"
-                        target="_blank"
-                        class="inline-block bg-[#BD6F22] text-white text-sm px-4 py-2 rounded hover:bg-[#a75e1c] transition">
-                        View Resume
-                    </a>
-                </div>
+                    <div class="mt-4">
+                        <a href="{{ $application->resume_snapshot_url }}"
+                           target="_blank"
+                           class="inline-block bg-[#BD6F22] text-white text-sm px-4 py-2 rounded hover:bg-[#a75e1c] transition 
+                           {{ $isInactive ? 'pointer-events-none opacity-50' : '' }}">
+                            View Resume
+                        </a>
+                    </div>
                 @endif
 
-                <p class="text-xs text-gray-500 mt-2">
+                <p class="text-xs {{ $isInactive ? 'text-gray-400' : 'text-gray-500' }} mt-2">
                     Applied on: {{ optional($application->created_at)->format('F d, Y') ?? 'N/A' }}
                 </p>
             </div>
 
-    <div class="flex flex-col items-end gap-2 mt-4">
-    @php
-    $statusLabels = [
-        'For_interview'           => 'For Interview',
-        'scheduled_for_training'  => 'Scheduled for Training',
-        'training_passed'         => 'Training Passed',
-    ];
+            <div class="flex flex-col items-end gap-2 mt-4">
+                <span class="inline-block text-white text-sm px-4 py-2 rounded" 
+                      style="background-color: #DD6161">
+                    {{ $displayStatus }}
+                </span>
 
-    $displayStatus = $statusLabels[$application->status]
-        ?? ucfirst(str_replace('_', ' ', $application->status ?? 'To Review'));
-@endphp
-
-<span class="inline-block text-white text-sm px-4 py-2 rounded" style="background-color: #DD6161">
-    {{ $displayStatus }}
-</span>
-
-{{-- Only allow delete if not interview, training, or passed --}}
-@if(!in_array($application->status, ['For_interview', 'scheduled_for_training', 'training_passed']))
-    <form action="{{ route('applicant.application.delete', $application->id) }}" method="POST" class="delete-application-form">
-        @csrf
-        @method('DELETE')
-        <button type="button" class="deleteApplicationBtn text-red-500 hover:text-red-700 transition mt-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 
-                      00-1-1h-4a1 1 0 00-1 1v3m5 0H6" />
-            </svg>
-        </button>
-    </form>
-@endif
-
-</div>
-
-
+                {{-- Only allow delete if not interview, training, or passed --}}
+                @if(!in_array($application->status, ['For_interview', 'scheduled_for_training', 'passed','declined', 'fail_interview']))
+                    <form action="{{ route('applicant.application.delete', $application->id) }}" method="POST" class="delete-application-form">
+                        @csrf
+                        @method('DELETE')
+                        <button type="button" class="deleteApplicationBtn text-red-500 hover:text-red-700 transition mt-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 
+                                      00-1-1h-4a1 1 0 00-1 1v3m5 0H6" />
+                            </svg>
+                        </button>
+                    </form>
+                @endif
+            </div>
         </div>
-        @empty
-        <p class="text-sm text-gray-600 mt-6 col-span-2">
-            You haven’t applied to any jobs yet.
-        </p>
-        @endforelse
-    </div>
+    @empty
+        <p class="text-gray-500">No applications found.</p>
+    @endforelse
 </div>
+
 
 <!-- Resume Preview Modal -->
 <div id="resumeModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
