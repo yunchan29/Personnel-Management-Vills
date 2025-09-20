@@ -18,8 +18,8 @@ class InterviewController extends Controller
         try {
             $validated = $request->validate([
                 'application_id' => 'required|exists:applications,id',
-                'user_id' => 'required|exists:users,id',
-                'scheduled_at' => 'required|date',
+                'user_id'        => 'required|exists:users,id',
+                'scheduled_at'   => 'required|date',
             ]);
 
             $interview = Interview::where('application_id', $validated['application_id'])
@@ -29,19 +29,20 @@ class InterviewController extends Controller
             $isReschedule = false;
             $sendMail = false;
 
+            $newScheduled = Carbon::parse($validated['scheduled_at'])->format('Y-m-d H:i');
+
             if ($interview) {
                 // Compare without seconds
                 $currentScheduled = optional($interview->scheduled_at)->format('Y-m-d H:i');
-                $newScheduled = Carbon::parse($validated['scheduled_at'])->format('Y-m-d H:i');
 
                 if ($currentScheduled !== $newScheduled) {
                     $isReschedule = true;
 
                     $interview->update([
-                        'scheduled_at' => $validated['scheduled_at'],
+                        'scheduled_at'   => $validated['scheduled_at'],
                         'rescheduled_at' => now(),
-                        'scheduled_by' => auth()->id(),
-                        'status' => 'rescheduled',
+                        'scheduled_by'   => auth()->id(),
+                        'status'         => 'rescheduled',
                     ]);
 
                     $sendMail = true;
@@ -49,10 +50,10 @@ class InterviewController extends Controller
             } else {
                 $interview = Interview::create([
                     'application_id' => $validated['application_id'],
-                    'user_id' => $validated['user_id'],
-                    'scheduled_at' => $validated['scheduled_at'],
-                    'scheduled_by' => auth()->id(),
-                    'status' => 'scheduled',
+                    'user_id'        => $validated['user_id'],
+                    'scheduled_at'   => $validated['scheduled_at'],
+                    'scheduled_by'   => auth()->id(),
+                    'status'         => 'scheduled',
                 ]);
 
                 $sendMail = true;
@@ -68,18 +69,14 @@ class InterviewController extends Controller
             // Eager load relations
             $interview->load(['application.job', 'applicant']);
 
-            // Send email only when needed
+            // 🔹 Send email only if schedule changed or new
             if ($sendMail) {
-                if ($isReschedule) {
-                    Mail::to(optional($interview->applicant)->email)
-                        ->send(new InterviewRescheduleMail($interview));
-                } else {
-                    Mail::to(optional($interview->applicant)->email)
-                        ->send(new InterviewScheduleMail($interview));
-                }
+                $mailClass = $isReschedule ? InterviewRescheduleMail::class : InterviewScheduleMail::class;
+                Mail::to(optional($interview->applicant)->email)->send(new $mailClass($interview));
             }
 
             return response()->json(['message' => 'Interview set successfully.']);
+
         } catch (\Throwable $e) {
             return response()->json([
                 'error' => $e->getMessage(),
@@ -194,27 +191,29 @@ class InterviewController extends Controller
                     ->first();
 
                 if ($interview) {
-                    // Always reschedule in this endpoint
-                    $interview->update([
-                        'scheduled_at'   => $scheduledAt,
-                        'rescheduled_at' => now(),
-                        'scheduled_by'   => $scheduledBy,
-                        'status'         => 'rescheduled',
-                    ]);
+                    // 🔹 Only update if the scheduled_at is different
+                    if ($interview->scheduled_at != $scheduledAt) {
+                        $interview->update([
+                            'scheduled_at'   => $scheduledAt,
+                            'rescheduled_at' => now(),
+                            'scheduled_by'   => $scheduledBy,
+                            'status'         => 'rescheduled',
+                        ]);
 
-                    // Eager load relations
-                    $interview->load(['application.job', 'applicant']);
+                        // Eager load relations
+                        $interview->load(['application.job', 'applicant']);
 
-                    // Update application status just to be sure
-                    $application = Application::find($applicant['application_id']);
-                    if ($application) {
-                        $application->status = 'for_interview';
-                        $application->save();
+                        // Update application status just to be sure
+                        $application = Application::find($applicant['application_id']);
+                        if ($application) {
+                            $application->status = 'for_interview';
+                            $application->save();
+                        }
+
+                        // Send reschedule email
+                        \Mail::to(optional($interview->applicant)->email)
+                            ->send(new \App\Mail\InterviewRescheduleMail($interview));
                     }
-
-                    // Send reschedule email
-                    \Mail::to(optional($interview->applicant)->email)
-                        ->send(new \App\Mail\InterviewRescheduleMail($interview));
                 }
             }
 
@@ -232,5 +231,4 @@ class InterviewController extends Controller
             ], 500);
         }
     }
-
 }

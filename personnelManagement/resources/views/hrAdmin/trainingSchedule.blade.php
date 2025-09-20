@@ -1,215 +1,221 @@
 <div x-data="applicantsHandler()" x-init="init()" class="relative">
-    <!-- Applicants Table -->
-    <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg">
-        <button 
-            @click="bulkSetTraining"
-            :disabled="selectedApplicants.length <= 1"
-            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-        Set Training
-        </button>
+    <div x-data="trainingHandler($data)">
 
-        <button 
-            @click="bulkReschedTraining"
-            :disabled="selectedApplicants.length <= 1"
-            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-        Resched Training
-        </button>
+        <!-- Applicants Table -->
+        <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg">
+            <button 
+                @click="bulkSetTraining"
+                :disabled="selectedApplicants.length <= 1"
+                class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+            Set Training
+            </button>
 
-        <table class="min-w-full text-sm text-left text-gray-700">
-            <thead class="border-b font-semibold bg-gray-50">
-                <tr>
-                    <th class="py-3 px-4">
-                        <input 
-                        type="checkbox" 
-                        x-ref="masterCheckbox"
-                        @change="toggleSelectAll($event)"
-                        >
-                    </th>
-                    <th class="py-3 px-4">Name</th>
-                    <th class="py-3 px-4">Position</th>
-                    <th class="py-3 px-4">Company</th>
-                    <th class="py-3 px-4">Applied On</th>
-                    <th class="py-3 px-4">Training Schedule</th>
-                    <th class="py-3 px-4">Training Time</th>
-                    <th class="py-3 px-4">Location</th>
-                    <th class="py-3 px-4">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($applications as $application)
-                    @php
-                        $fullName = $application->user->first_name . ' ' . $application->user->last_name;
-                        $training = $application->trainingSchedule;
-                        $trainingRange = '';
-                        if ($training && $training->start_date && $training->end_date) {
-                            $start = \Carbon\Carbon::parse($training->start_date)->format('m/d/Y');
-                            $end = \Carbon\Carbon::parse($training->end_date)->format('m/d/Y');
-                            $trainingRange = "$start - $end";
-                        }
-                    @endphp
+            <button 
+                @click="bulkReschedTraining"
+                :disabled="selectedApplicants.length <= 1"
+                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+            Resched Training
+            </button>
 
-                        <tr
-                            data-applicant-id="{{ $application->id }}"
-                            data-status="{{ $application->status }}"
-                            data-training-range="{{ $trainingRange }}"
-                            x-cloak
-                            x-show="(showAll || '{{ $application->training_schedule }}' === '') 
-                                    && ['interviewed', 'scheduled_for_training'].includes('{{ $application->status }}') 
-                                    && !removedApplicants.includes({{ $application->id }})"
-                            class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out"
-                        >
-
-                        <td class="py-3 px-4">
-                            <input 
-                                type="checkbox"
-                                class="applicant-checkbox"
-                                data-has-training="{{ $application->trainingSchedule ? 1 : 0 }}"
-                                :value="JSON.stringify({
-                                    application_id: {{ $application->id }},
-                                    user_id: {{ $application->user_id }},
-                                    name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
-                                    has_training: {{ $application->trainingSchedule ? 'true' : 'false' }}
-                                })"
-                                :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
-                                @change="toggleItem($event, {{ $application->id }})"
-                            />
-
-                        </td>
-
-                        <!-- Name -->
-                        <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
-                            <span class="inline-block w-3 h-3 rounded-full 
-                                {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}">
-                            </span>
-                            {{ $application->user->first_name }} {{ $application->user->last_name }}
-                        </td>
-
-                        <!-- Position + Company -->
-                        <td class="py-3 px-4">{{ $application->job->job_title ?? 'N/A' }}</td>
-                        <td class="py-3 px-4">{{ $application->job->company_name ?? 'N/A' }}</td>
-
-                        <!-- Applied On -->
-                        <td class="py-3 px-4 italic">
-                            {{ \Carbon\Carbon::parse($application->created_at)->format('F d, Y') }}
-                        </td>
-
-                        <!-- Training Schedule -->
-                        <td class="py-3 px-4 text-sm text-gray-700">
-                            @if ($application->trainingSchedule)
-                                <span>
-                                    {{ \Carbon\Carbon::parse($application->trainingSchedule->start_date)->format('m/d/Y') }}
-                                    -
-                                    {{ \Carbon\Carbon::parse($application->trainingSchedule->end_date)->format('m/d/Y') }}
-                                </span>
-                            @else
-                                <span class="text-gray-400 italic">None</span>
-                            @endif
-                        </td>
-
-                        <!-- Training Time -->
-                        <td class="py-3 px-4 text-sm text-gray-700">
-                            @if ($application->trainingSchedule && $application->trainingSchedule->start_time && $application->trainingSchedule->end_time)
-                                {{ \Carbon\Carbon::parse($application->trainingSchedule->start_time)->format('h:i A') }}
-                                -
-                                {{ \Carbon\Carbon::parse($application->trainingSchedule->end_time)->format('h:i A') }}
-                            @else
-                                <span class="text-gray-400 italic">None</span>
-                            @endif
-                        </td>
-
-                        <!-- Location -->
-                        <td class="py-3 px-4 text-sm text-gray-700">
-                            {{ $application->trainingSchedule->location ?? 'N/A' }}
-                        </td>
-
-                        <!-- Action -->
-                        <td class="py-3 px-4">
-                            <button
-                                x-data
-                                @click="openSetTraining(
-                                    $el.dataset.id,
-                                    $el.dataset.name,
-                                    $el.dataset.range,
-                                    {
-                                        start_time: $el.dataset.startTime,
-                                        end_time: $el.dataset.endTime,
-                                        location: $el.dataset.location
-                                    }
-                                )"
-                                data-id="{{ $application->id }}"
-                                data-name="{{ $fullName }}"
-                                data-range="{{ $trainingRange }}"
-                                data-start-time="{{ $application->trainingSchedule->start_time ?? '' }}"
-                                data-end-time="{{ $application->trainingSchedule->end_time ?? '' }}"
-                                data-location="{{ $application->trainingSchedule->location ?? '' }}"
-                                class="text-white text-sm font-medium h-8 px-3 rounded whitespace-nowrap
-                                    {{ $application->trainingSchedule ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-blue-600 hover:bg-blue-700' }}">
-                                {{ $application->trainingSchedule ? 'Reschedule' : 'Set Training' }}
-                            </button>
-                        </td>
-                    </tr>
-                @empty
+            <table class="min-w-full text-sm text-left text-gray-700">
+                <thead class="border-b font-semibold bg-gray-50">
                     <tr>
-                        <td colspan="8" class="py-6 text-center text-gray-500">No applicants yet.</td>
+                        <th class="py-3 px-4">
+                        <input 
+                            type="checkbox" 
+                            x-ref="masterCheckbox"
+                            @change="toggleSelectAll($event)"
+                        >
+                        </th>
+                        <th class="py-3 px-4">Name</th>
+                        <th class="py-3 px-4">Position</th>
+                        <th class="py-3 px-4">Company</th>
+                        <th class="py-3 px-4">Applied On</th>
+                        <th class="py-3 px-4">Training Schedule</th>
+                        <th class="py-3 px-4">Training Time</th>
+                        <th class="py-3 px-4">Location</th>
+                        <th class="py-3 px-4">Action</th>
                     </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+                </thead>
+                <tbody>
+                    @forelse ($applications as $application)
+                        @php
+                            $fullName = $application->user->first_name . ' ' . $application->user->last_name;
+                            $training = $application->trainingSchedule;
+                            $trainingRange = '';
+                            if ($training && $training->start_date && $training->end_date) {
+                                $start = \Carbon\Carbon::parse($training->start_date)->format('m/d/Y');
+                                $end = \Carbon\Carbon::parse($training->end_date)->format('m/d/Y');
+                                $trainingRange = "$start - $end";
+                            }
+                        @endphp
 
-    <!-- ✅ Only keep Set Training Modal -->
-    @include('components.hrAdmin.modals.setTraining')
+                            <tr
+                                data-applicant-id="{{ $application->id }}"
+                                data-status="{{ $application->status }}"
+                                data-training-range="{{ $trainingRange }}"
+                                x-cloak
+                                x-show="(showAll || '{{ $application->training_schedule }}' === '') 
+                                        && ['interviewed', 'scheduled_for_training'].includes('{{ $application->status }}') 
+                                        && !removedApplicants.includes({{ $application->id }})"
+                                class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out"
+                            >
 
-    <!-- Resume Modal -->
-    @include('components.hrAdmin.modals.resume')
+                            <td class="py-3 px-4">
+                                <input 
+                                    type="checkbox"
+                                    class="applicant-checkbox"
+                                    data-has-training="{{ $application->trainingSchedule ? 1 : 0 }}"
+                                    :value="JSON.stringify({
+                                        application_id: {{ $application->id }},
+                                        user_id: {{ $application->user_id }},
+                                        name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+                                        has_training: {{ $application->trainingSchedule ? 'true' : 'false' }}
+                                    })"
+                                    :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
+                                    @change="toggleItem($event, {{ $application->id }})"
+                                />
 
-    <!-- Set Training Modal -->
-    @include('components.hrAdmin.modals.setTraining')
+                            </td>
 
-    @foreach ($applications as $application)
-        @include('components.hrAdmin.modals.profile', ['user' => $application->user])
-    @endforeach
+                            <!-- Name -->
+                            <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
+                                <span class="inline-block w-3 h-3 rounded-full 
+                                    {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}">
+                                </span>
+                                {{ $application->user->first_name }} {{ $application->user->last_name }}
+                            </td>
 
+                            <!-- Position + Company -->
+                            <td class="py-3 px-4">{{ $application->job->job_title ?? 'N/A' }}</td>
+                            <td class="py-3 px-4">{{ $application->job->company_name ?? 'N/A' }}</td>
 
+                            <!-- Applied On -->
+                            <td class="py-3 px-4 italic">
+                                {{ \Carbon\Carbon::parse($application->created_at)->format('F d, Y') }}
+                            </td>
 
-    <!-- ✅ Feedback Toast -->
-    <div x-show="feedbackVisible"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 translate-y-4"
-         x-transition:enter-end="opacity-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100 translate-y-0"
-         x-transition:leave-end="opacity-0 translate-y-4"
-         class="fixed bottom-6 right-6 bg-green-600 text-white px-5 py-4 rounded-xl shadow-lg z-50 w-80 overflow-hidden"
-         x-cloak>
-        <div class="flex items-center gap-3">
-            <svg class="w-6 h-6 text-white animate-checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            <span class="font-semibold text-sm" x-text="feedbackMessage"></span>
+                            <!-- Training Schedule -->
+                            <td class="py-3 px-4 text-sm text-gray-700">
+                                @if ($application->trainingSchedule)
+                                    <span>
+                                        {{ \Carbon\Carbon::parse($application->trainingSchedule->start_date)->format('m/d/Y') }}
+                                        -
+                                        {{ \Carbon\Carbon::parse($application->trainingSchedule->end_date)->format('m/d/Y') }}
+                                    </span>
+                                @else
+                                    <span class="text-gray-400 italic">None</span>
+                                @endif
+                            </td>
+
+                            <!-- Training Time -->
+                            <td class="py-3 px-4 text-sm text-gray-700">
+                                @if ($application->trainingSchedule && $application->trainingSchedule->start_time && $application->trainingSchedule->end_time)
+                                    {{ \Carbon\Carbon::parse($application->trainingSchedule->start_time)->format('h:i A') }}
+                                    -
+                                    {{ \Carbon\Carbon::parse($application->trainingSchedule->end_time)->format('h:i A') }}
+                                @else
+                                    <span class="text-gray-400 italic">None</span>
+                                @endif
+                            </td>
+
+                            <!-- Location -->
+                            <td class="py-3 px-4 text-sm text-gray-700">
+                                {{ $application->trainingSchedule->location ?? 'N/A' }}
+                            </td>
+
+                            <!-- Action -->
+                            <td class="py-3 px-4">
+                                <button
+                                    x-data
+                                    @click="openSetTraining(
+                                        $el.dataset.id,
+                                        $el.dataset.name,
+                                        $el.dataset.range,
+                                        {
+                                            start_time: $el.dataset.startTime,
+                                            end_time: $el.dataset.endTime,
+                                            location: $el.dataset.location
+                                        }
+                                    )"
+                                    data-id="{{ $application->id }}"
+                                    data-name="{{ $fullName }}"
+                                    data-range="{{ $trainingRange }}"
+                                    data-start-time="{{ $application->trainingSchedule->start_time ?? '' }}"
+                                    data-end-time="{{ $application->trainingSchedule->end_time ?? '' }}"
+                                    data-location="{{ $application->trainingSchedule->location ?? '' }}"
+                                    class="text-white text-sm font-medium h-8 px-3 rounded whitespace-nowrap
+                                        {{ $application->trainingSchedule ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-blue-600 hover:bg-blue-700' }}">
+                                    {{ $application->trainingSchedule ? 'Reschedule' : 'Set Training' }}
+                                </button>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="py-6 text-center text-gray-500">No applicants yet.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
-        <div class="mt-3 h-1 w-full bg-white/20 rounded overflow-hidden">
-            <div class="h-full bg-white animate-progress-bar"></div>
+
+        <!-- ✅ Only keep Set Training Modal -->
+        @include('components.hrAdmin.modals.setTraining')
+
+        <!-- Resume Modal -->
+        @include('components.hrAdmin.modals.resume')
+
+        <!-- Set Training Modal -->
+        @include('components.hrAdmin.modals.setTraining')
+
+        @foreach ($applications as $application)
+            @include('components.hrAdmin.modals.profile', ['user' => $application->user])
+        @endforeach
+
+
+
+        <!-- ✅ Feedback Toast -->
+        <div x-show="feedbackVisible"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-4"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 translate-y-4"
+            class="fixed bottom-6 right-6 bg-green-600 text-white px-5 py-4 rounded-xl shadow-lg z-50 w-80 overflow-hidden"
+            x-cloak>
+            <div class="flex items-center gap-3">
+                <svg class="w-6 h-6 text-white animate-checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span class="font-semibold text-sm" x-text="feedbackMessage"></span>
+            </div>
+            <div class="mt-3 h-1 w-full bg-white/20 rounded overflow-hidden">
+                <div class="h-full bg-white animate-progress-bar"></div>
+            </div>
         </div>
-    </div>
 
-    <!-- ✅ Filter Toggle -->
-    <div class="flex justify-center my-6">
-        <button
-            @click="showAll = !showAll"
-            class="px-4 py-2 bg-[#ffffff] text-black text-sm font-medium hover:text-[#a95e1d]">
-            <span x-text="showAll ? 'Show Only Pending Training' : 'Show All Applicants'"></span>
-        </button>
-    </div>
+        <!-- ✅ Filter Toggle -->
+        <div class="flex justify-center my-6">
+            <button
+                @click="showAll = !showAll"
+                class="px-4 py-2 bg-[#ffffff] text-black text-sm font-medium hover:text-[#a95e1d]">
+                <span x-text="showAll ? 'Show Only Pending Training' : 'Show All Applicants'"></span>
+            </button>
+        </div>
 
+
+
+    </div>
 </div>
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js"></script>
 <script src="{{ asset('js/applicantsHandler.js') }}"></script>
+<script src="{{ asset('js/trainingHandler.js') }}"></script>
 
 <!-- Styles -->
 <style>

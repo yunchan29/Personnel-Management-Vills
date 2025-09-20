@@ -31,7 +31,7 @@ class TrainingScheduleController extends Controller
         $data = [
             'start_date'   => $startDate,
             'end_date'     => $endDate,
-            'start_time'   => $request->start_time, // already in 24h format
+            'start_time'   => $request->start_time, // 24h format
             'end_time'     => $request->end_time,
             'location'     => $request->location,
             'scheduled_by' => auth()->id(),
@@ -40,12 +40,23 @@ class TrainingScheduleController extends Controller
         $existingSchedule = $application->trainingSchedule;
 
         if ($existingSchedule) {
-            $existingSchedule->update(array_merge($data, ['status' => 'rescheduled']));
-            $existingSchedule->load('application.user', 'application.job');
-
-            Mail::to($application->user->email)->send(
-                new TrainingScheduleRescheduledMail($existingSchedule)
+            // ✅ Check if anything actually changed
+            $isChanged = (
+                $existingSchedule->start_date->format('Y-m-d') !== $startDate->format('Y-m-d') ||
+                $existingSchedule->end_date->format('Y-m-d')   !== $endDate->format('Y-m-d') ||
+                $existingSchedule->start_time                   !== $request->start_time ||
+                $existingSchedule->end_time                     !== $request->end_time ||
+                $existingSchedule->location                     !== $request->location
             );
+
+            if ($isChanged) {
+                $existingSchedule->update(array_merge($data, ['status' => 'rescheduled']));
+                $existingSchedule->load('application.user', 'application.job');
+
+                Mail::to($application->user->email)
+                    ->send(new TrainingScheduleRescheduledMail($existingSchedule));
+            }
+            // else nothing changed, no email
         } else {
             $newSchedule = TrainingSchedule::create(array_merge($data, [
                 'application_id' => $application->id,
@@ -56,9 +67,8 @@ class TrainingScheduleController extends Controller
 
             $newSchedule->load('application.user', 'application.job');
 
-            Mail::to($application->user->email)->send(
-                new TrainingScheduleSetMail($newSchedule)
-            );
+            Mail::to($application->user->email)
+                ->send(new TrainingScheduleSetMail($newSchedule));
         }
 
         $application->status = 'scheduled_for_training';
@@ -68,8 +78,6 @@ class TrainingScheduleController extends Controller
             'success' => true,
             'message' => 'Training schedule set successfully.'
         ]);
-
-
     }
 
     public function bulkSetTraining(Request $request)
@@ -103,12 +111,24 @@ class TrainingScheduleController extends Controller
             $existingSchedule = $application->trainingSchedule;
 
             if ($existingSchedule) {
-                $existingSchedule->update(array_merge($data, ['status' => 'rescheduled']));
-                $existingSchedule->load('application.user', 'application.job');
-
-                Mail::to($application->user->email)->send(
-                    new TrainingScheduleRescheduledMail($existingSchedule)
+                // Check if anything actually changed
+                $isChanged = (
+                    $existingSchedule->start_date->format('Y-m-d') !== $startDate->format('Y-m-d') ||
+                    $existingSchedule->end_date->format('Y-m-d')   !== $endDate->format('Y-m-d')   ||
+                    $existingSchedule->start_time                   !== $request->start_time        ||
+                    $existingSchedule->end_time                     !== $request->end_time          ||
+                    $existingSchedule->location                     !== $request->location
                 );
+
+                if ($isChanged) {
+                    $existingSchedule->update(array_merge($data, ['status' => 'rescheduled']));
+                    $existingSchedule->load('application.user', 'application.job');
+
+                    Mail::to($application->user->email)->send(
+                        new TrainingScheduleRescheduledMail($existingSchedule)
+                    );
+                }
+                // else do nothing, no email sent
             } else {
                 $newSchedule = TrainingSchedule::create(array_merge($data, [
                     'application_id' => $application->id,

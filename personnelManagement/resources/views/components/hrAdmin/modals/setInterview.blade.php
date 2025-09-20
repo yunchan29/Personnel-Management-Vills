@@ -51,19 +51,22 @@
                 <span>Interview Start</span>
             </template>
         </label>
+        
         <div class="flex gap-2 mb-4">
             <!-- Hours -->
             <select x-model.number="interviewTime" class="flex-1 p-2 border rounded">
-                <template x-for="h in (interviewPeriod === 'AM' ? [8,9,10,11] : [1,2,3,4,5])" :key="h">
+                <template x-for="h in [8,9,10,11,12,1,2,3,4]" :key="h">
                     <option :value="h" x-text="h"></option>
                 </template>
             </select>
 
-            <!-- AM/PM -->
-            <select x-model="interviewPeriod" class="w-24 p-2 border rounded">
-                <option value="AM">AM</option>
-                <option value="PM">PM</option>
-            </select>
+            <!-- Auto AM/PM -->
+            <input 
+                type="text" 
+                x-model="interviewPeriod" 
+                class="w-24 p-2 border rounded text-center bg-gray-100" 
+                readonly
+            />
         </div>
 
         <!-- Confirm button -->

@@ -113,7 +113,7 @@ class InitialApplicationController extends Controller
         $application->status = $validated['status'];
         $application->save();
 
-        if ($validated['status'] === 'interviewed') {
+        if (in_array($validated['status'], ['interviewed', 'fail_interview'])) {
             DB::table('interviews')
                 ->where('application_id', $application->id)
                 ->update(['status' => 'completed']);
@@ -130,7 +130,7 @@ class InitialApplicationController extends Controller
 
                     // ✅ Archive user when declined
                     $application->is_archived = true;
-$application->save();
+                    $application->save();
 
                     break;
 
@@ -142,8 +142,8 @@ $application->save();
                     Mail::to($application->user->email)->send(new FailInterviewMail($application));
 
                     // ✅ Archive user when failed interview
-                   $application->is_archived = true;
-$application->save();
+                    $application->is_archived = true;
+                    $application->save();
 
                     break;
             }
@@ -159,6 +159,7 @@ $application->save();
 
     public function bulkUpdateStatus(Request $request)
     {
+
         $validator = Validator::make($request->all(), [
             'ids' => 'required|array',   // match frontend
             'ids.*' => 'exists:applications,id',
@@ -184,8 +185,8 @@ $application->save();
             $application->status = $validated['status'];
             $application->save();
 
-            // 🔔 Sync interview record if interviewed
-            if ($validated['status'] === 'interviewed') {
+            // 🔔 Sync interview record if interviewed or failed interview
+            if (in_array($validated['status'], ['interviewed', 'fail_interview'])) {
                 DB::table('interviews')
                     ->where('application_id', $application->id)
                     ->update(['status' => 'completed']);

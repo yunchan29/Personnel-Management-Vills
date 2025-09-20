@@ -64,7 +64,7 @@
                                 @click="statusAction = 'fail_interview'; submitStatusChange()" 
                                 :disabled="loading" 
                                 class="px-4 py-2 text-sm rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                                <template x-if="loading && statusAction === 'declined'">
+                                <template x-if="loading && statusAction === 'fail_interview'">
                                     <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
                                         viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
@@ -73,7 +73,7 @@
                                             d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                                     </svg>
                                 </template>
-                                <span x-text="loading && statusAction === 'declined' ? 'Processing...' : 'Fail'"></span>
+                                <span x-text="loading && statusAction === 'fail_interview' ? 'Processing...' : 'Fail'"></span>
                             </button>
                         </div>
                     </template>

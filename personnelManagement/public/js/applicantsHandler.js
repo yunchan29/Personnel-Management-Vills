@@ -52,48 +52,6 @@ document.addEventListener('alpine:init', () => {
         trainingApplicant: null,
         trainingPicker: null,
 
-        // Convert interview set time to 12-hour format
-        to24h(hour12, period) {
-            let h = parseInt(hour12, 10);
-            if (period === 'AM') {
-                if (h === 12) h = 0;      // 12 AM -> 00
-            } else { // PM
-                if (h !== 12) h += 12;    // 1 PM -> 13 ... 11 PM -> 23
-            }
-            return h;
-        },
-
-        // Function converter para sa time ng training schedule
-        to12h(hour24) {
-            let period = hour24 >= 12 ? 'PM' : 'AM';
-            let hour12 = hour24 % 12;
-            if (hour12 === 0) hour12 = 12;
-            return { hour12, period };
-        },
-
-        formatDisplay(hour, period) {
-            return `${hour}:00 ${period}`;
-        },
-
-        //Converts Training Start/End time to 24-hour format for backend
-        formatTime(timeStr) {
-            // expects something like "7 AM" or "12 PM"
-            if (!timeStr) return null;
-
-            const [hourStr, period] = timeStr.split(" ");
-            let hour = parseInt(hourStr, 10);
-
-            if (period.toUpperCase() === "PM" && hour !== 12) {
-                hour += 12;
-            }
-            if (period.toUpperCase() === "AM" && hour === 12) {
-                hour = 0;
-            }
-
-            return `${hour.toString().padStart(2, "0")}:00:00`; 
-        },
-
-
         init() {
             setTimeout(() => {
                 this.applicants = Array.from(document.querySelectorAll('tr[data-applicant-id]')).map(row => ({
@@ -108,14 +66,6 @@ document.addEventListener('alpine:init', () => {
                     element: row
                 }));
             }, 50);
-        },
-
-        // Status for interview component
-        statusMap: {
-        interviewed: { label: 'Passed', class: 'bg-green-200 text-green-800' },
-        declined: { label: 'Failed', class: 'bg-red-200 text-red-800' },
-        for_interview: { label: 'For Interview', class: 'bg-yellow-200 text-yellow-800' },
-        default: { label: 'Pending', class: 'bg-gray-200 text-gray-800' },
         },
 
         filteredApplicants() {
@@ -159,26 +109,28 @@ document.addEventListener('alpine:init', () => {
         // ✅ Update master checkbox state (per component)
         updateMasterCheckbox() {
             const master = this.$root.querySelector('[x-ref="masterCheckbox"]');
-            if (!master) {
-                console.warn('[updateMasterCheckbox] no master checkbox found in this component');
-                return;
-            }
+            if (!master) return;
 
-            const total = this.getLocalCheckboxes().length;
-            const selected = this.selectedApplicants.length;
+            const visibleCheckboxes = this.getLocalCheckboxes(); // only visible rows
+            const total = visibleCheckboxes.length;
 
-            master.indeterminate = false;
-            master.checked = false;
+            const selected = visibleCheckboxes.filter(cb => {
+                const value = JSON.parse(cb.value);
+                return this.selectedApplicants.some(a => a.application_id === value.application_id);
+            }).length;
 
             if (selected === 0) {
-                return;
-            }
-            if (selected === total) {
+                master.checked = false;
+                master.indeterminate = false;
+            } else if (selected === total) {
                 master.checked = true;
+                master.indeterminate = false;
             } else {
+                master.checked = false;
                 master.indeterminate = true;
             }
         },
+
 
         // ✅ Toggle single item
         toggleItem(event, id) {
@@ -225,31 +177,51 @@ document.addEventListener('alpine:init', () => {
 
         // Status change for mass pass/fail status change 
         async submitBulkStatusChange() {
+            console.log("🚀 submitBulkStatusChange triggered");
             if (!this.selectedApplicants.length) {
                 Swal.fire("No applicants selected", "", "warning");
                 return;
             }
-            
+
             this.loading = true;
 
-            // extract application_id lang
+            // map to application IDs, fallback to id if application_id is missing
             const ids = this.selectedApplicants.map(app => app.application_id);
 
-            fetch('/hrAdmin/applications/bulk-status', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                },
-                body: JSON.stringify({
-                    ids: ids,
-                    status: this.bulkStatusAction
-                })
-            })
-            .then(response => response.json())
-            .then(res => {
+            // debug payload
+            console.log("🚀 Sending payload:", { ids, status: this.bulkStatusAction});
+
+            // check if ids array is empty after mapping
+            if (!ids.length) {
+                Swal.fire("Invalid applicants selected", "No valid IDs found", "error");
+                this.loading = false;
+                return;
+            }
+
+            // validate status locally before sending
+            const allowedStatuses = ['approved', 'declined', 'interviewed', 'fail_interview', 'for_interview', 'trained'];
+            if (!allowedStatuses.includes(this.bulkStatusAction)) {
+                Swal.fire("Invalid status", `Status must be one of: ${allowedStatuses.join(", ")}`, "error");
+                this.loading = false;
+                return;
+            }
+
+            try {
+                const response = await fetch('/hrAdmin/applications/bulk-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    },
+                    body: JSON.stringify({
+                        ids: ids,
+                        status: this.bulkStatusAction
+                    })
+                });
+
+                const res = await response.json();
+
                 if (res.success) {
-                    // ✅ Greenlist feedback
                     this.feedbackMessage = res.message || `Applicants ${this.bulkStatusAction} successfully.`;
                     this.feedbackVisible = true;
 
@@ -262,16 +234,15 @@ document.addEventListener('alpine:init', () => {
                     this.fetchApplicants?.();
                     this.showBulkStatusModal = false;
                 } else {
+                    console.error("Bulk update errors:", res.errors);
                     Swal.fire("Error", res.errors ? JSON.stringify(res.errors) : "Something went wrong", "error");
                 }
-            })
-            .catch(err => {
+            } catch (err) {
                 console.error(err);
                 Swal.fire("Error", "Request failed", "error");
-            })
-            .finally(() => {
+            } finally {
                 this.loading = false;
-            });
+            }
         },
         
         async bulkAction(status) {
@@ -308,7 +279,7 @@ document.addEventListener('alpine:init', () => {
                                 "X-CSRF-TOKEN": document.querySelector('meta[name=csrf-token]').content
                             },
                             body: JSON.stringify({
-                                ids: this.selectedApplicants,
+                                ids: this.selectedApplicants.map(app => app.id ?? app.application_id), // 🔥 FIXED
                                 status: status
                             })
                         });
@@ -317,12 +288,12 @@ document.addEventListener('alpine:init', () => {
                         if (!data.success) throw new Error(data.message || "Failed");
 
                         // ✅ remove rows
-                        this.selectedApplicants.forEach(id => {
-                            document.querySelector(`[data-applicant-id="${id}"]`).remove();
+                        this.selectedApplicants.forEach(app => {
+                            const id = app.id ?? app.application_id;
+                            document.querySelector(`[data-applicant-id="${id}"]`)?.remove();
                         });
                         this.selectedApplicants = [];
 
-                        // ✅ show your toast feedback
                         this.feedbackMessage = data.message || `Applicants ${status} successfully.`;
                         this.feedbackVisible = true;
                         setTimeout(() => { 
@@ -369,6 +340,7 @@ document.addEventListener('alpine:init', () => {
             this.showStatusModal = true;
         },
 
+        // Single applicant status change for both approval and interview status updates
         async submitStatusChange() {
             this.loading = true;
             try {
@@ -411,7 +383,7 @@ document.addEventListener('alpine:init', () => {
                 // Auto-hide after 2.5s
                 setTimeout(() => {
                     this.feedbackVisible = false;
-                    // optional: location.reload();
+                    location.reload();
                 }, 2500);
 
                 if (['interviewed', 'declined', 'trained', 'fail_interview'].includes(this.statusAction)) {
@@ -427,551 +399,6 @@ document.addEventListener('alpine:init', () => {
             } finally {
                 this.loading = false;
             }
-        },
-
-        async submitBulkStatusChange() {
-            console.log("🚀 [submitBulkStatusChange] triggered");
-
-            if (!this.selectedApplicants.length) {
-                console.warn("⚠️ No applicants selected");
-                Swal.fire("No applicants selected", "", "warning");
-                return;
-            }
-
-            console.log("📌 Selected Applicants:", this.selectedApplicants);
-
-            // ✅ Validation using has_schedule instead of interview_date
-            const withoutInterview = this.selectedApplicants.filter(app => !app.has_schedule);
-            const withInterview = this.selectedApplicants.filter(app => app.has_schedule);
-
-            console.log("❌ Applicants without interview:", withoutInterview);
-            console.log("✅ Applicants with interview:", withInterview);
-
-            if (withoutInterview.length > 0) {
-                console.warn("⚠️ Validation failed - Some applicants missing interview");
-                Swal.fire({
-                    icon: "warning",
-                    title: "Some applicants have no interview set",
-                    text: "Please schedule an interview before managing their status.",
-                });
-                return; // ⛔ stop execution
-            }
-
-            this.loading = true;
-            console.log("⏳ Sending bulk status request...");
-
-            // extract application_id lang
-            const ids = this.selectedApplicants.map(app => app.application_id);
-            console.log("📤 IDs to update:", ids, "→ Status:", this.bulkStatusAction);
-
-            fetch('/hrAdmin/applications/bulk-status', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                },
-                body: JSON.stringify({
-                    ids: ids,
-                    status: this.bulkStatusAction
-                })
-            })
-            .then(response => response.json())
-            .then(res => {
-                console.log("✅ Server response:", res);
-                if (res.success) {
-                    this.feedbackMessage = res.message || `Applicants ${this.bulkStatusAction} successfully.`;
-                    this.feedbackVisible = true;
-
-                    setTimeout(() => {
-                        this.feedbackVisible = false;
-                        location.reload();
-                    }, 3000);
-
-                    this.fetchApplicants?.();
-                    this.showBulkStatusModal = false;
-                } else {
-                    Swal.fire("Error", res.errors ? JSON.stringify(res.errors) : "Something went wrong", "error");
-                }
-            })
-            .catch(err => {
-                console.error("❌ Request failed:", err);
-                Swal.fire("Error", "Request failed", "error");
-            })
-            .finally(() => {
-                this.loading = false;
-                console.log("✅ Bulk status request finished");
-            });
-        },
-
-        // open for single applicant
-        openSetInterview(applicationId, name, userId, scheduledAt = '') {
-            this.interviewMode = 'single';
-            this.interviewApplicant = { application_id: applicationId, user_id: userId, name };
-
-            if (scheduledAt) {
-                const [datePart, timePartRaw = '00:00:00'] = scheduledAt.split(' ');
-                const hour24 = parseInt(timePartRaw.split(':')[0], 10);
-                let hour12 = hour24 % 12 || 12;
-                const period = hour24 < 12 ? 'AM' : 'PM';
-
-                this.interviewDate = datePart;
-                this.interviewTime = hour12;
-                this.interviewPeriod = period;
-                this.originalNormalizedDT = `${datePart} ${String(hour24).padStart(2,'0')}:00:00`;
-            } else {
-                this.interviewDate = '';
-                this.interviewTime = 8;
-                this.interviewPeriod = 'AM';
-                this.originalNormalizedDT = '';
-            }
-            this.showInterviewModal = true;
-        },
-
-        // open for bulk (just passes selectedApplicants)
-        async openBulk(type = 'bulk') {
-            if (!this.selectedApplicants.length) {
-                Swal.fire("No applicants selected", "", "warning");
-                return;
-            }
-
-            if (type === 'bulk-reschedule') {
-                // 🔹 Reschedule mode → block those without schedule
-                const unscheduled = this.selectedApplicants.filter(a => !a.has_schedule);
-                if (unscheduled.length) {
-                    Swal.fire({
-                        icon: 'warning',
-                        html: `Please set an interview date first for Applicants: <br><b>${unscheduled.map(a => a.name).join(', ')}</b>`,
-                    });
-                    return;
-                }
-            } else if (type === 'bulk') {
-                // 🔹 New schedule mode → block those who already have a schedule
-                const alreadyScheduled = this.selectedApplicants.filter(a => a.has_schedule);
-                if (alreadyScheduled.length) {
-                    Swal.fire({
-                        icon: 'warning',
-                        html: `These Applicants already have interview schedules: <br><b>${alreadyScheduled.map(a => a.name).join(', ')}</b>`,
-                    });
-                    return;
-                }
-            }
-
-            this.interviewMode = type; // 'bulk' or 'bulk-reschedule'
-            this.interviewApplicant = null;
-            this.resetInterviewForm();
-            this.showInterviewModal = true;
-        },
-
-        resetInterviewForm() {
-            this.interviewDate = '';
-            this.interviewTime = 8;
-            this.interviewPeriod = 'AM';
-            this.originalNormalizedDT = '';
-        },
-
-        async submitInterviewDate() {
-        if (!this.interviewDate || !this.interviewTime || !this.interviewPeriod) {
-            Swal.fire({ icon: 'warning', text: 'Select both date and time.' });
-            return;
-        }
-
-        const hour24 = this.to24h(this.interviewTime, this.interviewPeriod);
-        if (hour24 < 8 || hour24 > 17) {
-            alert('Interview must be between 8 AM and 5 PM.');
-            return;
-        }
-
-        const newNormalizedDT = `${this.interviewDate} ${String(hour24).padStart(2,'0')}:00:00`;
-        this.loading = true;
-
-        try {
-            if (this.interviewMode === 'single') {
-            await this.submitSingleInterview(newNormalizedDT);
-            } else {
-            await this.submitBulk(newNormalizedDT, this.interviewMode);
-            }
-
-            this.feedbackMessage = "Interview schedule saved!";
-            this.feedbackVisible = true;
-            setTimeout(() => { this.feedbackVisible = false; location.reload(); }, 2000);
-            this.showInterviewModal = false;
-        } catch (e) {
-            alert("Error: " + e.message);
-        } finally {
-            this.loading = false;
-        }
-        },
-
-        async submitSingleInterview(datetime) {
-            const response = await fetch(`/hrAdmin/interviews`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                },
-                body: JSON.stringify({
-                    application_id: this.interviewApplicant.application_id,
-                    user_id: this.interviewApplicant.user_id,
-                    scheduled_at: datetime,
-                }),
-            });
-            if (!response.ok) throw new Error("Failed single save");
-            return response.json();
-        },
-
-        async submitBulk(datetime, mode) {
-            const url = mode === 'bulk-reschedule'
-                ? '/hrAdmin/interviews/bulk-reschedule'
-                : '/hrAdmin/interviews/bulk';
-
-            const payload = {
-                applicants: this.selectedApplicants.map(a => ({
-                    application_id: a.application_id,
-                    user_id: a.user_id
-                })),
-                scheduled_at: datetime, // 🔥 at root level
-            };
-
-            console.log("Payload bulk:", JSON.stringify(payload, null, 2));
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) throw new Error("Bulk save failed");
-            return response.json();
-        },
-
-        bulkSetTraining() {
-            if (!this.selectedApplicants.length) {
-                Swal.fire("No applicants selected", "", "warning");
-                return;
-            }
-
-            const selectedBoxes = Array.from(document.querySelectorAll('.applicant-checkbox:checked'));
-
-            // Applicants na may training na
-            const alreadyScheduled = selectedBoxes.filter(cb => cb.dataset.hasTraining === "1");
-
-            if (alreadyScheduled.length > 0) {
-                const names = alreadyScheduled.map(cb => JSON.parse(cb.value).name).join('<br>');
-
-                return Swal.fire({
-                    icon: "error",
-                    title: "Invalid Selection",
-                    html: `You cannot set training for applicants who already have a schedule:<br><br><strong>${names}</strong>`
-                });
-            }
-
-            // ✅ lahat walang training, proceed
-            this.openSetTraining(null, null, '', null, 'bulk');
-        },
-
-        bulkReschedTraining() {
-            if (!this.selectedApplicants.length) {
-                Swal.fire("No applicants selected", "", "warning");
-                return;
-            }
-
-            const selectedBoxes = Array.from(document.querySelectorAll('.applicant-checkbox:checked'));
-
-            // Applicants na wala pang training
-            const unscheduled = selectedBoxes.filter(cb => cb.dataset.hasTraining === "0");
-
-            if (unscheduled.length > 0) {
-                const names = unscheduled.map(cb => JSON.parse(cb.value).name).join('<br>');
-
-                return Swal.fire({
-                    icon: "error",
-                    title: "Invalid Selection",
-                    html: `You can only reschedule applicants who already have training.<br><br>These applicants have none:<br><strong>${names}</strong>`
-                });
-            }
-
-            // ✅ lahat may training, proceed
-            this.openSetTraining(null, null, '', null, 'bulk');
-        },
-
-        openSetTraining(applicantId = null, fullName = '', range = '', schedule = null, mode = 'single') {
-            this.trainingMode = mode;
-
-            if(mode === 'single'){
-                this.selectedApplicantId = applicantId;
-                this.selectedApplicantName = fullName;
-            } else{
-                this.selectedApplicantId = null;
-                this.selectedApplicantName = `${this.selectedApplicants.length} applicants`;
-            }
-
-
-            // --- normalize date range
-            this.selectedTrainingDateRange = '';
-            this.originalTrainingDateRange = '';
-            if (range && range.includes(' - ')) {
-                this.selectedTrainingDateRange = range.trim();
-
-                const [startRaw, endRaw] = range.split(' - ').map(d => new Date(d.trim()));
-                const fmt = (d) => {
-                    const mm = String(d.getMonth() + 1).padStart(2, '0');
-                    const dd = String(d.getDate()).padStart(2, '0');
-                    const yyyy = d.getFullYear();
-                    return `${mm}/${dd}/${yyyy}`;
-                };
-                this.originalTrainingDateRange = `${fmt(startRaw)} - ${fmt(endRaw)}`;
-            }
-
-            // --- prefill time
-            if (schedule?.start_time && schedule?.end_time) {
-                const [startHour24] = schedule.start_time.split(':');
-                const [endHour24]   = schedule.end_time.split(':');
-
-                const start = this.to12h(parseInt(startHour24, 10));
-                const end   = this.to12h(parseInt(endHour24, 10));
-
-                this.trainingStartHour   = start.hour12;
-                this.trainingStartPeriod = start.period;
-
-                this.trainingEndHour     = end.hour12;
-                this.trainingEndPeriod   = end.period;
-            } else {
-                this.trainingStartHour = '8';
-                this.trainingStartPeriod = 'AM';
-                this.trainingEndHour = '5';
-                this.trainingEndPeriod = 'PM';
-            }
-
-            // --- prefill location ✅
-            this.trainingLocation = schedule?.location ?? '';
-
-            // --- show modal AFTER state is set
-            this.showTrainingModal = true;
-
-            // --- init/update Litepicker
-            this.$nextTick(() => {
-                const ref = this.$refs.trainingDateRange;
-                if (!ref) return console.warn("trainingDateRange input not found");
-
-                const [start, end] = (this.selectedTrainingDateRange && this.selectedTrainingDateRange.includes(' - '))
-                    ? this.selectedTrainingDateRange.split(' - ')
-                    : [null, null];
-
-                if (!this.trainingPicker) {
-                    this.trainingPicker = new Litepicker({
-                        element: ref,
-                        singleMode: false,
-                        format: 'MM/DD/YYYY',
-                        numberOfMonths: 2,
-                        numberOfColumns: 2,
-                        autoApply: true,
-                        startDate: start,
-                        endDate: end,
-                        minDate: new Date(),
-                    });
-                } else {
-                    if (start && end) {
-                        this.trainingPicker.setDateRange(start, end, true);
-                    } else {
-                        this.trainingPicker.clearSelection();
-                    }
-
-                    this.trainingPicker.setOptions({
-                        minDate: new Date(),
-                    });
-                }
-            });
-        },
-
-        openBulkSetTraining() {
-            if (!this.selectedApplicants.length) {
-                Swal.fire("No applicants selected", "", "warning");
-                return;
-            }
-            this.openSetTraining(null, null, '', null, 'bulk');
-        },
-
-        async submitTrainingSchedule() {
-            const selectedRange = this.$refs.trainingDateRange.value?.trim();
-            const trainingTimeStart = `${this.trainingStartHour} ${this.trainingStartPeriod}`;
-            const trainingTimeEnd   = `${this.trainingEndHour} ${this.trainingEndPeriod}`;
-            const trainingLocation  = (this.trainingLocation || '').trim();
-
-            // -------------------------------
-            // Basic validations
-            // -------------------------------
-            if (!selectedRange || !selectedRange.includes(' - ')) {
-                return Swal.fire({
-                    icon: 'error',
-                    title: 'Invalid Input',
-                    text: 'Please select a valid training date range.'
-                });
-            }
-
-            if (!trainingLocation) {
-                return Swal.fire({
-                    icon: 'error',
-                    title: 'Missing Location',
-                    text: 'Please enter the training location.'
-                });
-            }
-
-            // -------------------------------
-            // Date parsing
-            // -------------------------------
-            const [newStartStr, newEndStr] = selectedRange.split(' - ').map(s => s.trim());
-            const newStart = new Date(newStartStr);
-            const newEnd   = new Date(newEndStr);
-            const today    = new Date(); today.setHours(0, 0, 0, 0);
-
-            // -------------------------------
-            // Determine if date range actually changed
-            // -------------------------------
-            let datesChanged = true;
-            if (this.originalTrainingDateRange && this.originalTrainingDateRange.includes(' - ')) {
-                const [oStartStr, oEndStr] = this.originalTrainingDateRange.split(' - ').map(d => d.trim());
-                const oStart = new Date(oStartStr);
-                const oEnd   = new Date(oEndStr);
-
-                datesChanged = (newStart.getTime() !== oStart.getTime()) || 
-                            (newEnd.getTime()   !== oEnd.getTime());
-            }
-
-            // -------------------------------
-            // Validate ONLY if dates changed
-            // -------------------------------
-            if (datesChanged) {
-                if (isNaN(newStart) || isNaN(newEnd) || newStart < today || newEnd < today) {
-                    return Swal.fire({
-                        icon: 'error',
-                        title: 'Invalid Date Range',
-                        text: 'The training schedule must be set to future dates.'
-                    });
-                }
-            }
-
-            // -------------------------------
-            // Check if same as original
-            // -------------------------------
-            let isSameAsOriginal = false;
-            if (this.originalTrainingDateRange && this.originalTrainingDateRange.includes(' - ')) {
-                const [oStart, oEnd] = this.originalTrainingDateRange.split(' - ').map(d => d.trim());
-                isSameAsOriginal = (
-                    newStartStr       === oStart &&
-                    newEndStr         === oEnd &&
-                    trainingTimeStart === (this.originalTrainingTimeStart   || '') &&
-                    trainingTimeEnd   === (this.originalTrainingTimeEnd     || '') &&
-                    trainingLocation  === (this.originalTrainingLocation    || '')
-                );
-            }
-
-            if (isSameAsOriginal) {
-                this.feedbackMessage = 'No changes were made to the training schedule.';
-                this.feedbackVisible = true;
-                this.showTrainingModal = false;
-
-                setTimeout(() => this.feedbackVisible = false, 3000);
-                return;
-            }
-
-            // -------------------------------
-            // Proceed function (save changes)
-            // -------------------------------
-            const proceed = async () => {
-                try {
-                    if (this.trainingMode === 'single') {
-                        // ✅ Single applicant
-                        await this.saveTrainingForApplicant(this.selectedApplicantId, {
-                            start_date: newStartStr,
-                            end_date: newEndStr,
-                            start_time: this.formatTime(trainingTimeStart),
-                            end_time: this.formatTime(trainingTimeEnd),
-                            location: trainingLocation
-                        });
-                    } else if (this.trainingMode === 'bulk') {
-                        // ✅ Bulk applicants
-                        await this.saveBulkTraining(this.selectedApplicants, {
-                            start_date: newStartStr,
-                            end_date: newEndStr,
-                            start_time: this.formatTime(trainingTimeStart),
-                            end_time: this.formatTime(trainingTimeEnd),
-                            location: trainingLocation
-                        });
-                    }
-
-                    this.feedbackMessage = 'Training schedule saved successfully!';
-                    this.feedbackVisible = true;
-                    this.showTrainingModal = false;
-
-                    setTimeout(() => this.feedbackVisible = false, 3000);
-                    setTimeout(() => location.reload(), 3500);
-
-                } catch (error) {
-                    alert('Error: ' + error.message);
-                } finally {
-                    this.loading = false;
-                }
-            };
-
-            // -------------------------------
-            // Reschedule confirmation
-            // -------------------------------
-            this.loading = true;
-            const isReschedule = !!this.originalTrainingDateRange;
-
-            if (isReschedule) {
-                const result = await Swal.fire({
-                    title: "You're about to reschedule",
-                    html: `
-                        New training date range: <br><strong>${selectedRange}</strong><br>
-                        Time: <strong>${trainingTimeStart} - ${trainingTimeEnd}</strong><br>
-                        Location: <strong>${trainingLocation}</strong><br><br>
-                        Do you want to continue?`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#BD6F22',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes, reschedule'
-                });
-
-                if (result.isConfirmed) proceed();
-                else this.loading = false;
-            } else {
-                proceed();
-            }
-        },
-
-        async saveBulkTraining(applicantIds, payload) {
-            const response = await fetch(`/hrAdmin/training-schedule/bulk`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
-                    applicants: applicantIds,
-                    ...payload
-                })
-            });
-
-            if (!response.ok) throw new Error('Failed to bulk set training schedule');
-            return await response.json();
-        },
-
-        async saveTrainingForApplicant(applicantId, payload) {
-            const response = await fetch(`/hrAdmin/training-schedule/${applicantId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) throw new Error('Failed to set training schedule');
-            return await response.json();
         },
 
     }));

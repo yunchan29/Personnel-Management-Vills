@@ -162,7 +162,7 @@
                     <tr
                         data-applicant-id="{{ $application->id }}"
                         data-status="{{ $application->status }}"
-                        x-show="(showAll || (!['approved', 'interviewed', 'for_interview', 'scheduled_for_training','trained', 'hired'].includes('{{ $application->status }}'))) && !removedApplicants.includes({{ $application->id }})"
+                        x-show="(showAll || (!['approved', 'interviewed', 'for_interview', 'scheduled_for_training','trained', 'hired', 'fail_interview'].includes('{{ $application->status }}'))) && !removedApplicants.includes({{ $application->id }})"
                         x-transition:enter="transition ease-out duration-500"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"
@@ -232,10 +232,13 @@
                         <!-- Action -->
                          
                         <td class="py-3 px-4">
-                            @if($application->user->active_status === 'Active')
-                                @if($application->status === 'interviewed')
+                            @if($application->status === 'interviewed')
                                 <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300">
                                     Interviewed
+                                </span>
+                            @elseif($application->status === 'fail_interview')
+                                <span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full transition-colors duration-300">
+                                    Failed Interview
                                 </span>
                             @elseif($application->status === 'approved')
                                 <button 
@@ -256,27 +259,22 @@
                                     Declined
                                 </span>
                             @elseif($application->status === 'hired')
-                             <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300">
+                                <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300">
                                     Hired
                                 </span>
                             @else
-                          <button
-                            @click="confirmStatus(
-                                '{{ $application->status === 'approved' ? 'declined' : 'approved' }}',
-                                {{ $application->id }},
-                                '{{ $application->user->first_name }} {{ $application->user->last_name }}',
-                                '{{ $application->status }}'
-                            )"
-                            class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
-                            {{ $application->status === 'approved' ? 'Disapprove (Archive)' : 'Approve' }}
-                          </button>
-
-
+                                <button
+                                    @click="confirmStatus(
+                                        '{{ $application->status === 'approved' ? 'declined' : 'approved' }}',
+                                        {{ $application->id }},
+                                        '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+                                        '{{ $application->status }}'
+                                    )"
+                                    class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
+                                    {{ $application->status === 'approved' ? 'Disapprove (Archive)' : 'Approve' }}
+                                </button>
                             @endif
 
-                            @else
-                                <span class="text-gray-400 italic">Inactive</span>
-                            @endif
                         </td>
                     </tr>
                 @empty
