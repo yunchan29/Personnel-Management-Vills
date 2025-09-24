@@ -19,6 +19,8 @@ class Application extends Model
         'status',
         'is_archived', // ✅ for archiving
         'contract_signing_schedule', 
+        'contract_start',  
+        'contract_end',     
     ];
 
     protected $casts = [
@@ -27,6 +29,8 @@ class Application extends Model
         'reviewed_at' => 'datetime',
         'is_archived' => 'boolean', // ✅ for archiving
         'contract_signing_schedule' => 'datetime',
+        'contract_start' => 'date',   
+        'contract_end' => 'date',   
     ];
 
     public function job()

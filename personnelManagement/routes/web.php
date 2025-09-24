@@ -279,6 +279,11 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function (
         ->name('contractSchedule.store');
     Route::delete('/contract-schedule/{application}', [\App\Http\Controllers\ContractScheduleController::class, 'destroy'])
         ->name('contractSchedule.destroy');
+    // ✅ Contract Dates Routes
+    Route::post('/contract-dates/{application}', [\App\Http\Controllers\ContractScheduleController::class, 'storeDates'])
+        ->name('contractDates.store');
+    Route::delete('/contract-dates/{application}', [\App\Http\Controllers\ContractScheduleController::class, 'destroyDates'])
+        ->name('contractDates.destroy');
 });
 
 
