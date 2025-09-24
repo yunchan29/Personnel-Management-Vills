@@ -173,7 +173,7 @@
                     || {{ $additionalInfo }}.includes(search.toLowerCase())"
                 x-transition
             >
-                <x-hradmin.applicationJobListing :job="$job" />
+                <x-hrAdmin.applicationJobListing :job="$job" />
             </div>
         @empty
             <p class="text-center text-gray-500">No job applications available.</p>
