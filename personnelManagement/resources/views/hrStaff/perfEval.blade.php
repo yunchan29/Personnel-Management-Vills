@@ -149,7 +149,7 @@
             </span>
         </div>
 
-      <!-- Set Schedule -->
+      <!-- Set Contract Signing Date -->
 <div x-data="{ open: false }" class="relative group">
     <!-- Trigger Button -->
     <button 
@@ -170,53 +170,96 @@
         Set Schedule
     </span>
 
-    <!-- Modal -->
+    <!-- Set Contract Signing Date & Time Modal -->
     <div 
-        x-show="open" 
-        x-cloak 
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-        <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-            <!-- Close button -->
-            <button @click="open = false" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">&times;</button>
-            
-            <h2 class="text-lg font-semibold text-gray-700 mb-4">Set Contract Signing</h2>
+    x-show="open" 
+    x-cloak 
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+        <!-- Close button -->
+        <button @click="open = false" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">&times;</button>
+        
+        <h2 class="text-lg font-semibold text-[#BD6F22] mb-4">
+            Set Contract Signing for {{ $applicant->user->full_name }}
+        </h2>
 
-           <form action="{{ route('hrStaff.contractSchedule.store', $applicant->id) }}" 
-      method="POST" 
-      class="schedule-form">
-    @csrf
-    <label for="contract_signing_schedule" class="block text-sm font-medium text-gray-700">
-        Contract Signing Date & Time
-    </label>
-    <input 
-        type="datetime-local" 
-        id="contract_signing_schedule" 
-        name="contract_signing_schedule" 
-        value="{{ old('contract_signing_schedule', $applicant->contract_signing_schedule ? $applicant->contract_signing_schedule->format('Y-m-d\TH:i') : '') }}"
-        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm" 
-        required>
+        <form action="{{ route('hrStaff.contractSchedule.store', $applicant->id) }}" 
+              method="POST" 
+              class="schedule-form">
+            @csrf
 
-    <div class="mt-6 flex justify-end space-x-2">
-        <button type="button" @click="open = false" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded">Cancel</button>
-        <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded">Save</button>
-    </div>
-</form>
+            <!-- Contract Signing Date -->
+            <label for="contract_date" class="block text-sm font-medium text-black">
+                Contract Signing Date
+            </label>
+            <input 
+                type="date" 
+                id="contract_date" 
+                name="contract_date" 
+                :min="new Date(Date.now() + 86400000).toISOString().split('T')[0]"
+                value="{{ old('contract_date', $applicant->contract_signing_schedule ? $applicant->contract_signing_schedule->format('Y-m-d') : '') }}"
+                class="w-full mb-4 p-2 border rounded text-black" 
+                required>
 
-@if($applicant->contract_signing_schedule)
-    <form action="{{ route('hrStaff.contractSchedule.destroy', $applicant->id) }}" 
-          method="POST" 
-          class="remove-schedule-form mt-4">
-        @csrf
-        @method('DELETE')
-        <button type="submit" class="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded">
-            Remove Schedule
-        </button>
-    </form>
-@endif
 
-        </div>
+            <!-- Contract Signing Time -->
+            <label class="block text-sm font-medium mb-1 text-black">
+                <span>Contract Signing Time</span>
+            </label>
+
+            <div x-data="{
+                    contractHour: 8,
+                    contractMinute: '00',
+                    contractPeriod: 'AM',
+                    updatePeriod() {
+                        if (this.contractHour >= 8 && this.contractHour <= 11) {
+                            this.contractPeriod = 'AM';
+                        } else if (this.contractHour >= 1 && this.contractHour <= 5) {
+                            this.contractPeriod = 'PM';
+                        }
+                    }
+                }" class="flex gap-2 mb-4">
+                 
+                <!-- Hours -->
+                <select x-model.number="contractHour" @change="updatePeriod()" class="flex-1 p-2 border rounded text-black">
+                    <template x-for="h in [8,9,10,11,1,2,3,4,5]" :key="h">
+                        <option :value="h" x-text="h"></option>
+                    </template>
+                </select>
+
+                <!-- Minutes -->
+                <select x-model="contractMinute" class="flex-1 p-2 border rounded text-black">
+                    <template x-for="m in ['00','15','30','45']" :key="m">
+                        <option :value="m" x-text="m"></option>
+                    </template>
+                </select>
+
+                <!-- Auto AM/PM -->
+                <input 
+                    type="text" 
+                    x-model="contractPeriod" 
+                    class="w-20 p-2 border rounded text-center bg-gray-100 text-black" 
+                    readonly
+                />
+
+                <!-- Hidden combined value for backend -->
+                <input type="hidden" 
+                    name="contract_signing_time" 
+                    :value="`${contractHour}:${contractMinute} ${contractPeriod}`">
+            </div>
+
+            <!-- Confirm Button -->
+            <div class="mt-6 flex justify-end">
+                <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded">
+                    Confirm
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+</div>
+
+
 
 
        <!-- Set Contract -->
@@ -510,7 +553,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Contract Schedule Save Confirmation
-    document.querySelectorAll('.schedule-form').forEach(form => {
+ document.querySelectorAll('.schedule-form').forEach(form => {
         form.addEventListener('submit', function (e) {
             e.preventDefault();
             Swal.fire({
