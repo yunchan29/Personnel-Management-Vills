@@ -94,6 +94,16 @@
         <!-- Bulk Approve Button -->
         <template x-if="selectedApplicants.length > 0">
             <div class="flex gap-2 justify-end mb-2">
+                 <!-- Left side: Master Checkbox -->
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                    <input 
+                        type="checkbox" 
+                        x-ref="masterCheckbox"
+                        @change="toggleSelectAll($event)"
+                        class="rounded border-gray-300"
+                    >
+                    <span>Select All</span>
+                </label>
                 <!-- Bulk Approve -->
                 <div class="relative">
                     <button
@@ -141,13 +151,7 @@
         <table class="min-w-full text-sm text-left text-gray-700">
             <thead class="border-b font-semibold bg-gray-50">
                 <tr>
-                    <th class="py-3 px-4">
-                        <input 
-                        type="checkbox" 
-                        x-ref="masterCheckbox"
-                        @change="toggleSelectAll($event)"
-                        >
-                    </th>
+                    
                     <th class="py-3 px-4">Name</th>
                     <th class="py-3 px-4">Position</th>
                     <th class="py-3 px-4">Company</th>
@@ -171,8 +175,9 @@
                         x-transition:leave-end="opacity-0 scale-95"
                         @applicant-approved.window="if ($event.detail.id === {{ $application->id }}) removedApplicants.push({{ $application->id }})"
                         class="border-b hover:bg-gray-50"
-                    >    
-                        <td class="py-3 px-4">
+                    >   
+                        @if($application->status === 'Pending')
+                        <td class="py-3 px-2">
                         <input 
                             type="checkbox"
                             class="applicant-checkbox"
@@ -185,6 +190,7 @@
                             @change="toggleItem($event, {{ $application->id }})"
                         />
                         </td>
+                        @endif
                         <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
                             <span class="inline-block w-3 h-3 rounded-full {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
                             {{ $application->user->first_name . ' ' . $application->user->last_name }}
