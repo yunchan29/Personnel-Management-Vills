@@ -124,7 +124,7 @@ function validateAllTabsAndSubmit() {
     updateFullAddress();
     document.getElementById('profileForm').submit();
 }
-
+</script>
 
 
 <!-- Auto-Fill Full Address Script -->
