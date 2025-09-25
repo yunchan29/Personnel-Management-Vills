@@ -151,7 +151,7 @@
         <table class="min-w-full text-sm text-left text-gray-700">
             <thead class="border-b font-semibold bg-gray-50">
                 <tr>
-                    
+                     
                     <th class="py-3 px-4">Name</th>
                     <th class="py-3 px-4">Position</th>
                     <th class="py-3 px-4">Company</th>
@@ -277,7 +277,7 @@
                                 '{{ $application->status }}'
                             )"
                             class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
-                            Approve/Dissaprove
+                            Approve/Disapprove
                           </button>
 
 

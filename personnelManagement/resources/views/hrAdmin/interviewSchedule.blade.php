@@ -33,7 +33,7 @@
         <thead class="border-b font-semibold bg-gray-50">
           <tr>
             
-
+            <th class="py-3 px-4"></th>
             <th class="py-3 px-4">Name</th>
             <th class="py-3 px-4">Position</th>
             <th class="py-3 px-4">Company</th>
