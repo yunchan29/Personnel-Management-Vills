@@ -1,4 +1,4 @@
-@extends('layouts.hrStaff')
+@extends('layouts.hrAdmin')
 
 @section('content')
 <div x-data class="relative">
@@ -19,38 +19,46 @@
         </tr>
       </thead>
       <tbody>
-        @forelse($archivedEmployees as $employee)
-          <tr class="border-b hover:bg-gray-50">
-            <td class="py-3 px-4">{{ $employee->first_name }} {{ $employee->last_name }}</td>
-            <td class="py-3 px-4">{{ $employee->email }}</td>
-            <td class="py-3 px-4">{{ $employee->job->job_title ?? 'N/A' }}</td>
-            <td class="py-3 px-4">{{ $employee->job->company_name ?? 'N/A' }}</td>
-            <td class="py-3 px-4 italic">{{ \Carbon\Carbon::parse($employee->archived_at)->format('F d, Y') }}</td>
-            <td class="py-3 px-4 flex gap-3">
-              {{-- Restore Form --}}
-              <form action="{{ route('hrStaff.archive.restore', $employee->id) }}" method="POST" class="restore-form">
-                @csrf
-                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">
-                  Restore
-                </button>
-              </form>
+  @forelse($applications as $application)
+    <tr class="border-b hover:bg-gray-50">
+      <td class="py-3 px-4">
+        {{ $application->user->first_name ?? 'N/A' }}
+        {{ $application->user->last_name ?? '' }}
+      </td>
+      <td class="py-3 px-4">{{ $application->user->email ?? 'N/A' }}</td>
+      <td class="py-3 px-4">{{ $application->job->job_title ?? 'N/A' }}</td>
+      <td class="py-3 px-4">{{ $application->job->company_name ?? 'N/A' }}</td>
+      <td class="py-3 px-4 italic">
+        {{ $application->archived_at
+            ? \Carbon\Carbon::parse($application->archived_at)->format('F d, Y')
+            : '—' }}
+      </td>
+      <td class="py-3 px-4 flex gap-3">
+        {{-- Restore (hrAdmin route) --}}
+        <form action="{{ route('hrAdmin.archive.restore', $application->id) }}" method="POST" class="restore-form">
+          @csrf
+          <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">
+            Restore
+          </button>
+        </form>
 
-              {{-- Delete Form --}}
-              <form action="{{ route('hrStaff.archive.destroy', $employee->id) }}" method="POST" class="delete-form">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
-                  Delete
-                </button>
-              </form>
-            </td>
-          </tr>
-        @empty
-          <tr>
-            <td colspan="6" class="py-6 text-center text-gray-500">No archived employees.</td>
-          </tr>
-        @endforelse
-      </tbody>
+        {{-- Delete (hrAdmin route) --}}
+        <form action="{{ route('hrAdmin.archive.destroy', $application->id) }}" method="POST" class="delete-form">
+          @csrf
+          @method('DELETE')
+          <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
+            Delete
+          </button>
+        </form>
+      </td>
+    </tr>
+  @empty
+    <tr>
+      <td colspan="6" class="py-6 text-center text-gray-500">No archived applicants.</td>
+    </tr>
+  @endforelse
+</tbody>
+
     </table>
   </div>
 </div>
