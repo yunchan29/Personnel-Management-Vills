@@ -149,8 +149,8 @@
             </span>
         </div>
 
-      <!-- Set Contract Signing Date -->
-<div x-data="{ open: false }" class="relative group">
+    <!-- Set Contract Signing Date -->
+    <div x-data="{ open: false }" class="relative group">
     <!-- Trigger Button -->
     <button 
         @click="open = true" 
@@ -374,7 +374,13 @@
 
                 <!-- Requirements Modal -->
                 <x-hrStaff.requirementsModal />
-
+                
+            <script>
+                @if(session('success'))
+                    window.contractScheduleSuccess = "{{ session('success') }}";
+                @endif
+            </script>
+            
             </div>
         </template>
     </div>
@@ -384,6 +390,7 @@
 
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{ asset('js/contractsigningHandler.js') }}"></script>
 
 <script>
 function requirementsModal() {

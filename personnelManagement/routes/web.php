@@ -22,6 +22,8 @@ use App\Http\Controllers\DashboardChartController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ArchiveController; 
 use App\Http\Controllers\StaffArchiveController;
+use App\Http\Controllers\ContractScheduleController; //for contract signing schedule
+use App\Http\Controllers\ContractDatesController; //for contract dates
 //temporary ulit HAHAHAHH sorry
 Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
 
@@ -279,6 +281,7 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function (
         ->name('contractSchedule.store');
     Route::delete('/contract-schedule/{application}', [\App\Http\Controllers\ContractScheduleController::class, 'destroy'])
         ->name('contractSchedule.destroy');
+        
     // ✅ Contract Dates Routes
     Route::post('/contract-dates/{application}', [\App\Http\Controllers\ContractScheduleController::class, 'storeDates'])
         ->name('contractDates.store');
