@@ -121,9 +121,9 @@
                 @endif
             </td>
 
- <!-- Actions -->
-<td class="py-3 px-4 align-middle whitespace-nowrap text-left">
-    <div class="flex space-x-2">
+        <!-- Actions -->
+        <td class="py-3 px-4 align-middle whitespace-nowrap text-left">
+            <div class="flex space-x-2">
         <!-- Evaluate -->
         <div class="relative group">
             <button 
@@ -140,9 +140,9 @@
                     ] : null) }}
                 )"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5h6M9 3h6a2 2 0 012 2v14a2 2 0 01-2 2H9a2 2 0 01-2-2V5a2 2 0 012-2z" />
-                </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5h6M9 3h6a2 2 0 012 2v14a2 2 0 01-2 2H9a2 2 0 01-2-2V5a2 2 0 012-2z" />
+            </svg>
             </button>
             <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-blue-600 rounded opacity-0 group-hover:opacity-100 transition">
                 {{ $applicant->evaluation ? 'View Evaluation' : 'Evaluate' }}
@@ -164,11 +164,11 @@
                   d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 
                      2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 
                      002 2z"/>
-        </svg>
-    </button>
-    <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-green-600 rounded opacity-0 group-hover:opacity-100 transition">
-        Set Schedule
-    </span>
+            </svg>
+        </button>
+        <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-green-600 rounded opacity-0 group-hover:opacity-100 transition">
+            Set Schedule
+        </span>
 
     <!-- Set Contract Signing Date & Time Modal -->
     <div 
@@ -222,15 +222,15 @@
                  
                 <!-- Hours -->
                 <select x-model.number="contractHour" @change="updatePeriod()" class="flex-1 p-2 border rounded text-black">
-                    <template x-for="h in [8,9,10,11,1,2,3,4,5]" :key="h">
-                        <option :value="h" x-text="h"></option>
+                    <template x-for="h in [6,7,8,9,10,11,1,2,3,4,5]" :key="h">
+                    <option :value="h" x-text="h"></option>
                     </template>
                 </select>
 
                 <!-- Minutes -->
                 <select x-model="contractMinute" class="flex-1 p-2 border rounded text-black">
                     <template x-for="m in ['00','15','30','45']" :key="m">
-                        <option :value="m" x-text="m"></option>
+                    <option :value="m" x-text="m"></option>
                     </template>
                 </select>
 
@@ -250,7 +250,7 @@
 
             <!-- Confirm Button -->
             <div class="mt-6 flex justify-end">
-                <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded">
+                <button  type="submit" class="px-4 py-2 rounded text-white hover:opacity-90 transition"style="background-color: #BD6F22;">
                     Confirm
                 </button>
             </div>
@@ -390,7 +390,7 @@
 
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="{{ asset('js/contractsigningHandler.js') }}"></script>
+
 
 <script>
 function requirementsModal() {
@@ -538,9 +538,31 @@ function evaluationModal(applicants) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Archive Confirmation
-    document.querySelectorAll('.archive-form').forEach(form => {
-        form.addEventListener('submit', function (e) {
+
+    // ✅ Event Delegation for schedule-form
+    document.addEventListener('submit', function (e) {
+        if (e.target.matches('.schedule-form')) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Set Contract Schedule?',
+                text: "Do you want to save this contract signing schedule?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#BD6F22',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Yes, save!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    e.target.submit();
+                }
+            });
+        }
+    });
+
+    // ✅ Event Delegation for archive-form
+    document.addEventListener('submit', function (e) {
+        if (e.target.matches('.archive-form')) {
             e.preventDefault();
             Swal.fire({
                 title: 'Archive Applicant?',
@@ -553,66 +575,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 cancelButtonText: 'Cancel'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    form.submit();
+                    e.target.submit();
                 }
             });
-        });
+        }
     });
 
-    // Contract Schedule Save Confirmation
- document.querySelectorAll('.schedule-form').forEach(form => {
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            Swal.fire({
-                title: 'Set Contract Schedule?',
-                text: "Do you want to save this contract signing schedule?",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#16A34A', // green
-                cancelButtonColor: '#6B7280',
-                confirmButtonText: 'Yes, save!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
-            });
-        });
-    });
-
-    // Contract Schedule Remove Confirmation
-    document.querySelectorAll('.remove-schedule-form').forEach(form => {
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            Swal.fire({
-                title: 'Remove Contract Schedule?',
-                text: "This will clear the applicant's contract signing schedule.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33', // red
-                cancelButtonColor: '#6B7280',
-                confirmButtonText: 'Yes, remove!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
-            });
-        });
-    });
-
-    // Success Toast
+    // ✅ Success Toast
     @if(session('success'))
         Swal.fire({
             toast: true,
             position: 'top-end',
             icon: 'success',
-            title: "{{ session('success') }}",
+            title: @json(session('success')),
             showConfirmButton: false,
             timer: 2500,
             timerProgressBar: true
         });
     @endif
+
 });
 </script>
 

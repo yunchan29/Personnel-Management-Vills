@@ -101,26 +101,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Restore confirmation
-    document.querySelectorAll('.restore-form').forEach(form => {
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            Swal.fire({
-                title: 'Restore this application?',
-                text: "It will be reactivated and removed from archive.",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#28a745',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Yes, restore!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
-            });
-        });
-    });
 
     // Success Toast
     @if(session('success'))
