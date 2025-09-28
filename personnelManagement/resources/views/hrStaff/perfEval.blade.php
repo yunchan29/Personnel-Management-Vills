@@ -260,14 +260,15 @@
 </div>
 
 
-       <!-- Set Contract -->
+<!-- Set Contract -->
 @if($applicant->status !== 'hired')
 <div 
     x-data="{ 
         open:false, 
-        period:'6m', 
-        start:'', 
-        end:'', 
+        readonly: @js($applicant->contract_start && $applicant->contract_end), // true if already saved
+        period: @js(isset($contractPeriod) ? $contractPeriod : '6m'),
+        start: @js(optional($applicant->contract_start)->format('Y-m-d') ?? ''),
+        end: @js(optional($applicant->contract_end)->format('Y-m-d') ?? ''),
         today:new Date().toISOString().split('T')[0],
         updateEnd() {
             if(!this.start) return;
@@ -299,13 +300,14 @@
             <h2 class="text-lg font-semibold text-purple-700">Set Contract</h2>
 
             <!-- Form -->
-            <form method="POST" action="{{ route('hrStaff.contractDates.store', $applicant->id) }}" class="schedule-form">
+            <form method="POST" action="{{ route('hrStaff.contractDates.store', $applicant->id) }}" class="contractschedule-form">
                 @csrf
 
                 <!-- Contract Period -->
                 <div>
                     <label class="block text-sm font-medium mb-1">Contract Period</label>
-                    <select x-model="period" @change="updateEnd()" class="w-full border rounded p-2">
+                    <select x-model="period" @change="updateEnd()" class="w-full border rounded p-2"
+                            :disabled="readonly">
                         <option value="6m">6 Months</option>
                         <option value="1y">1 Year</option>
                     </select>
@@ -316,6 +318,7 @@
                     <label class="block text-sm font-medium mb-1">Contract Start Date</label>
                     <input type="date" name="contract_start" x-model="start" :min="today"
                            @change="updateEnd()" class="w-full border rounded p-2"
+                           :readonly="readonly"
                            required>
                 </div>
 
@@ -326,19 +329,17 @@
                            readonly class="w-full border rounded p-2 bg-gray-100">
                 </div>
 
-                <!-- Actions -->
+               <!-- Actions -->
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" @click="open=false" class="px-3 py-1 bg-gray-200 rounded">Cancel</button>
-                    <button type="submit" class="px-3 py-1 bg-purple-600 text-white rounded">Save</button>
+                    <button type="button" @click="open=false" class="px-3 py-1 bg-gray-200 rounded">Close</button>
+                    <button type="submit" class="px-3 py-1 bg-purple-600 text-white rounded" x-show="!readonly">Save</button>
                 </div>
+
             </form>
         </div>
     </div>
 </div>
 @endif
-
-
-
 
 
         <!-- View Requirements -->
@@ -397,12 +398,12 @@
                 </button>
                 <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-red-600 rounded opacity-0 group-hover:opacity-100 transition">
                     Archive
-                </span>
+               </span>
             </div>
-        </form>
+          </form>
         @endif
-    </div>
-</td>
+      </div>
+   </td>
 
 
         </tr>
@@ -413,19 +414,18 @@
             </td>
         </tr>
         @endforelse
-    </tbody>
-</table>
+        </tbody>
+        </table>
 
-                </div>
-
-                <div class="flex justify-center px-6 pb-4">
-                    <button
-                        @click="showAll = !showAll"
-                        class="text-sm text-[#BD6F22] hover:underline focus:outline-none"
-                    >
-                        <span x-text="showAll ? 'Hide Hired' : 'Show All'"></span>
-                    </button>
-                </div>
+        </div>
+        <div class="flex justify-center px-6 pb-4">
+            <button
+                @click="showAll = !showAll"
+                class="text-sm text-[#BD6F22] hover:underline focus:outline-none"
+            >
+                <span x-text="showAll ? 'Hide Hired' : 'Show All'"></span>
+            </button>
+        </div>
 
                 <!-- Evaluation Modal -->
                 <x-hrStaff.evaluationModal />
@@ -597,6 +597,25 @@ function evaluationModal(applicants) {
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
+     document.addEventListener('submit', function (e) {
+        if (e.target.matches('.contractschedule-form')) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Set Contract Dates?',
+                text: "Do you want to save this contract dates ?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#BD6F22',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Yes, save!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    e.target.submit();
+                }
+            });
+        }
+    });
     // ✅ Event Delegation for schedule-form
     document.addEventListener('submit', function (e) {
         if (e.target.matches('.schedule-form')) {

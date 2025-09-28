@@ -47,31 +47,39 @@ class ContractScheduleController extends Controller
 
 
 
-    /**
-     * Store contract dates (start & end)
-     */
- public function storeDates(Request $request, $applicationId)
-    {
-        $request->validate([
-            'contract_start' => 'required|date',
-            'contract_end'   => 'required|date|after_or_equal:contract_start',
-        ]);
+ /**
+ * Store contract dates (start & end)
+ */
+public function storeDates(Request $request, $applicationId)
+{
+    $request->validate([
+        'contract_start' => 'required|date',
+        'period'         => 'required|in:6m,1y', // make sure period is valid
+    ]);
 
-        $application = Application::findOrFail($applicationId);
+    $application = Application::findOrFail($applicationId);
 
-        // Ensure contract signing schedule exists before saving dates
-        if (!$application->contract_signing_schedule) {
-            return redirect()->back()->with('error', 'You must set a contract signing schedule before assigning contract dates.');
-        }
-
-        // Save contract dates
-        $application->update([
-            'contract_start' => $request->contract_start,
-            'contract_end'   => $request->contract_end,
-        ]);
-
-        return redirect()->back()->with('success', 'Contract dates saved successfully.');
+    // Ensure contract signing schedule exists before saving dates
+    if (!$application->contract_signing_schedule) {
+        return redirect()->back()->with('error', 'You must set a contract signing schedule before assigning contract dates.');
     }
 
+    // Calculate end date from start + period
+    $startDate = \Carbon\Carbon::parse($request->contract_start);
+    $endDate = $startDate->copy();
 
+    if ($request->period === '6m') {
+        $endDate->addMonths(6);
+    } elseif ($request->period === '1y') {
+        $endDate->addYear();
+    }
+
+    // Save contract dates
+    $application->update([
+        'contract_start' => $startDate->format('Y-m-d'),
+        'contract_end'   => $endDate->format('Y-m-d'),
+    ]);
+
+    return redirect()->back()->with('success', 'Contract dates saved successfully.');
+}
 }
