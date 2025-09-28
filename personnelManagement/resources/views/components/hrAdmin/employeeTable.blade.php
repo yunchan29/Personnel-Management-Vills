@@ -2,8 +2,11 @@
     x-data="{
         showProfile: false,
         activeProfileId: null,
+        showResume: false,
+        resumeUrl: null,
         openResume(url) {
-            window.open(url, '_blank');
+            this.resumeUrl = url;
+            this.showResume = true;
         },
         openProfile(id) {
             this.showProfile = true;
@@ -17,10 +20,10 @@
             <tr>
                 <th class="py-3 px-4">Name</th>
                 <th class="py-3 px-4">Company</th>
-                <th class="py-3 px-4">Start</th>
-                <th class="py-3 px-4">End</th>
                 <th class="py-3 px-4">Resume</th>
                 <th class="py-3 px-4">Profile</th>
+                <th class="py-3 px-4">Start</th>
+                <th class="py-3 px-4">End</th>
             </tr>
         </thead>
         <tbody>
@@ -35,16 +38,6 @@
                     <!-- Company -->
                     <td class="py-3 px-4 whitespace-nowrap">
                         {{ $employee->job->company_name ?? '—' }}
-                    </td>
-
-                    <!-- Start Date -->
-                    <td class="py-3 px-4 whitespace-nowrap">
-                        {{ $employee->start_date ?? '—' }}
-                    </td>
-
-                    <!-- End Date -->
-                    <td class="py-3 px-4 whitespace-nowrap">
-                        {{ $employee->end_date ?? '—' }}
                     </td>
 
                     <!-- Resume -->
@@ -67,13 +60,39 @@
                         @if($employee->active_status === 'Active')
                             <button
                                 @click="openProfile({{ $employee->id }})"
-                                class="border border-[#BD6F22] text-[#BD6F22] text-sm font-medium h-8 px-3 rounded hover:bg-[#BD6F22] hover:text-white">
+                                class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
                                 View
                             </button>
                         @else
                             <span class="text-gray-400 italic">Inactive</span>
                         @endif
                     </td>
+
+                   <!-- Start Date -->
+                <td class="py-3 px-4 whitespace-nowrap">
+                    @if($employee->application && $employee->application->contract_start)
+                        {{ $employee->application->contract_start->format('M d, Y') }}
+                    @else
+                        <span class="text-gray-400 italic">—</span>
+                    @endif
+                </td>
+
+                <!-- End Date -->
+                <td class="py-3 px-4 whitespace-nowrap">
+                    @if($employee->application && $employee->application->contract_end)
+                        @php
+                            $endDate = $employee->application->contract_end;
+                            $isPast = $endDate->isPast();
+                        @endphp
+
+                        <span class="{{ $isPast ? 'text-red-500 font-medium' : 'text-gray-700' }}">
+                            {{ $endDate->format('M d, Y') }}
+                        </span>
+                    @else
+                        <span class="text-green-600 font-medium">Ongoing</span>
+                    @endif
+                </td>
+
                 </tr>
             @empty
                 <tr>
@@ -103,4 +122,27 @@
             </div>
         </div>
     @endforeach
+
+    <!-- Resume Preview Modal -->
+    <div 
+        x-show="showResume"
+        x-transition
+        x-cloak
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+        <div class="bg-white rounded-lg overflow-hidden w-[95%] max-w-5xl h-[90vh] shadow-xl relative flex flex-col">
+            <!-- Close Button -->
+            <button 
+                @click="showResume = false; resumeUrl = null"
+                class="absolute top-4 right-4 text-gray-600 hover:text-gray-900 text-2xl font-bold">
+                &times;
+            </button>
+
+            <!-- Resume Preview -->
+            <iframe 
+                :src="resumeUrl" 
+                class="w-full h-full border-0"
+            ></iframe>
+        </div>
+    </div>
 </div>
