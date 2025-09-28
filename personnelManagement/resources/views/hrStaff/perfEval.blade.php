@@ -260,27 +260,85 @@
 </div>
 
 
-
-
        <!-- Set Contract -->
 @if($applicant->status !== 'hired')
-<div class="relative group">
-    <button class="w-10 h-10 flex items-center justify-center rounded-full bg-purple-100 hover:bg-purple-200 ring-2 ring-transparent hover:ring-purple-400 transition-all">
-        <!-- Clipboard/Document Icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" 
-             class="w-5 h-5 stroke-purple-600" 
-             fill="none" viewBox="0 0 24 24" 
-             stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" 
-                  d="M9 2h6a2 2 0 012 2v2h-2V4H9v2H7V4a2 2 0 012-2zM7 8h10v12a2 2 0 01-2 
+<div 
+    x-data="{ 
+        open:false, 
+        period:'6m', 
+        start:'', 
+        end:'', 
+        today:new Date().toISOString().split('T')[0],
+        updateEnd() {
+            if(!this.start) return;
+            let d = new Date(this.start);
+            if(this.period === '6m') d.setMonth(d.getMonth() + 6);
+            if(this.period === '1y') d.setFullYear(d.getFullYear() + 1);
+            this.end = d.toISOString().split('T')[0];
+        }
+    }" 
+    class="relative group">
+
+    <!-- Button -->
+    <button @click="open = true"
+        class="w-10 h-10 flex items-center justify-center rounded-full bg-purple-100 hover:bg-purple-200 ring-2 hover:ring-purple-400 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-purple-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 2h6a2 2 0 012 2v2h-2V4H9v2H7V4a2 2 0 012-2zM7 8h10v12a2 2 0 01-2 
                      2H9a2 2 0 01-2-2V8z"/>
         </svg>
     </button>
-    <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-purple-600 rounded opacity-0 group-hover:opacity-100 transition">
+
+    <!-- Tooltip -->
+    <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-purple-600 rounded opacity-0 group-hover:opacity-100">
         Set Contract
     </span>
+
+    <!-- Modal -->
+    <div x-show="open" x-transition class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div @click.away="open=false" class="bg-white rounded-xl p-6 w-96 space-y-4">
+            <h2 class="text-lg font-semibold text-purple-700">Set Contract</h2>
+
+            <!-- Form -->
+            <form method="POST" action="{{ route('hrStaff.contractDates.store', $applicant->id) }}" class="schedule-form">
+                @csrf
+
+                <!-- Contract Period -->
+                <div>
+                    <label class="block text-sm font-medium mb-1">Contract Period</label>
+                    <select x-model="period" @change="updateEnd()" class="w-full border rounded p-2">
+                        <option value="6m">6 Months</option>
+                        <option value="1y">1 Year</option>
+                    </select>
+                </div>
+
+                <!-- Start Date -->
+                <div>
+                    <label class="block text-sm font-medium mb-1">Contract Start Date</label>
+                    <input type="date" name="contract_start" x-model="start" :min="today"
+                           @change="updateEnd()" class="w-full border rounded p-2"
+                           required>
+                </div>
+
+                <!-- End Date -->
+                <div>
+                    <label class="block text-sm font-medium mb-1">Contract End Date</label>
+                    <input type="date" name="contract_end" x-model="end" :min="start || today"
+                           readonly class="w-full border rounded p-2 bg-gray-100">
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" @click="open=false" class="px-3 py-1 bg-gray-200 rounded">Cancel</button>
+                    <button type="submit" class="px-3 py-1 bg-purple-600 text-white rounded">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 @endif
+
+
+
 
 
         <!-- View Requirements -->

@@ -23,7 +23,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ArchiveController; 
 use App\Http\Controllers\StaffArchiveController;
 use App\Http\Controllers\ContractScheduleController; //for contract signing schedule
-use App\Http\Controllers\ContractDatesController; //for contract dates
+
 //temporary ulit HAHAHAHH sorry
 Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
 

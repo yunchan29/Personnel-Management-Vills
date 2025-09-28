@@ -73,22 +73,5 @@ class ContractScheduleController extends Controller
         return redirect()->back()->with('success', 'Contract dates saved successfully.');
     }
 
-    /**
-     * Delete contract start & end dates
-     */
-    public function destroyDates($applicationId)
-    {
-        $application = Application::findOrFail($applicationId);
 
-        if ($application->contract_start || $application->contract_end) {
-            $application->update([
-                'contract_start' => null,
-                'contract_end'   => null,
-            ]);
-
-            return redirect()->back()->with('success', 'Contract dates removed successfully.');
-        }
-
-        return redirect()->back()->with('error', 'No contract dates found for this applicant.');
-    }
 }
