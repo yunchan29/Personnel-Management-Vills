@@ -24,7 +24,7 @@ class ArchiveController extends Controller
     // Restore only this application
     $application->update([
         'is_archived' => false,
-        'status' => 'pending', // reset to pending
+        'status' => 'Pending', // reset to pending
     ]);
 
     return redirect()->route('hrAdmin.archive.index')
