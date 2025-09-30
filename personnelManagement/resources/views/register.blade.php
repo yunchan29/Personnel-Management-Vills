@@ -30,19 +30,25 @@
 
 <div class="flex flex-col-reverse md:flex-row bg-white rounded-lg shadow-md w-full max-w-5xl min-h-[600px] max-h-[600px] fade-slide-up">
 
-  <div class="w-full md:w-1/2 bg-[#BD9168] flex flex-col justify-center items-center p-8 text-white rounded-b-lg md:rounded-none">
-    <div class="text-center max-w-md fade-slide-up-delay">
-      <h1 class="text-2xl md:text-4xl font-alata mb-6 leading-relaxed">Welcome Back! Ready to land your next opportunity?</h1>
-      <a href="{{ route('login') }}" class="inline-block text-white bg-[#BD6F22] px-6 py-2 rounded-lg font-bold hover:bg-[#a35718] transition">Login</a>
-    </div>
+<div class="w-full md:w-1/2 bg-[#BD9168] flex flex-col justify-center items-center p-8 text-white rounded-b-lg md:rounded-l-lg">
+  <div class="text-center max-w-md fade-slide-up-delay">
+    <h1 class="text-2xl md:text-4xl font-alata mb-6 leading-relaxed">
+      Welcome Back! Ready to land your next opportunity?
+    </h1>
+    <a href="{{ route('login') }}" 
+       class="inline-block text-white bg-[#BD6F22] px-6 py-2 rounded-lg font-bold hover:bg-[#a35718] transition">
+       Login
+    </a>
   </div>
+</div>
+
 
   <!-- Right Side (Register Form) -->
-  <div class="w-full md:w-1/2 bg-white flex flex-col p-8 rounded-t-lg md:rounded-l-lg overflow-y-auto fade-slide-up">
-    <div class="flex flex-col items-center w-full min-h-full">
+<div class="w-full md:w-1/2 bg-white flex flex-col p-8 rounded-t-lg md:rounded-l-lg overflow-hidden overflow-y-auto fade-slide-up">
+
       <a href="/"><img src="/images/villsLogo2.png" alt="Logo" class="w-auto h-16 mb-6"></a>
       <h1 class="text-2xl md:text-3xl font-bold text-center mb-2 text-[#BD6F22]">Create Account</h1>
-
+      <div class="overflow-y-auto flex-1">
       <form method="POST" action="{{ route('register') }}" class="w-full max-w-sm" id="registerForm">
         @csrf
 
@@ -127,6 +133,7 @@
         </div>
 
       </form>
+  </div>
     </div>
   </div>
 </div>
