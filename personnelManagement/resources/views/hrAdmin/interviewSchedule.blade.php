@@ -2,32 +2,70 @@
   <div x-data="interviewHandler($data)">
     <!-- Applicants Table -->
     <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg">
-      <!-- Mass Interview Button -->
-      <div class="flex gap-2 mb-4">
-          <!-- Mass Schedule -->
-          <button 
-              @click="openBulk('bulk')"
-              class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              :disabled="selectedApplicants.length <= 1">
-              Set Mass Interview
-          </button>
+      <!-- Mass Interview Buttons -->
+<div class="flex gap-2 mb-4">
+    <!-- Mass Schedule (Primary Solid) -->
+    <button 
+        @click="openBulk('bulk')"
+        class="min-w-[160px] bg-[#8B4513] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
+               hover:bg-[#6F3610] transition-all duration-200 ease-in-out 
+               disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#BD9168]/40 focus:outline-none"
+        :disabled="selectedApplicants.length <= 1">
+        <!-- Lucide: Calendar -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        Set Mass Interview
+    </button>
 
-          <!-- Mass Reschedule -->
-          <button 
-              @click="openBulk('bulk-reschedule')"
-              class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              :disabled="selectedApplicants.length <= 1">
-              Mass Reschedule
-          </button>
+    <!-- Mass Reschedule (Accent Solid) -->
+    <button 
+        @click="openBulk('bulk-reschedule')"
+        class="min-w-[160px] bg-[#BD9168] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
+               hover:bg-[#A97E59] transition-all duration-200 ease-in-out 
+               disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#8B4513]/30 focus:outline-none"
+        :disabled="selectedApplicants.length <= 1">
+        <!-- Lucide: Refresh-Ccw -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <path d="M3 2v6h6"></path>
+          <path d="M21 12a9 9 0 0 0-9-9H9"></path>
+          <path d="M21 22v-6h-6"></path>
+          <path d="M3 12a9 9 0 0 0 9 9h3"></path>
+        </svg>
+        Mass Reschedule
+    </button>
 
-          <!-- Mass Manage -->
-          <button 
-              @click="openBulkManage"
-              class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              :disabled="selectedApplicants.length <= 1">
-              Mass Manage
-          </button>
-      </div>
+    <!-- Mass Manage (Ghost / Outline) -->
+    <button 
+        @click="openBulkManage"
+        class="min-w-[160px] border border-[#8B4513] text-[#8B4513] bg-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
+               hover:bg-[#F5F0EC] hover:border-[#6F3610] hover:text-[#6F3610] 
+               transition-all duration-200 ease-in-out 
+               disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#BD9168]/30 focus:outline-none"
+        :disabled="selectedApplicants.length <= 1">
+        <!-- Lucide: Settings -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 
+                   1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 
+                   1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06 
+                   a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09 
+                   a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06 
+                   a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 
+                   1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09c0 .66.39 1.26 1 1.51 
+                   .46.2.99.2 1.45 0h.05a2 2 0 0 1 2.83 2.83l-.06.06 
+                   c-.39.39-.51.96-.33 1.48.18.52.66.91 1.22.91H21a2 2 0 0 1 0 4h-.09 
+                   a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        Mass Manage
+    </button>
+</div>
 
       <table class="min-w-full text-sm text-left text-gray-700">
         <thead class="border-b font-semibold bg-gray-50">
@@ -57,21 +95,29 @@
               class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out">
 
              
-              <td class="py-3 px-4">
-                <input 
-                  type="checkbox"
-                  class="applicant-checkbox"
-                  :value="JSON.stringify({
-                      application_id: {{ $application->id }},
-                      user_id: {{ $application->user_id }},
-                      name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
-                      has_schedule: {{ $application->interview ? 'true' : 'false' }},
-                  })"
-                  :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
-                  :disabled="{{ $application->trainingSchedule ? 'true' : 'false' }}"
-                  @change="toggleItem($event, {{ $application->id }}); updateMasterCheckbox()"
-                />
-              </td>
+             <td class="py-3 px-4">
+  <label class="relative inline-flex items-center cursor-pointer">
+    <input 
+      type="checkbox"
+      class="peer h-4 w-4 appearance-none rounded border border-gray-300 checked:bg-[#BD6F22] checked:border-[#BD6F22] 
+             focus:ring-2 focus:ring-offset-1 focus:ring-[#BD6F22] transition-colors duration-200"
+      :value="JSON.stringify({
+          application_id: {{ $application->id }},
+          user_id: {{ $application->user_id }},
+          name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+          has_schedule: {{ $application->interview ? 'true' : 'false' }},
+      })"
+      :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
+      :disabled="{{ $application->trainingSchedule ? 'true' : 'false' }}"
+      @change="toggleItem($event, {{ $application->id }}); updateMasterCheckbox()"
+    />
+    <!-- Custom checkmark -->
+    <svg class="absolute left-0.5 top-0.5 hidden peer-checked:block w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+      <path d="M5 13l4 4L19 7" />
+    </svg>
+  </label>
+</td>
+
             
               <!-- Name -->
               <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
