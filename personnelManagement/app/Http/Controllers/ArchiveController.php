@@ -17,19 +17,19 @@ class ArchiveController extends Controller
         return view('hrAdmin.archive', compact('applications'));
     }
 
-   public function restore($id)
-{
-    $application = Application::findOrFail($id);
+    public function restore($id)
+    {
+        $application = Application::findOrFail($id);
 
-    // Restore only this application
-    $application->update([
-        'is_archived' => false,
-        'status' => 'Pending', // reset to pending
-    ]);
+        // Restore to previous status if available, otherwise fallback to "Pending"
+        $application->update([
+            'is_archived' => false,
+            'status' => $application->previous_status ?? 'Pending',
+        ]);
 
-    return redirect()->route('hrAdmin.archive.index')
-        ->with('success', 'Application restored and set to pending.');
-}
+        return redirect()->route('hrAdmin.archive.index')
+            ->with('success', 'Application restored to its previous status.');
+    }
 
     public function destroy($id)
     {

@@ -2,8 +2,8 @@
 
 @section('content')
 <div x-data class="relative">
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-semibold">Archived Employees</h1>
+  <div class="p-6 max-w-6xl mx-auto">
+    <h1 class="text-2xl font-semibold text-[#BD6F22] mb-6">Archived Applicants</h1>
   </div>
 
   <div class="overflow-x-auto bg-white p-4 rounded-lg shadow-lg">

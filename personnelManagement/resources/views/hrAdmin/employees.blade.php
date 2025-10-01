@@ -2,7 +2,7 @@
 
 @section('content')
 <section class="p-6 max-w-6xl mx-auto" x-data="{ tab: 'postings', selectedJobId: null }">
-    <h1 class="mb-6 text-xl font-bold text-[#BD6F22]">Employees</h1>
+    <h1 class="text-2xl font-semibold text-[#BD6F22] mb-6">Employees</h1>
 
     {{-- Tabs --}}
     <div class="flex border-b border-gray-300 mb-6 space-x-6">
