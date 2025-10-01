@@ -3,21 +3,42 @@
 
         <!-- Applicants Table -->
         <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg">
-            <button 
-                @click="bulkSetTraining"
-                :disabled="selectedApplicants.length <= 1"
-                class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-            Set Training
-            </button>
+          <div class="flex gap-2 mb-4">
+    <!-- Set Training (Primary Solid) -->
+    <button 
+        @click="bulkSetTraining"
+        :disabled="selectedApplicants.length <= 1"
+        class="min-w-[160px] bg-[#8B4513] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
+               hover:bg-[#6F3610] transition-all duration-200 ease-in-out 
+               disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#BD9168]/40 focus:outline-none">
+        <!-- Lucide: Graduation Cap -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" 
+             stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5L2 10z"></path>
+          <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+        </svg>
+        Set Training
+    </button>
 
-            <button 
-                @click="bulkReschedTraining"
-                :disabled="selectedApplicants.length <= 1"
-                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-            Resched Training
-            </button>
+    <!-- Resched Training (Accent Solid) -->
+    <button 
+        @click="bulkReschedTraining"
+        :disabled="selectedApplicants.length <= 1"
+        class="min-w-[160px] bg-[#BD9168] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
+               hover:bg-[#A97E59] transition-all duration-200 ease-in-out 
+               disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#8B4513]/30 focus:outline-none">
+        <!-- Lucide: Refresh-CCW -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <path d="M3 2v6h6"></path>
+          <path d="M21 12a9 9 0 0 0-9-9H9"></path>
+          <path d="M21 22v-6h-6"></path>
+          <path d="M3 12a9 9 0 0 0 9 9h3"></path>
+        </svg>
+        Resched Training
+    </button>
+</div>
+
 
             <table class="min-w-full text-sm text-left text-gray-700">
                 <thead class="border-b font-semibold bg-gray-50">
@@ -57,22 +78,34 @@
                                 class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out"
                             >
 
-                            <td class="py-3 px-4">
-                                <input 
-                                    type="checkbox"
-                                    class="applicant-checkbox"
-                                    data-has-training="{{ $application->trainingSchedule ? 1 : 0 }}"
-                                    :value="JSON.stringify({
-                                        application_id: {{ $application->id }},
-                                        user_id: {{ $application->user_id }},
-                                        name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
-                                        has_training: {{ $application->trainingSchedule ? 'true' : 'false' }}
-                                    })"
-                                    :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
-                                    @change="toggleItem($event, {{ $application->id }})"
-                                />
+                           <td class="py-3 px-4">
+  <label class="relative inline-flex items-center cursor-pointer">
+    <input 
+      type="checkbox"
+      class="peer h-4 w-4 appearance-none rounded border border-gray-300 
+             checked:bg-[#BD6F22] checked:border-[#BD6F22] 
+             focus:ring-2 focus:ring-offset-1 focus:ring-[#BD6F22] 
+             transition-colors duration-200
+             disabled:opacity-50 disabled:cursor-not-allowed applicant-checkbox"
+      data-has-training="{{ $application->trainingSchedule ? 1 : 0 }}"
+      :value="JSON.stringify({
+          application_id: {{ $application->id }},
+          user_id: {{ $application->user_id }},
+          name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+          has_training: {{ $application->trainingSchedule ? 'true' : 'false' }}
+      })"
+      :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
+      @change="toggleItem($event, {{ $application->id }})"
+      :disabled="{{ $application->trainingSchedule ? 'true' : 'false' }}"
+    />
+    <!-- Custom checkmark -->
+    <svg class="absolute left-0.5 top-0.5 hidden peer-checked:block w-3 h-3 text-white" 
+         fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+      <path d="M5 13l4 4L19 7" />
+    </svg>
+  </label>
+</td>
 
-                            </td>
 
                             <!-- Name -->
                             <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
