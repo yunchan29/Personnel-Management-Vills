@@ -52,6 +52,9 @@ class ApplicantJobController extends Controller
 {
     $user = auth()->user();
     $file201 = $user->file201;
+    
+    // merge submitted data into user profile for validation
+    $user->fill($request->only(['full_address', 'city', 'province']));
 
     // Check required fields
     $requiredFields = [

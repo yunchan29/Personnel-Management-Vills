@@ -105,14 +105,13 @@ function validateAllTabsAndSubmit() {
     const requiredDropdowns = [
         { id: 'civil_status', label: 'Civil Status' },
         { id: 'nationality', label: 'Nationality' },
-        { id: 'mobile_number', label: 'Mobile Number' },
         { id: 'province', label: 'Province' },
         { id: 'city', label: 'City / Municipality' },
         { id: 'barangay', label: 'Barangay' },
     ];
 
     for (const field of requiredDropdowns) {
-        const el = document.getElementById(field.id) || document.querySelector(`[name="${field.id}"]`);
+        const el = document.getElementById(field.id);
         if (el && (!el.value || el.value.trim() === '')) {
             Swal.fire({
                 icon: 'warning',
@@ -124,7 +123,32 @@ function validateAllTabsAndSubmit() {
             el.focus();
             return;
         }
+        
     }
+    // ✅ Validate mobile number (must match 09XXXXXXXXX format)
+    const mobileNumberInput = document.getElementById('mobile_number');
+    const mobileNumberPattern = /^09\d{9}$/;
+
+    if (!mobileNumberInput || mobileNumberInput.value.trim() === '') {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Missing Mobile Number',
+            text: 'Please enter your mobile number before submitting.',
+            confirmButtonColor: '#BD6F22'
+        });
+        mobileNumberInput.focus();
+        return;
+    } else if (!mobileNumberPattern.test(mobileNumberInput.value.trim())) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Invalid Mobile Number',
+            text: 'Please enter a valid 11-digit mobile number starting with 09.',
+            confirmButtonColor: '#BD6F22'
+        });
+        mobileNumberInput.focus();
+        return;
+    }
+
 
     // ✅ Validate all other form sections
     window.formSections = window.formSections || {};
@@ -156,7 +180,7 @@ function validateAllTabsAndSubmit() {
 
         const getSelectedText = (selectId) => {
             const select = document.getElementById(selectId);
-            if (select && !select.disabled && select.value !== '') {
+            if (select && select.value !== '') {
                 const selectedOption = select.options[select.selectedIndex];
                 return selectedOption?.text?.trim() || '';
             }
@@ -177,27 +201,42 @@ function validateAllTabsAndSubmit() {
         }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    // ✅ Attach listeners, even if selects are added dynamically
+    function attachListeners() {
         const fields = ['street_details', 'postal_code'];
         const selects = ['province', 'city', 'barangay'];
 
-        // Input field listeners
         fields.forEach(name => {
             const el = document.querySelector(`[name="${name}"]`);
-            if (el) el.addEventListener('input', updateFullAddress);
-        });
-
-        // Select dropdown listeners
-        selects.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.addEventListener('change', updateFullAddress);
-                if (el.value !== '') el.disabled = false;
+            if (el && !el.dataset.listenerAttached) {
+                el.addEventListener('input', updateFullAddress);
+                el.dataset.listenerAttached = true;
             }
         });
 
-        // Delay initial fill to ensure dropdowns are populated
-        setTimeout(updateFullAddress, 300);
+        selects.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && !el.dataset.listenerAttached) {
+                el.addEventListener('change', updateFullAddress);
+                el.dataset.listenerAttached = true;
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        attachListeners();
+
+        // ✅ Re-attach listeners in case selects are replaced (e.g., AJAX)
+        const observer = new MutationObserver(() => attachListeners());
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        // ✅ Run periodically to ensure address updates as data loads
+        const interval = setInterval(() => {
+            updateFullAddress();
+        }, 500);
+
+        // Stop after 5 seconds (once everything loads)
+        setTimeout(() => clearInterval(interval), 5000);
     });
 </script>
 
@@ -319,9 +358,10 @@ fetch('https://psgc.gitlab.io/api/provinces/')
                 provinceSelect.add(new Option(province.name, province.code));
             });
 
-        if (oldProvince && window.Alpine?.store('editMode')?.isEditing) {
-    provinceSelect.value = oldProvince;
-    provinceSelect.dispatchEvent(new Event('change'));
+        if (oldProvince) {
+            provinceSelect.value = oldProvince;
+            // Trigger city load automatically
+            provinceSelect.dispatchEvent(new Event('change'));
 }
 
     });
@@ -339,10 +379,10 @@ provinceSelect.addEventListener('change', () => {
         [...cities, ...municipalities]
             .sort((a, b) => a.name.localeCompare(b.name))
             .forEach(loc => citySelect.add(new Option(loc.name, loc.code)));
-
-        if (oldCity && window.Alpine?.store('editMode')?.isEditing) {
-    citySelect.value = oldCity;
-    citySelect.dispatchEvent(new Event('change'));
+         // ✅ Only select city *after* options are loaded
+       if (oldCity && provinceSelect.value === oldProvince) {
+            citySelect.value = oldCity;
+            citySelect.dispatchEvent(new Event('change'));
 }
 
     });
@@ -360,8 +400,13 @@ citySelect.addEventListener('change', () => {
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .forEach(brgy => barangaySelect.add(new Option(brgy.name, brgy.name)));
 
-            if (oldBarangay) {
+            // ✅ Select saved barangay only when it matches
+            if (oldBarangay && citySelect.value === oldCity) {
                 barangaySelect.value = oldBarangay;
+            }
+            // ✅ Once all location fields are restored, update full address
+            if (typeof updateFullAddress === 'function') {
+                updateFullAddress();
             }
         });
 });

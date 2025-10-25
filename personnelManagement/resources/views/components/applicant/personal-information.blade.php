@@ -103,19 +103,24 @@
         Civil Status <span class="text-red-600">*</span>
     </label>
     <select 
-        name="civil_status"
-        id="civil_status"
-        class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
-        :class="$store.editMode.isEditing 
-            ? 'bg-white cursor-pointer' 
-            : 'bg-gray-100 cursor-not-allowed'"
-        :disabled="!$store.editMode.isEditing"
-    >
-        <option value="">-- Select Civil Status --</option>
-        @foreach (['Single', 'Married', 'Divorced', 'Widowed', 'Separated'] as $status)
-            <option value="{{ $status }}">{{ $status }}</option>
-        @endforeach
-    </select>
+    name="civil_status"
+    id="civil_status"
+    class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
+    :class="$store.editMode.isEditing 
+        ? 'bg-white cursor-pointer' 
+        : 'bg-gray-100 cursor-not-allowed'"
+    :disabled="!$store.editMode.isEditing"
+>
+    <option value="">-- Select Civil Status --</option>
+    @foreach (['Single', 'Married', 'Divorced', 'Widowed', 'Separated'] as $status)
+        <option 
+            value="{{ $status }}" 
+            {{ old('civil_status', $user->civil_status ?? '') == $status ? 'selected' : '' }}
+        >
+            {{ $status }}
+        </option>
+    @endforeach
+</select>
 </div>
 
 
@@ -173,6 +178,7 @@
     </label>
     <input 
         type="text"
+        id="mobile_number"
         name="mobile_number"
         pattern="^09\\d{9}$"
         maxlength="11"
@@ -281,6 +287,7 @@
 function personalForm() {
     return {
         isEditing: false,
+        civil_status: user.civil_status ?? '',
         isNewAccount: {{ $user->created_at ? 'false' : 'true' }},
         locks: {
             birth_date: {{ $user->birth_date ? 'true' : 'false' }},
