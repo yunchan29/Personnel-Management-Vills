@@ -83,16 +83,14 @@
 
 
 <!-- Scripts -->
-
-
-<!-- Global Form Validation -->
+<!-- Validate All Tabs and Submit Script -->
 <script>
 function validateAllTabsAndSubmit() {
     const profilePicInput = document.getElementById('profile_picture');
     const previewImage = document.getElementById('previewImage');
     const hasExistingPic = previewImage && !previewImage.src.includes('default.png');
 
-    // Validate profile picture
+    // ✅ Validate profile picture
     if (!hasExistingPic && (!profilePicInput || !profilePicInput.files.length)) {
         Swal.fire({
             icon: 'warning',
@@ -103,10 +101,34 @@ function validateAllTabsAndSubmit() {
         return;
     }
 
-    // Validate form sections
-    window.formSections = window.formSections || {}; // ✅ Ensure it's defined before use
-    const sections = window.formSections;
+    // ✅ Validate civil status, nationality, province, city, barangay
+    const requiredDropdowns = [
+        { id: 'civil_status', label: 'Civil Status' },
+        { id: 'nationality', label: 'Nationality' },
+        { id: 'mobile_number', label: 'Mobile Number' },
+        { id: 'province', label: 'Province' },
+        { id: 'city', label: 'City / Municipality' },
+        { id: 'barangay', label: 'Barangay' },
+    ];
 
+    for (const field of requiredDropdowns) {
+        const el = document.getElementById(field.id) || document.querySelector(`[name="${field.id}"]`);
+        if (el && (!el.value || el.value.trim() === '')) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Incomplete Information',
+                text: `Please select your ${field.label} before submitting.`,
+                confirmButtonColor: '#BD6F22'
+            });
+            // Optionally focus the empty field for convenience
+            el.focus();
+            return;
+        }
+    }
+
+    // ✅ Validate all other form sections
+    window.formSections = window.formSections || {};
+    const sections = window.formSections;
     const order = ['personal', 'work'];
 
     for (const key of order) {
@@ -114,7 +136,6 @@ function validateAllTabsAndSubmit() {
         if (section && typeof section.validate === 'function') {
             const valid = section.validate();
             if (!valid) {
-                // Show the relevant tab
                 document.querySelector(`#tab-${key}-btn`)?.click();
                 return;
             }
@@ -298,18 +319,17 @@ fetch('https://psgc.gitlab.io/api/provinces/')
                 provinceSelect.add(new Option(province.name, province.code));
             });
 
-        if (oldProvince) {
-            provinceSelect.value = oldProvince;
-            provinceSelect.dispatchEvent(new Event('change'));
-        }
+        if (oldProvince && window.Alpine?.store('editMode')?.isEditing) {
+    provinceSelect.value = oldProvince;
+    provinceSelect.dispatchEvent(new Event('change'));
+}
+
     });
 
 provinceSelect.addEventListener('change', () => {
     const provCode = provinceSelect.value;
     citySelect.innerHTML = '<option value="">-- Select City --</option>';
     barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
-    citySelect.disabled = true;
-    barangaySelect.disabled = true;
     if (!provCode) return;
 
     Promise.all([
@@ -320,18 +340,17 @@ provinceSelect.addEventListener('change', () => {
             .sort((a, b) => a.name.localeCompare(b.name))
             .forEach(loc => citySelect.add(new Option(loc.name, loc.code)));
 
-        citySelect.disabled = false;
-        if (oldCity) {
-            citySelect.value = oldCity;
-            citySelect.dispatchEvent(new Event('change'));
-        }
+        if (oldCity && window.Alpine?.store('editMode')?.isEditing) {
+    citySelect.value = oldCity;
+    citySelect.dispatchEvent(new Event('change'));
+}
+
     });
 });
 
 citySelect.addEventListener('change', () => {
     const cityCode = citySelect.value;
     barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
-    barangaySelect.disabled = true;
     if (!cityCode) return;
 
     fetch(`https://psgc.gitlab.io/api/cities-municipalities/${cityCode}/barangays/`)
@@ -340,12 +359,13 @@ citySelect.addEventListener('change', () => {
             barangays
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .forEach(brgy => barangaySelect.add(new Option(brgy.name, brgy.name)));
-            barangaySelect.disabled = false;
+
             if (oldBarangay) {
                 barangaySelect.value = oldBarangay;
             }
         });
 });
+
 
 
     @if(session('success'))

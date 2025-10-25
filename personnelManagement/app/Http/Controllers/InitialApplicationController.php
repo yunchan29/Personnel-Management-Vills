@@ -64,42 +64,58 @@ class InitialApplicationController extends Controller
     }
 
     public function viewApplicants($jobId)
-    {
-        $job = Job::findOrFail($jobId);
-        $jobs = Job::withCount('applications')->get();
+{
+    $job = Job::findOrFail($jobId);
 
-        $applications = Application::with(['user', 'job', 'interview', 'trainingSchedule'])
-            ->where('job_id', $jobId)
-            ->get();
+    // Jobs with filtered application count (exclude hired + declined)
+    $jobs = Job::withCount([
+        'applications as applications_count' => function ($query) {
+            $query->whereNotIn('status', ['hired', 'declined']);
+        }
+    ])->get();
 
-        $approvedApplicants = Application::with(['user', 'job', 'trainingSchedule'])
-            ->where('job_id', $jobId)
-            ->whereIn('status', ['approved', 'for_interview'])
-            ->get();
+    // Main applicants list (exclude hired + declined)
+    $applications = Application::with(['user', 'job', 'interview', 'trainingSchedule'])
+        ->where('job_id', $jobId)
+        ->whereNotIn('status', ['hired', 'declined'])
+        ->get();
 
-        $interviewApplicants = Application::with(['user', 'job', 'trainingSchedule'])
-            ->where('job_id', $jobId)
-            ->whereIn('status', ['interviewed', 'scheduled_for_training'])
-            ->get();
+    // Approved applicants (approved + for_interview, but still exclude hired/declined just in case)
+    $approvedApplicants = Application::with(['user', 'job', 'trainingSchedule'])
+        ->where('job_id', $jobId)
+        ->whereIn('status', ['approved', 'for_interview'])
+        ->whereNotIn('status', ['hired', 'declined'])
+        ->get();
 
-        $forTrainingApplicants = Application::with(['user', 'job', 'trainingSchedule'])
-            ->where('job_id', $jobId)
-            ->where('status', 'for_evaluation')
-            ->get();
+    // Interview applicants
+    $interviewApplicants = Application::with(['user', 'job', 'trainingSchedule'])
+        ->where('job_id', $jobId)
+        ->whereIn('status', ['interviewed', 'scheduled_for_training'])
+        ->whereNotIn('status', ['hired', 'declined'])
+        ->get();
 
-        $companies = Job::select('company_name')->distinct()->pluck('company_name');
+    // For training applicants
+    $forTrainingApplicants = Application::with(['user', 'job', 'trainingSchedule'])
+        ->where('job_id', $jobId)
+        ->where('status', 'for_evaluation')
+        ->whereNotIn('status', ['hired', 'declined'])
+        ->get();
 
-        return view('hrAdmin.application', [
-            'jobs' => $jobs,
-            'applications' => $applications,
-            'selectedJob' => $job,
-            'selectedTab' => 'applicants',
-            'approvedApplicants' => $approvedApplicants,
-            'interviewApplicants' => $interviewApplicants,
-            'forTrainingApplicants' => $forTrainingApplicants,
-            'companies' => $companies,
-        ]);
-    }
+    $companies = Job::select('company_name')->distinct()->pluck('company_name');
+
+    return view('hrAdmin.application', [
+        'jobs' => $jobs,
+        'applications' => $applications,
+        'selectedJob' => $job,
+        'selectedTab' => 'applicants',
+        'approvedApplicants' => $approvedApplicants,
+        'interviewApplicants' => $interviewApplicants,
+        'forTrainingApplicants' => $forTrainingApplicants,
+        'companies' => $companies,
+    ]);
+}
+
+
 
     public function updateApplicationStatus(Request $request, $id)
     {

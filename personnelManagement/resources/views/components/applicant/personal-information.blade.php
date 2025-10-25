@@ -15,74 +15,110 @@
     </button>
 </div>
 
-<!-- Personal Info -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    @foreach ([
-        'first_name' => 'First Name',
-        'middle_name' => 'Middle Name',
-        'last_name' => 'Last Name',
-        'suffix' => 'Suffix',
-        'birth_date' => 'Birth Date',
-        'birth_place' => 'Birth Place',
-        'age' => 'Age'
-    ] as $field => $label)
-        <div>
-            <label class="block text-sm text-gray-700">
-                {{ $label }}
-                @if(!in_array($field, ['suffix','middle_name']))
-                    <span x-show="isNewAccount && !getValue('{{ $field }}')" class="text-red-600">*</span>
+    <!-- Personal Info Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        @foreach ([
+            'first_name' => 'First Name',
+            'middle_name' => 'Middle Name',
+            'last_name' => 'Last Name',
+            'suffix' => 'Suffix',
+            'birth_date' => 'Birth Date',
+            'birth_place' => 'Birth Place',
+            'age' => 'Age'
+        ] as $field => $label)
+            @php
+                // Permanently non-editable once filled
+                $isConditionallyLocked = in_array($field, ['first_name', 'middle_name', 'last_name']) && !empty($user->$field);
+
+                // Always locked fields
+                $isAlwaysLocked = in_array($field, ['birth_date', 'age']);
+            @endphp
+
+            <div>
+                <label class="block text-sm text-gray-700 mb-1">
+                    {{ $label }}
+                    @if(!in_array($field, ['suffix', 'middle_name', 'birth_place']))
+                        <span class="text-red-600">*</span>
+                    @endif
+                </label>
+
+
+                @if ($field === 'suffix')
+                    <!-- Editable dropdown for suffix -->
+                    <select 
+                        name="suffix"
+                        x-bind:disabled="!$store.editMode.isEditing"
+                        x-bind:class="$store.editMode.isEditing 
+                            ? 'w-full border border-gray-300 rounded-md shadow-sm px-3 py-2' 
+                            : 'w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-gray-100 cursor-not-allowed'">
+                        <option value="">-- Select Suffix --</option>
+                        @foreach (['Jr.', 'Sr.', 'II', 'III', 'IV', 'V'] as $suffix)
+                            <option value="{{ $suffix }}" {{ old('suffix', $user->suffix) === $suffix ? 'selected' : '' }}>
+                                {{ $suffix }}
+                            </option>
+                        @endforeach
+                    </select>
+                @else
+                    <!-- Inputs -->
+                    <input 
+                        type="{{ $field === 'birth_date' ? 'date' : ($field === 'age' ? 'number' : 'text') }}"
+                        name="{{ $field }}" 
+                        value="{{ old($field, $field === 'birth_date' && $user->$field ? \Carbon\Carbon::parse($user->$field)->format('Y-m-d') : $user->$field) }}"
+                        x-bind:readonly="
+                            {{ $isAlwaysLocked ? 'true' : 'false' }} || 
+                            {{ $isConditionallyLocked ? 'true' : '!$store.editMode.isEditing' }}
+                        "
+                        x-bind:class="(
+                            {{ $isAlwaysLocked ? 'true' : 'false' }} || 
+                            {{ $isConditionallyLocked ? 'true' : '!$store.editMode.isEditing' }}
+                        )
+                            ? 'w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-gray-100 cursor-not-allowed' 
+                            : 'w-full border border-gray-300 rounded-md shadow-sm px-3 py-2'
+                        ">
                 @endif
-            </label>
-            @if ($field === 'suffix')
-                <!-- Always read-only -->
-                <select name="suffix"
-                        class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-gray-100 cursor-not-allowed"
-                        disabled>
-                    <option value="">-- Select Suffix --</option>
-                    @foreach (['Jr.', 'Sr.', 'II', 'III', 'IV', 'V'] as $suffix)
-                        <option value="{{ $suffix }}" {{ old('suffix', $user->suffix) === $suffix ? 'selected' : '' }}>{{ $suffix }}</option>
-                    @endforeach
-                </select>
-            @else
-                <!-- Always read-only -->
-                <input 
-                    type="{{ $field === 'birth_date' ? 'date' : ($field === 'age' ? 'number' : 'text') }}"
-                    name="{{ $field }}" 
-                    value="{{ old($field, $field === 'birth_date' && $user->$field ? \Carbon\Carbon::parse($user->$field)->format('Y-m-d') : $user->$field) }}"
-                    class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-gray-100 cursor-not-allowed"
-                    readonly>
-            @endif
-        </div>
-    @endforeach
+            </div>
+        @endforeach
+           
+  <!-- Gender (always read-only but marked important) -->
+<div>
+    <label class="block text-sm text-gray-700">
+        Gender <span class="text-red-600">*</span>
+    </label>
+    <select 
+        name="gender"
+        class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-gray-100 cursor-not-allowed"
+        disabled
+    >
+        @foreach (['Male', 'Female', 'Other'] as $gender)
+            <option value="{{ $gender }}" {{ old('gender', $user->gender) === $gender ? 'selected' : '' }}>
+                {{ $gender }}
+            </option>
+        @endforeach
+    </select>
+</div>
 
-    <!-- Gender (always read-only) -->
-    <div>
-        <label class="block text-sm text-gray-700">
-            Gender <span x-show="isNewAccount && !getValue('gender')" class="text-red-600">*</span>
-        </label>
-        <select name="gender"
-                class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-gray-100 cursor-not-allowed"
-                disabled>
-            @foreach (['Male', 'Female', 'Other'] as $gender)
-                <option value="{{ $gender }}" {{ old('gender', $user->gender) === $gender ? 'selected' : '' }}>{{ $gender }}</option>
-            @endforeach
-        </select>
-    </div>
+ <!-- Civil Status (editable and always marked important) -->
+<div>
+    <label class="block text-sm text-gray-700">
+        Civil Status <span class="text-red-600">*</span>
+    </label>
+    <select 
+        name="civil_status"
+        id="civil_status"
+        class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
+        :class="$store.editMode.isEditing 
+            ? 'bg-white cursor-pointer' 
+            : 'bg-gray-100 cursor-not-allowed'"
+        :disabled="!$store.editMode.isEditing"
+    >
+        <option value="">-- Select Civil Status --</option>
+        @foreach (['Single', 'Married', 'Divorced', 'Widowed', 'Separated'] as $status)
+            <option value="{{ $status }}">{{ $status }}</option>
+        @endforeach
+    </select>
+</div>
 
-    <!-- Civil Status (editable) -->
-    <div>
-        <label class="block text-sm text-gray-700">
-            Civil Status <span x-show="isNewAccount && !getValue('civil_status')" class="text-red-600">*</span>
-        </label>
-        <select name="civil_status"
-                class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
-                :class="$store.editMode.isEditing ? 'bg-white cursor-pointer' : 'bg-gray-100 cursor-not-allowed'"
-                :disabled="!$store.editMode.isEditing">
-            @foreach (['Single', 'Married', 'Divorced', 'Widowed', 'Separated'] as $status)
-                <option value="{{ $status }}" {{ old('civil_status', $user->civil_status) === $status ? 'selected' : '' }}>{{ $status }}</option>
-            @endforeach
-        </select>
-    </div>
+
 
     <!-- Religion (editable) -->
     <div>
@@ -97,18 +133,27 @@
                :readonly="!$store.editMode.isEditing">
     </div>
 
-    <!-- Nationality (always read-only) -->
-    <div>
-        <label class="block text-sm text-gray-700">
-            Nationality <span x-show="isNewAccount && !getValue('nationality')" class="text-red-600">*</span>
-        </label>
-        <select name="nationality" id="nationality"
-                class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-gray-100 cursor-not-allowed"
-                disabled>
-            <option value="">-- Select Nationality --</option>
-        </select>
-    </div>
+<!-- Nationality (editable only if empty, always marked important) -->
+<div>
+    <label class="block text-sm text-gray-700 mb-1">
+        Nationality <span class="text-red-600">*</span>
+    </label>
+
+    <select 
+        name="nationality" 
+        id="nationality"
+        x-bind:disabled="{{ $user->nationality ? 'true' : '!$store.editMode.isEditing' }}"
+        x-bind:class="(
+            {{ $user->nationality ? 'true' : '!$store.editMode.isEditing' }}
+        )
+            ? 'w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-gray-100 cursor-not-allowed' 
+            : 'w-full border border-gray-300 rounded-md shadow-sm px-3 py-2'
+        ">
+        <option value="">-- Select Nationality --</option>
+    </select>
 </div>
+</div>
+
 
 <!-- Contacts -->
 <h2 class="text-lg font-semibold mt-6 mb-2" style="color: #BD6F22;">Contacts</h2>
@@ -120,21 +165,26 @@
                class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-gray-100 cursor-not-allowed"
                readonly>
     </div>
-    <div>
-        <label class="block text-sm text-gray-700">
-            Mobile Number <span x-show="isNewAccount && !getValue('mobile_number')" class="text-red-600">*</span>
-        </label>
-        <!-- Editable -->
-        <input type="text"
-               name="mobile_number"
-               pattern="^09\\d{9}$"
-               maxlength="11"
-               title="Enter a valid 11-digit mobile number starting with 09"
-               value="{{ old('mobile_number', $user->mobile_number) }}"
-               class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
-               :class="$store.editMode.isEditing ? 'bg-white cursor-text' : 'bg-gray-100 cursor-not-allowed'"
-               :readonly="!$store.editMode.isEditing">
-    </div>
+
+    <!-- Mobile Number (editable, always marked important) -->
+<div>
+    <label class="block text-sm text-gray-700">
+        Mobile Number <span class="text-red-600">*</span>
+    </label>
+    <input 
+        type="text"
+        name="mobile_number"
+        pattern="^09\\d{9}$"
+        maxlength="11"
+        title="Enter a valid 11-digit mobile number starting with 09"
+        value="{{ old('mobile_number', $user->mobile_number) }}"
+        class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
+        :class="$store.editMode.isEditing 
+            ? 'bg-white cursor-text' 
+            : 'bg-gray-100 cursor-not-allowed'"
+        :readonly="!$store.editMode.isEditing"
+    >
+</div>
 </div>
 
 <!-- Address -->
@@ -175,40 +225,52 @@
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+    <!-- Province -->
     <div>
-        <label class="block text-sm text-gray-700">
-            Province <span x-show="isNewAccount && !getValue('province')" class="text-red-600">*</span>
+        <label class="block text-sm text-gray-700 mb-1">
+            Province <span class="text-red-600">*</span>
         </label>
         <select id="province" name="province"
-                class="w-full border rounded px-3 py-2"
-                :class="$store.editMode.isEditing ? 'bg-white cursor-pointer' : 'bg-gray-100 cursor-not-allowed'"
+                class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
+                :class="$store.editMode.isEditing 
+                    ? 'bg-white cursor-pointer' 
+                    : 'bg-gray-100 cursor-not-allowed'"
                 :disabled="!$store.editMode.isEditing">
             <option value="">-- Select Province --</option>
         </select>
     </div>
+
+    <!-- City / Municipality -->
     <div>
-        <label class="block text-sm text-gray-700">
-            City / Municipality <span x-show="isNewAccount && !getValue('city')" class="text-red-600">*</span>
+        <label class="block text-sm text-gray-700 mb-1">
+            City / Municipality <span class="text-red-600">*</span>
         </label>
         <select id="city" name="city"
-                class="w-full border rounded px-3 py-2"
-                :class="$store.editMode.isEditing ? 'bg-white cursor-pointer' : 'bg-gray-100 cursor-not-allowed'"
+                class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
+                :class="$store.editMode.isEditing 
+                    ? 'bg-white cursor-pointer' 
+                    : 'bg-gray-100 cursor-not-allowed'"
                 :disabled="!$store.editMode.isEditing">
             <option value="">-- Select City --</option>
         </select>
     </div>
+
+    <!-- Barangay -->
     <div>
-        <label class="block text-sm text-gray-700">
-            Barangay <span x-show="isNewAccount && !getValue('barangay')" class="text-red-600">*</span>
+        <label class="block text-sm text-gray-700 mb-1">
+            Barangay <span class="text-red-600">*</span>
         </label>
         <select id="barangay" name="barangay"
-                class="w-full border rounded px-3 py-2"
-                :class="$store.editMode.isEditing ? 'bg-white cursor-pointer' : 'bg-gray-100 cursor-not-allowed'"
+                class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
+                :class="$store.editMode.isEditing 
+                    ? 'bg-white cursor-pointer' 
+                    : 'bg-gray-100 cursor-not-allowed'"
                 :disabled="!$store.editMode.isEditing">
             <option value="">-- Select Barangay --</option>
         </select>
     </div>
 </div>
+
 
 
         </div>
