@@ -1,5 +1,12 @@
 document.addEventListener('alpine:init', () => {
-    Alpine.data('interviewHandler', () => ({
+    Alpine.data('interviewHandler', (parent) => ({
+            get selectedApplicants() {
+            return parent.selectedApplicants;
+            },
+            set selectedApplicants(val) {
+            parent.selectedApplicants = val;
+            },
+
 
         // 🔹 State
         showInterviewModal: false,
@@ -24,6 +31,8 @@ document.addEventListener('alpine:init', () => {
                     this.interviewPeriod = 'PM';
                 }
             });
+            // Ensure master checkbox sync on init
+            this.$nextTick(() => this.updateMasterCheckbox());
         },
 
         // 🔹 Helpers
@@ -62,6 +71,106 @@ document.addEventListener('alpine:init', () => {
         for_interview: { label: 'For Interview', class: 'bg-yellow-200 text-yellow-800' },
         default: { label: 'Pending', class: 'bg-gray-200 text-gray-800' },
         },
+
+
+        // 🔹 Toggle all visible checkboxes
+        toggleSelectAll(event) {
+            const isChecked = event.target.checked;
+
+            // ✅ Only get visible checkboxes
+            const visibleCheckboxes = Array.from(document.querySelectorAll('.applicant-checkbox'))
+                .filter(cb => cb.offsetParent !== null); // only visible rows
+
+            visibleCheckboxes.forEach(cb => {
+                cb.checked = isChecked;
+                const data = JSON.parse(cb.value);
+
+                if (isChecked) {
+                    // add if not already selected
+                    if (!this.selectedApplicants.some(a => a.application_id === data.application_id)) {
+                        this.selectedApplicants.push(data);
+                    }
+                } else {
+                    // remove if deselected
+                    this.selectedApplicants = this.selectedApplicants.filter(
+                        a => a.application_id !== data.application_id
+                    );
+                }
+            });
+
+            this.updateMasterCheckbox();
+        },
+
+        // 🔹 Update master checkbox visual state (checked / indeterminate)
+        updateMasterCheckbox() {
+            const master = this.$root.querySelector('[x-ref="masterCheckbox"]');
+            if (!master) return;
+
+            const visibleCheckboxes = this.getLocalCheckboxes();
+            const total = visibleCheckboxes.length;
+
+            const selected = visibleCheckboxes.filter(cb => {
+                const value = JSON.parse(cb.value);
+                return this.selectedApplicants.some(a => a.application_id === value.application_id);
+            }).length;
+
+            if (selected === 0) {
+                master.checked = false;
+                master.indeterminate = false;
+            } else if (selected === total) {
+                master.checked = true;
+                master.indeterminate = false;
+            } else {
+                master.checked = false;
+                master.indeterminate = true;
+            }
+        },
+
+        // 🔹 Toggle a single checkbox
+        toggleItem(event, id) {
+            const checked = event.target.checked;
+            const value = JSON.parse(event.target.value);
+            const applicantId = this.getApplicantId(value);
+
+            if (checked) {
+                if (!this.selectedApplicants.some(a => this.getApplicantId(a) === applicantId)) {
+                    this.selectedApplicants.push(value);
+                }
+            } else {
+                this.selectedApplicants = this.selectedApplicants.filter(
+                    a => this.getApplicantId(a) !== applicantId
+                );
+            }
+
+            this.updateMasterCheckbox();
+        },
+
+        // 🔹 Helpers
+        getLocalCheckboxes() {
+            return Array.from(document.querySelectorAll('.applicant-checkbox'))
+                .filter(cb => cb.offsetParent !== null);
+        },
+
+        getApplicantId(applicant) {
+            return applicant.application_id;
+        },
+
+        isAllSelected() {
+            const total = this.getLocalCheckboxes().length;
+            return (
+                this.selectedApplicants.length > 0 &&
+                this.selectedApplicants.length === total
+            );
+        },
+
+        isIndeterminate() {
+            const total = this.getLocalCheckboxes().length;
+            return (
+                this.selectedApplicants.length > 0 &&
+                this.selectedApplicants.length < total
+            );
+        },
+
 
         // 🔹 Bulk status change
         async submitBulkStatusChange() {

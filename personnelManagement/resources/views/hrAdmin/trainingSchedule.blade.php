@@ -4,6 +4,21 @@
         <!-- Applicants Table -->
         <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg">
           <div class="flex gap-2 mb-4">
+             
+             <!-- Master Checkbox -->
+        <label class="inline-flex items-center cursor-pointer select-none">
+          <input 
+            type="checkbox"
+            @change="toggleSelectAll($event)"
+            x-model="selectAll"
+            class="h-4 w-4 rounded border border-gray-300 
+                   checked:bg-[#BD6F22] checked:border-[#BD6F22]
+                   focus:ring-2 focus:ring-offset-1 focus:ring-[#BD6F22]
+                   transition-colors duration-200"
+          >
+          <span class="ml-2 text-sm text-gray-700">Select All</span>
+        </label>
+
     <!-- Set Training (Primary Solid) -->
     <button 
         @click="bulkSetTraining"
@@ -24,9 +39,9 @@
     <button 
         @click="bulkReschedTraining"
         :disabled="selectedApplicants.length <= 1"
-        class="min-w-[160px] bg-[#BD9168] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
-               hover:bg-[#A97E59] transition-all duration-200 ease-in-out 
-               disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#8B4513]/30 focus:outline-none">
+        class="min-w-[160px] bg-[#8B4513] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
+               hover:bg-[#6F3610] transition-all duration-200 ease-in-out 
+               disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#BD9168]/40 focus:outline-none">
         <!-- Lucide: Refresh-CCW -->
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
@@ -79,32 +94,32 @@
                             >
 
                            <td class="py-3 px-4">
-  <label class="relative inline-flex items-center cursor-pointer">
-    <input 
-      type="checkbox"
-      class="peer h-4 w-4 appearance-none rounded border border-gray-300 
-             checked:bg-[#BD6F22] checked:border-[#BD6F22] 
-             focus:ring-2 focus:ring-offset-1 focus:ring-[#BD6F22] 
-             transition-colors duration-200
-             disabled:opacity-50 disabled:cursor-not-allowed applicant-checkbox"
-      data-has-training="{{ $application->trainingSchedule ? 1 : 0 }}"
-      :value="JSON.stringify({
-          application_id: {{ $application->id }},
-          user_id: {{ $application->user_id }},
-          name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
-          has_training: {{ $application->trainingSchedule ? 'true' : 'false' }}
-      })"
-      :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
-      @change="toggleItem($event, {{ $application->id }})"
-      :disabled="{{ $application->trainingSchedule ? 'true' : 'false' }}"
-    />
-    <!-- Custom checkmark -->
-    <svg class="absolute left-0.5 top-0.5 hidden peer-checked:block w-3 h-3 text-white" 
-         fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
-      <path d="M5 13l4 4L19 7" />
-    </svg>
-  </label>
-</td>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input 
+                                type="checkbox"
+                                class="peer h-4 w-4 appearance-none rounded border border-gray-300 
+                                        checked:bg-[#BD6F22] checked:border-[#BD6F22] 
+                                        focus:ring-2 focus:ring-offset-1 focus:ring-[#BD6F22] 
+                                        transition-colors duration-200
+                                        disabled:opacity-50 disabled:cursor-not-allowed applicant-checkbox"
+                                data-has-training="{{ $application->trainingSchedule ? 1 : 0 }}"
+                                :value="JSON.stringify({
+                                    application_id: {{ $application->id }},
+                                    user_id: {{ $application->user_id }},
+                                    name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+                                    has_training: {{ $application->trainingSchedule ? 'true' : 'false' }}
+                                })"
+                                :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
+                                @change="toggleItem($event, {{ $application->id }})"
+                                
+                                />
+                                <!-- Custom checkmark -->
+                                <svg class="absolute left-0.5 top-0.5 hidden peer-checked:block w-3 h-3 text-white" 
+                                    fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                                <path d="M5 13l4 4L19 7" />
+                                </svg>
+                            </label>
+                            </td>
 
 
                             <!-- Name -->

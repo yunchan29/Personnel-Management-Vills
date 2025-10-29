@@ -36,7 +36,7 @@
                             class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-[#BD6F22] focus:border-[#BD6F22]">
                             <option value="all">All Applicants</option>
                             <option value="approved">Approved Applicants</option>
-                            <option value="disapproved">Disapproved Applicants</option>
+                            <option value="disapproved">Declined Applicants</option>
                         </select>
                     </div>
 
@@ -93,7 +93,7 @@
     <div class="overflow-x-auto relative bg-white p-4 rounded-lg shadow-lg">
         <!-- Bulk Approve Button -->
         <template x-if="selectedApplicants.length > 0">
-            <div class="flex gap-2 justify-end mb-2">
+            <div class="flex gap-2 mb-4">
                  <!-- Left side: Master Checkbox -->
                 <label class="flex items-center gap-2 text-sm text-gray-700">
                     <input 
@@ -109,41 +109,35 @@
                     <button
                         @click="bulkAction('approved')"
                         :disabled="selectedApplicants.length === 0"
-                        class="relative text-green-600 hover:text-green-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                    >
-                        <!-- Check icon -->
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-
-                        <!-- Counter inside icon -->
-                        <span
-                            x-show="selectedApplicants.length > 0"
-                            x-text="selectedApplicants.length"
-                            class="absolute top-0 right-0 -mt-1 -mr-1 flex items-center justify-center text-[10px] font-bold text-white bg-green-600 rounded-full w-4 h-4"
-                        ></span>
-                    </button>
+                        class="min-w-[160px] bg-[#8B4513] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
+                                hover:bg-[#6F3610] transition-all duration-200 ease-in-out 
+                                disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#BD9168]/40 focus:outline-none">
+                    <!-- Lucide: Graduation Cap -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" 
+                        stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5L2 10z"></path>
+                    <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                    </svg>
+                    Mass Approve
+                </button>
                 </div>
 
-                <!-- Bulk Disapprove -->
+                <!-- Bulk Decline -->
                 <div class="relative">
                     <button
                         @click="bulkAction('declined')"
                         :disabled="selectedApplicants.length === 0"
-                        class="relative text-red-600 hover:text-red-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                    >
-                        <!-- X icon -->
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-
-                        <!-- Counter inside icon -->
-                        <span
-                            x-show="selectedApplicants.length > 0"
-                            x-text="selectedApplicants.length"
-                            class="absolute top-0 right-0 -mt-1 -mr-1 flex items-center justify-center text-[10px] font-bold text-white bg-red-600 rounded-full w-4 h-4"
-                        ></span>
-                    </button>
+                         class="min-w-[160px] bg-[#8B4513] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
+                                hover:bg-[#6F3610] transition-all duration-200 ease-in-out 
+                                disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#BD9168]/40 focus:outline-none">
+                    <!-- Lucide: Graduation Cap -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" 
+                        stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5L2 10z"></path>
+                    <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                    </svg>
+                    Mass Decline
+                </button>
                 </div>
             </div>
         </template>
@@ -277,7 +271,7 @@
                                 '{{ $application->status }}'
                             )"
                             class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
-                            Approve/Disapprove
+                            Approve/Decline
                           </button>
 
 
