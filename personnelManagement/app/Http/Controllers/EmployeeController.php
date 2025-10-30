@@ -45,7 +45,8 @@ public function performanceEvaluation(Request $request)
                         });
                   });
         })
-        ->with(['applications' => function ($query) {
+        
+        ->withCount(['applications as applications_count' => function ($query) {
             $query->whereHas('trainingSchedule')
                   ->where('is_archived', false)
                   ->where(function ($q) {
