@@ -343,14 +343,12 @@
 
 
         <!-- View Requirements -->
-        <div class="relative group">
+        <div class="requirementsModal()">
             <button 
                 class="w-10 h-10 flex items-center justify-center rounded-full bg-indigo-100 hover:bg-indigo-200 ring-2 ring-transparent hover:ring-indigo-400 transition-all"
                 @click="openRequirements(
                     {{ Js::from($applicant->user->full_name) }},
-                    {{ Js::from($applicant->id) }},
-                    {{ Js::from($applicant->job->job_title ?? '') }},
-                    {{ Js::from($applicant->job->company_name ?? '') }}
+                    {{ Js::from($applicant->user->id) }},
                 )"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
@@ -456,28 +454,76 @@ function requirementsModal() {
         requirementsOpen: false,
         requirementsApplicantName: '',
         requirementsApplicantId: null,
-        requirementsJobTitle: '',
-        requirementsCompanyName: '',
         requirementsFile201: null,
         requirementsOtherFiles: [],
+        requiredDocs: [
+            'Barangay Clearance',
+            'NBI Clearance',
+            'Police Clearance',
+            'Medical Certificate',
+            'Birth Certificate'
+        ],
 
-        openRequirements(name, id, jobTitle, company) {
-            this.requirementsOpen = true;
-            this.requirementsApplicantName = name ?? '';
-            this.requirementsApplicantId = id ?? null;
-            this.requirementsJobTitle = jobTitle ?? '';
-            this.requirementsCompanyName = company ?? '';
+        isSubmitted(doc) {
+            return this.requirementsOtherFiles.some(f => f.type === doc);
+        },
+        hasMissingRequirements() {
+            return this.requiredDocs.some(doc => !this.isSubmitted(doc));
+        },
+        
+       async openRequirements(name, user_id) {
+        this.requirementsApplicantName = name;
+        this.requirementsApplicantId = user_id;
+        this.requirementsOpen = true;
 
-            fetch(`/hrStaff/requirements/${id}`)
-                .then(res => res.json())
-                .then(data => {
-                    this.requirementsFile201 = data.file201 ?? null;
-                    this.requirementsOtherFiles = data.otherFiles ?? [];
-                })
-                .catch(() => {
-                    this.requirementsFile201 = null;
-                    this.requirementsOtherFiles = [];
+        try {
+            const response = await fetch(`/hrStaff/requirements/${user_id}`);
+            if (!response.ok) throw new Error('Failed to fetch applicant files');
+
+            const data = await response.json();
+            this.requirementsFile201 = data.file201;
+            this.requirementsOtherFiles = data.otherFiles;
+        } catch (error) {
+            console.error(error);
+            Swal.fire({
+                title: 'Error',
+                text: 'Unable to load applicant requirements.',
+                icon: 'error',
+                confirmButtonColor: '#BD6F22'
+            });
+        }
+    },
+        
+        async sendEmailRequirements() {
+            if (!this.requirementsApplicantId) return;
+
+            try {
+                const response = await fetch(`/hrStaff/applicants/${this.requirementsApplicantId}/send-missing-requirements`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
                 });
+
+                const data = await response.json();
+
+                Swal.fire({
+                    title: 'Success',
+                    text: data.message || 'Requirements email sent successfully!',
+                    icon: 'success',
+                    confirmButtonColor: '#BD6F22'
+                });
+
+            } catch (error) {
+                console.error(error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to send requirements email.',
+                    icon: 'error',
+                    confirmButtonColor: '#BD6F22'
+                });
+            }
         },
 
         closeRequirements() {

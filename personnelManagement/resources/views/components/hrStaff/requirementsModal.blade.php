@@ -1,5 +1,4 @@
 <!-- Requirements Modal -->
-<div>
     <div 
         x-show="requirementsOpen"
         x-cloak
@@ -39,7 +38,7 @@
                 </button>
 
                 <!-- Header -->
-                <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-4">
+                <h2 class="text-lg sm:text-xl font-bold text-[#BD6F22] mb-4">
                     Requirements for <span x-text="requirementsApplicantName"></span>
                 </h2>
 
@@ -57,32 +56,9 @@
                         </div>
                     </template>
                 </div>
-
-                <!-- Licenses -->
-                <div class="mb-6">
-                    <h3 class="font-semibold text-gray-800 mb-2">Licenses</h3>
-                    <template x-if="requirementsFile201?.licenses?.length > 0">
-                        <ul class="space-y-2">
-                            <template x-for="license in requirementsFile201.licenses" :key="license.number">
-                                <li class="bg-gray-50 px-3 py-2 rounded-lg text-sm sm:text-base">
-                                    <span class="font-medium text-[#BD6F22]" x-text="license.name"></span>
-                                    - <span x-text="license.number"></span>
-                                    (<span x-text="license.date"></span>)
-                                </li>
-                            </template>
-                        </ul>
-                    </template>
-                    <p 
-                        x-show="!requirementsFile201?.licenses || requirementsFile201.licenses.length === 0" 
-                        class="text-gray-500 italic"
-                    >
-                        No licenses uploaded
-                    </p>
-                </div>
-
                 <!-- Required Documents -->
                 <div>
-                    <h3 class="font-semibold text-gray-800 mb-2">Required Documents</h3>
+                    <h3 class="text-lg sm:text-xl font-bold text-[#BD6F22] mb-4">Required Documents</h3>
                     <ul class="space-y-3">
                         <template x-for="doc in requiredDocs" :key="doc">
                             <li 
@@ -126,14 +102,18 @@
             </div>
 
             <!-- Sticky Email Button -->
-            <div class="border-t bg-white px-4 py-3 flex justify-end sticky bottom-0">
-                <button 
-                    type="button" 
-                    class="px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-400 focus:outline-none transition"
-                >
-                    Email Requirements
-                </button>
-            </div>
+        <div 
+            class="border-t bg-white px-4 py-3 flex justify-end sticky bottom-0"
+            x-show="hasMissingRequirements()"
+        >
+            <button 
+                type="button" 
+                @click="sendEmailRequirements()"
+                class="px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-400 focus:outline-none transition"
+            >
+                Email Requirements
+            </button>
+        </div>
         </div>
     </div>
-</div>
+

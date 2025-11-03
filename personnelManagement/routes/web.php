@@ -245,10 +245,14 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function (
     Route::get('/perfEval', [EmployeeController::class, 'performanceEvaluation'])->name('perfEval');
 
     // ✅ HR Staff - View Applicant Requirements (for requirementsModal in perfEval)
-    Route::get('/applicants/{id}/requirements', [File201Controller::class, 'showApplicantFiles'])
-        ->name('applicants.requirements');
+   
     Route::get('/requirements/{applicant}', [File201Controller::class, 'showApplicantFiles'])
         ->name('requirements.show');
+
+    // ✅ HR Staff - Send Missing Requirements Email
+    Route::post('/applicants/{id}/send-missing-requirements', [File201Controller::class, 'sendMissingRequirements'])
+    ->name('applicants.sendMissingRequirements');
+
 
     // Evaluations - Submit Evaluation for an Applicant
     Route::post('/evaluations/{application}', [EvaluationController::class, 'store'])
