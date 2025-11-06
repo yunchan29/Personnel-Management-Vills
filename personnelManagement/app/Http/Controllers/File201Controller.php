@@ -130,7 +130,16 @@ class File201Controller extends Controller
             foreach ($request->additional_documents as $index => $doc) {
                 if (isset($doc['file']) && $request->file("additional_documents.$index.file")) {
                     $uploadedFile = $request->file("additional_documents.$index.file");
-                    $filePath = $uploadedFile->store('other_documents', 'public');
+
+                    // Additional security: Verify file is actually a PDF by checking magic bytes
+                    $fileContents = file_get_contents($uploadedFile->getRealPath());
+                    if (substr($fileContents, 0, 4) !== '%PDF') {
+                        return redirect()->back()->withErrors(['file' => 'Invalid PDF file detected.']);
+                    }
+
+                    // Use random filename for better security
+                    $randomName = \Str::random(40) . '.pdf';
+                    $filePath = $uploadedFile->storeAs('other_documents', $randomName, 'public');
 
                     // ✅ Prevent duplicate type uploads
                     $alreadyExists = OtherFile::where('user_id', auth()->id())

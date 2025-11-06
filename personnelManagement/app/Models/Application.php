@@ -16,11 +16,19 @@ class Application extends Model
         'philhealth_number',
         'tin_id_number',
         'pagibig_number',
-        'status',
-        'is_archived', // ✅ for archiving
-        'contract_signing_schedule', 
-        'contract_start',  
-        'contract_end',     
+        'contract_signing_schedule',
+        'contract_start',
+        'contract_end',
+    ];
+
+    /**
+     * The attributes that are guarded from mass assignment.
+     *
+     * @var array<int, string>
+     */
+    protected $guarded = [
+        'status',       // Prevent unauthorized status changes
+        'is_archived',  // Prevent unauthorized archiving
     ];
 
     protected $casts = [

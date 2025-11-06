@@ -207,11 +207,17 @@ document.addEventListener('alpine:init', () => {
             }
 
             try {
+                // Validate CSRF token exists
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                if (!csrfToken) {
+                    throw new Error('CSRF token not found. Please refresh the page.');
+                }
+
                 const response = await fetch('/hrAdmin/applications/bulk-status', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-CSRF-TOKEN': csrfToken,
                     },
                     body: JSON.stringify({
                         ids: ids,
@@ -272,11 +278,17 @@ document.addEventListener('alpine:init', () => {
                     document.getElementById("bulk-spinner").classList.remove("hidden");
 
                     try {
+                        // Validate CSRF token exists
+                        const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
+                        if (!csrfToken) {
+                            throw new Error('CSRF token not found. Please refresh the page.');
+                        }
+
                         const response = await fetch(window.bulkApproveUrl, {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
-                                "X-CSRF-TOKEN": document.querySelector('meta[name=csrf-token]').content
+                                "X-CSRF-TOKEN": csrfToken
                             },
                             body: JSON.stringify({
                                 ids: this.selectedApplicants.map(app => app.id ?? app.application_id), // 🔥 FIXED
@@ -344,11 +356,17 @@ document.addEventListener('alpine:init', () => {
         async submitStatusChange() {
             this.loading = true;
             try {
+                // Validate CSRF token exists
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                if (!csrfToken) {
+                    throw new Error('CSRF token not found. Please refresh the page.');
+                }
+
                 const response = await fetch(`/hrAdmin/applications/${this.selectedApplicant.id}/status`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        'X-CSRF-TOKEN': csrfToken
                     },
                     body: JSON.stringify({ status: this.statusAction })
                 });

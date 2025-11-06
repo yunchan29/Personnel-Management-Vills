@@ -186,11 +186,17 @@ document.addEventListener('alpine:init', () => {
             const ids = this.selectedApplicants.map(app => app.application_id);
 
             try {
+                // Validate CSRF token exists
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                if (!csrfToken) {
+                    throw new Error('CSRF token not found. Please refresh the page.');
+                }
+
                 const res = await fetch('/hrAdmin/applications/bulk-status', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'X-CSRF-TOKEN': csrfToken,
                     },
                     body: JSON.stringify({
                         ids,
@@ -309,11 +315,17 @@ document.addEventListener('alpine:init', () => {
 
         // 🔹 Submit single interview
         async submitSingleInterview(datetime) {
+            // Validate CSRF token exists
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            if (!csrfToken) {
+                throw new Error('CSRF token not found. Please refresh the page.');
+            }
+
             const response = await fetch(`/hrAdmin/interviews`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'X-CSRF-TOKEN': csrfToken,
                 },
                 body: JSON.stringify({
                     application_id: this.interviewApplicant.application_id,
@@ -351,11 +363,17 @@ document.addEventListener('alpine:init', () => {
                 scheduled_at: newNormalizedDT,
             };
 
+            // Validate CSRF token exists
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            if (!csrfToken) {
+                throw new Error('CSRF token not found. Please refresh the page.');
+            }
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'X-CSRF-TOKEN': csrfToken,
                 },
                 body: JSON.stringify(payload),
             });

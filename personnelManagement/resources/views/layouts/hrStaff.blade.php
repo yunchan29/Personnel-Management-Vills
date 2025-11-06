@@ -1,38 +1,20 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'HR Staff Dashboard' }} - VillsPMS</title>
-     <!-- Favicon -->
-    <link rel="icon" href="{{ asset('images/villslogo3.png') }}" type="image/png">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@extends('layouts.base', ['title' => $title ?? 'HR Staff Dashboard'])
 
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Alata&display=swap" rel="stylesheet">
-    
-    <style>
-    .font-alata { font-family: 'Alata', sans-serif; }
-    [x-cloak] { display: none !important; }
-    </style>
-</head>
-<body class="bg-gray-100 font-alata min-h-screen">
+@php
+    $menuItems = [
+        ['img' => 'home.png', 'label' => 'Home', 'route' => 'hrStaff.dashboard'],
+        ['img' => 'employees.png', 'label' => 'Employees', 'route' => 'hrStaff.employees'],
+        ['img' => 'briefcase.png', 'label' => 'Performance Evaluation', 'route' => 'hrStaff.perfEval'],
+        ['img' => 'leaveForm.png', 'label' => 'Leave Forms', 'route' => 'hrStaff.leaveForm'],
+        ['img' => 'archive.png', 'label' => 'Archive', 'route' => 'hrStaff.archive.index'],
+        ['img' => 'settings.png', 'label' => 'Settings', 'route' => 'hrStaff.settings'],
+    ];
+@endphp
 
-    <x-hrStaff.navbar />
+@section('navbar')
+    <x-shared.navbar :showRoleText="true" />
+@endsection
 
-    <div class="flex" x-data="{ open: true }">
-    <x-hrStaff.sidebar :currentRoute="Route::currentRouteName()" />
-
-        <main class="flex-1 p-6">
-            <div class="bg-white rounded-lg shadow-lg p-6 h-full">
-            
-                @yield('content')
-            </div>
-        </main>
-    </div>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-</body>
-</html>
+@section('sidebar')
+    <x-shared.sidebar :items="$menuItems" :currentRoute="Route::currentRouteName()" />
+@endsection

@@ -13,10 +13,14 @@ class DashboardChartController extends Controller
         // Labels for months
         $labels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-        // Get distinct company names from jobs table
+        // Get distinct company names from jobs table (sanitized)
         $companies = DB::table('jobs')
             ->distinct()
-            ->pluck('company_name');
+            ->pluck('company_name')
+            ->filter(function($name) {
+                // Ensure only valid company names (extra safety layer)
+                return !empty($name) && is_string($name);
+            });
 
         // Helper function: Fill missing months with zeros
         $fillMonths = function ($counts) {
@@ -35,9 +39,10 @@ class DashboardChartController extends Controller
         // ==============================
         $jobData = [];
         foreach ($companies as $company) {
+            // Safe: $company is from database, WHERE uses parameter binding
             $counts = DB::table('jobs')
                 ->selectRaw('MONTH(created_at) as month, COUNT(*) as total')
-                ->where('company_name', $company)
+                ->where('company_name', $company)  // Parameter binding prevents SQL injection
                 ->groupBy('month')
                 ->orderBy('month')
                 ->get();

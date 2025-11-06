@@ -34,13 +34,23 @@ class ResumeController extends Controller
    public function store(Request $request)
 {
     $request->validate([
-        'resume_file' => 'required|file|mimes:pdf|max:25000', // Max 25 MB
+        'resume_file' => 'required|file|mimes:pdf|max:5120', // Reduced from 25MB to 5MB for security
     ]);
 
     $user = auth()->user();
     $file = $request->file('resume_file');
-    $path = $file->store('resumes', 'public');
-    $originalName = $file->getClientOriginalName(); // <-- This line gets the original name
+
+    // Additional security: Verify file is actually a PDF by checking magic bytes
+    $fileContents = file_get_contents($file->getRealPath());
+    if (substr($fileContents, 0, 4) !== '%PDF') {
+        return redirect()
+            ->back()
+            ->withErrors(['resume_file' => 'Invalid PDF file detected. Please upload a valid PDF.']);
+    }
+
+    // Use random filename for better security
+    $randomName = \Str::random(40) . '.pdf';
+    $path = $file->storeAs('resumes', $randomName, 'public');
 
     if ($user->resume) {
         // Delete old file from storage

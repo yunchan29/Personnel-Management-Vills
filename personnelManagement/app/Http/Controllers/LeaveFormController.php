@@ -65,6 +65,11 @@ class LeaveFormController extends Controller
 
     public function approve($id)
     {
+        // Verify user has HR role
+        if (!in_array(Auth::user()->role, ['hrAdmin', 'hrStaff'])) {
+            abort(403, 'Unauthorized. Only HR personnel can approve leave requests.');
+        }
+
         $form = LeaveForm::findOrFail($id);
         $form->status = 'Approved';
         $form->save();
@@ -74,6 +79,11 @@ class LeaveFormController extends Controller
 
     public function decline($id)
     {
+        // Verify user has HR role
+        if (!in_array(Auth::user()->role, ['hrAdmin', 'hrStaff'])) {
+            abort(403, 'Unauthorized. Only HR personnel can decline leave requests.');
+        }
+
         $form = LeaveForm::findOrFail($id);
         $form->status = 'Declined';
         $form->save();

@@ -46,8 +46,20 @@ class User extends Authenticatable
         'uuid',
         'street_details',
         'postal_code',
-        'is_archived', // ✅ for archiving
         'active_status',
+        'job_industry',
+    ];
+
+    /**
+     * The attributes that are guarded from mass assignment.
+     * These fields can only be set through direct assignment.
+     *
+     * @var array<int, string>
+     */
+    protected $guarded = [
+        'role',           // Prevent role escalation attacks
+        'is_archived',    // Prevent users from archiving themselves
+        'remember_token',
     ];
 
     /**

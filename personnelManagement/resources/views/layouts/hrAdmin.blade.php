@@ -1,64 +1,21 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+@extends('layouts.base', ['title' => $title ?? 'HR Admin Dashboard'])
 
-    <title>{{ $title ?? 'HR Admin Dashboard' }} - VillsPMS</title>
-     <!-- Favicon -->
-    <link rel="icon" href="{{ asset('images/villslogo3.png') }}" type="image/png">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Alata&display=swap" rel="stylesheet">
-    <style>
-@keyframes checkmark {
-    0% {
-        stroke-dashoffset: 22;
-    }
-    100% {
-        stroke-dashoffset: 0;
-    }
-}
-@keyframes progressBar {
-    0% {
-        width: 100%;
-    }
-    100% {
-        width: 0%;
-    }
-}
-.animate-checkmark path {
-    stroke-dasharray: 22;
-    stroke-dashoffset: 22;
-    animation: checkmark 0.5s ease-out forwards;
-}
-.animate-progress-bar {
-    animation: progressBar 3s linear forwards;
-}
-</style>
+@php
+    $menuItems = [
+        ['img' => 'home.png', 'label' => 'Home', 'route' => 'hrAdmin.dashboard'],
+        ['img' => 'search.png', 'label' => 'Job Posting', 'route' => 'hrAdmin.jobPosting'],
+        ['img' => 'application.png', 'label' => 'Applications', 'route' => 'hrAdmin.application'],
+        ['img' => 'leaveForm.png', 'label' => 'Leave Forms', 'route' => 'hrAdmin.leaveForm'],
+        ['img' => 'employees.png', 'label' => 'Employees', 'route' => 'hrAdmin.employees'],
+        ['img' => 'archive.png', 'label' => 'Archive', 'route' => 'hrAdmin.archive.index'],
+        ['img' => 'settings.png', 'label' => 'Settings', 'route' => 'hrAdmin.settings'],
+    ];
+@endphp
 
-    <style>
-    .font-alata { font-family: 'Alata', sans-serif; }
-    [x-cloak] { display: none !important; }
-    </style>
-</head>
-<body class="bg-gray-100 font-alata min-h-screen">
+@section('navbar')
+    <x-shared.navbar :showRoleText="true" />
+@endsection
 
-    <x-hrAdmin.navbar />
-
-    <div class="flex" x-data="{ open: true }">
-    <x-hrAdmin.sidebar :currentRoute="Route::currentRouteName()" />
-
-        <main class="flex-1 p-6">
-            <div class="bg-white rounded-lg shadow-lg p-6 h-full">
-            
-                @yield('content')
-            </div>
-        </main>
-    </div>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-</body>
-</html>
+@section('sidebar')
+    <x-shared.sidebar :items="$menuItems" :currentRoute="Route::currentRouteName()" />
+@endsection

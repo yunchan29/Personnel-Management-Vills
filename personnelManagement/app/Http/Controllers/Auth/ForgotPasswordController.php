@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Mail\PasswordResetMail;
 
 class ForgotPasswordController
 {
@@ -18,46 +18,26 @@ public function sendResetLinkEmail(Request $request)
     ]);
 
     $token = Str::random(64);
+    $hashedToken = hash('sha256', $token);
 
     DB::table('password_resets')->updateOrInsert(
         ['email' => $request->email],
         [
-            'token' => $token,
+            'token' => $hashedToken,
             'created_at' => Carbon::now()
         ]
     );
 
     $resetUrl = url("/reset-password?token={$token}&email=" . urlencode($request->email));
 
-    // Render the Blade view as email HTML
-    $htmlContent = view('emails.password-reset', [
-        'resetUrl' => $resetUrl
-    ])->render();
-
-    $mail = new PHPMailer(true);
-
     try {
-        $mail->isSMTP();
-        $mail->Host       = env('MAIL_HOST');
-        $mail->SMTPAuth   = true;
-        $mail->Username   = env('MAIL_USERNAME');
-        $mail->Password   = env('MAIL_PASSWORD');
-        $mail->SMTPSecure = env('MAIL_ENCRYPTION');
-        $mail->Port       = env('MAIL_PORT');
-
-        $mail->setFrom(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'));
-        $mail->addAddress($request->email);
-
-        $mail->isHTML(true);
-        $mail->Subject = 'Reset Your Password - Personnel Management System';
-        $mail->Body    = $htmlContent;
-        $mail->AltBody = "To reset your password, visit: {$resetUrl}";
-
-        $mail->send();
+        // Use Laravel Mail facade instead of PHPMailer
+        Mail::to($request->email)->send(new PasswordResetMail($resetUrl));
 
         return back()->with('status', 'Reset link sent!');
-    } catch (Exception $e) {
-        return back()->withErrors(['email' => "Mailer Error: {$mail->ErrorInfo}"]);
+    } catch (\Exception $e) {
+        \Log::error('Password reset email error: ' . $e->getMessage());
+        return back()->withErrors(['email' => 'Failed to send reset link. Please try again.']);
     }
 }
 
@@ -70,12 +50,16 @@ public function resetPassword(Request $request)
         'password' => 'required|confirmed|min:8',
     ]);
 
+    // Hash the incoming token for comparison
+    $hashedToken = hash('sha256', $request->token);
+
     $resetRecord = DB::table('password_resets')
         ->where('email', $request->email)
-        ->where('token', $request->token)
+        ->where('token', $hashedToken)
         ->first();
 
-    if (!$resetRecord || Carbon::parse($resetRecord->created_at)->addMinutes(60)->isPast()) {
+    // Reduced expiration time from 60 to 15 minutes for better security
+    if (!$resetRecord || Carbon::parse($resetRecord->created_at)->addMinutes(15)->isPast()) {
         return back()->withErrors(['email' => 'This password reset link is invalid or has expired.']);
     }
 

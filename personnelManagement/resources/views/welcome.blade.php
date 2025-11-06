@@ -13,6 +13,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&display=swap" rel="stylesheet">
 
   <style>
+    html {
+      scroll-behavior: smooth;
+    }
+
     .barlow-condensed {
       font-family: 'Barlow Condensed', sans-serif;
     }
@@ -43,8 +47,21 @@
     .parallax-bg {
       background-image: url('/images/Workflows.png');
       background-size: cover;
-      background-position: center;
+      background-position: center top;
+      background-repeat: no-repeat;
       background-attachment: scroll;
+    }
+
+    .hero-section {
+      height: 100vh;
+      min-height: 600px;
+    }
+
+    @media (max-width: 768px) {
+      .parallax-bg {
+        background-image: linear-gradient(135deg, #f5f5f5 0%, #e8e0d5 50%, #d4c4b0 100%);
+        background-size: cover;
+      }
     }
 
     @keyframes fadeSlideUp {
@@ -77,29 +94,38 @@
   <x-landingPage.navbar/>
 
   <!-- Hero Section -->
-  <section class="relative w-full h-screen bg-cover bg-center pt-16 parallax-bg">
+  <section class="relative w-full parallax-bg hero-section">
     <div class="absolute inset-0 bg-black bg-opacity-10 z-0"></div>
 
-    <div class="relative z-10 flex items-center h-full px-6 md:px-16">
+    <div class="absolute inset-0 z-10 flex items-center justify-center md:justify-start px-4 sm:px-6 md:px-16 pt-20 md:pt-0">
       <h1 id="hero-heading"
-          class="barlow-condensed fade-slide-up text-[#8C5A3C] text-3xl sm:text-4xl md:text-5xl font-bold leading-normal tracking-tight max-w-2xl text-left uppercase">
-        “CONNECTING TALENT WITH OPPORTUNITY — ANYTIME,<br>ANYWHERE.”
+          class="barlow-condensed fade-slide-up text-[#8C5A3C] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight sm:leading-normal tracking-tight max-w-full sm:max-w-xl md:max-w-2xl text-center md:text-left uppercase px-4">
+        "CONNECTING TALENT WITH OPPORTUNITY — ANYTIME,<br class="hidden sm:block">ANYWHERE."
       </h1>
     </div>
   </section>
 
   <!-- Job Listings Section -->
-  <section class="px-6 md:px-16 py-12 space-y-8">
+  <section id="jobs" class="px-6 md:px-16 py-12 space-y-8">
     <x-landingPage.jobListing :jobs="$jobs" />
   </section>
 
   <!-- Footer Section -->
-  <x-landingPage.footer/>
+  <section id="footer">
+    <x-landingPage.footer/>
+  </section>
 
   <!-- Mobile Menu Toggle -->
   <script>
     document.getElementById('menu-btn')?.addEventListener('click', function () {
       document.getElementById('mobile-menu')?.classList.toggle('hidden');
+    });
+
+    // Close mobile menu when clicking on nav links
+    document.querySelectorAll('#mobile-menu a').forEach(link => {
+      link.addEventListener('click', function () {
+        document.getElementById('mobile-menu')?.classList.add('hidden');
+      });
     });
   </script>
 

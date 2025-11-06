@@ -36,14 +36,14 @@ Route::get('/', [LandingPageController::class, 'index'])->name('welcome');
 |--------------------------------------------------------------------------
 */
 
-// Authentication routes Login & Logout
+// Authentication routes Login & Logout (with rate limiting for security)
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'login']);
+Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:5,1'); // 5 attempts per minute
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// Registration routes
+// Registration routes (with rate limiting for security)
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-Route::post('/register', [RegisterController::class, 'register']);
+Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:3,1'); // 3 attempts per minute
 
 
 // Temporary route for testing
@@ -51,7 +51,7 @@ Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
 
 
 // ✅ Applicant-related routes with auth middleware
-Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(function () {
+Route::prefix('applicant')->name('applicant.')->middleware(['auth', 'role:applicant'])->group(function () {
 
     // Dashboard
     Route::get('dashboard', [ApplicantJobController::class, 'dashboard'])->name('dashboard');
@@ -83,7 +83,7 @@ Route::prefix('applicant')->name('applicant.')->middleware('auth')->group(functi
 
 
 // ✅ Employee-related routes with auth middleware
-Route::prefix('employee')->name('employee.')->middleware('auth')->group(function () {
+Route::prefix('employee')->name('employee.')->middleware(['auth', 'role:employee'])->group(function () {
     // Dashboard route
     Route::get('/dashboard', function () {return view('employee.dashboard');})->name('dashboard');
 
@@ -114,7 +114,7 @@ Route::prefix('employee')->name('employee.')->middleware('auth')->group(function
 
 
 // ✅ HRadmin-related routes with auth middleware
-Route::prefix('hrAdmin')->name('hrAdmin.')->middleware('auth')->group(function () {
+Route::prefix('hrAdmin')->name('hrAdmin.')->middleware(['auth', 'role:hrAdmin'])->group(function () {
 
     // Dashboard (with chart data passed directly)
     Route::get('/dashboard', [DashboardChartController::class, 'index'])->name('dashboard');
@@ -205,12 +205,13 @@ Route::get('/admin/dashboard', function () {return view('admin.dashboard');})->n
 Route::get('/home', function () {return view('home'); // Ensure this view exists
 })->name('home')->middleware('auth');
 
-// Password reset 
+// Password reset (with rate limiting for security)
 Route::get('/forgot-password', function () {
     return view('auth.forgot-password'); // Change this to load the Blade
 })->name('password.request');
 
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])
+    ->middleware('throttle:3,1') // 3 attempts per minute
     ->name('password.email');
 
 Route::get('/reset-password', function (Request $request) {
@@ -221,6 +222,7 @@ Route::get('/reset-password', function (Request $request) {
 })->name('password.reset');
 
 Route::post('/reset-password', [\App\Http\Controllers\Auth\ForgotPasswordController::class, 'resetPassword'])
+    ->middleware('throttle:5,1') // 5 attempts per minute
     ->name('password.update');
 
 // Apply route for applicants (di ko pa na sosort nag eerror pa eh)
@@ -231,7 +233,7 @@ Route::post('/apply/{job}', [ApplicantJobController::class, 'apply'])->name('job
 //hi
 
 // ✅ HRstaff-related routes with auth middleware
-Route::prefix('hrStaff')->name('hrStaff.')->middleware('auth')->group(function () {
+Route::prefix('hrStaff')->name('hrStaff.')->middleware(['auth', 'role:hrStaff'])->group(function () {
 
     // Dashboard route
     Route::get('/dashboard', function () {

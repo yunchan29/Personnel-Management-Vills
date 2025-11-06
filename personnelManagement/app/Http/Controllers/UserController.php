@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PasswordChangedMail;
 
 class UserController extends Controller
 {
@@ -163,7 +165,17 @@ class UserController extends Controller
     public function changePassword(Request $request) {
         $request->validate([
             'current_password' => 'required',
-            'new_password' => 'required|confirmed|min:8',
+            'new_password' => [
+                'required',
+                'confirmed',
+                'min:8',
+                'regex:/[a-z]/',      // must contain at least one lowercase letter
+                'regex:/[A-Z]/',      // must contain at least one uppercase letter
+                'regex:/[0-9]/',      // must contain at least one digit
+                'regex:/[@$!%*#?&]/', // must contain a special character
+            ],
+        ], [
+            'new_password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*#?&).'
         ]);
 
         $user = Auth::user();
@@ -175,7 +187,15 @@ class UserController extends Controller
         $user->password = Hash::make($request->new_password);
         $user->save();
 
-        return back()->with('success', 'Password changed successfully.');
+        // Send email notification
+        try {
+            Mail::to($user->email)->send(new PasswordChangedMail($user));
+        } catch (\Exception $e) {
+            Log::error('Failed to send password change email: ' . $e->getMessage());
+            // Continue even if email fails - password was already changed
+        }
+
+        return back()->with('success', 'Password changed successfully. A confirmation email has been sent.');
     }
 
     public function deleteAccount(Request $request) {
