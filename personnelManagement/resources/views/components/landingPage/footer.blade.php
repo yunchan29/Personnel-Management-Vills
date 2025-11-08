@@ -2,8 +2,8 @@
     <div class="max-w-6xl mx-auto">
         <!-- Logo Section -->
         <div class="mb-2 flex justify-center items-center gap-2">
-            <img src="/images/villslogo3.png" alt="Vills Manpower Logo" class="w-8 h-8 sm:w-10 sm:h-10">
-            <img src="/images/villsName.png" alt="Vills Manpower Recruitment Agency" class="h-8 sm:h-10 w-auto">
+            <img src="/images/villslogo3.png" alt="Vills Manpower Logo" class="w-8 h-8 sm:w-20 sm:h-20">
+            <img src="/images/villsName.png" alt="Vills Manpower Recruitment Agency" class="h-8 sm:h-20 w-auto">
         </div>
 
         <!-- Divider -->

@@ -14,10 +14,10 @@
         class="hidden sm:flex sticky top-0 bg-white shadow-md h-screen transition-all duration-300 flex-col"
     >
         <!-- Toggle -->
-        <div class="flex justify-end p-2">
-            <button @click="open = !open" class="text-[#8B4513] focus:outline-none">
-                <svg :class="open ? 'rotate-180' : ''"
-                     class="w-5 h-5 transition-transform duration-300"
+        <div class="flex justify-center items-center p-4 mb-2">
+            <button @click="open = !open" class="text-[#8B4513] hover:bg-gray-100 rounded-full p-2 focus:outline-none transition-colors duration-200">
+                <svg :class="open ? '' : 'rotate-180'"
+                     class="w-6 h-6 transition-transform duration-300"
                      fill="none" stroke="currentColor" stroke-width="2"
                      viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />

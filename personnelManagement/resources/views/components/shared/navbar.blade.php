@@ -36,7 +36,7 @@
         $roleText = $roleTextMap[$role] ?? '';
     @endphp
     <div class="mt-2 sm:mt-0 flex justify-center sm:justify-end">
-        <x-dropdown align="right" width="48">
+        <x-shared.dropdown align="right" width="48">
             <x-slot name="trigger">
                 <button class="flex items-center text-sm rounded-full focus:outline-none gap-x-2">
                     <img class="h-9 w-9 rounded-full object-cover border-2 border-white"
@@ -50,19 +50,19 @@
             </x-slot>
 
             <x-slot name="content">
-                <x-dropdown-link href="{{ $profileRoutes[$role] ?? '#' }}">
+                <x-shared.dropdown-link href="{{ $profileRoutes[$role] ?? '#' }}">
                     Profile
-                </x-dropdown-link>
+                </x-shared.dropdown-link>
 
                 <form method="POST" action="/logout" class="m-0 p-0">
                     @csrf
-                    <x-dropdown-link href="/logout"
+                    <x-shared.dropdown-link href="/logout"
                         onclick="event.preventDefault(); this.closest('form').submit();">
                         Log Out
-                    </x-dropdown-link>
+                    </x-shared.dropdown-link>
                 </form>
             </x-slot>
-        </x-dropdown>
+        </x-shared.dropdown>
     </div>
     @endauth
 </nav>

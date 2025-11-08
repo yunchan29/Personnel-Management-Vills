@@ -6,12 +6,15 @@ use Illuminate\Http\Request;
 use App\Models\File201;
 use App\Models\OtherFile;
 use App\Models\User;
+use App\Models\Application;
 use App\Mail\RequirementsLetterMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use App\Http\Traits\FileValidationTrait;
 
 class File201Controller extends Controller
 {
+    use FileValidationTrait;
     /**
      * Display the logged-in user's 201 form.
      */
@@ -20,11 +23,7 @@ class File201Controller extends Controller
         $file201 = auth()->user()->file201;
         $otherFiles = OtherFile::where('user_id', auth()->id())->get();
 
-        $view = auth()->user()->role === 'employee'
-            ? 'employee.files'
-            : 'applicant.files';
-
-        return view($view, compact('file201', 'otherFiles'));
+        return view('users.files', compact('file201', 'otherFiles'));
     }
 
     /**
@@ -32,8 +31,27 @@ class File201Controller extends Controller
      */
    public function showApplicantFiles($applicantId)
 {
+    // ✅ SECURITY FIX: Verify HR staff can only access files of applicants who have active applications
+    $hasActiveApplication = Application::where('user_id', $applicantId)
+        ->whereIn('status', ['pending', 'approved', 'for_interview', 'interviewed', 'scheduled_for_training', 'for_evaluation', 'passed'])
+        ->exists();
+
+    if (!$hasActiveApplication) {
+        return response()->json([
+            'error' => 'Unauthorized access. Applicant not found or no active application.'
+        ], 403);
+    }
+
     $file201 = File201::where('user_id', $applicantId)->first();
     $otherFiles = OtherFile::where('user_id', $applicantId)->get();
+
+    // ✅ SECURITY FIX: Mask sensitive government ID numbers
+    if ($file201) {
+        $file201->sss_number = $file201->sss_number ? '****' . substr($file201->sss_number, -4) : null;
+        $file201->philhealth_number = $file201->philhealth_number ? '****' . substr($file201->philhealth_number, -4) : null;
+        $file201->tin_id_number = $file201->tin_id_number ? '****' . substr($file201->tin_id_number, -4) : null;
+        $file201->pagibig_number = $file201->pagibig_number ? '****' . substr($file201->pagibig_number, -4) : null;
+    }
 
     return response()->json([
         'file201' => $file201,
@@ -131,15 +149,17 @@ class File201Controller extends Controller
                 if (isset($doc['file']) && $request->file("additional_documents.$index.file")) {
                     $uploadedFile = $request->file("additional_documents.$index.file");
 
-                    // Additional security: Verify file is actually a PDF by checking magic bytes
-                    $fileContents = file_get_contents($uploadedFile->getRealPath());
-                    if (substr($fileContents, 0, 4) !== '%PDF') {
-                        return redirect()->back()->withErrors(['file' => 'Invalid PDF file detected.']);
-                    }
+                    // ✅ SECURITY FIX: Verify file is actually a PDF by checking magic bytes
+                    $uploadResult = $this->validateAndStoreFile(
+                        $uploadedFile,
+                        'other_documents',
+                        ['pdf'],
+                        'public'
+                    );
 
-                    // Use random filename for better security
-                    $randomName = \Str::random(40) . '.pdf';
-                    $filePath = $uploadedFile->storeAs('other_documents', $randomName, 'public');
+                    if (!$uploadResult['success']) {
+                        return redirect()->back()->withErrors(['file' => $uploadResult['error']]);
+                    }
 
                     // ✅ Prevent duplicate type uploads
                     $alreadyExists = OtherFile::where('user_id', auth()->id())
@@ -150,7 +170,7 @@ class File201Controller extends Controller
                         OtherFile::create([
                             'user_id'   => auth()->id(),
                             'type'      => $doc['type'],
-                            'file_path' => $filePath,
+                            'file_path' => $uploadResult['path'],
                         ]);
                     }
                 }

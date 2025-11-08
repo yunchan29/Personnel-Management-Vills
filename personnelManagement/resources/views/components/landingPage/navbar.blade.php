@@ -1,5 +1,5 @@
  <!-- Navbar -->
-    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 bg-transparent">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-transparent">
         <div class="w-full px-4 sm:px-6 lg:px-8 ">
             <div class="flex items-center justify-between h-16 md:h-20 items-center py-2">
                 <div class="flex-shrink-0">
@@ -24,7 +24,7 @@
                     <a href="#" class="nav-link text-sm lg:text-base">Home</a>
                     <a href="#jobs" class="nav-link text-sm lg:text-base">Jobs</a>
                     <a href="#footer" class="nav-link text-sm lg:text-base">About Us</a>
-                    <a href="/register" class="nav-button text-sm lg:text-base">Login / Sign Up</a>
+                    <button @click="activeModal = 'login'" class="nav-button text-sm lg:text-base">Login / Sign Up</button>
                 </div>
             </div>
         </div>
@@ -34,6 +34,6 @@
             <a href="#" class="block nav-link py-2 text-base">Home</a>
             <a href="#jobs" class="block nav-link py-2 text-base">Jobs</a>
             <a href="#footer" class="block nav-link py-2 text-base">About Us</a>
-            <a href="/register" class="block nav-button text-center py-3 text-base">Login / Sign Up</a>
+            <button @click="activeModal = 'login'" class="block nav-button text-center py-3 text-base w-full">Login / Sign Up</button>
         </div>
     </nav>

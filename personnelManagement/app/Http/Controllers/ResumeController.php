@@ -20,11 +20,7 @@ class ResumeController extends Controller
         $resume = $this->getResume($user->id);
         $applications = $this->getApplications($user->id);
 
-        $view = $user->role === 'employee'
-            ? 'employee.application'
-            : 'applicant.application';
-
-        return view($view, compact('resume', 'applications'));
+        return view('users.application', compact('resume', 'applications'));
     }
 
 

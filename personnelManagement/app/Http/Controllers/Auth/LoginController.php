@@ -5,15 +5,20 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\LoginAttempt;
+use App\Http\Traits\ApiResponseTrait;
 
 class LoginController extends Controller
 {
+    use ApiResponseTrait;
+
     /**
-     * Show the login form.
+     * Show the login form (redirect to welcome page with login modal)
      */
     public function showLoginForm()
     {
-        return view('auth.login'); // or 'login' if your blade file is directly in resources/views
+        // Redirect to landing page where login modal will be shown
+        return redirect()->route('welcome');
     }
 
     /**
@@ -26,31 +31,61 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
+        // ✅ SECURITY FIX: Check if account is locked due to failed attempts
+        if (LoginAttempt::isAccountLocked($credentials['email'])) {
+            $remainingMinutes = LoginAttempt::getRemainingLockoutTime($credentials['email']);
+            return $this->accountLockedResponse($credentials['email'], $remainingMinutes);
+        }
+
         if (Auth::attempt($credentials, $request->remember)) {
             $request->session()->regenerate();
 
             $user = Auth::user();
 
-            // Role-based redirection
-            if ($user->role === 'hrAdmin') {
-                return redirect()->route('hrAdmin.dashboard');
-            } elseif ($user->role === 'applicant') {
-                return redirect()->route('applicant.dashboard'); // ✅ fixed here
-            } elseif ($user->role === 'employee') {
-                return redirect()->route('employee.dashboard');
-            
-             } elseif ($user->role === 'hrStaff') {
-                return redirect()->route('hrStaff.dashboard');
-            }
+            // ✅ SECURITY FIX: Clear failed login attempts on successful login
+            LoginAttempt::clearAttempts($credentials['email']);
 
+            // ✅ SECURITY FIX: Record successful login attempt
+            LoginAttempt::recordAttempt($credentials['email'], true);
 
-            // Fallback redirection
-            return redirect()->intended('/home');
+            // ✅ SECURITY ENHANCEMENT: Track last login time and IP
+            $user->update([
+                'last_login_at' => now(),
+                'last_login_ip' => $request->ip(),
+                'last_activity_at' => now(),
+            ]);
+
+            // Determine redirect URL based on role
+            $redirectUrl = match ($user->role) {
+                'hrAdmin'   => route('hrAdmin.dashboard'),
+                'applicant' => route('applicant.dashboard'),
+                'employee'  => route('employee.dashboard'),
+                'hrStaff'   => route('hrStaff.dashboard'),
+                default     => route('welcome'),
+            };
+
+            return $this->successResponse(
+                'Login successful!',
+                $redirectUrl,
+                [
+                    'user' => [
+                        'name' => $user->first_name . ' ' . $user->last_name,
+                        'email' => $user->email,
+                        'role' => $user->role,
+                    ]
+                ]
+            );
         }
 
-        return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ])->onlyInput('email');
+        // ✅ SECURITY FIX: Record failed login attempt
+        LoginAttempt::recordAttempt($credentials['email'], false);
+
+        // ✅ SECURITY FIX: Generic error message to prevent account enumeration
+        return $this->errorResponse(
+            ['email' => ['The provided credentials are incorrect.']],
+            'The provided credentials are incorrect.',
+            ['email' => $credentials['email']]
+        );
     }
 
     /**
@@ -62,6 +97,6 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login');
+        return redirect()->route('welcome')->with('success', 'You have been logged out successfully.');
     }
 }

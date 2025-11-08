@@ -80,7 +80,7 @@ class JobController extends Controller
     // 🏢 Distinct company list for filter dropdown
     $companies = Job::select('company_name')->distinct()->pluck('company_name');
 
-    return view('hrAdmin.jobPosting', compact('jobs', 'companies'));
+    return view('admins.hrAdmin.jobPosting', compact('jobs', 'companies'));
 }
 
 

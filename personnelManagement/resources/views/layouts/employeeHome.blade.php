@@ -26,6 +26,14 @@
 
 @push('modals')
     <x-shared.loading-overlay />
+    {{-- Complete Profile Modal - Shows on all pages if profile is incomplete --}}
+    <x-shared.complete-profile-modal
+        :isIncomplete="!auth()->user()->is_profile_complete"
+        :profileRoute="route('employee.profile')"
+        title="Complete Your Profile"
+        message="Please complete your profile to access all employee features and benefits."
+        buttonText="Go to Profile"
+    />
 @endpush
 
 @push('scripts')

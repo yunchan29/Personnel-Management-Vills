@@ -60,7 +60,7 @@ class InitialApplicationController extends Controller
         $applications = $applicationsQuery->get();
         $companies = Job::select('company_name')->distinct()->pluck('company_name');
 
-        return view('hrAdmin.application', compact('jobs', 'applications', 'companies'));
+        return view('admins.hrAdmin.application', compact('jobs', 'applications', 'companies'));
     }
 
     public function viewApplicants($jobId)
@@ -103,7 +103,7 @@ class InitialApplicationController extends Controller
 
     $companies = Job::select('company_name')->distinct()->pluck('company_name');
 
-    return view('hrAdmin.application', [
+    return view('admins.hrAdmin.application', [
         'jobs' => $jobs,
         'applications' => $applications,
         'selectedJob' => $job,
@@ -125,45 +125,48 @@ class InitialApplicationController extends Controller
             'status' => 'required|string|in:approved,declined,interviewed,for_interview,trained,fail_interview'
         ]);
 
-        $oldStatus = $application->status;
-        $application->status = $validated['status'];
-        $application->save();
+        // ✅ SECURITY FIX: Wrap in database transaction for data consistency
+        DB::transaction(function () use ($application, $validated, $request) {
+            $oldStatus = $application->status;
+            $application->status = $validated['status'];
+            $application->save();
 
-        if (in_array($validated['status'], ['interviewed', 'fail_interview'])) {
-            DB::table('interviews')
-                ->where('application_id', $application->id)
-                ->update(['status' => 'completed']);
-        }
-
-        if ($oldStatus !== $application->status) {
-            switch ($application->status) {
-                case 'approved':
-                    Mail::to($application->user->email)->send(new ApprovedLetterMail($application));
-                    break;
-
-                case 'declined':
-                    Mail::to($application->user->email)->send(new DeclinedLetterMail($application));
-
-                    // ✅ Archive user when declined
-                    $application->is_archived = true;
-                    $application->save();
-
-                    break;
-
-                case 'interviewed':
-                    Mail::to($application->user->email)->send(new PassInterviewMail($application));
-                    break;
-
-                case 'fail_interview':
-                    Mail::to($application->user->email)->send(new FailInterviewMail($application));
-
-                    // ✅ Archive user when failed interview
-                    $application->is_archived = true;
-                    $application->save();
-
-                    break;
+            if (in_array($validated['status'], ['interviewed', 'fail_interview'])) {
+                DB::table('interviews')
+                    ->where('application_id', $application->id)
+                    ->update(['status' => 'completed']);
             }
-        }
+
+            if ($oldStatus !== $application->status) {
+                switch ($application->status) {
+                    case 'approved':
+                        Mail::to($application->user->email)->send(new ApprovedLetterMail($application));
+                        break;
+
+                    case 'declined':
+                        Mail::to($application->user->email)->send(new DeclinedLetterMail($application));
+
+                        // ✅ Archive user when declined
+                        $application->is_archived = true;
+                        $application->save();
+
+                        break;
+
+                    case 'interviewed':
+                        Mail::to($application->user->email)->send(new PassInterviewMail($application));
+                        break;
+
+                    case 'fail_interview':
+                        Mail::to($application->user->email)->send(new FailInterviewMail($application));
+
+                        // ✅ Archive user when failed interview
+                        $application->is_archived = true;
+                        $application->save();
+
+                        break;
+                }
+            }
+        });
 
         return response()->json([
             'success' => true,
@@ -191,54 +194,58 @@ class InitialApplicationController extends Controller
 
         $validated = $validator->validated();
 
-        $applications = Application::with(['user', 'job'])
-            ->whereIn('id', $validated['ids'])
-            ->where('status', '!=', $validated['status'])
-            ->get();
+        // ✅ SECURITY FIX: Wrap bulk operations in database transaction
+        $updatedCount = DB::transaction(function () use ($validated) {
+            $applications = Application::with(['user', 'job'])
+                ->whereIn('id', $validated['ids'])
+                ->where('status', '!=', $validated['status'])
+                ->get();
 
-        foreach ($applications as $application) {
-            $oldStatus = $application->status;
-            $application->status = $validated['status'];
-            $application->save();
+            foreach ($applications as $application) {
+                $oldStatus = $application->status;
+                $application->status = $validated['status'];
+                $application->save();
 
-            // 🔔 Sync interview record if interviewed or failed interview
-            if (in_array($validated['status'], ['interviewed', 'fail_interview'])) {
-                DB::table('interviews')
-                    ->where('application_id', $application->id)
-                    ->update(['status' => 'completed']);
-            }
+                // 🔔 Sync interview record if interviewed or failed interview
+                if (in_array($validated['status'], ['interviewed', 'fail_interview'])) {
+                    DB::table('interviews')
+                        ->where('application_id', $application->id)
+                        ->update(['status' => 'completed']);
+                }
 
-            // 🔔 Send mails and archive rules
-            if ($oldStatus !== $application->status) {
-                switch ($application->status) {
-                    case 'approved':
-                        Mail::to($application->user->email)->send(new ApprovedLetterMail($application));
-                        break;
+                // 🔔 Send mails and archive rules
+                if ($oldStatus !== $application->status) {
+                    switch ($application->status) {
+                        case 'approved':
+                            Mail::to($application->user->email)->send(new ApprovedLetterMail($application));
+                            break;
 
-                    case 'declined':
-                        Mail::to($application->user->email)->send(new DeclinedLetterMail($application));
-                        $application->is_archived = true;
-                        $application->save();
-                        break;
+                        case 'declined':
+                            Mail::to($application->user->email)->send(new DeclinedLetterMail($application));
+                            $application->is_archived = true;
+                            $application->save();
+                            break;
 
-                    case 'interviewed': // Pass
-                        Mail::to($application->user->email)->send(new PassInterviewMail($application));
-                        break;
+                        case 'interviewed': // Pass
+                            Mail::to($application->user->email)->send(new PassInterviewMail($application));
+                            break;
 
-                    case 'fail_interview': // Fail
-                        Mail::to($application->user->email)->send(new FailInterviewMail($application));
-                        $application->is_archived = true;
-                        $application->save();
-                        break;
+                        case 'fail_interview': // Fail
+                            Mail::to($application->user->email)->send(new FailInterviewMail($application));
+                            $application->is_archived = true;
+                            $application->save();
+                            break;
+                    }
                 }
             }
-        }
+
+            return $applications->count();
+        });
 
         return response()->json([
             'success' => true,
-            'message' => $applications->count() . ' applications updated successfully.',
+            'message' => $updatedCount . ' applications updated successfully.',
             'status' => $validated['status'],
-            'ids' => $applications->pluck('id'),
         ]);
     }
 }

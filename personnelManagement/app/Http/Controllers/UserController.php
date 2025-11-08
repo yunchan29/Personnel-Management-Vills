@@ -10,43 +10,65 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PasswordChangedMail;
+use App\Http\Traits\FileValidationTrait;
+use App\Http\Controllers\Auth\RegisterController;
 
 class UserController extends Controller
 {
+    use FileValidationTrait;
+
+    /**
+     * Show user profile (auto-detects role from authenticated user)
+     */
     public function show() {
-        return $this->showProfileByRole('applicant');
+        return $this->showProfileByRole(auth()->user()->role);
     }
 
+    /**
+     * Show user profile (auto-detects role from authenticated user)
+     * Alias for show() to maintain backward compatibility with edit routes
+     */
     public function edit() {
-        return $this->editProfileByRole('applicant');
+        return $this->showProfileByRole(auth()->user()->role);
     }
 
+    /**
+     * Update user profile (auto-detects role from authenticated user)
+     */
     public function update(Request $request) {
-        return $this->updateProfileByRole($request, 'applicant');
+        return $this->updateProfileByRole($request, auth()->user()->role);
     }
 
+    /**
+     * Alias methods for backward compatibility with existing routes
+     * These simply delegate to the main methods above
+     */
     public function showEmployee() {
-        return $this->showProfileByRole('employee');
+        return $this->show();
     }
 
     public function editEmployee() {
-        return $this->editProfileByRole('employee');
+        return $this->edit();
     }
 
     public function updateEmployee(Request $request) {
-        return $this->updateProfileByRole($request, 'employee');
+        return $this->update($request);
     }
 
     public function showHrAdmin() {
-        return $this->showProfileByRole('hrAdmin');
+        return $this->show();
     }
 
     public function editHrAdmin() {
-        return $this->editProfileByRole('hrAdmin');
+        return $this->edit();
     }
 
     public function updateHrAdmin(Request $request) {
-        return $this->updateProfileByRole($request, 'hrAdmin');
+        return $this->update($request);
+    }
+
+    public function showHrStaff() {
+        return $this->show();
     }
 
     public function toggleVisibility(Request $request)
@@ -66,14 +88,14 @@ class UserController extends Controller
         $user = auth()->user();
         $experiences = $user->workExperiences()->get();
 
-        return view("$role.profile", compact('user', 'experiences'));
+        return view("users.profile", compact('user', 'experiences'));
     }
 
     private function editProfileByRole($role) {
         $user = auth()->user();
         $experiences = $user->workExperiences()->get();
 
-        return view("$role.profile", compact('user', 'experiences'));
+        return view("users.profile", compact('user', 'experiences'));
     }
 
     private function updateProfileByRole(Request $request, $role)
@@ -95,9 +117,23 @@ class UserController extends Controller
         ));
 
         if ($request->hasFile('profile_picture')) {
-            $path = $request->file('profile_picture')->store('profile_pictures', 'public');
-            Log::info('Profile picture uploaded:', ['path' => $path]);
-            $validated['profile_picture'] = $path;
+            $file = $request->file('profile_picture');
+
+            // ✅ SECURITY FIX: Verify file is actually an image by checking magic bytes
+            $uploadResult = $this->validateAndStoreFile(
+                $file,
+                'profile_pictures',
+                ['jpeg', 'png', 'gif'],
+                'public'
+            );
+
+            if (!$uploadResult['success']) {
+                return redirect()->back()->withErrors([
+                    'profile_picture' => $uploadResult['error']
+                ])->withInput();
+            }
+
+            $validated['profile_picture'] = $uploadResult['path'];
         }
 
         Log::info("Updating $role profile with data:", [
@@ -151,7 +187,7 @@ class UserController extends Controller
             'religion' => 'nullable|string|max:100',
             'nationality' => 'nullable|string|max:100',
             'email' => 'required|email|max:255|unique:users,email,' . $userId,
-            'mobile_number' => 'nullable|string|max:15',
+            'mobile_number' => ['nullable', 'string', 'max:15', 'regex:/^(09|\+639)\d{9}$/'],
             'full_address' => 'nullable|string|max:255',
             'province' => 'nullable|string|max:100',
             'city' => 'nullable|string|max:100',
@@ -165,15 +201,7 @@ class UserController extends Controller
     public function changePassword(Request $request) {
         $request->validate([
             'current_password' => 'required',
-            'new_password' => [
-                'required',
-                'confirmed',
-                'min:8',
-                'regex:/[a-z]/',      // must contain at least one lowercase letter
-                'regex:/[A-Z]/',      // must contain at least one uppercase letter
-                'regex:/[0-9]/',      // must contain at least one digit
-                'regex:/[@$!%*#?&]/', // must contain a special character
-            ],
+            'new_password' => RegisterController::getPasswordRules(),
         ], [
             'new_password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*#?&).'
         ]);
@@ -214,10 +242,4 @@ class UserController extends Controller
 
         return redirect('/')->with('success', 'Your account has been deleted.');
     }
-
-    public function showHrStaff() {
-    return $this->showProfileByRole('hrStaff');
-}
-
-
 }

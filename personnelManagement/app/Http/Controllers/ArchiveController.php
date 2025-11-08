@@ -20,7 +20,7 @@ class ArchiveController extends Controller
             ->where('is_archived', true)
             ->get();
 
-        return view('hrAdmin.archive', compact('applications'));
+        return view('admins.shared.archive', compact('applications'));
     }
 
     public function restore($id)

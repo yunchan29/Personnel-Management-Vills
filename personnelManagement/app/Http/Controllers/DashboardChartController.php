@@ -120,6 +120,6 @@ class DashboardChartController extends Controller
             'employees'  => DB::table('users')->where('role', 'employee')->count(),
         ];
 
-        return view('hrAdmin.dashboard', compact('chartData', 'stats', 'leaveData'));
+        return view('admins.hrAdmin.dashboard', compact('chartData', 'stats', 'leaveData'));
     }
 }

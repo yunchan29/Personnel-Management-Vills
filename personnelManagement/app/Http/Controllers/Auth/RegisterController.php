@@ -8,9 +8,35 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Http\Traits\ApiResponseTrait;
 
 class RegisterController extends Controller
 {
+    use ApiResponseTrait;
+
+    /**
+     * Standardized password validation rules
+     * Used consistently across registration and password changes
+     */
+    public static function getPasswordRules(bool $isConfirmed = true): array
+    {
+        $rules = [
+            'required',
+            'string',
+            'min:8',
+            'regex:/[a-z]/',      // must contain at least one lowercase letter
+            'regex:/[A-Z]/',      // must contain at least one uppercase letter
+            'regex:/[0-9]/',      // must contain at least one digit
+            'regex:/[@$!%*#?&]/', // must contain a special character
+        ];
+
+        if ($isConfirmed) {
+            $rules[] = 'confirmed';
+        }
+
+        return $rules;
+    }
+
     public function showRegistrationForm()
     {
         return view('register');
@@ -25,46 +51,38 @@ class RegisterController extends Controller
             'email'        => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'birth_date'   => ['required', 'date_format:m/d/Y'],
             'gender'       => ['required', 'string'],
-            'password'     => [
-                'required',
-                'string',
-                'min:8',
-                'confirmed',
-                function ($attribute, $value, $fail) {
-                    if (!preg_match('/[A-Z]/', $value)) {
-                        $fail('The password must contain at least one uppercase letter.');
-                    }
-                    if (!preg_match('/[0-9]/', $value)) {
-                        $fail('The password must contain at least one number.');
-                    }
-                    if (!preg_match('/[!@#$%^&*(),.?":{}|<>]/', $value)) {
-                        $fail('The password must contain at least one special character.');
-                    }
-                },
-            ],
+            'password'     => self::getPasswordRules(),
             'terms' => ['accepted'],
+        ], [
+            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*#?&).'
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            return $this->errorResponse(
+                $validator->errors()->toArray(),
+                'Validation failed.',
+                $request->all()
+            );
         }
 
         // Convert birth_date from m/d/Y to Y-m-d
         try {
             $birthDate = Carbon::createFromFormat('m/d/Y', $request->birth_date);
         } catch (\Exception $e) {
-            return redirect()->back()
-                ->withErrors(['birth_date' => 'Invalid birth date format.'])
-                ->withInput();
+            return $this->errorResponse(
+                ['birth_date' => ['Invalid birth date format.']],
+                'Invalid birth date format.',
+                $request->all()
+            );
         }
 
         // Backend age enforcement
         if ($birthDate->age < 18) {
-            return redirect()->back()
-                ->withErrors(['birth_date' => 'You must be at least 18 years old to register.'])
-                ->withInput();
+            return $this->errorResponse(
+                ['birth_date' => ['You must be at least 18 years old to register.']],
+                'You must be at least 18 years old to register.',
+                $request->all()
+            );
         }
 
         // Create user
@@ -81,13 +99,25 @@ class RegisterController extends Controller
 
         auth()->login($user);
 
-        // Redirect based on role with SweetAlert success
-        $successMessage = 'Welcome! Your account has been successfully created.';
-
-        return match ($user->role) {
-            'admin'     => redirect()->route('admin.dashboard')->with('success', $successMessage),
-            'applicant' => redirect()->route('applicant.dashboard')->with('success', $successMessage),
-            default     => redirect('/login')->with('success', $successMessage),
+        // Determine redirect URL based on role
+        $redirectUrl = match ($user->role) {
+            'applicant' => route('applicant.dashboard'),
+            'employee'  => route('employee.dashboard'),
+            'hrAdmin'   => route('hrAdmin.dashboard'),
+            'hrStaff'   => route('hrStaff.dashboard'),
+            default     => route('login'),
         };
+
+        return $this->successResponse(
+            'Welcome! Your account has been successfully created.',
+            $redirectUrl,
+            [
+                'user' => [
+                    'name' => $user->first_name . ' ' . $user->last_name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                ]
+            ]
+        );
     }
 }

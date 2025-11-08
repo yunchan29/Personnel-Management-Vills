@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>VillsPMS</title>
   <!-- Favicon -->
     <link rel="icon" href="{{ asset('images/villslogo3.png') }}" type="image/png">
@@ -12,6 +13,19 @@
   <!-- Google Font: Barlow Condensed -->
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&display=swap" rel="stylesheet">
 
+  <!-- Alata Font for modals -->
+  <link href="https://fonts.googleapis.com/css2?family=Alata&display=swap" rel="stylesheet">
+
+  <!-- Axios for AJAX -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- Flatpickr for date picker -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
   <style>
     html {
       scroll-behavior: smooth;
@@ -19,6 +33,14 @@
 
     .barlow-condensed {
       font-family: 'Barlow Condensed', sans-serif;
+    }
+
+    .font-alata {
+      font-family: 'Alata', sans-serif;
+    }
+
+    [x-cloak] {
+      display: none !important;
     }
 
     .nav-link {
@@ -88,7 +110,7 @@
    
   </style>
 </head>
-<body class="bg-white text-gray-900">
+<body class="bg-white text-gray-900" x-data="authModals()" x-init="init()">
 
   <!-- Navigation -->
   <x-landingPage.navbar/>
@@ -114,6 +136,12 @@
   <section id="footer">
     <x-landingPage.footer/>
   </section>
+
+  <!-- Auth Modals -->
+  @include('auth.login')
+  @include('auth.register')
+  @include('auth.forgot-password')
+  @include('auth.reset-password')
 
   <!-- Mobile Menu Toggle -->
   <script>
@@ -193,6 +221,380 @@
       });
     });
   </script>
+
+  <!-- Alpine.js Auth Modals Script -->
+  <script>
+    function authModals() {
+      return {
+        // Modal state
+        activeModal: null,
+
+        // Login form
+        loginForm: {
+          email: '',
+          password: '',
+          remember: false
+        },
+        loginErrors: [],
+        loginStatus: '',
+        loginLoading: false,
+        showLoginPassword: false,
+
+        // Register form
+        registerForm: {
+          first_name: '',
+          last_name: '',
+          email: '',
+          birth_date: '',
+          gender: '',
+          password: '',
+          password_confirmation: '',
+          terms: false
+        },
+        registerErrors: [],
+        registerLoading: false,
+        showRegPassword: false,
+        showRegConfirmPassword: false,
+        showPasswordRules: false,
+        passwordRules: {
+          length: false,
+          lowercase: false,
+          uppercase: false,
+          number: false,
+          special: false,
+          match: false
+        },
+
+        // Forgot password form
+        forgotPasswordForm: {
+          email: ''
+        },
+        forgotPasswordErrors: [],
+        forgotPasswordStatus: '',
+        forgotPasswordLoading: false,
+
+        // Reset password form
+        resetPasswordForm: {
+          token: '',
+          email: '',
+          password: '',
+          password_confirmation: ''
+        },
+        resetPasswordErrors: [],
+        resetPasswordStatus: '',
+        resetPasswordLoading: false,
+        showResetPassword: false,
+        showResetConfirmPassword: false,
+        resetPasswordRules: {
+          length: false,
+          lowercase: false,
+          uppercase: false,
+          number: false,
+          special: false,
+          match: false
+        },
+
+        // Date picker state
+        showDatePicker: false,
+        selectedYear: new Date().getFullYear() - 18,
+        selectedMonth: new Date().getMonth(),
+        selectedDay: null,
+        datePickerDropUp: false,
+
+        init() {
+          // Check for reset password token in URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const token = urlParams.get('token');
+          const email = urlParams.get('email');
+
+          if (token && email) {
+            this.resetPasswordForm.token = token;
+            this.resetPasswordForm.email = email;
+            this.activeModal = 'resetPassword';
+          }
+        },
+
+        // Get years for date picker (from 100 years ago to 18 years ago)
+        get availableYears() {
+          const currentYear = new Date().getFullYear();
+          const years = [];
+          for (let i = currentYear - 100; i <= currentYear - 18; i++) {
+            years.push(i);
+          }
+          return years.reverse();
+        },
+
+        // Get months
+        get availableMonths() {
+          return [
+            { value: 0, label: 'January' },
+            { value: 1, label: 'February' },
+            { value: 2, label: 'March' },
+            { value: 3, label: 'April' },
+            { value: 4, label: 'May' },
+            { value: 5, label: 'June' },
+            { value: 6, label: 'July' },
+            { value: 7, label: 'August' },
+            { value: 8, label: 'September' },
+            { value: 9, label: 'October' },
+            { value: 10, label: 'November' },
+            { value: 11, label: 'December' }
+          ];
+        },
+
+        // Get days in selected month
+        get availableDays() {
+          const daysInMonth = new Date(this.selectedYear, this.selectedMonth + 1, 0).getDate();
+          const days = [];
+          for (let i = 1; i <= daysInMonth; i++) {
+            days.push(i);
+          }
+          return days;
+        },
+
+        // Set the birthdate when day is selected
+        selectBirthdate(day) {
+          this.selectedDay = day;
+          const month = String(this.selectedMonth + 1).padStart(2, '0');
+          const dayStr = String(day).padStart(2, '0');
+          this.registerForm.birth_date = `${month}/${dayStr}/${this.selectedYear}`;
+          this.showDatePicker = false;
+        },
+
+        // Open date picker
+        openDatePicker() {
+          this.showDatePicker = true;
+
+          // Determine if picker should drop up or down
+          this.$nextTick(() => {
+            const input = document.getElementById('reg_birth_date');
+            if (input) {
+              const rect = input.getBoundingClientRect();
+              const spaceBelow = window.innerHeight - rect.bottom;
+              const spaceAbove = rect.top;
+              const pickerHeight = 400; // minimum space needed to show picker comfortably
+
+              // Drop up if there's not enough space below but more space above
+              this.datePickerDropUp = spaceBelow < pickerHeight && spaceAbove > spaceBelow;
+            }
+          });
+
+          // If birth_date is already set, parse it
+          if (this.registerForm.birth_date) {
+            const parts = this.registerForm.birth_date.split('/');
+            if (parts.length === 3) {
+              this.selectedMonth = parseInt(parts[0]) - 1;
+              this.selectedDay = parseInt(parts[1]);
+              this.selectedYear = parseInt(parts[2]);
+            }
+          }
+        },
+
+        // Validate register password
+        validateRegisterPassword() {
+          const password = this.registerForm.password;
+          const confirm = this.registerForm.password_confirmation;
+
+          this.passwordRules.length = password.length >= 8;
+          this.passwordRules.lowercase = /[a-z]/.test(password);
+          this.passwordRules.uppercase = /[A-Z]/.test(password);
+          this.passwordRules.number = /[0-9]/.test(password);
+          this.passwordRules.special = /[@$!%*#?&]/.test(password);
+          this.passwordRules.match = password && confirm && password === confirm;
+        },
+
+        // Validate reset password
+        validateResetPassword() {
+          const password = this.resetPasswordForm.password;
+          const confirm = this.resetPasswordForm.password_confirmation;
+
+          this.resetPasswordRules.length = password.length >= 8;
+          this.resetPasswordRules.lowercase = /[a-z]/.test(password);
+          this.resetPasswordRules.uppercase = /[A-Z]/.test(password);
+          this.resetPasswordRules.number = /[0-9]/.test(password);
+          this.resetPasswordRules.special = /[@$!%*#?&]/.test(password);
+          this.resetPasswordRules.match = password && confirm && password === confirm;
+        },
+
+        // Check if register form is valid
+        get isRegisterFormValid() {
+          return this.passwordRules.length &&
+                 this.passwordRules.lowercase &&
+                 this.passwordRules.uppercase &&
+                 this.passwordRules.number &&
+                 this.passwordRules.special &&
+                 this.passwordRules.match &&
+                 this.registerForm.terms;
+        },
+
+        // Check if reset form is valid
+        get isResetFormValid() {
+          return this.resetPasswordRules.length &&
+                 this.resetPasswordRules.lowercase &&
+                 this.resetPasswordRules.uppercase &&
+                 this.resetPasswordRules.number &&
+                 this.resetPasswordRules.special &&
+                 this.resetPasswordRules.match;
+        },
+
+        // Submit login form
+        async submitLogin() {
+          this.loginLoading = true;
+          this.loginErrors = [];
+          this.loginStatus = '';
+
+          try {
+            const response = await axios.post('{{ route('login') }}', this.loginForm, {
+              headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+              }
+            });
+
+            if (response.data.success) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Login Successful!',
+                text: response.data.message || 'Welcome back!',
+                confirmButtonColor: '#BD6F22',
+                timer: 2000,
+                showConfirmButton: false
+              }).then(() => {
+                window.location.href = response.data.redirect || '/home';
+              });
+            }
+          } catch (error) {
+            if (error.response?.data?.errors) {
+              this.loginErrors = Object.values(error.response.data.errors).flat();
+            } else if (error.response?.data?.message) {
+              this.loginErrors = [error.response.data.message];
+            } else {
+              this.loginErrors = ['An error occurred. Please try again.'];
+            }
+          } finally {
+            this.loginLoading = false;
+          }
+        },
+
+        // Submit register form
+        async submitRegister() {
+          this.registerLoading = true;
+          this.registerErrors = [];
+
+          try {
+            const response = await axios.post('{{ route('register') }}', this.registerForm, {
+              headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+              }
+            });
+
+            if (response.data.success) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Registration Successful!',
+                text: response.data.message || 'Your account has been created!',
+                confirmButtonColor: '#BD6F22',
+                timer: 2500,
+                showConfirmButton: false
+              }).then(() => {
+                this.activeModal = null;
+                window.location.href = response.data.redirect || '/home';
+              });
+            }
+          } catch (error) {
+            if (error.response?.data?.errors) {
+              this.registerErrors = Object.values(error.response.data.errors).flat();
+            } else if (error.response?.data?.message) {
+              this.registerErrors = [error.response.data.message];
+            } else {
+              this.registerErrors = ['An error occurred. Please try again.'];
+            }
+          } finally {
+            this.registerLoading = false;
+          }
+        },
+
+        // Submit forgot password form
+        async submitForgotPassword() {
+          this.forgotPasswordLoading = true;
+          this.forgotPasswordErrors = [];
+          this.forgotPasswordStatus = '';
+
+          try {
+            const response = await axios.post('{{ route('password.email') }}', this.forgotPasswordForm, {
+              headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+              }
+            });
+
+            if (response.data.success || response.data.status) {
+              this.forgotPasswordStatus = response.data.message || response.data.status || 'Password reset link sent to your email!';
+              this.forgotPasswordForm.email = '';
+
+              Swal.fire({
+                icon: 'success',
+                title: 'Email Sent!',
+                text: this.forgotPasswordStatus,
+                confirmButtonColor: '#BD6F22',
+                timer: 3000,
+                showConfirmButton: true
+              });
+            }
+          } catch (error) {
+            if (error.response?.data?.errors) {
+              this.forgotPasswordErrors = Object.values(error.response.data.errors).flat();
+            } else if (error.response?.data?.message) {
+              this.forgotPasswordErrors = [error.response.data.message];
+            } else {
+              this.forgotPasswordErrors = ['An error occurred. Please try again.'];
+            }
+          } finally {
+            this.forgotPasswordLoading = false;
+          }
+        },
+
+        // Submit reset password form
+        async submitResetPassword() {
+          this.resetPasswordLoading = true;
+          this.resetPasswordErrors = [];
+          this.resetPasswordStatus = '';
+
+          try {
+            const response = await axios.post('{{ route('password.update') }}', this.resetPasswordForm, {
+              headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+              }
+            });
+
+            if (response.data.success || response.data.status) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Password Reset!',
+                text: response.data.message || 'Your password has been reset successfully!',
+                confirmButtonColor: '#BD6F22',
+                timer: 2500,
+                showConfirmButton: false
+              }).then(() => {
+                this.activeModal = 'login';
+                // Clear URL parameters
+                window.history.replaceState({}, document.title, window.location.pathname);
+              });
+            }
+          } catch (error) {
+            if (error.response?.data?.errors) {
+              this.resetPasswordErrors = Object.values(error.response.data.errors).flat();
+            } else if (error.response?.data?.message) {
+              this.resetPasswordErrors = [error.response.data.message];
+            } else {
+              this.resetPasswordErrors = ['An error occurred. Please try again.'];
+            }
+          } finally {
+            this.resetPasswordLoading = false;
+          }
+        }
+      }
+    }
+  </script>
+
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
 </body>

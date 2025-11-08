@@ -48,6 +48,10 @@ class User extends Authenticatable
         'postal_code',
         'active_status',
         'job_industry',
+
+        'last_login_at',
+        'last_activity_at',
+        'last_login_ip',
     ];
 
     /**
@@ -83,6 +87,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_archived' => 'boolean', // ✅ for archiving
+            'last_login_at' => 'datetime',
+            'last_activity_at' => 'datetime',
         ];
     }
 

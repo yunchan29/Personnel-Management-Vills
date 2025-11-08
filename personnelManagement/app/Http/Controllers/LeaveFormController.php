@@ -17,11 +17,7 @@ class LeaveFormController extends Controller
         // HR Admin and HR Staff can view all leave forms
         $leaveForms = LeaveForm::with('user')->latest()->get();
 
-        $view = $user->role === 'hrAdmin' 
-            ? 'hrAdmin.leaveForm' 
-            : 'hrStaff.leaveForm';
-
-        return view($view, compact('leaveForms'));
+        return view('admins.shared.leaveForm', compact('leaveForms'));
     }
 
     // Regular employee view

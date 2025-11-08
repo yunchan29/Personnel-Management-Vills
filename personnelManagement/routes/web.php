@@ -24,9 +24,6 @@ use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\StaffArchiveController;
 use App\Http\Controllers\ContractScheduleController; //for contract signing schedule
 
-//temporary ulit HAHAHAHH sorry
-Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
-
 // Landing page route
 Route::get('/', [LandingPageController::class, 'index'])->name('welcome');
 
@@ -45,8 +42,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:3,1'); // 3 attempts per minute
 
-
-// Temporary route for testing
+// Job listing route (public)
 Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
 
 
@@ -62,7 +58,7 @@ Route::prefix('applicant')->name('applicant.')->middleware(['auth', 'role:applic
     Route::put('/profile', [UserController::class, 'update'])->name('profile.update');
 
     // Settings
-    Route::get('/settings', fn () => view('applicant.settings'))->name('settings');
+    Route::get('/settings', fn () => view('users.settings'))->name('settings');
     Route::post('/user/toggle-visibility', [UserController::class, 'toggleVisibility'])->name('user.toggleVisibility');
 
 
@@ -85,7 +81,7 @@ Route::prefix('applicant')->name('applicant.')->middleware(['auth', 'role:applic
 // ✅ Employee-related routes with auth middleware
 Route::prefix('employee')->name('employee.')->middleware(['auth', 'role:employee'])->group(function () {
     // Dashboard route
-    Route::get('/dashboard', function () {return view('employee.dashboard');})->name('dashboard');
+    Route::get('/dashboard', function () {return view('users.dashboard');})->name('dashboard');
 
     // Profile routes to edit and update user profile
     Route::get('/profile', [UserController::class, 'showEmployee'])->name('profile');
@@ -98,7 +94,7 @@ Route::prefix('employee')->name('employee.')->middleware(['auth', 'role:employee
     Route::delete('/application', [ResumeController::class, 'destroy'])->name('application.destroy');
 
     // Change password route
-    Route::get('/settings', function () {return view('employee.settings');})->name('settings');
+    Route::get('/settings', function () {return view('users.settings');})->name('settings');
 
     // ✅ Leave Form Routes
     Route::get('/leave-forms', [LeaveFormController::class, 'index'])->name('leaveForm'); 
@@ -161,7 +157,7 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware(['auth', 'role:hrAdmin'])
     Route::delete('/jobPosting/{id}', [JobController::class, 'destroy'])->name('jobPosting.destroy');
 
     // 201 Files: Government IDs and Licenses
-    Route::get('/files', fn() => view('hrAdmin.files'))->name('files');
+    Route::get('/files', fn() => view('users.files'))->name('files');
 
   Route::get('/archive', [ArchiveController::class, 'index'])->name('archive.index');
   Route::post('/archive/{id}/restore', [ArchiveController::class, 'restore'])->name('archive.restore');
@@ -180,7 +176,7 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware(['auth', 'role:hrAdmin'])
     Route::get('/employees', [EmployeeController::class, 'index'])->name('employees');
 
     // Settings
-    Route::get('/settings', fn() => view('hrAdmin.settings'))->name('settings');
+    Route::get('/settings', fn() => view('admins.shared.settings'))->name('settings');
 
     // Training Schedule
     Route::post('/training-schedule/{id}', [TrainingScheduleController::class, 'setTrainingDate'])->name('training.schedule.set');
@@ -195,15 +191,13 @@ Route::fallback(function () {return response()->view('errors.404', [], 404);});
 Route::middleware(['auth'])->group(function () {
     Route::post('/user/change-password', [UserController::class, 'changePassword'])->name('user.changePassword');
     Route::delete('/user/delete-account', [UserController::class, 'deleteAccount'])->name('user.deleteAccount');
+
+    // ✅ SECURITY FIX: Secure file serving routes with authentication
+    Route::get('/secure/resume/{filename}', [\App\Http\Controllers\SecureFileController::class, 'serveResume'])->name('secure.resume');
+    Route::get('/secure/other-file/{filename}', [\App\Http\Controllers\SecureFileController::class, 'serveOtherFile'])->name('secure.otherFile');
+    Route::get('/secure/profile-picture/{filename}', [\App\Http\Controllers\SecureFileController::class, 'serveProfilePicture'])->name('secure.profilePicture');
+    Route::get('/secure/resume-snapshot/{filename}', [\App\Http\Controllers\SecureFileController::class, 'serveResumeSnapshot'])->name('secure.resumeSnapshot');
 });
-
-// Di ko alam kung anong gagawin dito, pero baka kailangan mo ng mga routes para sa mga admin at home page
-// Admin dashboard (auth protected)
-Route::get('/admin/dashboard', function () {return view('admin.dashboard');})->name('admin.dashboard')->middleware('auth');
-
-// General home route (auth protected)
-Route::get('/home', function () {return view('home'); // Ensure this view exists
-})->name('home')->middleware('auth');
 
 // Password reset (with rate limiting for security)
 Route::get('/forgot-password', function () {
@@ -237,7 +231,7 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware(['auth', 'role:hrStaff'])
 
     // Dashboard route
     Route::get('/dashboard', function () {
-        return view('hrStaff.dashboard');
+        return view('admins.hrStaff.dashboard');
     })->name('dashboard');
 
     // Employees
@@ -279,7 +273,7 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware(['auth', 'role:hrStaff'])
 
     // Settings / Change Password
     Route::get('/settings', function () {
-        return view('hrStaff.settings');
+        return view('admins.shared.settings');
     })->name('settings');
 
     // ✅ Contract Signing Schedule Routes

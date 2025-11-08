@@ -20,4 +20,23 @@
 
 @push('modals')
     <x-shared.loading-overlay />
+    {{-- Debug: Profile Status --}}
+    {{-- @php
+        $profileComplete = auth()->user()->is_profile_complete;
+        $isIncomplete = !$profileComplete;
+        \Log::info('Profile Debug', [
+            'is_profile_complete' => $profileComplete,
+            'isIncomplete' => $isIncomplete,
+            'user_id' => auth()->id()
+        ]);
+    @endphp --}}
+
+    {{-- Complete Profile Modal - Shows on all pages if profile is incomplete --}}
+    <x-shared.complete-profile-modal
+        :isIncomplete="!auth()->user()->is_profile_complete"
+        :profileRoute="route('applicant.profile')"
+        title="Complete Your Profile"
+        message="Please complete your profile to apply for jobs and access all features."
+        buttonText="Go to Profile"
+    />
 @endpush

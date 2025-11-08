@@ -25,7 +25,7 @@ class EmployeeController extends Controller
         // Group employees by job_id
         $groupedEmployees = $employees->groupBy('job_id');
 
-        return view("$role.employees", [
+        return view('admins.shared.employees', [
             'jobs' => $jobs,
             'employees' => $employees,
             'groupedEmployees' => $groupedEmployees,
@@ -76,7 +76,7 @@ public function performanceEvaluation(Request $request)
         ->with('job')
         ->get();
 
-    return view('hrStaff.perfEval', [
+    return view('admins.hrStaff.perfEval', [
         'jobs'       => $jobs,
         'applicants' => $applicants,
         'employees'  => $employees,

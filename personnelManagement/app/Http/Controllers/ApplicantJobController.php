@@ -38,7 +38,7 @@ class ApplicantJobController extends Controller
          ->whereIn('status', ['scheduled_for_training', 'training_passed'])
          ->exists();
 
-    return view('applicant.dashboard', compact(
+    return view('users.dashboard', compact(
     'jobs',
     'resume',
     'appliedJobIds',
