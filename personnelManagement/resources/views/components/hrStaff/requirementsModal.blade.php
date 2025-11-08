@@ -18,24 +18,27 @@
         }"
     >
         <!-- Modal wrapper with transition -->
-        <div 
+        <div
             x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
             x-transition:leave="transition ease-in duration-200"
             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
             x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-            class="bg-white rounded-lg shadow-xl w-full max-w-3xl sm:max-w-lg md:max-w-2xl lg:max-w-3xl flex flex-col max-h-[90vh]"
+            class="bg-white rounded-lg shadow-xl w-full max-w-3xl sm:max-w-lg md:max-w-2xl lg:max-w-3xl flex flex-col max-h-[90vh] relative"
         >
+            <!-- Close button -->
+            <button
+                @click="closeRequirements()"
+                class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 z-10"
+            >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+
             <!-- Scrollable content -->
             <div class="px-4 sm:px-6 py-6 overflow-y-auto">
-                <!-- Close button -->
-                <button 
-                    @click="closeRequirements()" 
-                    class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
-                >
-                    ✕
-                </button>
 
                 <!-- Header -->
                 <h2 class="text-lg sm:text-xl font-bold text-[#BD6F22] mb-4">

@@ -9,11 +9,32 @@
     <div x-data="{
         ...evaluationModal({{ $applicants }}),
         ...requirementsModal(),
-        ...actionDropdown()
+        ...actionDropdown(),
+        activeTab: 'for-evaluation'
     }">
 
-    <!-- Applicants List for Evaluation -->
-    <div class="bg-white rounded-lg shadow-lg p-6">
+    <!-- Tabs -->
+    <div class="bg-white rounded-t-lg shadow-lg">
+        <div class="flex border-b">
+            <button
+                @click="activeTab = 'for-evaluation'"
+                :class="activeTab === 'for-evaluation' ? 'border-b-2 border-[#BD6F22] text-[#BD6F22] font-semibold' : 'text-gray-600 hover:text-[#BD6F22]'"
+                class="px-6 py-3 text-sm focus:outline-none transition-colors"
+            >
+                For Evaluation
+            </button>
+            <button
+                @click="activeTab = 'passer'"
+                :class="activeTab === 'passer' ? 'border-b-2 border-[#BD6F22] text-[#BD6F22] font-semibold' : 'text-gray-600 hover:text-[#BD6F22]'"
+                class="px-6 py-3 text-sm focus:outline-none transition-colors"
+            >
+                Passer
+            </button>
+        </div>
+    </div>
+
+    <!-- For Evaluation Tab Content -->
+    <div x-show="activeTab === 'for-evaluation'" class="bg-white rounded-b-lg shadow-lg p-6">
         <!-- Bulk Actions Bar -->
         <div x-show="selectedApplicants.length > 0"
              x-transition
@@ -29,61 +50,6 @@
                 >
                 <span>Select All</span>
             </label>
-
-            <!-- Evaluate Button -->
-            <button
-                @click="bulkEvaluate()"
-                class="min-w-[160px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2 hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
-                     stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                    <path d="M9 5h6M9 3h6a2 2 0 012 2v14a2 2 0 01-2 2H9a2 2 0 01-2-2V5a2 2 0 012-2z" />
-                </svg>
-                <span class="text-sm" x-text="`Evaluate (${selectedApplicants.length})`"></span>
-            </button>
-
-            <!-- Set Contract Signing Button -->
-            <button
-                @click="bulkSetContractSigning()"
-                class="min-w-[180px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2 hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
-                     stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                    <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                <span class="text-sm" x-text="`Contract Signing (${selectedApplicants.length})`"></span>
-            </button>
-
-            <!-- Set Contract Dates Button -->
-            <button
-                @click="bulkSetContractDates()"
-                class="min-w-[180px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2 hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
-                     stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                    <path d="M9 2h6a2 2 0 012 2v2h-2V4H9v2H7V4a2 2 0 012-2zM7 8h10v12a2 2 0 01-2 2H9a2 2 0 01-2-2V8z"/>
-                </svg>
-                <span class="text-sm" x-text="`Contract Dates (${selectedApplicants.length})`"></span>
-            </button>
-
-            <!-- View Requirements Button -->
-            <button
-                @click="bulkViewRequirements()"
-                class="min-w-[180px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2 hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
-                     stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                    <path d="M3 7h4l2-2h8l2 2h4v12H3V7z" />
-                </svg>
-                <span class="text-sm" x-text="`Requirements (${selectedApplicants.length})`"></span>
-            </button>
-
-            <!-- Promote Button -->
-            <button
-                @click="bulkPromote()"
-                class="min-w-[160px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2 hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
-                     stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                    <path d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                </svg>
-                <span class="text-sm" x-text="`Promote (${selectedApplicants.length})`"></span>
-            </button>
 
             <!-- Archive Button -->
             <button
@@ -107,6 +73,7 @@
             <th class="py-3 px-4">Company</th>
             <th class="py-3 px-4">Training End Date</th>
             <th class="py-3 px-4">Status</th>
+            <th class="py-3 px-4">Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -178,11 +145,54 @@
                 @endif
             </td>
 
+            <!-- Actions Icons -->
+            <td class="py-3 px-4 align-middle whitespace-nowrap">
+                <div class="flex gap-2">
+                    @php
+                        $hasPassed = $applicant->evaluation && ($applicant->evaluation->total_score ?? 0) >= 70;
+                    @endphp
+
+                    @if($hasPassed)
+                    <!-- Send Invitation Icon (for passed applicants) -->
+                    <button
+                        @click="openContractSigningInvitation('{{ $applicant->user->full_name }}', {{ $applicant->id }})"
+                        class="p-2 text-gray-700 hover:text-[#BD6F22] hover:bg-gray-100 rounded transition-colors"
+                        title="Send Invitation"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                    </button>
+                    @else
+                    <!-- Evaluate Icon (for not evaluated or failed applicants) -->
+                    <button
+                        @click="openModal('{{ $applicant->user->full_name }}', {{ $applicant->id }}, {{ $applicant->evaluation ? 'true' : 'false' }}, null)"
+                        class="p-2 text-gray-700 hover:text-[#BD6F22] hover:bg-gray-100 rounded transition-colors"
+                        title="Evaluate"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h6M9 3h6a2 2 0 012 2v14a2 2 0 01-2 2H9a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                        </svg>
+                    </button>
+                    @endif
+
+                    <!-- View Requirements Icon -->
+                    <button
+                        @click="openRequirements('{{ $applicant->user->full_name }}', {{ $applicant->user_id }})"
+                        class="p-2 text-gray-700 hover:text-[#BD6F22] hover:bg-gray-100 rounded transition-colors"
+                        title="View Requirements"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h4l2-2h8l2 2h4v12H3V7z" />
+                        </svg>
+                    </button>
+                </div>
+            </td>
 
         </tr>
         @empty
         <tr>
-            <td colspan="6" class="text-center py-6 text-gray-500 italic">
+            <td colspan="7" class="text-center py-6 text-gray-500 italic">
                 No applicants pending for evaluation.
             </td>
         </tr>
@@ -200,6 +210,171 @@
             >
                 <span x-text="showAll ? 'Hide Hired' : 'Show All'"></span>
             </button>
+        </div>
+    </div>
+
+    <!-- Passer Tab Content -->
+    <div x-show="activeTab === 'passer'" class="bg-white rounded-b-lg shadow-lg p-6" x-data="{ selectedPassers: [] }">
+        <!-- Bulk Actions Bar for Passers -->
+        <div x-show="selectedPassers.length > 0"
+             x-transition
+             class="flex flex-wrap gap-2 mb-4">
+
+            <!-- Master Checkbox -->
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                    type="checkbox"
+                    x-ref="passerMasterCheckbox"
+                    @change="
+                        if ($event.target.checked) {
+                            selectedPassers = Array.from(document.querySelectorAll('.passer-checkbox')).map(cb => JSON.parse(cb.value));
+                        } else {
+                            selectedPassers = [];
+                        }
+                    "
+                    class="rounded border-gray-300"
+                >
+                <span>Select All</span>
+            </label>
+
+            <!-- Send Invitation Button -->
+            <button
+                @click="bulkSendInvitation()"
+                class="min-w-[180px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2 hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
+                     stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span class="text-sm" x-text="`Send Invitation (${selectedPassers.length})`"></span>
+            </button>
+
+            <!-- Promote Button (includes contract setting) -->
+            <button
+                @click="bulkPromotePassers()"
+                class="min-w-[160px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2 hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
+                     stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+                <span class="text-sm" x-text="`Promote (${selectedPassers.length})`"></span>
+            </button>
+
+            <!-- Archive Button -->
+            <button
+                @click="bulkArchivePassers()"
+                class="min-w-[160px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2 hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
+                     stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M20.25 6.75H3.75M19.5 21H4.5A2.25 2.25 0 012.25 18.75v-12m19.5 0v12A2.25 2.25 0 0119.5 21zM9 12h6" />
+                </svg>
+                <span class="text-sm" x-text="`Archive (${selectedPassers.length})`"></span>
+            </button>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-700">
+                <thead class="border-b font-semibold bg-gray-50">
+                    <tr>
+                        <th class="py-3 px-4"></th>
+                        <th class="py-3 px-4">Name</th>
+                        <th class="py-3 px-4">Job Position</th>
+                        <th class="py-3 px-4">Company</th>
+                        <th class="py-3 px-4">Training End Date</th>
+                        <th class="py-3 px-4">Score</th>
+                        <th class="py-3 px-4">Requirements</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        $passers = $applicants->filter(function($app) {
+                            return ($app->status === 'passed' || $app->status === 'scheduled_for_training')
+                                && $app->trainingSchedule
+                                && $app->evaluation
+                                && ($app->evaluation->total_score ?? 0) >= 70;
+                        });
+                    @endphp
+
+                    @forelse ($passers as $applicant)
+                    <tr class="border-b hover:bg-gray-50">
+                        <!-- Checkbox -->
+                        <td class="py-3 px-4">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    class="passer-checkbox rounded border-gray-300"
+                                    :value="JSON.stringify({
+                                        application_id: {{ $applicant->id }},
+                                        user_id: {{ $applicant->user_id }},
+                                        name: '{{ $applicant->user->full_name }}'
+                                    })"
+                                    :checked="selectedPassers.some(a => a.application_id === {{ $applicant->id }})"
+                                    @change="
+                                        if ($event.target.checked) {
+                                            selectedPassers.push(JSON.parse($event.target.value));
+                                        } else {
+                                            selectedPassers = selectedPassers.filter(a => a.application_id !== {{ $applicant->id }});
+                                        }
+                                        const allCheckboxes = document.querySelectorAll('.passer-checkbox');
+                                        const checkedCheckboxes = Array.from(allCheckboxes).filter(cb => cb.checked);
+                                        $refs.passerMasterCheckbox.checked = allCheckboxes.length === checkedCheckboxes.length;
+                                        $refs.passerMasterCheckbox.indeterminate = checkedCheckboxes.length > 0 && checkedCheckboxes.length < allCheckboxes.length;
+                                    "
+                                />
+                            </label>
+                        </td>
+
+                        <!-- Name -->
+                        <td class="py-3 px-4 align-middle font-medium whitespace-nowrap">
+                            {{ $applicant->user->full_name }}
+                        </td>
+
+                        <!-- Job Position -->
+                        <td class="py-3 px-4 align-middle whitespace-nowrap">
+                            {{ $applicant->job->job_title ?? '—' }}
+                        </td>
+
+                        <!-- Company -->
+                        <td class="py-3 px-4 align-middle whitespace-nowrap">
+                            {{ $applicant->job->company_name ?? '—' }}
+                        </td>
+
+                        <!-- Training End Date -->
+                        <td class="py-3 px-4 align-middle whitespace-nowrap">
+                            {{ $applicant->trainingSchedule ? \Carbon\Carbon::parse($applicant->trainingSchedule->end_date)->format('M d, Y') : '—' }}
+                        </td>
+
+                        <!-- Score -->
+                        <td class="py-3 px-4 align-middle whitespace-nowrap">
+                            @php
+                                $score = $applicant->evaluation->total_score ?? 0;
+                            @endphp
+                            <span class="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded">
+                                {{ $score }}/100
+                            </span>
+                        </td>
+
+                        <!-- Requirements Button -->
+                        <td class="py-3 px-4 align-middle whitespace-nowrap">
+                            <button
+                                @click="openRequirements('{{ $applicant->user->full_name }}', {{ $applicant->user_id }})"
+                                class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#BD6F22]"
+                            >
+                                <svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h4l2-2h8l2 2h4v12H3V7z" />
+                                </svg>
+                                View
+                            </button>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="7" class="text-center py-6 text-gray-500 italic">
+                            No applicants have passed the evaluation yet.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -268,33 +443,18 @@ function actionDropdown() {
                 });
                 return;
             }
-            this.startSteppedAction('evaluate', this.selectedApplicants);
-        },
-
-        bulkSetContractSigning() {
-            if (this.selectedApplicants.length === 0) {
+            if (this.selectedApplicants.length > 1) {
                 Swal.fire({
-                    title: 'No Selection',
-                    text: 'Please select at least one applicant.',
+                    title: 'Single Selection Only',
+                    text: 'Evaluation requires individual assessment. Please select only ONE applicant at a time.',
                     icon: 'warning',
                     confirmButtonColor: '#BD6F22'
                 });
                 return;
             }
-            this.startSteppedAction('contractSigning', this.selectedApplicants);
-        },
-
-        bulkSetContractDates() {
-            if (this.selectedApplicants.length === 0) {
-                Swal.fire({
-                    title: 'No Selection',
-                    text: 'Please select at least one applicant.',
-                    icon: 'warning',
-                    confirmButtonColor: '#BD6F22'
-                });
-                return;
-            }
-            this.startSteppedAction('contractDates', this.selectedApplicants);
+            // Open evaluation modal for single applicant
+            const applicant = this.selectedApplicants[0];
+            this.openModal(applicant.name, applicant.application_id, applicant.has_evaluation, null);
         },
 
         bulkViewRequirements() {
@@ -307,10 +467,21 @@ function actionDropdown() {
                 });
                 return;
             }
-            this.startSteppedAction('requirements', this.selectedApplicants);
+            if (this.selectedApplicants.length > 1) {
+                Swal.fire({
+                    title: 'Single Selection Only',
+                    text: 'Requirements viewing is for individual applicants. Please select only ONE applicant at a time.',
+                    icon: 'warning',
+                    confirmButtonColor: '#BD6F22'
+                });
+                return;
+            }
+            // Open requirements modal for single applicant
+            const applicant = this.selectedApplicants[0];
+            this.openRequirements(applicant.name, applicant.user_id);
         },
 
-        bulkPromote() {
+        async bulkPromote() {
             if (this.selectedApplicants.length === 0) {
                 Swal.fire({
                     title: 'No Selection',
@@ -320,10 +491,131 @@ function actionDropdown() {
                 });
                 return;
             }
-            this.startSteppedAction('promote', this.selectedApplicants);
+
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const minDate = tomorrow.toISOString().split('T')[0];
+
+            Swal.fire({
+                title: `Promote ${this.selectedApplicants.length} Applicant(s) to Employee`,
+                html: `
+                    <div class="text-left space-y-4">
+                        <p class="text-sm text-gray-600 mb-4">
+                            Set the employment contract period for all selected applicants.
+                        </p>
+
+                        <div>
+                            <label class="block text-sm text-gray-700 mb-1">Contract Start Date</label>
+                            <input type="date" id="bulk_promote_contract_start"
+                                   class="w-full px-3 py-2 border rounded"
+                                   min="${minDate}" required>
+
+                            <label class="block text-sm text-gray-700 mb-1 mt-2">Contract Period</label>
+                            <select id="bulk_promote_contract_period" class="w-full px-3 py-2 border rounded">
+                                <option value="6m" selected>6 Months</option>
+                                <option value="1y">1 Year</option>
+                            </select>
+
+                            <label class="block text-sm text-gray-700 mb-1 mt-2">Contract End Date (Auto-calculated)</label>
+                            <input type="text" id="bulk_promote_contract_end"
+                                   class="w-full px-3 py-2 border rounded bg-gray-100"
+                                   readonly placeholder="Will be calculated">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonColor: '#BD6F22',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Promote All',
+                cancelButtonText: 'Cancel',
+                didOpen: () => {
+                    const startInput = document.getElementById('bulk_promote_contract_start');
+                    const periodSelect = document.getElementById('bulk_promote_contract_period');
+                    const endInput = document.getElementById('bulk_promote_contract_end');
+
+                    const calculateEnd = () => {
+                        if (!startInput.value) return;
+                        const start = new Date(startInput.value);
+                        const period = periodSelect.value;
+
+                        if (period === '6m') {
+                            start.setMonth(start.getMonth() + 6);
+                        } else if (period === '1y') {
+                            start.setFullYear(start.getFullYear() + 1);
+                        }
+
+                        endInput.value = start.toISOString().split('T')[0];
+                    };
+
+                    startInput.addEventListener('change', calculateEnd);
+                    periodSelect.addEventListener('change', calculateEnd);
+                },
+                preConfirm: () => {
+                    const contractStart = document.getElementById('bulk_promote_contract_start').value;
+                    const contractPeriod = document.getElementById('bulk_promote_contract_period').value;
+
+                    if (!contractStart) {
+                        Swal.showValidationMessage('Please fill in the contract start date');
+                        return false;
+                    }
+
+                    return {
+                        contract_start: contractStart,
+                        period: contractPeriod
+                    };
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed && result.value) {
+                    const contractData = result.value;
+                    let successCount = 0;
+                    let errorCount = 0;
+
+                    for (const applicant of this.selectedApplicants) {
+                        try {
+                            // Set contract dates
+                            const contractResponse = await fetch(`/hrStaff/contract-dates/${applicant.application_id}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                },
+                                body: JSON.stringify(contractData)
+                            });
+
+                            if (!contractResponse.ok) throw new Error('Failed to set contract');
+
+                            // Promote to employee
+                            const promoteResponse = await fetch(`/hrStaff/evaluation/promote/${applicant.application_id}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                }
+                            });
+
+                            if (!promoteResponse.ok) throw new Error('Failed to promote');
+
+                            successCount++;
+                        } catch (error) {
+                            errorCount++;
+                            console.error(`Error promoting ${applicant.name}:`, error);
+                        }
+                    }
+
+                    Swal.fire({
+                        title: 'Complete!',
+                        html: `<p>Successfully promoted: <strong>${successCount}</strong></p>
+                               ${errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${errorCount}</strong></p>` : ''}`,
+                        icon: errorCount > 0 ? 'warning' : 'success',
+                        confirmButtonColor: '#BD6F22'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                }
+            });
         },
 
-        bulkArchive() {
+        async bulkArchive() {
             if (this.selectedApplicants.length === 0) {
                 Swal.fire({
                     title: 'No Selection',
@@ -333,7 +625,51 @@ function actionDropdown() {
                 });
                 return;
             }
-            this.startSteppedAction('archive', this.selectedApplicants);
+
+            Swal.fire({
+                title: `Archive ${this.selectedApplicants.length} Applicant(s)?`,
+                text: 'Are you sure you want to archive all selected applicants?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#BD6F22',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Yes, archive all',
+                cancelButtonText: 'Cancel'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    let successCount = 0;
+                    let errorCount = 0;
+
+                    for (const applicant of this.selectedApplicants) {
+                        try {
+                            const response = await fetch(`/hrStaff/evaluation/archive/${applicant.application_id}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                }
+                            });
+
+                            if (!response.ok) throw new Error('Failed to archive');
+
+                            successCount++;
+                        } catch (error) {
+                            errorCount++;
+                            console.error(`Error archiving ${applicant.name}:`, error);
+                        }
+                    }
+
+                    Swal.fire({
+                        title: 'Complete!',
+                        html: `<p>Successfully archived: <strong>${successCount}</strong></p>
+                               ${errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${errorCount}</strong></p>` : ''}`,
+                        icon: errorCount > 0 ? 'warning' : 'success',
+                        confirmButtonColor: '#BD6F22'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                }
+            });
         },
 
         startSteppedAction(actionType, applicants) {
@@ -362,12 +698,6 @@ function actionDropdown() {
                 case 'evaluate':
                     this.openEvaluationModal(applicant, progress);
                     break;
-                case 'contractSigning':
-                    this.openContractSigningModal(applicant, progress);
-                    break;
-                case 'contractDates':
-                    this.openContractDatesModal(applicant, progress);
-                    break;
                 case 'requirements':
                     this.openRequirementsForApplicant(applicant, progress);
                     break;
@@ -386,54 +716,127 @@ function actionDropdown() {
             // Note: The modal close should call continueToNext()
         },
 
-        openContractSigningModal(applicant, progress) {
+        openContractModal(applicant, progress) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const minDate = tomorrow.toISOString().split('T')[0];
+
             Swal.fire({
-                title: `Set Contract Signing ${progress}`,
+                title: `Set Contract Dates for ${applicant.name} ${progress}`,
                 html: `
-                    <div class="text-left">
-                        <p class="mb-4"><strong>Applicant:</strong> ${applicant.name}</p>
-                        <p class="text-sm text-gray-600">This would open the contract signing modal. You can skip or continue to next applicant.</p>
+                    <div class="text-left space-y-4">
+                        <p class="text-sm text-gray-600 mb-4">
+                            Set the employment contract period for <strong>${applicant.name}</strong>.
+                        </p>
+
+                        <div>
+                            <label class="block text-sm text-gray-700 mb-1">Contract Start Date</label>
+                            <input type="date" id="contract_start"
+                                   class="w-full px-3 py-2 border rounded"
+                                   min="${minDate}" required>
+
+                            <label class="block text-sm text-gray-700 mb-1 mt-2">Contract Period</label>
+                            <select id="contract_period_length" class="w-full px-3 py-2 border rounded">
+                                <option value="6m" selected>6 Months</option>
+                                <option value="1y">1 Year</option>
+                            </select>
+
+                            <label class="block text-sm text-gray-700 mb-1 mt-2">Contract End Date (Auto-calculated)</label>
+                            <input type="text" id="contract_end"
+                                   class="w-full px-3 py-2 border rounded bg-gray-100"
+                                   readonly placeholder="Will be calculated">
+                        </div>
                     </div>
                 `,
-                icon: 'info',
                 showDenyButton: true,
                 showCancelButton: true,
                 confirmButtonColor: '#BD6F22',
                 denyButtonColor: '#6B7280',
                 cancelButtonColor: '#d33',
-                confirmButtonText: 'Set & Next',
+                confirmButtonText: 'Save & Next',
                 denyButtonText: 'Skip',
-                cancelButtonText: 'Stop'
+                cancelButtonText: 'Stop',
+                didOpen: () => {
+                    // Auto-calculate end date
+                    const startInput = document.getElementById('contract_start');
+                    const periodSelect = document.getElementById('contract_period_length');
+                    const endInput = document.getElementById('contract_end');
+
+                    const calculateEnd = () => {
+                        if (!startInput.value) return;
+                        const start = new Date(startInput.value);
+                        const period = periodSelect.value;
+
+                        if (period === '6m') {
+                            start.setMonth(start.getMonth() + 6);
+                        } else if (period === '1y') {
+                            start.setFullYear(start.getFullYear() + 1);
+                        }
+
+                        endInput.value = start.toISOString().split('T')[0];
+                    };
+
+                    startInput.addEventListener('change', calculateEnd);
+                    periodSelect.addEventListener('change', calculateEnd);
+                },
+                preConfirm: () => {
+                    const contractStart = document.getElementById('contract_start').value;
+                    const contractPeriodLength = document.getElementById('contract_period_length').value;
+
+                    if (!contractStart) {
+                        Swal.showValidationMessage('Please fill in the contract start date');
+                        return false;
+                    }
+
+                    return {
+                        contract_start: contractStart,
+                        period: contractPeriodLength
+                    };
+                }
             }).then((result) => {
-                if (result.isConfirmed || result.isDenied) {
+                if (result.isConfirmed && result.value) {
+                    // Submit contract data via AJAX
+                    this.submitContractData(applicant.application_id, result.value);
+                } else if (result.isDenied) {
                     this.continueToNext();
                 }
             });
         },
 
-        openContractDatesModal(applicant, progress) {
-            Swal.fire({
-                title: `Set Contract Dates ${progress}`,
-                html: `
-                    <div class="text-left">
-                        <p class="mb-4"><strong>Applicant:</strong> ${applicant.name}</p>
-                        <p class="text-sm text-gray-600">This would open the contract dates modal. You can skip or continue to next applicant.</p>
-                    </div>
-                `,
-                icon: 'info',
-                showDenyButton: true,
-                showCancelButton: true,
-                confirmButtonColor: '#BD6F22',
-                denyButtonColor: '#6B7280',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Set & Next',
-                denyButtonText: 'Skip',
-                cancelButtonText: 'Stop'
-            }).then((result) => {
-                if (result.isConfirmed || result.isDenied) {
-                    this.continueToNext();
-                }
-            });
+        async submitContractData(applicationId, data) {
+            try {
+                // Submit contract dates only
+                const datesResponse = await fetch(`/hrStaff/contract-dates/${applicationId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({
+                        contract_start: data.contract_start,
+                        period: data.period
+                    })
+                });
+
+                if (!datesResponse.ok) throw new Error('Failed to set contract dates');
+
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Contract dates saved successfully.',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+
+                this.continueToNext();
+            } catch (error) {
+                Swal.fire({
+                    title: 'Error',
+                    text: error.message,
+                    icon: 'error',
+                    confirmButtonColor: '#BD6F22'
+                });
+            }
         },
 
         openRequirementsForApplicant(applicant, progress) {
@@ -444,35 +847,136 @@ function actionDropdown() {
             }, 1000);
         },
 
-        promptPromote(applicant, progress) {
+        async promptPromote(applicant, progress) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const minDate = tomorrow.toISOString().split('T')[0];
+
             Swal.fire({
-                title: `Promote Applicant ${progress}`,
-                text: `Are you sure you want to promote ${applicant.name} to employee?`,
-                icon: 'question',
+                title: `Promote to Employee ${progress}`,
+                html: `
+                    <div class="text-left space-y-4">
+                        <p class="text-sm text-gray-600 mb-4">
+                            Set the employment contract period for <strong>${applicant.name}</strong>.
+                        </p>
+
+                        <div>
+                            <label class="block text-sm text-gray-700 mb-1">Contract Start Date</label>
+                            <input type="date" id="promote_contract_start"
+                                   class="w-full px-3 py-2 border rounded"
+                                   min="${minDate}" required>
+
+                            <label class="block text-sm text-gray-700 mb-1 mt-2">Contract Period</label>
+                            <select id="promote_contract_period" class="w-full px-3 py-2 border rounded">
+                                <option value="6m" selected>6 Months</option>
+                                <option value="1y">1 Year</option>
+                            </select>
+
+                            <label class="block text-sm text-gray-700 mb-1 mt-2">Contract End Date (Auto-calculated)</label>
+                            <input type="text" id="promote_contract_end"
+                                   class="w-full px-3 py-2 border rounded bg-gray-100"
+                                   readonly placeholder="Will be calculated">
+                        </div>
+                    </div>
+                `,
                 showDenyButton: true,
                 showCancelButton: true,
                 confirmButtonColor: '#BD6F22',
                 denyButtonColor: '#6B7280',
                 cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, promote!',
+                confirmButtonText: 'Promote & Set Contract',
                 denyButtonText: 'Skip',
-                cancelButtonText: 'Stop'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Submit promote form
-                    const form = document.getElementById(`promote-form-${applicant.application_id}`);
-                    if (form) {
-                        form.submit();
+                cancelButtonText: 'Stop',
+                didOpen: () => {
+                    // Auto-calculate end date
+                    const startInput = document.getElementById('promote_contract_start');
+                    const periodSelect = document.getElementById('promote_contract_period');
+                    const endInput = document.getElementById('promote_contract_end');
+
+                    const calculateEnd = () => {
+                        if (!startInput.value) return;
+                        const start = new Date(startInput.value);
+                        const period = periodSelect.value;
+
+                        if (period === '6m') {
+                            start.setMonth(start.getMonth() + 6);
+                        } else if (period === '1y') {
+                            start.setFullYear(start.getFullYear() + 1);
+                        }
+
+                        endInput.value = start.toISOString().split('T')[0];
+                    };
+
+                    startInput.addEventListener('change', calculateEnd);
+                    periodSelect.addEventListener('change', calculateEnd);
+                },
+                preConfirm: () => {
+                    const contractStart = document.getElementById('promote_contract_start').value;
+                    const contractPeriod = document.getElementById('promote_contract_period').value;
+
+                    if (!contractStart) {
+                        Swal.showValidationMessage('Please fill in the contract start date');
+                        return false;
                     }
-                    this.continueToNext();
+
+                    return {
+                        contract_start: contractStart,
+                        period: contractPeriod
+                    };
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed && result.value) {
+                    try {
+                        // First, set contract dates
+                        const contractResponse = await fetch(`/hrStaff/contract-dates/${applicant.application_id}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                contract_start: result.value.contract_start,
+                                period: result.value.period
+                            })
+                        });
+
+                        if (!contractResponse.ok) throw new Error('Failed to set contract dates');
+
+                        // Then, promote to employee
+                        const promoteResponse = await fetch(`/hrStaff/evaluation/promote/${applicant.application_id}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        });
+
+                        if (!promoteResponse.ok) throw new Error('Failed to promote applicant');
+
+                        Swal.fire({
+                            title: 'Success!',
+                            text: `${applicant.name} has been promoted to employee with contract set.`,
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+
+                        this.continueToNext();
+                    } catch (error) {
+                        Swal.fire({
+                            title: 'Error',
+                            text: error.message,
+                            icon: 'error',
+                            confirmButtonColor: '#BD6F22'
+                        });
+                    }
                 } else if (result.isDenied) {
-                    // Skip this one
                     this.continueToNext();
                 }
             });
         },
 
-        promptArchive(applicant, progress) {
+        async promptArchive(applicant, progress) {
             Swal.fire({
                 title: `Archive Applicant ${progress}`,
                 text: `Archive ${applicant.name}?`,
@@ -485,14 +989,37 @@ function actionDropdown() {
                 confirmButtonText: 'Yes, archive!',
                 denyButtonText: 'Skip',
                 cancelButtonText: 'Stop'
-            }).then((result) => {
+            }).then(async (result) => {
                 if (result.isConfirmed) {
-                    // Submit archive form
-                    const form = document.getElementById(`archive-form-${applicant.application_id}`);
-                    if (form) {
-                        form.submit();
+                    // Submit archive via AJAX
+                    try {
+                        const response = await fetch(`/hrStaff/archive/${applicant.application_id}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        });
+
+                        if (!response.ok) throw new Error('Failed to archive applicant');
+
+                        Swal.fire({
+                            title: 'Archived!',
+                            text: `${applicant.name} has been archived.`,
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+
+                        this.continueToNext();
+                    } catch (error) {
+                        Swal.fire({
+                            title: 'Error',
+                            text: error.message,
+                            icon: 'error',
+                            confirmButtonColor: '#BD6F22'
+                        });
                     }
-                    this.continueToNext();
                 } else if (result.isDenied) {
                     this.continueToNext();
                 }
@@ -506,6 +1033,368 @@ function actionDropdown() {
 
         skipToEnd() {
             this.currentIndex = this.processingApplicants.length;
+        },
+
+        // Bulk actions for Passer tab
+        async bulkSendInvitation() {
+            const selectedPassers = window.Alpine ? Alpine.raw(this.$data.selectedPassers || []) : [];
+            if (selectedPassers.length === 0) {
+                Swal.fire({
+                    title: 'No Selection',
+                    text: 'Please select at least one applicant.',
+                    icon: 'warning',
+                    confirmButtonColor: '#BD6F22'
+                });
+                return;
+            }
+
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const minDate = tomorrow.toISOString().split('T')[0];
+
+            Swal.fire({
+                title: `Send Contract Signing Invitation`,
+                html: `
+                    <div class="text-left space-y-4">
+                        <p class="text-sm text-gray-600 mb-4">
+                            Schedule the contract signing for <strong>${selectedPassers.length}</strong> selected applicant(s).
+                        </p>
+
+                        <div>
+                            <label class="block text-sm text-gray-700 mb-1">Signing Date</label>
+                            <input type="date" id="bulk_contract_date"
+                                   class="w-full px-3 py-2 border rounded"
+                                   min="${minDate}" required>
+
+                            <label class="block text-sm text-gray-700 mb-1 mt-2">Signing Time</label>
+                            <div class="flex gap-2">
+                                <select id="bulk_contract_hour" class="flex-1 px-2 py-2 border rounded">
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8" selected>8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                                <select id="bulk_contract_minute" class="flex-1 px-2 py-2 border rounded">
+                                    <option value="00" selected>00</option>
+                                    <option value="15">15</option>
+                                    <option value="30">30</option>
+                                    <option value="45">45</option>
+                                </select>
+                                <select id="bulk_contract_period" class="px-3 py-2 border rounded bg-gray-100">
+                                    <option value="AM" selected>AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonColor: '#BD6F22',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Send Invitations',
+                cancelButtonText: 'Cancel',
+                didOpen: () => {
+                    const hourSelect = document.getElementById('bulk_contract_hour');
+                    const periodAMPM = document.getElementById('bulk_contract_period');
+
+                    hourSelect.addEventListener('change', () => {
+                        const hour = parseInt(hourSelect.value);
+                        if (hour >= 6 && hour <= 11) {
+                            periodAMPM.value = 'AM';
+                        } else {
+                            periodAMPM.value = 'PM';
+                        }
+                    });
+                },
+                preConfirm: () => {
+                    const contractDate = document.getElementById('bulk_contract_date').value;
+                    const contractHour = document.getElementById('bulk_contract_hour').value;
+                    const contractMinute = document.getElementById('bulk_contract_minute').value;
+                    const contractPeriod = document.getElementById('bulk_contract_period').value;
+
+                    if (!contractDate) {
+                        Swal.showValidationMessage('Please fill in the signing date');
+                        return false;
+                    }
+
+                    return {
+                        contract_date: contractDate,
+                        contract_signing_time: `${contractHour}:${contractMinute} ${contractPeriod}`
+                    };
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed && result.value) {
+                    const invitationData = result.value;
+                    let successCount = 0;
+                    let errorCount = 0;
+
+                    for (const applicant of selectedPassers) {
+                        try {
+                            const response = await fetch(`/hrStaff/contract-schedule/${applicant.application_id}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                },
+                                body: JSON.stringify(invitationData)
+                            });
+
+                            if (!response.ok) throw new Error('Failed to send invitation');
+
+                            successCount++;
+                        } catch (error) {
+                            errorCount++;
+                            console.error(`Error sending invitation to ${applicant.name}:`, error);
+                        }
+                    }
+
+                    Swal.fire({
+                        title: 'Complete!',
+                        html: `<p>Invitations sent successfully: <strong>${successCount}</strong></p>
+                               ${errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${errorCount}</strong></p>` : ''}`,
+                        icon: errorCount > 0 ? 'warning' : 'success',
+                        confirmButtonColor: '#BD6F22'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                }
+            });
+        },
+
+        async bulkPromotePassers() {
+            const selectedPassers = window.Alpine ? Alpine.raw(this.$data.selectedPassers || []) : [];
+            if (selectedPassers.length === 0) {
+                Swal.fire({
+                    title: 'No Selection',
+                    text: 'Please select at least one applicant to promote.',
+                    icon: 'warning',
+                    confirmButtonColor: '#BD6F22'
+                });
+                return;
+            }
+
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const minDate = tomorrow.toISOString().split('T')[0];
+
+            Swal.fire({
+                title: `Promote ${selectedPassers.length} Applicant(s) to Employee`,
+                html: `
+                    <div class="text-left space-y-4">
+                        <p class="text-sm text-gray-600 mb-4">
+                            Set the employment contract period for all selected applicants.
+                        </p>
+
+                        <div>
+                            <label class="block text-sm text-gray-700 mb-1">Contract Start Date</label>
+                            <input type="date" id="bulk_passer_promote_contract_start"
+                                   class="w-full px-3 py-2 border rounded"
+                                   min="${minDate}" required>
+
+                            <label class="block text-sm text-gray-700 mb-1 mt-2">Contract Period</label>
+                            <select id="bulk_passer_promote_contract_period" class="w-full px-3 py-2 border rounded">
+                                <option value="6m" selected>6 Months</option>
+                                <option value="1y">1 Year</option>
+                            </select>
+
+                            <label class="block text-sm text-gray-700 mb-1 mt-2">Contract End Date (Auto-calculated)</label>
+                            <input type="text" id="bulk_passer_promote_contract_end"
+                                   class="w-full px-3 py-2 border rounded bg-gray-100"
+                                   readonly placeholder="Will be calculated">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonColor: '#BD6F22',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Promote All',
+                cancelButtonText: 'Cancel',
+                didOpen: () => {
+                    const startInput = document.getElementById('bulk_passer_promote_contract_start');
+                    const periodSelect = document.getElementById('bulk_passer_promote_contract_period');
+                    const endInput = document.getElementById('bulk_passer_promote_contract_end');
+
+                    const calculateEnd = () => {
+                        if (!startInput.value) return;
+                        const start = new Date(startInput.value);
+                        const period = periodSelect.value;
+
+                        if (period === '6m') {
+                            start.setMonth(start.getMonth() + 6);
+                        } else if (period === '1y') {
+                            start.setFullYear(start.getFullYear() + 1);
+                        }
+
+                        endInput.value = start.toISOString().split('T')[0];
+                    };
+
+                    startInput.addEventListener('change', calculateEnd);
+                    periodSelect.addEventListener('change', calculateEnd);
+                },
+                preConfirm: () => {
+                    const contractStart = document.getElementById('bulk_passer_promote_contract_start').value;
+                    const contractPeriod = document.getElementById('bulk_passer_promote_contract_period').value;
+
+                    if (!contractStart) {
+                        Swal.showValidationMessage('Please fill in the contract start date');
+                        return false;
+                    }
+
+                    return {
+                        contract_start: contractStart,
+                        period: contractPeriod
+                    };
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed && result.value) {
+                    const contractData = result.value;
+                    let successCount = 0;
+                    let errorCount = 0;
+
+                    for (const applicant of selectedPassers) {
+                        try {
+                            // Set contract dates
+                            const contractResponse = await fetch(`/hrStaff/contract-dates/${applicant.application_id}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                },
+                                body: JSON.stringify(contractData)
+                            });
+
+                            if (!contractResponse.ok) throw new Error('Failed to set contract');
+
+                            // Promote to employee
+                            const promoteResponse = await fetch(`/hrStaff/evaluation/promote/${applicant.application_id}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                }
+                            });
+
+                            if (!promoteResponse.ok) throw new Error('Failed to promote');
+
+                            successCount++;
+                        } catch (error) {
+                            errorCount++;
+                            console.error(`Error promoting ${applicant.name}:`, error);
+                        }
+                    }
+
+                    Swal.fire({
+                        title: 'Complete!',
+                        html: `<p>Successfully promoted: <strong>${successCount}</strong></p>
+                               ${errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${errorCount}</strong></p>` : ''}`,
+                        icon: errorCount > 0 ? 'warning' : 'success',
+                        confirmButtonColor: '#BD6F22'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                }
+            });
+        },
+
+        async bulkArchivePassers() {
+            const selectedPassers = window.Alpine ? Alpine.raw(this.$data.selectedPassers || []) : [];
+            if (selectedPassers.length === 0) {
+                Swal.fire({
+                    title: 'No Selection',
+                    text: 'Please select at least one applicant to archive.',
+                    icon: 'warning',
+                    confirmButtonColor: '#BD6F22'
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: `Archive ${selectedPassers.length} Applicant(s)?`,
+                text: 'Are you sure you want to archive all selected applicants?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#BD6F22',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Yes, archive all',
+                cancelButtonText: 'Cancel'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    let successCount = 0;
+                    let errorCount = 0;
+
+                    for (const applicant of selectedPassers) {
+                        try {
+                            const response = await fetch(`/hrStaff/evaluation/archive/${applicant.application_id}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                }
+                            });
+
+                            if (!response.ok) throw new Error('Failed to archive');
+
+                            successCount++;
+                        } catch (error) {
+                            errorCount++;
+                            console.error(`Error archiving ${applicant.name}:`, error);
+                        }
+                    }
+
+                    Swal.fire({
+                        title: 'Complete!',
+                        html: `<p>Successfully archived: <strong>${successCount}</strong></p>
+                               ${errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${errorCount}</strong></p>` : ''}`,
+                        icon: errorCount > 0 ? 'warning' : 'success',
+                        confirmButtonColor: '#BD6F22'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                }
+            });
+        },
+
+        startSteppedActionPassers(actionType, applicants) {
+            this.actionType = actionType;
+            this.processingApplicants = [...applicants];
+            this.currentIndex = 0;
+            this.processNextApplicantPasser();
+        },
+
+        processNextApplicantPasser() {
+            if (this.currentIndex >= this.processingApplicants.length) {
+                Swal.fire({
+                    title: 'Complete!',
+                    text: `All ${this.processingApplicants.length} applicant(s) have been processed.`,
+                    icon: 'success',
+                    confirmButtonColor: '#BD6F22'
+                }).then(() => {
+                    window.location.reload();
+                });
+                return;
+            }
+
+            const applicant = this.processingApplicants[this.currentIndex];
+            const progress = `(${this.currentIndex + 1}/${this.processingApplicants.length})`;
+
+            switch(this.actionType) {
+                case 'invitation':
+                    this.openContractSigningInvitation(applicant.name, applicant.application_id);
+                    break;
+                case 'promote':
+                    this.promptPromote(applicant, progress);
+                    break;
+                case 'archive':
+                    this.promptArchive(applicant, progress);
+                    break;
+            }
         }
     };
 }
@@ -654,17 +1543,168 @@ function evaluationModal(applicants) {
             this.result = this.totalScore >= 70 ? 'Passed' : 'Failed';
         },
 
-        submitEvaluation() {
+        async submitEvaluation() {
             this.computeResult();
+            const passed = this.result === 'Passed';
+
             Swal.fire({
                 title: 'Evaluation Submitted!',
                 html: `<p><strong>${this.selectedEmployee}</strong> has been evaluated.</p>
                        <p>Result: <strong>${this.result}</strong></p>
                        <p>Total Score: <strong>${this.totalScore}</strong></p>`,
-                icon: this.result === 'Passed' ? 'success' : 'error',
+                icon: passed ? 'success' : 'error',
                 confirmButtonColor: '#BD6F22'
-            }).then(() => {
-                this.$refs.evaluationForm.submit();
+            }).then(async () => {
+                // Submit the evaluation form
+                const formData = new FormData(this.$refs.evaluationForm);
+
+                try {
+                    const response = await fetch(this.$refs.evaluationForm.action, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) throw new Error('Failed to submit evaluation');
+
+                    // If passed, show contract signing invitation
+                    if (passed) {
+                        this.showModal = false;
+                        this.openContractSigningInvitation(this.selectedEmployee, this.selectedApplicationId);
+                    } else {
+                        // If failed, just reload
+                        window.location.reload();
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Failed to submit evaluation',
+                        icon: 'error',
+                        confirmButtonColor: '#BD6F22'
+                    });
+                }
+            });
+        },
+
+        openContractSigningInvitation(employeeName, applicationId) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const minDate = tomorrow.toISOString().split('T')[0];
+
+            Swal.fire({
+                title: `Send Contract Signing Invitation`,
+                html: `
+                    <div class="text-left space-y-4">
+                        <p class="text-sm text-gray-600 mb-4">
+                            <strong>${employeeName}</strong> has passed the evaluation. Schedule the contract signing.
+                        </p>
+
+                        <div>
+                            <label class="block text-sm text-gray-700 mb-1">Signing Date</label>
+                            <input type="date" id="contract_date"
+                                   class="w-full px-3 py-2 border rounded"
+                                   min="${minDate}" required>
+
+                            <label class="block text-sm text-gray-700 mb-1 mt-2">Signing Time</label>
+                            <div class="flex gap-2">
+                                <select id="contract_hour" class="flex-1 px-2 py-2 border rounded">
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8" selected>8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                                <select id="contract_minute" class="flex-1 px-2 py-2 border rounded">
+                                    <option value="00" selected>00</option>
+                                    <option value="15">15</option>
+                                    <option value="30">30</option>
+                                    <option value="45">45</option>
+                                </select>
+                                <select id="contract_period" class="px-3 py-2 border rounded bg-gray-100">
+                                    <option value="AM" selected>AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonColor: '#BD6F22',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Send Invitation',
+                cancelButtonText: 'Skip',
+                didOpen: () => {
+                    // Auto-update period AM/PM based on hour
+                    const hourSelect = document.getElementById('contract_hour');
+                    const periodAMPM = document.getElementById('contract_period');
+
+                    hourSelect.addEventListener('change', () => {
+                        const hour = parseInt(hourSelect.value);
+                        if (hour >= 6 && hour <= 11) {
+                            periodAMPM.value = 'AM';
+                        } else {
+                            periodAMPM.value = 'PM';
+                        }
+                    });
+                },
+                preConfirm: () => {
+                    const contractDate = document.getElementById('contract_date').value;
+                    const contractHour = document.getElementById('contract_hour').value;
+                    const contractMinute = document.getElementById('contract_minute').value;
+                    const contractPeriod = document.getElementById('contract_period').value;
+
+                    if (!contractDate) {
+                        Swal.showValidationMessage('Please fill in the signing date');
+                        return false;
+                    }
+
+                    return {
+                        contract_date: contractDate,
+                        contract_signing_time: `${contractHour}:${contractMinute} ${contractPeriod}`
+                    };
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed && result.value) {
+                    // Submit contract signing schedule
+                    try {
+                        const response = await fetch(`/hrStaff/contract-schedule/${applicationId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify(result.value)
+                        });
+
+                        if (!response.ok) throw new Error('Failed to send invitation');
+
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Contract signing invitation sent successfully.',
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } catch (error) {
+                        Swal.fire({
+                            title: 'Error',
+                            text: error.message,
+                            icon: 'error',
+                            confirmButtonColor: '#BD6F22'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    }
+                } else {
+                    window.location.reload();
+                }
             });
         },
 
