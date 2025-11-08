@@ -71,6 +71,10 @@
                         <span class="text-[#BD6F22] mr-2">•</span>
                         <span>Preference</span>
                     </li>
+                    <li class="flex items-start">
+                        <span class="text-[#BD6F22] mr-2">•</span>
+                        <span>Active Toggle Switch in Settings</span>
+                    </li>
                 </ul>
             </div>
 
@@ -102,6 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const profileRoute = @json($profileRoute);
     const currentUrl = window.location.href;
     const isProfilePage = currentUrl.includes('/profile');
+    const isSettingsPage = currentUrl.includes('/settings');
     let allowNavigation = false; // Flag to allow navigation when button is clicked
 
     console.log('Modal Elements:', {
@@ -110,7 +115,8 @@ document.addEventListener('DOMContentLoaded', function () {
         goToProfileBtn: !!goToProfileBtn,
         profileRoute: profileRoute,
         currentUrl: currentUrl,
-        isProfilePage: isProfilePage
+        isProfilePage: isProfilePage,
+        isSettingsPage: isSettingsPage
     });
 
     // Show modal with animation
@@ -146,8 +152,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Prevent all navigation attempts
     function preventNavigation(e) {
-        // Only redirect to profile if not already on profile page
-        if (!isProfilePage) {
+        // Only redirect to profile if not already on profile or settings page
+        if (!isProfilePage && !isSettingsPage) {
             e.preventDefault();
             e.stopPropagation();
 
@@ -161,13 +167,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Block all link clicks except profile link
+    // Block all link clicks except profile and settings links
     document.addEventListener('click', function(e) {
         const link = e.target.closest('a');
-        if (link && !isProfilePage) {
+        if (link && !isProfilePage && !isSettingsPage) {
             const href = link.getAttribute('href');
-            // Allow only profile route
-            if (!href || !href.includes('/profile')) {
+            // Allow only profile and settings routes
+            if (!href || (!href.includes('/profile') && !href.includes('/settings'))) {
                 preventNavigation(e);
             }
         }
@@ -175,13 +181,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Block form submissions
     document.addEventListener('submit', function(e) {
-        if (!isProfilePage) {
+        if (!isProfilePage && !isSettingsPage) {
             preventNavigation(e);
         }
     }, true);
 
     // Prevent back/forward browser navigation
-    if (!isProfilePage) {
+    if (!isProfilePage && !isSettingsPage) {
         window.history.pushState(null, '', window.location.href);
         window.addEventListener('popstate', function(e) {
             window.history.pushState(null, '', window.location.href);
@@ -205,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function () {
             (e.keyCode === 8 && !isInputField(e.target)) // Backspace (not in input)
         ];
 
-        if (!isProfilePage && blockedKeys.some(key => key === true || key === e.keyCode)) {
+        if (!isProfilePage && !isSettingsPage && blockedKeys.some(key => key === true || key === e.keyCode)) {
             e.preventDefault();
             e.stopPropagation();
             modalContent.classList.add('animate-shake');
@@ -241,12 +247,12 @@ document.addEventListener('DOMContentLoaded', function () {
         window.location.href = profileRoute;
     });
 
-    // Show modal on page load if not on profile page
-    if (!isProfilePage) {
-        console.log('Showing modal - not on profile page');
+    // Show modal on page load if not on profile or settings page
+    if (!isProfilePage && !isSettingsPage) {
+        console.log('Showing modal - not on profile or settings page');
         showModal();
     } else {
-        console.log('Not showing modal - on profile page');
+        console.log('Not showing modal - on profile or settings page');
     }
 
     // Detect if user is trying to navigate away (not reload)
@@ -255,10 +261,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Track navigation attempts through links
     document.addEventListener('click', function(e) {
         const link = e.target.closest('a');
-        if (link && !isProfilePage) {
+        if (link && !isProfilePage && !isSettingsPage) {
             const href = link.getAttribute('href');
-            // Mark as navigating away if clicking non-profile links
-            if (href && !href.includes('/profile')) {
+            // Mark as navigating away if clicking non-profile and non-settings links
+            if (href && !href.includes('/profile') && !href.includes('/settings')) {
                 isNavigatingAway = true;
             }
         }
@@ -267,10 +273,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Only show warning when navigating away, not on reload
     window.addEventListener('beforeunload', function (e) {
         // Don't show warning if:
-        // - User is on profile page
+        // - User is on profile or settings page
         // - Navigation is explicitly allowed (going to profile)
         // - User is just reloading the page (not navigating away)
-        if (!isProfilePage && !allowNavigation && isNavigatingAway) {
+        if (!isProfilePage && !isSettingsPage && !allowNavigation && isNavigatingAway) {
             e.preventDefault();
             e.returnValue = 'You must complete your profile before accessing other pages.';
             return e.returnValue;

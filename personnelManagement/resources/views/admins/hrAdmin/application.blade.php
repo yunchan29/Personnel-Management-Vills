@@ -1,8 +1,8 @@
 @extends('layouts.hrAdmin')
 
 @section('content')
-<section 
-    class="p-6 max-w-6xl mx-auto"
+<section
+    class="p-6 w-full max-w-full mx-auto"
     x-data
     x-init="$store.applications.tab = '{{ $selectedTab ?? 'postings' }}'"
 >

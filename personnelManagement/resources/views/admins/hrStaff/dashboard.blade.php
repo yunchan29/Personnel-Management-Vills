@@ -14,16 +14,16 @@
   <div class="flex justify-center mb-6">
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl w-full">
       <div class="bg-white shadow-md rounded-md p-4 text-center border border-gray-200">
-        <div class="text-3xl font-bold">2</div>
-        <div class="text-sm mt-1" style="color: #BD6F22;">Total Employees</div>
+        <div class="text-3xl font-bold">{{ $interviewScheduleCount ?? 0 }}</div>
+        <div class="text-sm mt-1" style="color: #BD6F22;">Applicants in Interview Schedule</div>
       </div>
       <div class="bg-white shadow-md rounded-md p-4 text-center border border-gray-200">
-        <div class="text-3xl font-bold">5</div>
-        <div class="text-sm mt-1" style="color: #BD6F22;">Employees</div>
+        <div class="text-3xl font-bold">{{ $trainingScheduleCount ?? 0 }}</div>
+        <div class="text-sm mt-1" style="color: #BD6F22;">Applicants in Training Schedule</div>
       </div>
       <div class="bg-white shadow-md rounded-md p-4 text-center border border-gray-200">
-        <div class="text-3xl font-bold">2</div>
-        <div class="text-sm mt-1" style="color: #BD6F22;">For Evaluation Employees</div>
+        <div class="text-3xl font-bold">{{ $pendingEvaluationCount ?? 0 }}</div>
+        <div class="text-sm mt-1" style="color: #BD6F22;">Applicants Pending for Evaluation</div>
       </div>
     </div>
   </div>

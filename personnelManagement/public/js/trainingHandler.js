@@ -322,7 +322,19 @@ document.addEventListener('alpine:init', () => {
                 })
             });
 
-            if (!response.ok) throw new Error('Failed to bulk set training schedule');
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Server response:', errorText);
+                throw new Error('Failed to bulk set training schedule');
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Expected JSON but received:', text);
+                throw new Error('Server returned invalid response format');
+            }
+
             return await response.json();
         },
 
@@ -335,7 +347,20 @@ document.addEventListener('alpine:init', () => {
                 },
                 body: JSON.stringify(payload)
             });
-            if (!response.ok) throw new Error('Failed to set training schedule');
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Server response:', errorText);
+                throw new Error('Failed to set training schedule');
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Expected JSON but received:', text);
+                throw new Error('Server returned invalid response format');
+            }
+
             return await response.json();
         },
     }));

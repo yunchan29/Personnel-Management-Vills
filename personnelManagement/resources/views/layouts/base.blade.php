@@ -84,10 +84,10 @@
 
     <!-- Main Content with Sidebar -->
     @if(View::hasSection('sidebar'))
-    <div class="flex" x-data="{ open: true }">
+    <div class="flex overflow-hidden" x-data="{ open: true }">
         @yield('sidebar')
 
-        <main class="flex-1 p-6">
+        <main class="flex-1 min-w-0 p-6">
             <div class="bg-white rounded-lg shadow-lg p-6 h-full">
                 @yield('content')
             </div>

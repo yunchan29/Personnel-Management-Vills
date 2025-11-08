@@ -2,63 +2,58 @@
     <div x-data="trainingHandler($data)">
 
         <!-- Applicants Table -->
-        <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg">
-          <div class="flex gap-2 mb-4">
-             
+        <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg w-full">
+          <div x-show="selectedApplicants.length > 0"
+               x-transition
+               class="flex flex-wrap gap-2 mb-4">
+
              <!-- Master Checkbox -->
-        <label class="inline-flex items-center cursor-pointer select-none">
-          <input 
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+          <input
             type="checkbox"
+            x-ref="masterCheckbox"
             @change="toggleSelectAll($event)"
-            x-model="selectAll"
-            class="h-4 w-4 rounded border border-gray-300 
-                   checked:bg-[#BD6F22] checked:border-[#BD6F22]
-                   focus:ring-2 focus:ring-offset-1 focus:ring-[#BD6F22]
-                   transition-colors duration-200"
+            class="rounded border-gray-300"
           >
-          <span class="ml-2 text-sm text-gray-700">Select All</span>
+          <span>Select All</span>
         </label>
 
     <!-- Set Training (Primary Solid) -->
-    <button 
+    <button
         @click="bulkSetTraining"
-        :disabled="selectedApplicants.length <= 1"
-        class="min-w-[160px] bg-[#8B4513] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
-               hover:bg-[#6F3610] transition-all duration-200 ease-in-out 
-               disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#BD9168]/40 focus:outline-none">
+        class="min-w-[160px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2
+               hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
         <!-- Lucide: Graduation Cap -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" 
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
              stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
           <path d="M22 10v6M2 10l10-5 10 5-10 5L2 10z"></path>
           <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
         </svg>
-        Set Training
+        <span class="text-sm" x-text="`Set Training (${selectedApplicants.length})`"></span>
     </button>
 
     <!-- Resched Training (Accent Solid) -->
-    <button 
+    <button
         @click="bulkReschedTraining"
-        :disabled="selectedApplicants.length <= 1"
-        class="min-w-[160px] bg-[#8B4513] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
-               hover:bg-[#6F3610] transition-all duration-200 ease-in-out 
-               disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#BD9168]/40 focus:outline-none">
+        class="min-w-[160px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2
+               hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
         <!-- Lucide: Refresh-CCW -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
              stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
           <path d="M3 2v6h6"></path>
           <path d="M21 12a9 9 0 0 0-9-9H9"></path>
           <path d="M21 22v-6h-6"></path>
           <path d="M3 12a9 9 0 0 0 9 9h3"></path>
         </svg>
-        Resched Training
+        <span class="text-sm" x-text="`Resched Training (${selectedApplicants.length})`"></span>
     </button>
 </div>
 
-
-            <table class="min-w-full text-sm text-left text-gray-700">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-700">
                 <thead class="border-b font-semibold bg-gray-50">
                     <tr>
-                        
+                        <th class="py-3 px-4"></th>
                         <th class="py-3 px-4">Name</th>
                         <th class="py-3 px-4">Position</th>
                         <th class="py-3 px-4">Company</th>
@@ -66,7 +61,6 @@
                         <th class="py-3 px-4">Training Schedule</th>
                         <th class="py-3 px-4">Training Time</th>
                         <th class="py-3 px-4">Location</th>
-                        <th class="py-3 px-4">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -95,14 +89,9 @@
 
                            <td class="py-3 px-4">
                             <label class="relative inline-flex items-center cursor-pointer">
-                                <input 
+                                <input
                                 type="checkbox"
-                                class="peer h-4 w-4 appearance-none rounded border border-gray-300 
-                                        checked:bg-[#BD6F22] checked:border-[#BD6F22] 
-                                        focus:ring-2 focus:ring-offset-1 focus:ring-[#BD6F22] 
-                                        transition-colors duration-200
-                                        disabled:opacity-50 disabled:cursor-not-allowed applicant-checkbox"
-                                data-has-training="{{ $application->trainingSchedule ? 1 : 0 }}"
+                                class="applicant-checkbox"
                                 :value="JSON.stringify({
                                     application_id: {{ $application->id }},
                                     user_id: {{ $application->user_id }},
@@ -110,12 +99,10 @@
                                     has_training: {{ $application->trainingSchedule ? 'true' : 'false' }}
                                 })"
                                 :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
-                                @change="toggleItem($event, {{ $application->id }})"
-                                
+                                @change="toggleItem($event, {{ $application->id }}); updateMasterCheckbox()"
                                 />
                                 <!-- Custom checkmark -->
-                                <svg class="absolute left-0.5 top-0.5 hidden peer-checked:block w-3 h-3 text-white" 
-                                    fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                                <svg class="absolute left-0.5 top-0.5 hidden peer-checked:block w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
                                 <path d="M5 13l4 4L19 7" />
                                 </svg>
                             </label>
@@ -123,10 +110,7 @@
 
 
                             <!-- Name -->
-                            <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
-                                <span class="inline-block w-3 h-3 rounded-full 
-                                    {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}">
-                                </span>
+                            <td class="py-3 px-4 font-medium whitespace-nowrap">
                                 {{ $application->user->first_name }} {{ $application->user->last_name }}
                             </td>
 
@@ -167,32 +151,6 @@
                             <td class="py-3 px-4 text-sm text-gray-700">
                                 {{ $application->trainingSchedule->location ?? 'N/A' }}
                             </td>
-
-                            <!-- Action -->
-                            <td class="py-3 px-4">
-                                <button
-                                    x-data
-                                    @click="openSetTraining(
-                                        $el.dataset.id,
-                                        $el.dataset.name,
-                                        $el.dataset.range,
-                                        {
-                                            start_time: $el.dataset.startTime,
-                                            end_time: $el.dataset.endTime,
-                                            location: $el.dataset.location
-                                        }
-                                    )"
-                                    data-id="{{ $application->id }}"
-                                    data-name="{{ $fullName }}"
-                                    data-range="{{ $trainingRange }}"
-                                    data-start-time="{{ $application->trainingSchedule->start_time ?? '' }}"
-                                    data-end-time="{{ $application->trainingSchedule->end_time ?? '' }}"
-                                    data-location="{{ $application->trainingSchedule->location ?? '' }}"
-                                    class="text-white text-sm font-medium h-8 px-3 rounded whitespace-nowrap
-                                        {{ $application->trainingSchedule ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-blue-600 hover:bg-blue-700' }}">
-                                    {{ $application->trainingSchedule ? 'Reschedule' : 'Set Training' }}
-                                </button>
-                            </td>
                         </tr>
                     @empty
                         <tr>
@@ -200,7 +158,8 @@
                         </tr>
                     @endforelse
                 </tbody>
-            </table>
+                </table>
+            </div>
         </div>
 
         <!-- Set Training Modal -->

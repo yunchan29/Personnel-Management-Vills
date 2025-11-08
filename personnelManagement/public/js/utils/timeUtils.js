@@ -63,5 +63,43 @@ window.TimeUtils = {
             return 'PM';
         }
         return 'PM'; // default
+    },
+
+    /**
+     * Format time string for storage in 24-hour format (H:i:s)
+     * @param {string} timeStr - Time string (e.g., "8 AM", "4 PM", "8:00 AM")
+     * @returns {string} Formatted time string in 24-hour format (e.g., "08:00:00", "16:00:00")
+     */
+    formatTime(timeStr) {
+        if (!timeStr || typeof timeStr !== 'string') {
+            return '';
+        }
+
+        // Parse the time string
+        const parts = timeStr.trim().split(' ');
+        if (parts.length !== 2) {
+            return '';
+        }
+
+        let hour = parts[0];
+        const period = parts[1].toUpperCase();
+
+        // Extract hour from "8:00" or "8" format
+        if (hour.includes(':')) {
+            hour = hour.split(':')[0];
+        }
+
+        // Convert to number
+        hour = parseInt(hour, 10);
+
+        if (isNaN(hour) || hour < 1 || hour > 12) {
+            return '';
+        }
+
+        // Convert to 24-hour format
+        const hour24 = this.to24h(hour, period);
+
+        // Format as H:i:s (e.g., "08:00:00" or "16:00:00")
+        return `${String(hour24).padStart(2, '0')}:00:00`;
     }
 };

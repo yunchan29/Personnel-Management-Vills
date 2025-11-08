@@ -90,14 +90,15 @@
     </div>
 
     <!-- Applicants Table -->
-    <div class="overflow-x-auto relative bg-white p-4 rounded-lg shadow-lg">
+    <div class="overflow-x-auto relative bg-white p-4 rounded-lg shadow-lg w-full">
         <!-- Bulk Approve Button -->
-        <template x-if="selectedApplicants.length > 0">
-            <div class="flex gap-2 mb-4">
+        <div x-show="selectedApplicants.length > 0"
+             x-transition
+             class="flex flex-wrap gap-2 mb-4">
                  <!-- Left side: Master Checkbox -->
                 <label class="flex items-center gap-2 text-sm text-gray-700">
-                    <input 
-                        type="checkbox" 
+                    <input
+                        type="checkbox"
                         x-ref="masterCheckbox"
                         @change="toggleSelectAll($event)"
                         class="rounded border-gray-300"
@@ -108,17 +109,15 @@
                 <div class="relative">
                     <button
                         @click="bulkAction('approved')"
-                        :disabled="selectedApplicants.length === 0"
-                        class="min-w-[160px] bg-[#8B4513] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
-                                hover:bg-[#6F3610] transition-all duration-200 ease-in-out 
-                                disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#BD9168]/40 focus:outline-none">
+                        class="min-w-[160px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2
+                                hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
                     <!-- Lucide: Graduation Cap -->
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" 
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
                         stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                     <path d="M22 10v6M2 10l10-5 10 5-10 5L2 10z"></path>
                     <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
                     </svg>
-                    Mass Approve
+                    <span class="text-sm" x-text="`Mass Approve (${selectedApplicants.length})`"></span>
                 </button>
                 </div>
 
@@ -126,37 +125,36 @@
                 <div class="relative">
                     <button
                         @click="bulkAction('declined')"
-                        :disabled="selectedApplicants.length === 0"
-                         class="min-w-[160px] bg-[#8B4513] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
-                                hover:bg-[#6F3610] transition-all duration-200 ease-in-out 
-                                disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#BD9168]/40 focus:outline-none">
+                         class="min-w-[160px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2
+                                hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
                     <!-- Lucide: Graduation Cap -->
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" 
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
                         stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                     <path d="M22 10v6M2 10l10-5 10 5-10 5L2 10z"></path>
                     <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
                     </svg>
-                    Mass Decline
+                    <span class="text-sm" x-text="`Mass Decline (${selectedApplicants.length})`"></span>
                 </button>
                 </div>
-            </div>
-        </template>
+        </div>
 
-        <table class="min-w-full text-sm text-left text-gray-700">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-700">
             <thead class="border-b font-semibold bg-gray-50">
                 <tr>
-                     
+                    <th class="py-3 px-4"></th>
                     <th class="py-3 px-4">Name</th>
                     <th class="py-3 px-4">Position</th>
                     <th class="py-3 px-4">Company</th>
                     <th class="py-3 px-4">Applied On</th>
                     <th class="py-3 px-4">Resume</th>
                     <th class="py-3 px-4">Profile</th>
-                    <th class="py-3 px-4">Progress</th>
+                    <th class="py-3 px-4">Status</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($applications as $application)
+                    @if($application->user->active_status === 'Active')
                     <tr
                         data-applicant-id="{{ $application->id }}"
                         data-status="{{ $application->status }}"
@@ -169,24 +167,21 @@
                         x-transition:leave-end="opacity-0 scale-95"
                         @applicant-approved.window="if ($event.detail.id === {{ $application->id }}) removedApplicants.push({{ $application->id }})"
                         class="border-b hover:bg-gray-50"
-                    >   
-                        @if($application->status === 'Pending')
-                        <td class="py-3 px-2">
-                        <input 
-                            type="checkbox"
-                            class="applicant-checkbox"
-                            :value="JSON.stringify({
-                                application_id: {{ $application->id }},
-                                user_id: {{ $application->user_id }},
-                                name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
-                            })"
-                            :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
-                            @change="toggleItem($event, {{ $application->id }})"
-                        />
+                    >
+                        <td class="py-3 px-4">
+                            <input
+                                type="checkbox"
+                                class="applicant-checkbox rounded border-gray-300"
+                                :value="JSON.stringify({
+                                    application_id: {{ $application->id }},
+                                    user_id: {{ $application->user_id }},
+                                    name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
+                                })"
+                                :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
+                                @change="toggleItem($event, {{ $application->id }}); updateMasterCheckbox()"
+                            />
                         </td>
-                        @endif
-                        <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
-                            <span class="inline-block w-3 h-3 rounded-full {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
+                        <td class="py-3 px-4 font-medium whitespace-nowrap">
                             {{ $application->user->first_name . ' ' . $application->user->last_name }}
                         </td>
                         <td class="py-3 px-4 whitespace-nowrap">
@@ -233,63 +228,53 @@
                             @endif
                         </td>
 
-                        <!-- Action -->
-                         
+                        <!-- Status -->
+
                         <td class="py-3 px-4">
                             @if($application->status === 'interviewed')
-                                <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300">
+                                <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
                                     Interviewed
                                 </span>
                             @elseif($application->status === 'fail_interview')
-                                <span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full transition-colors duration-300">
+                                <span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
                                     Failed Interview
                                 </span>
                             @elseif($application->status === 'approved')
-                                <button 
-                                    class="bg-green-600 text-white text-sm font-medium h-8 px-3 rounded shadow cursor-not-allowed opacity-70"
-                                    disabled>
+                                <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
                                     Approved
-                                </button>
+                                </span>
                             @elseif($application->status === 'for_interview')
-                                <span class="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full transition-colors duration-300">
+                                <span class="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
                                     For Interview
                                 </span>
                             @elseif($application->status === 'scheduled_for_training')
-                                <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full transition-colors duration-300">
+                                <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
                                     Scheduled for Training
-                                </span>     
+                                </span>
                             @elseif($application->status === 'declined')
-                                <span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full transition-colors duration-300">
+                                <span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
                                     Declined
                                 </span>
                             @elseif($application->status === 'hired')
-                                <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300">
+                                <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
                                     Hired
                                 </span>
                             @else
-                          <button
-                            @click="confirmStatus(
-                                '{{ $application->status === 'approved' ? 'declined' : 'approved' }}',
-                                {{ $application->id }},
-                                '{{ $application->user->first_name }} {{ $application->user->last_name }}',
-                                '{{ $application->status }}'
-                            )"
-                            class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
-                            Approve/Decline
-                          </button>
-
-
+                                <span class="text-xs bg-gray-200 text-gray-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
+                                    {{ ucfirst(str_replace('_', ' ', $application->status)) }}
+                                </span>
                             @endif
-
                         </td>
                     </tr>
+                    @endif
                 @empty
                     <tr>
-                        <td colspan="7" class="py-6 text-center text-gray-500">No applicants yet.</td>
+                        <td colspan="8" class="py-6 text-center text-gray-500">No applicants yet.</td>
                     </tr>
                 @endforelse
             </tbody>
-        </table>
+            </table>
+        </div>
     </div>
 
     <!-- Toggle Button -->

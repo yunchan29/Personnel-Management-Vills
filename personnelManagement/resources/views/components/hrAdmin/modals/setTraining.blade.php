@@ -14,7 +14,7 @@
 
         <!-- Modal Title -->
         <h2 class="text-xl font-bold text-[#BD6F22] mb-2"
-            x-text="trainingMode === 'bulk' ? 'Set Training Schedule (Bulk)' : 'Set Training Schedule'"></h2>
+            x-text="trainingMode === 'bulk' ? 'Set Training Schedule' : 'Set Training Schedule'"></h2>
 
         <!-- Applicant(s) Info -->
         <p class="text-sm text-gray-600 mb-5">

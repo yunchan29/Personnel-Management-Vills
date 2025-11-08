@@ -1,14 +1,16 @@
 <div x-data="applicantsHandler()" x-init="init(); pageContext = 'interview'" class="relative">
   <div x-data="interviewHandler($data)">
     <!-- Applicants Table -->
-    <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg">
+    <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg w-full">
       
     <!-- Master Checkbox + Mass Interview Buttons -->
-    <div class="flex items-center gap-4 mb-4">
+    <div x-show="selectedApplicants.length > 0"
+         x-transition
+         class="flex flex-wrap items-center gap-4 mb-4">
         <!-- Master Checkbox -->
         <label class="flex items-center gap-2 text-sm text-gray-700">
-            <input 
-                type="checkbox" 
+            <input
+                type="checkbox"
                 x-ref="masterCheckbox"
                 @change="toggleSelectAll($event)"
                 class="rounded border-gray-300"
@@ -20,66 +22,64 @@
     <!-- Schedule Interview Button -->
     <button
         @click="openBulk('bulk')"
-        class="min-w-[160px] bg-[#8B4513] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
-               hover:bg-[#6F3610] transition-all duration-200 ease-in-out
-               disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#BD9168]/40 focus:outline-none"
-        :disabled="selectedApplicants.length === 0">
+        class="min-w-[160px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2
+               hover:text-[#8B4513] transition-colors duration-150
+               focus:outline-none">
         <!-- Lucide: Calendar -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
              stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
           <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
           <line x1="16" y1="2" x2="16" y2="6"></line>
           <line x1="8" y1="2" x2="8" y2="6"></line>
           <line x1="3" y1="10" x2="21" y2="10"></line>
         </svg>
-        <span x-text="selectedApplicants.length === 0 ? 'Schedule Interview' : `Schedule Interview (${selectedApplicants.length})`"></span>
+        <span class="text-sm" x-text="`Schedule Interview (${selectedApplicants.length})`"></span>
     </button>
 
     <!-- Reschedule Interview Button -->
     <button
         @click="openBulk('bulk-reschedule')"
-        class="min-w-[160px] bg-[#8B4513] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
-               hover:bg-[#6F3610] transition-all duration-200 ease-in-out
-               disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#BD9168]/40 focus:outline-none"
-        :disabled="selectedApplicants.length === 0">
+        class="min-w-[160px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2
+               hover:text-[#8B4513] transition-colors duration-150
+               focus:outline-none">
         <!-- Lucide: Refresh-Ccw -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
              stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
           <path d="M3 2v6h6"></path>
           <path d="M21 12a9 9 0 0 0-9-9H9"></path>
           <path d="M21 22v-6h-6"></path>
           <path d="M3 12a9 9 0 0 0 9 9h3"></path>
         </svg>
-        <span x-text="selectedApplicants.length === 0 ? 'Reschedule Interview' : `Reschedule Interview (${selectedApplicants.length})`"></span>
+        <span class="text-sm" x-text="`Reschedule Interview (${selectedApplicants.length})`"></span>
     </button>
 
     <!-- Manage Results Button -->
     <button
         @click="openBulkManage"
-        class="min-w-[160px] bg-[#8B4513] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
-               hover:bg-[#6F3610] transition-all duration-200 ease-in-out
-               disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#BD9168]/40 focus:outline-none"
-        :disabled="selectedApplicants.length === 0">
+        class="min-w-[160px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2
+               hover:text-[#8B4513] transition-colors duration-150
+               focus:outline-none">
         <!-- Lucide: Settings -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
              stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 
-                   1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 
-                   1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06 
-                   a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09 
-                   a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06 
-                   a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 
-                   1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09c0 .66.39 1.26 1 1.51 
-                   .46.2.99.2 1.45 0h.05a2 2 0 0 1 2.83 2.83l-.06.06 
-                   c-.39.39-.51.96-.33 1.48.18.52.66.91 1.22.91H21a2 2 0 0 1 0 4h-.09 
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33
+                   1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51
+                   1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06
+                   a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
+                   a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06
+                   a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65
+                   1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09c0 .66.39 1.26 1 1.51
+                   .46.2.99.2 1.45 0h.05a2 2 0 0 1 2.83 2.83l-.06.06
+                   c-.39.39-.51.96-.33 1.48.18.52.66.91 1.22.91H21a2 2 0 0 1 0 4h-.09
                    a1.65 1.65 0 0 0-1.51 1z"></path>
         </svg>
-        <span x-text="selectedApplicants.length === 0 ? 'Manage Results' : `Manage Results (${selectedApplicants.length})`"></span>
+        <span class="text-sm" x-text="`Manage Results (${selectedApplicants.length})`"></span>
     </button>
 </div>
 
-      <table class="min-w-full text-sm text-left text-gray-700">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-700">
         <thead class="border-b font-semibold bg-gray-50">
           <tr>
             
@@ -91,7 +91,6 @@
             <th class="py-3 px-4">Resume</th>
             <th class="py-3 px-4">Profile</th>
             <th class="py-3 px-4">Status</th>
-            <th class="py-3 px-4">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -132,8 +131,7 @@
 
             
               <!-- Name -->
-              <td class="py-3 px-4 font-medium whitespace-nowrap flex items-center gap-2">
-                <span class="inline-block w-3 h-3 rounded-full {{ $application->user->active_status === 'Active' ? 'bg-green-500' : 'bg-red-500' }}"></span>
+              <td class="py-3 px-4 font-medium whitespace-nowrap">
                 {{ $application->user->first_name }} {{ $application->user->last_name }}
               </td>
 
@@ -154,12 +152,14 @@
               <!-- Resume -->
               <td class="py-3 px-4">
                   @if($application->resume_snapshot)
-                      <button @click="openResume('{{ asset('storage/' . $application->resume_snapshot) }}')"
+                      <button
+                          @click="openResume('{{ asset('storage/' . $application->resume_snapshot) }}')"
                           class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
                           View
                       </button>
                   @elseif($application->user->resume && $application->user->resume->resume)
-                      <button @click="openResume('{{ asset('storage/' . $application->user->resume->resume) }}')"
+                      <button
+                          @click="openResume('{{ asset('storage/' . $application->user->resume->resume) }}')"
                           class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
                           View
                       </button>
@@ -171,7 +171,7 @@
               <!-- Profile -->
               <td class="py-3 px-4">
                   @if($application->user->active_status === 'Active')
-                      <button 
+                      <button
                           @click="openProfile({{ $application->user->id }})"
                           class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
                           View
@@ -207,20 +207,6 @@
                       Pending
                   </span>
               </td>
-              
-              <!-- Action -->
-              <td class="py-3 px-4">
-                  @if($application->user->active_status === 'Active')
-                      <button
-                          @click="openStatusModal({{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}')"
-                          class="bg-green-600 text-white text-sm font-medium h-8 px-3 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                          :disabled="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') !== 'for_interview'">
-                          Manage
-                      </button>
-                  @else
-                      <span class="text-gray-400 italic">Inactive</span>
-                  @endif
-              </td>
             </tr>
           @empty
             <tr>
@@ -228,7 +214,8 @@
             </tr>
           @endforelse
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
 
     <!-- Feedback Toast -->
@@ -247,7 +234,7 @@
     <div class="flex justify-center mb-4">
         <button
             @click="showAll = !showAll"
-            class="px-4 py-2 bg-[#bd6f2200] text-black text-sm font-medium hover:text-[#a95e1d]">
+            class="px-4 py-2 text-gray-700 text-sm underline underline-offset-4 hover:text-[#8B4513] transition-colors duration-150">
             <span x-text="showAll ? 'Show Only Pending Interviews' : 'Show All Interviews'"></span>
         </button>
     </div>

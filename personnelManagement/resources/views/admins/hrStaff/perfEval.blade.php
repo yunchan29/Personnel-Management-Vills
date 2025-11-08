@@ -1,88 +1,140 @@
 @extends('layouts.hrStaff')
 
 @section('content')
-<section class="p-6 max-w-6xl mx-auto"
-         x-data="{ 
-             ...evaluationModal({{ $applicants }}), 
-             ...requirementsModal() 
-         }"
-         x-init="init()">
-
+<section class="p-6 max-w-6xl mx-auto">
     <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">Training Evaluation</h1>
     <hr class="border-t border-gray-300 mb-6">
 
-    <!-- Tabs -->
-    <div class="flex space-x-8 text-sm font-medium text-gray-600 border-b border-gray-300 mb-6">
-        <button 
-            @click="tab = 'job_postings'"
-            :class="tab === 'job_postings' 
-                ? 'text-[#BD9168] border-b-2 border-[#BD9168] pb-2' 
-                : 'hover:text-[#BD9168]'"
-            class="pb-2 focus:outline-none">
-            Job Postings
-        </button>
+<div x-data="applicantsHandler()" x-init="init()" class="relative">
+    <div x-data="{
+        ...evaluationModal({{ $applicants }}),
+        ...requirementsModal(),
+        ...actionDropdown()
+    }">
 
-        <button 
-            @click="if (selectedJobId) tab = 'evaluation'"
-            :class="[tab === 'evaluation' ? 'text-[#BD9168] border-b-2 border-[#BD9168]' : 'hover:text-[#BD9168]',
-                     !selectedJobId ? 'text-gray-400 cursor-not-allowed pointer-events-none' : '']">
-            Evaluation
-        </button>
-    </div>
+    <!-- Applicants List for Evaluation -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <!-- Bulk Actions Bar -->
+        <div x-show="selectedApplicants.length > 0"
+             x-transition
+             class="flex flex-wrap gap-2 mb-4">
 
-    <!-- Job Listings -->
-    <div x-show="tab === 'job_postings'" x-transition>
-        @php
-            $jobsToShow = $jobs;
-        @endphp
+            <!-- Master Checkbox -->
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                    type="checkbox"
+                    x-ref="masterCheckbox"
+                    @change="toggleSelectAll($event)"
+                    class="rounded border-gray-300"
+                >
+                <span>Select All</span>
+            </label>
 
-        @if ($jobsToShow->isNotEmpty())
-            @foreach ($jobsToShow as $job)
-                <x-hrStaff.jobListingDisplay :job="$job" />
-            @endforeach
-        @else
-            <div class="text-center py-6 text-gray-500 italic">
-                No applicants available for any job postings.
-            </div>
-        @endif
-    </div>
+            <!-- Evaluate Button -->
+            <button
+                @click="bulkEvaluate()"
+                class="min-w-[160px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2 hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
+                     stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M9 5h6M9 3h6a2 2 0 012 2v14a2 2 0 01-2 2H9a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                </svg>
+                <span class="text-sm" x-text="`Evaluate (${selectedApplicants.length})`"></span>
+            </button>
 
-    <!-- Evaluation Tab -->
-    <div x-show="tab === 'evaluation'" x-transition x-cloak>
-        <template x-if="selectedJobId">
-            <div class="bg-white rounded-lg shadow-lg">
-                <!-- Currently Evaluating Notice -->
-                <div x-data="{ showNotice: true }"
-                    x-show="showNotice"
-                    x-transition
-                    class="mb-4 bg-blue-100 border border-blue-300 text-blue-800 px-4 py-3 rounded-lg flex justify-between items-center">
-                    <span>
-                        You are currently evaluating applicants for:
-                        <strong class="text-[#1E3A8A]" x-text="selectedJobTitle"></strong> 
-                        <span class="text-gray-500">—</span> 
-                        <strong class="text-[#BD6F22]" x-text="selectedCompany"></strong>
-                    </span>
-                    <button @click="showNotice = false" class="text-sm text-blue-600 hover:underline">Dismiss</button>
-                </div>
+            <!-- Set Contract Signing Button -->
+            <button
+                @click="bulkSetContractSigning()"
+                class="min-w-[180px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2 hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
+                     stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span class="text-sm" x-text="`Contract Signing (${selectedApplicants.length})`"></span>
+            </button>
 
-                <!-- Evaluation Table -->
-                <div class="overflow-x-auto px-6 pb-4">
-                   <table class="min-w-full text-sm text-left text-gray-700 align-middle">
+            <!-- Set Contract Dates Button -->
+            <button
+                @click="bulkSetContractDates()"
+                class="min-w-[180px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2 hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
+                     stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M9 2h6a2 2 0 012 2v2h-2V4H9v2H7V4a2 2 0 012-2zM7 8h10v12a2 2 0 01-2 2H9a2 2 0 01-2-2V8z"/>
+                </svg>
+                <span class="text-sm" x-text="`Contract Dates (${selectedApplicants.length})`"></span>
+            </button>
+
+            <!-- View Requirements Button -->
+            <button
+                @click="bulkViewRequirements()"
+                class="min-w-[180px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2 hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
+                     stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M3 7h4l2-2h8l2 2h4v12H3V7z" />
+                </svg>
+                <span class="text-sm" x-text="`Requirements (${selectedApplicants.length})`"></span>
+            </button>
+
+            <!-- Promote Button -->
+            <button
+                @click="bulkPromote()"
+                class="min-w-[160px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2 hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
+                     stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+                <span class="text-sm" x-text="`Promote (${selectedApplicants.length})`"></span>
+            </button>
+
+            <!-- Archive Button -->
+            <button
+                @click="bulkArchive()"
+                class="min-w-[160px] text-gray-700 px-4 py-2 flex items-center justify-center gap-2 hover:text-[#8B4513] transition-colors duration-150 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"
+                     stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M20.25 6.75H3.75M19.5 21H4.5A2.25 2.25 0 012.25 18.75v-12m19.5 0v12A2.25 2.25 0 0119.5 21zM9 12h6" />
+                </svg>
+                <span class="text-sm" x-text="`Archive (${selectedApplicants.length})`"></span>
+            </button>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-700">
     <thead class="border-b font-semibold bg-gray-50">
         <tr>
+            <th class="py-3 px-4"></th>
             <th class="py-3 px-4">Name</th>
             <th class="py-3 px-4">Job Position</th>
             <th class="py-3 px-4">Company</th>
+            <th class="py-3 px-4">Training End Date</th>
             <th class="py-3 px-4">Status</th>
-            <th class="py-3 px-4">Actions</th>
         </tr>
     </thead>
     <tbody>
-        @forelse ($applicants->sortBy(fn($app) => $app->evaluation || $app->status === 'hired') as $applicant)
-        <tr 
-            x-show="shouldShow('{{ $applicant->job_id }}', '{{ $applicant->status }}')"
+        @forelse ($applicants->filter(function($app) {
+            return $app->status === 'scheduled_for_training'
+                && $app->trainingSchedule;
+        })->sortBy(fn($app) => $app->evaluation ? 1 : 0) as $applicant)
+        <tr
+            x-show="showAll || '{{ $applicant->status }}' !== 'hired'"
             class="border-b hover:bg-gray-50"
         >
+            <!-- Checkbox -->
+            <td class="py-3 px-4">
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input
+                        type="checkbox"
+                        class="applicant-checkbox rounded border-gray-300"
+                        :value="JSON.stringify({
+                            application_id: {{ $applicant->id }},
+                            user_id: {{ $applicant->user_id }},
+                            name: '{{ $applicant->user->full_name }}',
+                            has_evaluation: {{ $applicant->evaluation ? 'true' : 'false' }}
+                        })"
+                        :checked="selectedApplicants.some(a => a.application_id === {{ $applicant->id }})"
+                        @change="toggleItem($event, {{ $applicant->id }}); updateMasterCheckbox()"
+                    />
+                </label>
+            </td>
             <!-- Name -->
             <td class="py-3 px-4 align-middle font-medium whitespace-nowrap">
                 {{ $applicant->user->full_name }}
@@ -96,6 +148,11 @@
             <!-- Company -->
             <td class="py-3 px-4 align-middle whitespace-nowrap">
                 {{ $applicant->job->company_name ?? '—' }}
+            </td>
+
+            <!-- Training End Date -->
+            <td class="py-3 px-4 align-middle whitespace-nowrap">
+                {{ $applicant->trainingSchedule ? \Carbon\Carbon::parse($applicant->trainingSchedule->end_date)->format('M d, Y') : '—' }}
             </td>
 
             <!-- Status + Score -->
@@ -121,294 +178,12 @@
                 @endif
             </td>
 
-        <!-- Actions -->
-        <td class="py-3 px-4 align-middle whitespace-nowrap text-left">
-            <div class="flex space-x-2">
-        <!-- Evaluate -->
-        <div class="relative group">
-            <button 
-                class="w-10 h-10 flex items-center justify-center rounded-full bg-blue-100 hover:bg-blue-200 ring-2 ring-transparent hover:ring-blue-400 transition-all"
-                @click="openModal(
-                    {{ Js::from($applicant->user->full_name) }},
-                    {{ Js::from($applicant->id) }},
-                    {{ $applicant->evaluation ? 'true' : 'false' }},
-                    {{ Js::from($applicant->evaluation ? [
-                        'knowledge_score' => $applicant->evaluation->knowledge ?? 0,
-                        'skill_score' => $applicant->evaluation->skill ?? 0,
-                        'participation_score' => $applicant->evaluation->participation ?? 0,
-                        'professionalism_score' => $applicant->evaluation->professionalism ?? 0
-                    ] : null) }}
-                )"
-            >
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5h6M9 3h6a2 2 0 012 2v14a2 2 0 01-2 2H9a2 2 0 01-2-2V5a2 2 0 012-2z" />
-            </svg>
-            </button>
-            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-blue-600 rounded opacity-0 group-hover:opacity-100 transition">
-                {{ $applicant->evaluation ? 'View Evaluation' : 'Evaluate' }}
-            </span>
-        </div>
-
-    <!-- Set Contract Signing Date -->
-    <div x-data="{ open: false }" class="relative group">
-    <!-- Trigger Button -->
-    <button 
-        @click="open = true" 
-        class="w-10 h-10 flex items-center justify-center rounded-full bg-green-100 hover:bg-green-200 ring-2 ring-transparent hover:ring-green-400 transition-all">
-        <!-- Calendar Icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" 
-             class="w-5 h-5 stroke-green-600" 
-             fill="none" viewBox="0 0 24 24" 
-             stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" 
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 
-                     2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 
-                     002 2z"/>
-            </svg>
-        </button>
-        <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-green-600 rounded opacity-0 group-hover:opacity-100 transition">
-            Set Schedule
-        </span>
-
-    <!-- Set Contract Signing Date & Time Modal -->
-    <div 
-    x-show="open" 
-    x-cloak 
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-        <!-- Close button -->
-        <button @click="open = false" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">&times;</button>
-        
-        <h2 class="text-lg font-semibold text-[#BD6F22] mb-4">
-            Set Contract Signing for {{ $applicant->user->full_name }}
-        </h2>
-
-        <form action="{{ route('hrStaff.contractSchedule.store', $applicant->id) }}" 
-              method="POST" 
-              class="schedule-form">
-            @csrf
-
-            <!-- Contract Signing Date -->
-            <label for="contract_date" class="block text-sm font-medium text-black">
-                Contract Signing Date
-            </label>
-            <input 
-                type="date" 
-                id="contract_date" 
-                name="contract_date" 
-                :min="new Date(Date.now() + 86400000).toISOString().split('T')[0]"
-                value="{{ old('contract_date', $applicant->contract_signing_schedule ? $applicant->contract_signing_schedule->format('Y-m-d') : '') }}"
-                class="w-full mb-4 p-2 border rounded text-black" 
-                required>
-
-
-            <!-- Contract Signing Time -->
-            <label class="block text-sm font-medium mb-1 text-black">
-                <span>Contract Signing Time</span>
-            </label>
-
-            <div x-data="{
-                    contractHour: 8,
-                    contractMinute: '00',
-                    contractPeriod: 'AM',
-                    updatePeriod() {
-                        if (this.contractHour >= 8 && this.contractHour <= 11) {
-                            this.contractPeriod = 'AM';
-                        } else if (this.contractHour >= 1 && this.contractHour <= 5) {
-                            this.contractPeriod = 'PM';
-                        }
-                    }
-                }" class="flex gap-2 mb-4">
-                 
-                <!-- Hours -->
-                <select x-model.number="contractHour" @change="updatePeriod()" class="flex-1 p-2 border rounded text-black">
-                    <template x-for="h in [6,7,8,9,10,11,1,2,3,4,5]" :key="h">
-                    <option :value="h" x-text="h"></option>
-                    </template>
-                </select>
-
-                <!-- Minutes -->
-                <select x-model="contractMinute" class="flex-1 p-2 border rounded text-black">
-                    <template x-for="m in ['00','15','30','45']" :key="m">
-                    <option :value="m" x-text="m"></option>
-                    </template>
-                </select>
-
-                <!-- Auto AM/PM -->
-                <input 
-                    type="text" 
-                    x-model="contractPeriod" 
-                    class="w-20 p-2 border rounded text-center bg-gray-100 text-black" 
-                    readonly
-                />
-
-                <!-- Hidden combined value for backend -->
-                <input type="hidden" 
-                    name="contract_signing_time" 
-                    :value="`${contractHour}:${contractMinute} ${contractPeriod}`">
-            </div>
-
-            <!-- Confirm Button -->
-            <div class="mt-6 flex justify-end">
-                <button  type="submit" class="px-4 py-2 rounded text-white hover:opacity-90 transition"style="background-color: #BD6F22;">
-                    Confirm
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-</div>
-
-
-<!-- Set Contract -->
-@if($applicant->status !== 'hired')
-<div 
-    x-data="{ 
-        open:false, 
-        readonly: @js($applicant->contract_start && $applicant->contract_end), // true if already saved
-        period: @js(isset($contractPeriod) ? $contractPeriod : '6m'),
-        start: @js(optional($applicant->contract_start)->format('Y-m-d') ?? ''),
-        end: @js(optional($applicant->contract_end)->format('Y-m-d') ?? ''),
-        today:new Date().toISOString().split('T')[0],
-        updateEnd() {
-            if(!this.start) return;
-            let d = new Date(this.start);
-            if(this.period === '6m') d.setMonth(d.getMonth() + 6);
-            if(this.period === '1y') d.setFullYear(d.getFullYear() + 1);
-            this.end = d.toISOString().split('T')[0];
-        }
-    }" 
-    class="relative group">
-
-    <!-- Button -->
-    <button @click="open = true"
-        class="w-10 h-10 flex items-center justify-center rounded-full bg-purple-100 hover:bg-purple-200 ring-2 hover:ring-purple-400 transition">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-purple-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 2h6a2 2 0 012 2v2h-2V4H9v2H7V4a2 2 0 012-2zM7 8h10v12a2 2 0 01-2 
-                     2H9a2 2 0 01-2-2V8z"/>
-        </svg>
-    </button>
-
-    <!-- Tooltip -->
-    <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-purple-600 rounded opacity-0 group-hover:opacity-100">
-        Set Contract
-    </span>
-
-    <!-- Modal -->
-    <div x-show="open" x-transition class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div @click.away="open=false" class="bg-white rounded-xl p-6 w-96 space-y-4">
-            <h2 class="text-lg font-semibold text-purple-700">Set Contract</h2>
-
-            <!-- Form -->
-            <form method="POST" action="{{ route('hrStaff.contractDates.store', $applicant->id) }}" class="contractschedule-form">
-                @csrf
-
-                <!-- Contract Period -->
-                <div>
-                    <label class="block text-sm font-medium mb-1">Contract Period</label>
-                    <select x-model="period" @change="updateEnd()" class="w-full border rounded p-2"
-                            :disabled="readonly">
-                        <option value="6m">6 Months</option>
-                        <option value="1y">1 Year</option>
-                    </select>
-                </div>
-
-                <!-- Start Date -->
-                <div>
-                    <label class="block text-sm font-medium mb-1">Contract Start Date</label>
-                    <input type="date" name="contract_start" x-model="start" :min="today"
-                           @change="updateEnd()" class="w-full border rounded p-2"
-                           :readonly="readonly"
-                           required>
-                </div>
-
-                <!-- End Date -->
-                <div>
-                    <label class="block text-sm font-medium mb-1">Contract End Date</label>
-                    <input type="date" name="contract_end" x-model="end" :min="start || today"
-                           readonly class="w-full border rounded p-2 bg-gray-100">
-                </div>
-
-               <!-- Actions -->
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" @click="open=false" class="px-3 py-1 bg-gray-200 rounded">Close</button>
-                    <button type="submit" class="px-3 py-1 bg-purple-600 text-white rounded" x-show="!readonly">Save</button>
-                </div>
-
-            </form>
-        </div>
-    </div>
-</div>
-@endif
-
-
-        <!-- View Requirements -->
-        <div class="requirementsModal()">
-            <button 
-                class="w-10 h-10 flex items-center justify-center rounded-full bg-indigo-100 hover:bg-indigo-200 ring-2 ring-transparent hover:ring-indigo-400 transition-all"
-                @click="openRequirements(
-                    {{ Js::from($applicant->user->full_name) }},
-                    {{ Js::from($applicant->user->id) }},
-                )"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h4l2-2h8l2 2h4v12H3V7z" />
-                </svg>
-            </button>
-            <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-indigo-600 rounded opacity-0 group-hover:opacity-100 transition">
-                View Requirements
-            </span>
-        </div>
-
-        <!-- Promote -->
-        @if($applicant->status !== 'hired')
-        <form method="POST" action="{{ route('hrStaff.evaluation.promote', $applicant->id) }}">
-            @csrf
-            <div class="relative group">
-                <button 
-                    type="button"
-                    class="w-10 h-10 flex items-center justify-center rounded-full bg-yellow-100 hover:bg-yellow-200 ring-2 ring-transparent hover:ring-yellow-400 transition-all"
-                    @click="confirmPromotion($event, {{ $applicant->id }}, '{{ $applicant->user->full_name }}')"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-yellow-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                    </svg>
-                </button>
-                <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-yellow-600 rounded opacity-0 group-hover:opacity-100 transition">
-                    Promote
-                </span>
-            </div>
-        </form>
-        @endif
-
-        <!-- Archive -->
-        @if($applicant->status !== 'hired')
-        <form action="{{ route('hrStaff.archive.store', $applicant->id) }}" method="POST" class="archive-form">
-            @csrf
-            <div class="relative group">
-                <button 
-                    type="submit"
-                    class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 ring-2 ring-transparent hover:ring-red-400 transition-all"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 stroke-red-600" fill="none" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.75H3.75M19.5 21H4.5A2.25 2.25 0 012.25 18.75v-12m19.5 0v12A2.25 2.25 0 0119.5 21zM9 12h6" />
-                    </svg>
-                </button>
-                <span class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-red-600 rounded opacity-0 group-hover:opacity-100 transition">
-                    Archive
-               </span>
-            </div>
-          </form>
-        @endif
-      </div>
-   </td>
-
 
         </tr>
         @empty
         <tr>
-            <td colspan="5" class="text-center py-6 text-gray-500 italic">
-                No applicants yet.
+            <td colspan="6" class="text-center py-6 text-gray-500 italic">
+                No applicants pending for evaluation.
             </td>
         </tr>
         @endforelse
@@ -416,7 +191,9 @@
         </table>
 
         </div>
-        <div class="flex justify-center px-6 pb-4">
+
+        <!-- Show All / Hide Hired Toggle -->
+        <div class="flex justify-center mt-4">
             <button
                 @click="showAll = !showAll"
                 class="text-sm text-[#BD6F22] hover:underline focus:outline-none"
@@ -424,22 +201,45 @@
                 <span x-text="showAll ? 'Hide Hired' : 'Show All'"></span>
             </button>
         </div>
-
-                <!-- Evaluation Modal -->
-                <x-hrStaff.evaluationModal />
-
-                <!-- Requirements Modal -->
-                <x-hrStaff.requirementsModal />
-                
-            <script>
-                @if(session('success'))
-                    window.contractScheduleSuccess = "{{ session('success') }}";
-                @endif
-            </script>
-            
-            </div>
-        </template>
     </div>
+
+    <!-- Hidden Forms for Bulk Actions -->
+    @foreach ($applicants->filter(function($app) {
+        return $app->status === 'scheduled_for_training' && $app->trainingSchedule;
+    }) as $applicant)
+        <!-- Promote Form -->
+        @if($applicant->status !== 'hired')
+        <form method="POST" action="{{ route('hrStaff.evaluation.promote', $applicant->id) }}" style="display: none;" id="promote-form-{{ $applicant->id }}">
+            @csrf
+        </form>
+        @endif
+
+        <!-- Archive Form -->
+        @if($applicant->status !== 'hired')
+        <form action="{{ route('hrStaff.archive.store', $applicant->id) }}" method="POST" style="display: none;" id="archive-form-{{ $applicant->id }}" class="archive-form">
+            @csrf
+        </form>
+        @endif
+    @endforeach
+
+    <!-- Evaluation Modal -->
+    <x-hrStaff.evaluationModal />
+
+    <!-- Requirements Modal -->
+    <x-hrStaff.requirementsModal />
+
+    <!-- Feedback Toast -->
+    <x-shared.feedbackToast />
+
+    <script>
+        @if(session('success'))
+            window.contractScheduleSuccess = "{{ session('success') }}";
+        @endif
+    </script>
+
+    </div>
+</div>
+
 </section>
 
 @endsection
@@ -447,6 +247,269 @@
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+<!-- Handlers -->
+<script src="{{ asset('js/utils/checkboxUtils.js') }}"></script>
+<script src="{{ asset('js/applicantsHandler.js') }}"></script>
+
+<script>
+function actionDropdown() {
+    return {
+        currentIndex: 0,
+        processingApplicants: [],
+        actionType: '',
+
+        bulkEvaluate() {
+            if (this.selectedApplicants.length === 0) {
+                Swal.fire({
+                    title: 'No Selection',
+                    text: 'Please select at least one applicant to evaluate.',
+                    icon: 'warning',
+                    confirmButtonColor: '#BD6F22'
+                });
+                return;
+            }
+            this.startSteppedAction('evaluate', this.selectedApplicants);
+        },
+
+        bulkSetContractSigning() {
+            if (this.selectedApplicants.length === 0) {
+                Swal.fire({
+                    title: 'No Selection',
+                    text: 'Please select at least one applicant.',
+                    icon: 'warning',
+                    confirmButtonColor: '#BD6F22'
+                });
+                return;
+            }
+            this.startSteppedAction('contractSigning', this.selectedApplicants);
+        },
+
+        bulkSetContractDates() {
+            if (this.selectedApplicants.length === 0) {
+                Swal.fire({
+                    title: 'No Selection',
+                    text: 'Please select at least one applicant.',
+                    icon: 'warning',
+                    confirmButtonColor: '#BD6F22'
+                });
+                return;
+            }
+            this.startSteppedAction('contractDates', this.selectedApplicants);
+        },
+
+        bulkViewRequirements() {
+            if (this.selectedApplicants.length === 0) {
+                Swal.fire({
+                    title: 'No Selection',
+                    text: 'Please select at least one applicant.',
+                    icon: 'warning',
+                    confirmButtonColor: '#BD6F22'
+                });
+                return;
+            }
+            this.startSteppedAction('requirements', this.selectedApplicants);
+        },
+
+        bulkPromote() {
+            if (this.selectedApplicants.length === 0) {
+                Swal.fire({
+                    title: 'No Selection',
+                    text: 'Please select at least one applicant to promote.',
+                    icon: 'warning',
+                    confirmButtonColor: '#BD6F22'
+                });
+                return;
+            }
+            this.startSteppedAction('promote', this.selectedApplicants);
+        },
+
+        bulkArchive() {
+            if (this.selectedApplicants.length === 0) {
+                Swal.fire({
+                    title: 'No Selection',
+                    text: 'Please select at least one applicant to archive.',
+                    icon: 'warning',
+                    confirmButtonColor: '#BD6F22'
+                });
+                return;
+            }
+            this.startSteppedAction('archive', this.selectedApplicants);
+        },
+
+        startSteppedAction(actionType, applicants) {
+            this.actionType = actionType;
+            this.processingApplicants = [...applicants];
+            this.currentIndex = 0;
+            this.processNextApplicant();
+        },
+
+        processNextApplicant() {
+            if (this.currentIndex >= this.processingApplicants.length) {
+                // All done
+                Swal.fire({
+                    title: 'Complete!',
+                    text: `All ${this.processingApplicants.length} applicant(s) have been processed.`,
+                    icon: 'success',
+                    confirmButtonColor: '#BD6F22'
+                });
+                return;
+            }
+
+            const applicant = this.processingApplicants[this.currentIndex];
+            const progress = `(${this.currentIndex + 1}/${this.processingApplicants.length})`;
+
+            switch(this.actionType) {
+                case 'evaluate':
+                    this.openEvaluationModal(applicant, progress);
+                    break;
+                case 'contractSigning':
+                    this.openContractSigningModal(applicant, progress);
+                    break;
+                case 'contractDates':
+                    this.openContractDatesModal(applicant, progress);
+                    break;
+                case 'requirements':
+                    this.openRequirementsForApplicant(applicant, progress);
+                    break;
+                case 'promote':
+                    this.promptPromote(applicant, progress);
+                    break;
+                case 'archive':
+                    this.promptArchive(applicant, progress);
+                    break;
+            }
+        },
+
+        openEvaluationModal(applicant, progress) {
+            // Open evaluation modal for this applicant
+            this.openModal(applicant.name, applicant.application_id, applicant.has_evaluation, null);
+            // Note: The modal close should call continueToNext()
+        },
+
+        openContractSigningModal(applicant, progress) {
+            Swal.fire({
+                title: `Set Contract Signing ${progress}`,
+                html: `
+                    <div class="text-left">
+                        <p class="mb-4"><strong>Applicant:</strong> ${applicant.name}</p>
+                        <p class="text-sm text-gray-600">This would open the contract signing modal. You can skip or continue to next applicant.</p>
+                    </div>
+                `,
+                icon: 'info',
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonColor: '#BD6F22',
+                denyButtonColor: '#6B7280',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Set & Next',
+                denyButtonText: 'Skip',
+                cancelButtonText: 'Stop'
+            }).then((result) => {
+                if (result.isConfirmed || result.isDenied) {
+                    this.continueToNext();
+                }
+            });
+        },
+
+        openContractDatesModal(applicant, progress) {
+            Swal.fire({
+                title: `Set Contract Dates ${progress}`,
+                html: `
+                    <div class="text-left">
+                        <p class="mb-4"><strong>Applicant:</strong> ${applicant.name}</p>
+                        <p class="text-sm text-gray-600">This would open the contract dates modal. You can skip or continue to next applicant.</p>
+                    </div>
+                `,
+                icon: 'info',
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonColor: '#BD6F22',
+                denyButtonColor: '#6B7280',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Set & Next',
+                denyButtonText: 'Skip',
+                cancelButtonText: 'Stop'
+            }).then((result) => {
+                if (result.isConfirmed || result.isDenied) {
+                    this.continueToNext();
+                }
+            });
+        },
+
+        openRequirementsForApplicant(applicant, progress) {
+            this.openRequirements(applicant.name, applicant.user_id);
+            // Continue after viewing
+            setTimeout(() => {
+                this.continueToNext();
+            }, 1000);
+        },
+
+        promptPromote(applicant, progress) {
+            Swal.fire({
+                title: `Promote Applicant ${progress}`,
+                text: `Are you sure you want to promote ${applicant.name} to employee?`,
+                icon: 'question',
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonColor: '#BD6F22',
+                denyButtonColor: '#6B7280',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, promote!',
+                denyButtonText: 'Skip',
+                cancelButtonText: 'Stop'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Submit promote form
+                    const form = document.getElementById(`promote-form-${applicant.application_id}`);
+                    if (form) {
+                        form.submit();
+                    }
+                    this.continueToNext();
+                } else if (result.isDenied) {
+                    // Skip this one
+                    this.continueToNext();
+                }
+            });
+        },
+
+        promptArchive(applicant, progress) {
+            Swal.fire({
+                title: `Archive Applicant ${progress}`,
+                text: `Archive ${applicant.name}?`,
+                icon: 'warning',
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonColor: '#BD6F22',
+                denyButtonColor: '#6B7280',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, archive!',
+                denyButtonText: 'Skip',
+                cancelButtonText: 'Stop'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Submit archive form
+                    const form = document.getElementById(`archive-form-${applicant.application_id}`);
+                    if (form) {
+                        form.submit();
+                    }
+                    this.continueToNext();
+                } else if (result.isDenied) {
+                    this.continueToNext();
+                }
+            });
+        },
+
+        continueToNext() {
+            this.currentIndex++;
+            this.processNextApplicant();
+        },
+
+        skipToEnd() {
+            this.currentIndex = this.processingApplicants.length;
+        }
+    };
+}
+</script>
 
 <script>
 function requirementsModal() {
@@ -537,10 +600,6 @@ function requirementsModal() {
 
 function evaluationModal(applicants) {
     return {
-        tab: 'job_postings',
-        selectedJobId: null,
-        selectedJobTitle: '',
-        selectedCompany: '',
         showModal: false,
         showAll: false,
         selectedEmployee: '',
@@ -557,18 +616,7 @@ function evaluationModal(applicants) {
         result: '',
 
         init() {
-            // listen for job selection events
-            this.$el.addEventListener('select-job', (e) => {
-                this.selectedJobId = e.detail.id;
-                this.selectedJobTitle = e.detail.title;
-                this.selectedCompany = e.detail.company;
-                this.tab = 'evaluation';
-            });
-        },
-
-        shouldShow(jobId, status) {
-            if (jobId != this.selectedJobId) return false;
-            return this.showAll || status !== 'hired';
+            // Initialization if needed
         },
 
         openModal(employeeName, applicationId, evaluated = false, previousScores = null) {
@@ -633,6 +681,23 @@ function evaluationModal(applicants) {
             }).then((result) => {
                 if(result.isConfirmed) {
                     event.target.closest('form').submit();
+                }
+            });
+        },
+
+        confirmPromotionById(applicationId, employeeName) {
+            Swal.fire({
+                title: 'Promote Applicant?',
+                text: `Are you sure you want to promote ${employeeName} to employee?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#BD6F22',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Yes, promote!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if(result.isConfirmed) {
+                    document.getElementById('promote-form-' + applicationId).submit();
                 }
             });
         }

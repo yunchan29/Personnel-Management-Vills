@@ -145,7 +145,8 @@ public function getIsProfileCompleteAttribute(): bool
            $this->province &&
            $this->city &&
            $this->barangay &&
-           $this->profile_picture;
+           $this->profile_picture &&
+           $this->active_status === 'Active';
 }
 
 public function resume()

@@ -231,7 +231,32 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware(['auth', 'role:hrStaff'])
 
     // Dashboard route
     Route::get('/dashboard', function () {
-        return view('admins.hrStaff.dashboard');
+        // Count applicants in Interview Schedule (with scheduled interview)
+        $interviewScheduleCount = \App\Models\Application::whereIn('status', ['approved', 'for_interview', 'interviewed', 'declined'])
+            ->whereHas('interview', function($query) {
+                $query->whereNotNull('scheduled_at');
+            })
+            ->count();
+
+        // Count applicants in Training Schedule (with scheduled training)
+        $trainingScheduleCount = \App\Models\Application::whereIn('status', ['interviewed', 'scheduled_for_training'])
+            ->whereHas('trainingSchedule', function($query) {
+                $query->whereNotNull('start_date')
+                      ->whereNotNull('end_date');
+            })
+            ->count();
+
+        // Count applicants pending for evaluation (has training schedule but no evaluation)
+        $pendingEvaluationCount = \App\Models\Application::where('status', 'scheduled_for_training')
+            ->whereHas('trainingSchedule')
+            ->whereDoesntHave('evaluation')
+            ->count();
+
+        return view('admins.hrStaff.dashboard', compact(
+            'interviewScheduleCount',
+            'trainingScheduleCount',
+            'pendingEvaluationCount'
+        ));
     })->name('dashboard');
 
     // Employees
