@@ -1,4 +1,3 @@
-
 document.addEventListener('alpine:init', () => {
     Alpine.data('applicantsHandler', () => ({
         loading: false,
@@ -72,82 +71,45 @@ document.addEventListener('alpine:init', () => {
             return this.applicants.filter(applicant => this.showAll || !applicant.training);
         },
 
-        // ✅ Helper: kunin unique ID (application_id or id)
+        // ✅ Helper: get unique ID (application_id or id) - uses CheckboxUtils
         getApplicantId(applicant) {
-            const id = applicant.application_id ?? applicant.id;
-            return id;
+            return CheckboxUtils.getApplicantId(applicant);
         },
 
-        // ✅ Kunin lahat ng local checkboxes (hindi kasama disabled)
+        // ✅ Get all local checkboxes (not disabled)
         getLocalCheckboxes(checkboxClass = '.applicant-checkbox:not(:disabled)') {
-            const cbs = Array.from(this.$root.querySelectorAll(checkboxClass));
-            return cbs;
+            return Array.from(this.$root.querySelectorAll(checkboxClass));
         },
 
-        // ✅ Master toggle (select all / deselect all)
+        // ✅ Master toggle (select all / deselect all) - uses CheckboxUtils
         toggleSelectAll(event) {
-            const isChecked = event.target.checked;
-
-            // ✅ Only get visible checkboxes
-            const visibleCheckboxes = Array.from(document.querySelectorAll('.applicant-checkbox'))
-                .filter(cb => cb.offsetParent !== null); // only visible rows
-
-            visibleCheckboxes.forEach(cb => {
-                cb.checked = isChecked;
-
-                const data = JSON.parse(cb.value);
-                if (isChecked) {
-                    if (!this.selectedApplicants.some(a => a.application_id === data.application_id)) {
-                        this.selectedApplicants.push(data);
-                    }
-                } else {
-                    this.selectedApplicants = this.selectedApplicants.filter(a => a.application_id !== data.application_id);
-                }
-            });
+            this.selectedApplicants = CheckboxUtils.toggleSelectAll(
+                event,
+                this.selectedApplicants,
+                '.applicant-checkbox',
+                'application_id'
+            );
+            this.updateMasterCheckbox();
         },
 
-        // ✅ Update master checkbox state (per component)
+        // ✅ Update master checkbox state - uses CheckboxUtils
         updateMasterCheckbox() {
-            const master = this.$root.querySelector('[x-ref="masterCheckbox"]');
-            if (!master) return;
-
-            const visibleCheckboxes = this.getLocalCheckboxes(); // only visible rows
-            const total = visibleCheckboxes.length;
-
-            const selected = visibleCheckboxes.filter(cb => {
-                const value = JSON.parse(cb.value);
-                return this.selectedApplicants.some(a => a.application_id === value.application_id);
-            }).length;
-
-            if (selected === 0) {
-                master.checked = false;
-                master.indeterminate = false;
-            } else if (selected === total) {
-                master.checked = true;
-                master.indeterminate = false;
-            } else {
-                master.checked = false;
-                master.indeterminate = true;
-            }
+            CheckboxUtils.updateMasterCheckbox(
+                this.$root,
+                this.selectedApplicants,
+                '.applicant-checkbox:not(:disabled)',
+                'masterCheckbox',
+                'application_id'
+            );
         },
 
-
-        // ✅ Toggle single item
+        // ✅ Toggle single item - uses CheckboxUtils
         toggleItem(event, id) {
-            const checked = event.target.checked;
-            const value = JSON.parse(event.target.value);
-            const applicantId = this.getApplicantId(value);
-
-            if (checked) {
-                if (!this.selectedApplicants.some(a => this.getApplicantId(a) === applicantId)) {
-                    this.selectedApplicants.push(value);  
-                }
-            } else {
-                this.selectedApplicants = this.selectedApplicants.filter(
-                    a => this.getApplicantId(a) !== applicantId
-                );
-            }
-
+            this.selectedApplicants = CheckboxUtils.toggleItem(
+                event,
+                this.selectedApplicants,
+                'application_id'
+            );
             this.updateMasterCheckbox();
         },
 

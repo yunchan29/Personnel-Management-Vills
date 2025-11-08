@@ -16,21 +16,13 @@ document.addEventListener('alpine:init', () => {
         trainingApplicant: null,
         trainingPicker: null,
 
-        // Function converter para sa time ng training schedule
+        // Function converter for training schedule time - using TimeUtils
         to12h(hour24) {
-            let period = hour24 >= 12 ? 'PM' : 'AM';
-            let hour12 = hour24 % 12;
-            if (hour12 === 0) hour12 = 12;
-            return { hour12, period };
+            return TimeUtils.to12h(hour24);
         },
 
         formatTime(timeStr) {
-            if (!timeStr) return null;
-            const [hourStr, period] = timeStr.split(" ");
-            let hour = parseInt(hourStr, 10);
-            if (period.toUpperCase() === "PM" && hour !== 12) hour += 12;
-            if (period.toUpperCase() === "AM" && hour === 12) hour = 0;
-            return `${hour.toString().padStart(2, "0")}:00:00`; 
+            return TimeUtils.formatTime(timeStr);
         },
 
         bulkSetTraining() {

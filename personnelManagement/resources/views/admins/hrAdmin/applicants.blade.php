@@ -200,16 +200,20 @@
                         </td>
 
                           <!-- Resume -->
-                        
+
                         <td class="py-3 px-4">
-                            @if($application->user->active_status === 'Active' && $application->resume_snapshot)
+                            @if($application->resume_snapshot)
                                 <button
                                     @click="openResume('{{ asset('storage/' . $application->resume_snapshot) }}')"
                                     class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
                                     View
                                 </button>
-                            @elseif($application->user->active_status === 'Inactive')
-                                <span class="text-gray-400 italic">Inactive</span>
+                            @elseif($application->user->resume && $application->user->resume->resume)
+                                <button
+                                    @click="openResume('{{ asset('storage/' . $application->user->resume->resume) }}')"
+                                    class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
+                                    View
+                                </button>
                             @else
                                 <span class="text-gray-500 italic">None</span>
                             @endif
@@ -298,27 +302,7 @@
     </div>
 
     <!-- Feedback Toast -->
-    <div 
-        x-show="feedbackVisible"
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0 translate-y-4"
-        x-transition:enter-end="opacity-100 translate-y-0"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100 translate-y-0"
-        x-transition:leave-end="opacity-0 translate-y-4"
-        class="fixed bottom-6 right-6 bg-green-600 text-white px-5 py-4 rounded-xl shadow-lg z-50 w-80 overflow-hidden"
-        x-cloak
-    >
-    <div class="flex items-center gap-3">
-            <svg class="w-6 h-6 text-white animate-checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            <span class="font-semibold text-sm" x-text="feedbackMessage"></span>
-        </div>
-        <div class="mt-3 h-1 w-full bg-white/20 rounded overflow-hidden">
-            <div class="h-full bg-white animate-progress-bar"></div>
-        </div>
-    </div>
+    <x-shared.feedbackToast />
 
     <!-- ✅ INCLUDE MODALS INSIDE THE ROOT x-data DIV -->
     @include('components.hrAdmin.modals.resume')
@@ -333,8 +317,8 @@
     window.bulkApproveUrl = "{{ route('hrAdmin.applications.bulkUpdateStatus') }}";
 </script>
 
-<!-- Scripts: Load Alpine FIRST -->
-<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<!-- Scripts -->
+<script src="{{ asset('js/utils/checkboxUtils.js') }}"></script>
 <script src="{{ asset('js/applicantsHandler.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <!-- Alpine Cloak -->

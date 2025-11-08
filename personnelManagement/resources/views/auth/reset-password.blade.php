@@ -1,5 +1,7 @@
 <!-- Reset Password Modal -->
 <div x-show="activeModal === 'resetPassword'"
+     x-data="resetPasswordModal()"
+     x-init="init()"
      x-transition:enter="transition ease-out duration-300"
      x-transition:enter-start="opacity-0"
      x-transition:enter-end="opacity-100"
@@ -143,3 +145,106 @@
         </div>
     </div>
 </div>
+
+<!-- Reset Password Modal Script -->
+<script>
+    function resetPasswordModal() {
+        return {
+            // Reset password form
+            resetPasswordForm: {
+                token: '',
+                email: '',
+                password: '',
+                password_confirmation: ''
+            },
+            resetPasswordErrors: [],
+            resetPasswordStatus: '',
+            resetPasswordLoading: false,
+            showResetPassword: false,
+            showResetConfirmPassword: false,
+            resetPasswordRules: {
+                length: false,
+                lowercase: false,
+                uppercase: false,
+                number: false,
+                special: false,
+                match: false
+            },
+
+            // Initialize from URL params
+            init() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token');
+                const email = urlParams.get('email');
+
+                if (token && email) {
+                    this.resetPasswordForm.token = token;
+                    this.resetPasswordForm.email = email;
+                }
+            },
+
+            // Validate reset password
+            validateResetPassword() {
+                const password = this.resetPasswordForm.password;
+                const confirm = this.resetPasswordForm.password_confirmation;
+
+                this.resetPasswordRules.length = password.length >= 8;
+                this.resetPasswordRules.lowercase = /[a-z]/.test(password);
+                this.resetPasswordRules.uppercase = /[A-Z]/.test(password);
+                this.resetPasswordRules.number = /[0-9]/.test(password);
+                this.resetPasswordRules.special = /[@$!%*#?&]/.test(password);
+                this.resetPasswordRules.match = password && confirm && password === confirm;
+            },
+
+            // Check if reset form is valid
+            get isResetFormValid() {
+                return this.resetPasswordRules.length &&
+                       this.resetPasswordRules.lowercase &&
+                       this.resetPasswordRules.uppercase &&
+                       this.resetPasswordRules.number &&
+                       this.resetPasswordRules.special &&
+                       this.resetPasswordRules.match;
+            },
+
+            // Submit reset password form
+            async submitResetPassword() {
+                this.resetPasswordLoading = true;
+                this.resetPasswordErrors = [];
+                this.resetPasswordStatus = '';
+
+                try {
+                    const response = await axios.post('/reset-password', this.resetPasswordForm, {
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                        }
+                    });
+
+                    if (response.data.success || response.data.status) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Password Reset!',
+                            text: response.data.message || 'Your password has been reset successfully!',
+                            confirmButtonColor: '#BD6F22',
+                            timer: 2500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            activeModal = 'login';
+                            // Clear URL parameters
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                        });
+                    }
+                } catch (error) {
+                    if (error.response?.data?.errors) {
+                        this.resetPasswordErrors = Object.values(error.response.data.errors).flat();
+                    } else if (error.response?.data?.message) {
+                        this.resetPasswordErrors = [error.response.data.message];
+                    } else {
+                        this.resetPasswordErrors = ['An error occurred. Please try again.'];
+                    }
+                } finally {
+                    this.resetPasswordLoading = false;
+                }
+            }
+        };
+    }
+</script>

@@ -6,7 +6,12 @@ document.addEventListener('alpine:init', () => {
             set selectedApplicants(val) {
             parent.selectedApplicants = val;
             },
-
+            get applicants() {
+            return parent.applicants || [];
+            },
+            get removedApplicants() {
+            return parent.removedApplicants || [];
+            },
 
         // 🔹 State
         showInterviewModal: false,
@@ -35,33 +40,17 @@ document.addEventListener('alpine:init', () => {
             this.$nextTick(() => this.updateMasterCheckbox());
         },
 
-        // 🔹 Helpers
+        // 🔹 Helpers - using TimeUtils
         to24h(hour, period) {
-            hour = Number(hour);
-
-            if (period === "AM") {
-                if (hour === 12) {
-                    return 0; // 12 AM → 00
-                }
-                return hour; // 1–11 AM → 1–11
-            } else {
-                if (hour === 12) {
-                    return 12; // 12 PM → 12 (noon)
-                }
-                return hour + 12; // 1–11 PM → 13–23
-            }
+            return TimeUtils.to24h(hour, period);
         },
 
-
         to12h(hour24) {
-            let period = hour24 >= 12 ? 'PM' : 'AM';
-            let hour12 = hour24 % 12;
-            if (hour12 === 0) hour12 = 12;
-            return { hour12, period };
+            return TimeUtils.to12h(hour24);
         },
 
         formatDisplay(hour, period) {
-            return `${hour}:00 ${period}`;
+            return TimeUtils.formatDisplay(hour, period);
         },
 
         // Status for interview component
@@ -73,86 +62,46 @@ document.addEventListener('alpine:init', () => {
         },
 
 
-        // 🔹 Toggle all visible checkboxes
+        // 🔹 Toggle all visible checkboxes - using CheckboxUtils
         toggleSelectAll(event) {
-            const isChecked = event.target.checked;
-
-            // ✅ Only get visible checkboxes
-            const visibleCheckboxes = Array.from(document.querySelectorAll('.applicant-checkbox'))
-                .filter(cb => cb.offsetParent !== null); // only visible rows
-
-            visibleCheckboxes.forEach(cb => {
-                cb.checked = isChecked;
-                const data = JSON.parse(cb.value);
-
-                if (isChecked) {
-                    // add if not already selected
-                    if (!this.selectedApplicants.some(a => a.application_id === data.application_id)) {
-                        this.selectedApplicants.push(data);
-                    }
-                } else {
-                    // remove if deselected
-                    this.selectedApplicants = this.selectedApplicants.filter(
-                        a => a.application_id !== data.application_id
-                    );
-                }
-            });
-
+            this.selectedApplicants = CheckboxUtils.toggleSelectAll(
+                event,
+                this.selectedApplicants,
+                '.applicant-checkbox',
+                'application_id'
+            );
             this.updateMasterCheckbox();
         },
 
-        // 🔹 Update master checkbox visual state (checked / indeterminate)
+        // 🔹 Update master checkbox visual state - using CheckboxUtils
         updateMasterCheckbox() {
-            const master = this.$root.querySelector('[x-ref="masterCheckbox"]');
-            if (!master) return;
-
-            const visibleCheckboxes = this.getLocalCheckboxes();
-            const total = visibleCheckboxes.length;
-
-            const selected = visibleCheckboxes.filter(cb => {
-                const value = JSON.parse(cb.value);
-                return this.selectedApplicants.some(a => a.application_id === value.application_id);
-            }).length;
-
-            if (selected === 0) {
-                master.checked = false;
-                master.indeterminate = false;
-            } else if (selected === total) {
-                master.checked = true;
-                master.indeterminate = false;
-            } else {
-                master.checked = false;
-                master.indeterminate = true;
-            }
+            CheckboxUtils.updateMasterCheckbox(
+                this.$root,
+                this.selectedApplicants,
+                '.applicant-checkbox:not(:disabled)',
+                'masterCheckbox',
+                'application_id'
+            );
         },
 
-        // 🔹 Toggle a single checkbox
+        // 🔹 Toggle a single checkbox - using CheckboxUtils
         toggleItem(event, id) {
-            const checked = event.target.checked;
-            const value = JSON.parse(event.target.value);
-            const applicantId = this.getApplicantId(value);
-
-            if (checked) {
-                if (!this.selectedApplicants.some(a => this.getApplicantId(a) === applicantId)) {
-                    this.selectedApplicants.push(value);
-                }
-            } else {
-                this.selectedApplicants = this.selectedApplicants.filter(
-                    a => this.getApplicantId(a) !== applicantId
-                );
-            }
-
+            this.selectedApplicants = CheckboxUtils.toggleItem(
+                event,
+                this.selectedApplicants,
+                'application_id'
+            );
             this.updateMasterCheckbox();
         },
 
-        // 🔹 Helpers
+        // 🔹 Helpers - using CheckboxUtils
         getLocalCheckboxes() {
             return Array.from(document.querySelectorAll('.applicant-checkbox'))
                 .filter(cb => cb.offsetParent !== null);
         },
 
         getApplicantId(applicant) {
-            return applicant.application_id;
+            return CheckboxUtils.getApplicantId(applicant);
         },
 
         isAllSelected() {

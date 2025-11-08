@@ -1,8 +1,8 @@
-@extends(auth()->user()->role === 'HR Admin' ? 'layouts.hrAdmin' : 'layouts.hrStaff')
+@extends(auth()->user()->role === 'hrAdmin' ? 'layouts.hrAdmin' : 'layouts.hrStaff')
 
 @section('content')
 <section class="p-6 max-w-6xl mx-auto" x-data="{ tab: 'postings', selectedJobId: null }">
-    <h1 class="{{ auth()->user()->role === 'HR Admin' ? 'text-2xl' : 'text-xl' }} font-{{ auth()->user()->role === 'HR Admin' ? 'semibold' : 'bold' }} text-[#BD6F22] mb-6">Employees</h1>
+    <h1 class="{{ auth()->user()->role === 'hrAdmin' ? 'text-2xl' : 'text-xl' }} font-{{ auth()->user()->role === 'hrAdmin' ? 'semibold' : 'bold' }} text-[#BD6F22] mb-6">Employees</h1>
 
     {{-- Tabs --}}
     <div class="flex border-b border-gray-300 mb-6 space-x-6">

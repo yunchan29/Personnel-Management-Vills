@@ -1,5 +1,6 @@
 <!-- Forgot Password Modal -->
 <div x-show="activeModal === 'forgotPassword'"
+     x-data="forgotPasswordModal()"
      x-transition:enter="transition ease-out duration-300"
      x-transition:enter-start="opacity-0"
      x-transition:enter-end="opacity-100"
@@ -88,3 +89,57 @@
         </div>
     </div>
 </div>
+
+<!-- Forgot Password Modal Script -->
+<script>
+    function forgotPasswordModal() {
+        return {
+            // Forgot password form
+            forgotPasswordForm: {
+                email: ''
+            },
+            forgotPasswordErrors: [],
+            forgotPasswordStatus: '',
+            forgotPasswordLoading: false,
+
+            // Submit forgot password form
+            async submitForgotPassword() {
+                this.forgotPasswordLoading = true;
+                this.forgotPasswordErrors = [];
+                this.forgotPasswordStatus = '';
+
+                try {
+                    const response = await axios.post('/forgot-password', this.forgotPasswordForm, {
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                        }
+                    });
+
+                    if (response.data.success || response.data.status) {
+                        this.forgotPasswordStatus = response.data.message || response.data.status || 'Password reset link sent to your email!';
+                        this.forgotPasswordForm.email = '';
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Email Sent!',
+                            text: this.forgotPasswordStatus,
+                            confirmButtonColor: '#BD6F22',
+                            timer: 3000,
+                            showConfirmButton: true
+                        });
+                    }
+                } catch (error) {
+                    if (error.response?.data?.errors) {
+                        this.forgotPasswordErrors = Object.values(error.response.data.errors).flat();
+                    } else if (error.response?.data?.message) {
+                        this.forgotPasswordErrors = [error.response.data.message];
+                    } else {
+                        this.forgotPasswordErrors = ['An error occurred. Please try again.'];
+                    }
+                } finally {
+                    this.forgotPasswordLoading = false;
+                }
+            }
+        };
+    }
+</script>

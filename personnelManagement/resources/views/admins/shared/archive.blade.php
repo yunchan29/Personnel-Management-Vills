@@ -1,8 +1,8 @@
-@extends(auth()->user()->role === 'HR Admin' ? 'layouts.hrAdmin' : 'layouts.hrStaff')
+@extends(auth()->user()->role === 'hrAdmin' ? 'layouts.hrAdmin' : 'layouts.hrStaff')
 
 @section('content')
 <div x-data class="relative">
-  @if(auth()->user()->role === 'HR Admin')
+  @if(auth()->user()->role === 'hrAdmin')
   <div class="p-6 max-w-6xl mx-auto">
     <h1 class="text-2xl font-semibold text-[#BD6F22] mb-6">Archived Applicants</h1>
   </div>
@@ -21,7 +21,7 @@
           <th class="py-3 px-4">Job Title</th>
           <th class="py-3 px-4">Company</th>
           <th class="py-3 px-4">Archived On</th>
-          @if(auth()->user()->role === 'HR Staff')
+          @if(auth()->user()->role === 'hrStaff')
           <th class="py-3 px-4">Reason</th>
           @endif
           <th class="py-3 px-4">Actions</th>
@@ -38,7 +38,7 @@
       <td class="py-3 px-4">{{ $application->job->job_title ?? 'N/A' }}</td>
       <td class="py-3 px-4">{{ $application->job->company_name ?? 'N/A' }}</td>
       <td class="py-3 px-4 italic">
-        @if(auth()->user()->role === 'HR Admin')
+        @if(auth()->user()->role === 'hrAdmin')
           {{ $application->archived_at
               ? \Carbon\Carbon::parse($application->archived_at)->format('F d, Y')
               : '—' }}
@@ -47,7 +47,7 @@
         @endif
       </td>
 
-      @if(auth()->user()->role === 'HR Staff')
+      @if(auth()->user()->role === 'hrStaff')
       <td class="py-3 px-4 italic">
         @if($application->evaluation && $application->evaluation->result === 'failed')
           Failed Evaluation
@@ -58,7 +58,7 @@
       @endif
 
       <td class="py-3 px-4 flex gap-3">
-        @if(auth()->user()->role === 'HR Admin')
+        @if(auth()->user()->role === 'hrAdmin')
           {{-- HR Admin Restore --}}
           <form action="{{ route('hrAdmin.archive.restore', $application->id) }}" method="POST" class="restore-form">
             @csrf
@@ -100,8 +100,8 @@
     </tr>
   @empty
     <tr>
-      <td colspan="{{ auth()->user()->role === 'HR Staff' ? '7' : '6' }}" class="py-6 text-center text-gray-500">
-        No archived {{ auth()->user()->role === 'HR Admin' ? 'applicants' : 'applications' }}.
+      <td colspan="{{ auth()->user()->role === 'hrStaff' ? '7' : '6' }}" class="py-6 text-center text-gray-500">
+        No archived {{ auth()->user()->role === 'hrAdmin' ? 'applicants' : 'applications' }}.
       </td>
     </tr>
   @endforelse
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
             Swal.fire({
                 title: 'Are you sure?',
-                text: "This will permanently delete the archived {{ auth()->user()->role === 'HR Admin' ? 'employee record' : 'application' }}!",
+                text: "This will permanently delete the archived {{ auth()->user()->role === 'hrAdmin' ? 'employee record' : 'application' }}!",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
@@ -140,8 +140,8 @@ document.addEventListener('DOMContentLoaded', function () {
         form.addEventListener('submit', function (e) {
             e.preventDefault();
             Swal.fire({
-                title: 'Restore this {{ auth()->user()->role === 'HR Admin' ? 'employee' : 'application' }}?',
-                text: "{{ auth()->user()->role === 'HR Admin' ? 'They will be reactivated and moved back from archive.' : 'This application will be restored.' }}",
+                title: 'Restore this {{ auth()->user()->role === 'hrAdmin' ? 'employee' : 'application' }}?',
+                text: "{{ auth()->user()->role === 'hrAdmin' ? 'They will be reactivated and moved back from archive.' : 'This application will be restored.' }}",
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#28a745',

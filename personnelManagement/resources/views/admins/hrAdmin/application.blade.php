@@ -212,7 +212,7 @@
         </div>
 
 
-            @include('hrAdmin.applicants', [
+            @include('admins.hrAdmin.applicants', [
                 'applications' => $applications,
                 'selectedJob' => $selectedJob,
             ])
@@ -231,7 +231,7 @@
         class="space-y-4"
     >
         @if(isset($approvedApplicants) && $approvedApplicants->count() > 0)
-            @include('hrAdmin.interviewSchedule',['approvedApplicants' => $approvedApplicants])
+            @include('admins.hrAdmin.interviewSchedule',['applications' => $approvedApplicants])
         @else
             <p class="text-center text-gray-500">No applicants scheduled for interview.</p>
         @endif
@@ -246,7 +246,7 @@
         class="space-y-4"
     >
         @if(isset($interviewApplicants) && $interviewApplicants->isNotEmpty())
-            @include('hrAdmin.trainingSchedule',['interviewApplicants' => $interviewApplicants])
+            @include('admins.hrAdmin.trainingSchedule',['interviewApplicants' => $interviewApplicants])
         @else
             <p class="text-center text-gray-500">No approved applicants for training yet.</p>
         @endif

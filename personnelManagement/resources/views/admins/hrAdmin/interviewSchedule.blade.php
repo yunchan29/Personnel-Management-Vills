@@ -17,13 +17,13 @@
         </label>
       <!-- Mass Interview Buttons -->
 
-    <!-- Mass Schedule (Primary Solid) -->
-    <button 
+    <!-- Schedule Interview Button -->
+    <button
         @click="openBulk('bulk')"
         class="min-w-[160px] bg-[#8B4513] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
-               hover:bg-[#6F3610] transition-all duration-200 ease-in-out 
+               hover:bg-[#6F3610] transition-all duration-200 ease-in-out
                disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#BD9168]/40 focus:outline-none"
-        :disabled="selectedApplicants.length <= 1">
+        :disabled="selectedApplicants.length === 0">
         <!-- Lucide: Calendar -->
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
@@ -32,16 +32,16 @@
           <line x1="8" y1="2" x2="8" y2="6"></line>
           <line x1="3" y1="10" x2="21" y2="10"></line>
         </svg>
-        Set Mass Interview
+        <span x-text="selectedApplicants.length === 0 ? 'Schedule Interview' : `Schedule Interview (${selectedApplicants.length})`"></span>
     </button>
 
-    <!-- Mass Reschedule (Accent Solid) -->
-    <button 
+    <!-- Reschedule Interview Button -->
+    <button
         @click="openBulk('bulk-reschedule')"
         class="min-w-[160px] bg-[#8B4513] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
-               hover:bg-[#6F3610] transition-all duration-200 ease-in-out 
+               hover:bg-[#6F3610] transition-all duration-200 ease-in-out
                disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#BD9168]/40 focus:outline-none"
-        :disabled="selectedApplicants.length <= 1">
+        :disabled="selectedApplicants.length === 0">
         <!-- Lucide: Refresh-Ccw -->
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
@@ -50,16 +50,16 @@
           <path d="M21 22v-6h-6"></path>
           <path d="M3 12a9 9 0 0 0 9 9h3"></path>
         </svg>
-        Mass Reschedule
+        <span x-text="selectedApplicants.length === 0 ? 'Reschedule Interview' : `Reschedule Interview (${selectedApplicants.length})`"></span>
     </button>
 
-    <!-- Mass Manage (Ghost / Outline) -->
-    <button 
+    <!-- Manage Results Button -->
+    <button
         @click="openBulkManage"
         class="min-w-[160px] bg-[#8B4513] text-white px-5 py-2.5 rounded-lg shadow-sm flex items-center justify-center gap-2
-               hover:bg-[#6F3610] transition-all duration-200 ease-in-out 
+               hover:bg-[#6F3610] transition-all duration-200 ease-in-out
                disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#BD9168]/40 focus:outline-none"
-        :disabled="selectedApplicants.length <= 1">
+        :disabled="selectedApplicants.length === 0">
         <!-- Lucide: Settings -->
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
@@ -75,7 +75,7 @@
                    c-.39.39-.51.96-.33 1.48.18.52.66.91 1.22.91H21a2 2 0 0 1 0 4h-.09 
                    a1.65 1.65 0 0 0-1.51 1z"></path>
         </svg>
-        Mass Manage
+        <span x-text="selectedApplicants.length === 0 ? 'Manage Results' : `Manage Results (${selectedApplicants.length})`"></span>
     </button>
 </div>
 
@@ -153,13 +153,16 @@
             </td>
               <!-- Resume -->
               <td class="py-3 px-4">
-                  @if($application->user->active_status === 'Active' && $application->resume_snapshot)
+                  @if($application->resume_snapshot)
                       <button @click="openResume('{{ asset('storage/' . $application->resume_snapshot) }}')"
                           class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
                           View
                       </button>
-                  @elseif($application->user->active_status === 'Inactive')
-                      <span class="text-gray-400 italic">Inactive</span>
+                  @elseif($application->user->resume && $application->user->resume->resume)
+                      <button @click="openResume('{{ asset('storage/' . $application->user->resume->resume) }}')"
+                          class="bg-[#BD6F22] text-white text-sm font-medium h-8 px-3 rounded shadow hover:bg-[#a95e1d]">
+                          View
+                      </button>
                   @else
                       <span class="text-gray-500 italic">None</span>
                   @endif
@@ -181,59 +184,39 @@
               <!-- Status -->
               <td class="py-3 px-4">
                   <!-- Passed -->
-                  <template x-if="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'interviewed'">
-                      <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-                          Interviewed
-                      </span>
-                  </template>
+                  <span x-show="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'interviewed'"
+                        class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
+                      Interviewed
+                  </span>
 
                   <!-- Failed -->
-                  <template x-if="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'declined'">
-                      <span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-                          Failed
-                      </span>
-                  </template>
+                  <span x-show="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'declined'"
+                        class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
+                      Failed
+                  </span>
 
                   <!-- For Interview -->
-                  <template x-if="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'for_interview'">
-                      <span class="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-                          For Interview
-                      </span>
-                  </template>
+                  <span x-show="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'for_interview'"
+                        class="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
+                      For Interview
+                  </span>
 
                   <!-- Pending -->
-                  <template x-if="!['interviewed','declined','for_interview'].includes(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}')">
-                      <span class="text-xs bg-gray-200 text-gray-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-                          Pending
-                      </span>
-                  </template>
+                  <span x-show="!['interviewed','declined','for_interview'].includes(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}')"
+                        class="text-xs bg-gray-200 text-gray-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
+                      Pending
+                  </span>
               </td>
               
               <!-- Action -->
               <td class="py-3 px-4">
                   @if($application->user->active_status === 'Active')
-                      <div class="flex gap-2">
-                          <button
-                              @click="openSetInterview(
-                                {{ $application->id }},
-                                '{{ $application->user->first_name }} {{ $application->user->last_name }}',
-                                {{ $application->user_id }},
-                                '{{ optional($application->interview)?->scheduled_at ? \Carbon\Carbon::parse($application->interview->scheduled_at)->format('Y-m-d H:i:s') : '' }}'
-                              )"
-                              class="bg-blue-600 text-white text-sm font-medium h-8 px-3 rounded hover:bg-blue-700 disabled:opacity-50"
-                              :disabled="['interviewed','declined'].includes(applicants.find(a => a.id === {{ $application->id }})?.status)"
-                          >
-                            <span x-text="'{{ optional($application->interview)?->scheduled_at ? 'Reschedule' : 'Interview' }}'"></span>
-                          </button>
-
-
-                          <button
-                              @click="openStatusModal({{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}')"
-                              class="bg-green-600 text-white text-sm font-medium h-8 px-3 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                              :disabled="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') !== 'for_interview'">
-                              Manage
-                          </button>
-                      </div>
+                      <button
+                          @click="openStatusModal({{ $application->id }}, '{{ $application->user->first_name }} {{ $application->user->last_name }}')"
+                          class="bg-green-600 text-white text-sm font-medium h-8 px-3 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          :disabled="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') !== 'for_interview'">
+                          Manage
+                      </button>
                   @else
                       <span class="text-gray-400 italic">Inactive</span>
                   @endif
@@ -249,25 +232,7 @@
     </div>
 
     <!-- Feedback Toast -->
-    <div x-show="feedbackVisible"
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0 translate-y-4"
-        x-transition:enter-end="opacity-100 translate-y-0"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100 translate-y-0"
-        x-transition:leave-end="opacity-0 translate-y-4"
-        class="fixed bottom-6 right-6 bg-green-600 text-white px-5 py-4 rounded-xl shadow-lg z-50 w-80 overflow-hidden"
-        x-cloak>
-        <div class="flex items-center gap-3">
-          <svg class="w-6 h-6 text-white animate-checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <span class="font-semibold text-sm" x-text="feedbackMessage"></span>
-        </div>
-        <div class="mt-3 h-1 w-full bg-white/20 rounded overflow-hidden">
-          <div class="h-full bg-white animate-progress-bar"></div>
-        </div>
-    </div>
+    <x-shared.feedbackToast />
 
     <!-- Modals -->
     @include('components.hrAdmin.modals.resume')
@@ -289,8 +254,9 @@
   </div>
 </div>
 
-<!-- Alpine + Handler -->
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<!-- Handlers -->
+<script src="{{ asset('js/utils/checkboxUtils.js') }}"></script>
+<script src="{{ asset('js/utils/timeUtils.js') }}"></script>
 <script src="{{ asset('js/applicantsHandler.js') }}"></script>
 <script src="{{ asset('js/interviewHandler.js') }}"></script>
 

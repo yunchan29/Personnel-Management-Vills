@@ -1,22 +1,22 @@
 <section class="p-6">
     <h1 class="mb-6 text-2xl font-bold text-[#BD6F22]">
-        @if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff']))
+        @if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff']))
         <i class="fas fa-cog mr-2"></i>
         @endif
         Settings
     </h1>
 
     <!-- Change Password Section -->
-    <div class="@if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff'])) bg-gray-50 p-6 rounded-md shadow-md max-w-md @else border-t border-gray-300 pt-4 mb-6 @endif">
-        <h3 class="text-lg font-semibold text-[#BD6F22] mb-@if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff']))4 @else 3 @endif">
-            @if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff']))
+    <div class="@if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff'])) bg-gray-50 p-6 rounded-md shadow-md max-w-md @else border-t border-gray-300 pt-4 mb-6 @endif">
+        <h3 class="text-lg font-semibold text-[#BD6F22] mb-@if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff']))4 @else 3 @endif">
+            @if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff']))
             <i class="fas fa-lock mr-2"></i>Account Security
             @else
             Account Settings
             @endif
         </h3>
 
-        @if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff']))
+        @if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff']))
         <p class="text-gray-500 mb-4 text-sm">
             Update your password regularly to keep your account secure.
         </p>
@@ -25,40 +25,40 @@
         @endif
 
         <form method="POST" action="{{ route('user.changePassword') }}"
-               class="grid grid-cols-1 @if(!in_array(auth()->user()->role, ['HR Admin', 'HR Staff'])) md:grid-cols-3 @endif gap-4 @if(!in_array(auth()->user()->role, ['HR Admin', 'HR Staff'])) items-end mb-4 @endif">
+               class="grid grid-cols-1 @if(!in_array(auth()->user()->role, ['hrAdmin', 'hrStaff'])) md:grid-cols-3 @endif gap-4 @if(!in_array(auth()->user()->role, ['hrAdmin', 'hrStaff'])) items-end mb-4 @endif">
             @csrf
 
             <div>
-                <label @if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff'])) for="current_pass" @endif class="block text-sm @if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff'])) font-semibold @else font-medium @endif text-gray-700 mb-1">
+                <label @if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff'])) for="current_pass" @endif class="block text-sm @if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff'])) font-semibold @else font-medium @endif text-gray-700 mb-1">
                     Current Password
-                    @if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff']))
+                    @if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff']))
                     <i class="fas fa-question-circle ml-1 text-gray-400" title="Enter your existing password first"></i>
                     @endif
                 </label>
-                <input @if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff'])) id="current_pass" @endif name="current_password" type="password" required
+                <input @if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff'])) id="current_pass" @endif name="current_password" type="password" required
                        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
             </div>
 
             <div>
-                <label @if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff'])) for="new_pass" @endif class="block text-sm @if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff'])) font-semibold @else font-medium @endif text-gray-700 mb-1">
+                <label @if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff'])) for="new_pass" @endif class="block text-sm @if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff'])) font-semibold @else font-medium @endif text-gray-700 mb-1">
                     New Password
-                    @if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff']))
+                    @if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff']))
                     <i class="fas fa-question-circle ml-1 text-gray-400" title="Choose a strong password with letters, numbers, and symbols"></i>
                     @endif
                 </label>
-                <input @if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff'])) id="new_pass" @endif name="new_password" type="password" required
+                <input @if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff'])) id="new_pass" @endif name="new_password" type="password" required
                        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
             </div>
 
             <div>
-                <label @if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff'])) for="new_pass_confirm" @endif class="block text-sm @if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff'])) font-semibold @else font-medium @endif text-gray-700 mb-1">
+                <label @if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff'])) for="new_pass_confirm" @endif class="block text-sm @if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff'])) font-semibold @else font-medium @endif text-gray-700 mb-1">
                     Re-type Password
                 </label>
-                <input @if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff'])) id="new_pass_confirm" @endif name="new_password_confirmation" type="password" required
+                <input @if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff'])) id="new_pass_confirm" @endif name="new_password_confirmation" type="password" required
                        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
             </div>
 
-            <div class="@if(!in_array(auth()->user()->role, ['HR Admin', 'HR Staff'])) md:col-span-3 @endif text-right mt-@if(in_array(auth()->user()->role, ['HR Admin', 'HR Staff']))4 @else 2 @endif">
+            <div class="@if(!in_array(auth()->user()->role, ['hrAdmin', 'hrStaff'])) md:col-span-3 @endif text-right mt-@if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff']))4 @else 2 @endif">
                 <button type="submit"
                         class="bg-[#BD6F22] hover:bg-[#a75f1c] text-white font-semibold px-4 py-2 rounded-md transition">
                     Save

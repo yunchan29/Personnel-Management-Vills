@@ -1,5 +1,6 @@
 <!-- Login Modal -->
 <div x-show="activeModal === 'login'"
+     x-data="loginModal()"
      x-transition:enter="transition ease-out duration-300"
      x-transition:enter-start="opacity-0"
      x-transition:enter-end="opacity-100"
@@ -120,3 +121,59 @@
         </div>
     </div>
 </div>
+
+<!-- Login Modal Script -->
+<script>
+    function loginModal() {
+        return {
+            // Login form
+            loginForm: {
+                email: '',
+                password: '',
+                remember: false
+            },
+            loginErrors: [],
+            loginStatus: '',
+            loginLoading: false,
+            showLoginPassword: false,
+
+            // Submit login form
+            async submitLogin() {
+                this.loginLoading = true;
+                this.loginErrors = [];
+                this.loginStatus = '';
+
+                try {
+                    const response = await axios.post('/login', this.loginForm, {
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                        }
+                    });
+
+                    if (response.data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Login Successful!',
+                            text: response.data.message || 'Welcome back!',
+                            confirmButtonColor: '#BD6F22',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = response.data.redirect || '/home';
+                        });
+                    }
+                } catch (error) {
+                    if (error.response?.data?.errors) {
+                        this.loginErrors = Object.values(error.response.data.errors).flat();
+                    } else if (error.response?.data?.message) {
+                        this.loginErrors = [error.response.data.message];
+                    } else {
+                        this.loginErrors = ['An error occurred. Please try again.'];
+                    }
+                } finally {
+                    this.loginLoading = false;
+                }
+            }
+        };
+    }
+</script>

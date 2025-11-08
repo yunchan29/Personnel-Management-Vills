@@ -1,4 +1,4 @@
-@extends(auth()->user()->role === 'HR Admin' ? 'layouts.hrAdmin' : 'layouts.hrStaff')
+@extends(auth()->user()->role === 'hrAdmin' ? 'layouts.hrAdmin' : 'layouts.hrStaff')
 
 @section('content')
 <div class="max-w-7xl mx-auto px-6 py-8"
@@ -92,7 +92,7 @@
 
                     <div class="mb-4">
                         <label class="block text-sm text-gray-700 mb-1">Attachment:</label>
-                        @if(auth()->user()->role === 'HR Admin')
+                        @if(auth()->user()->role === 'hrAdmin')
                             <button type="button"
                                 class="text-blue-600 hover:underline text-sm"
                                 @click="openAttachmentModal('/storage/' + selectedForm.file_path)">
@@ -160,7 +160,7 @@
 
                     <div class="mb-4">
                         <label class="block text-sm text-gray-700 mb-1">Attachment:</label>
-                        @if(auth()->user()->role === 'HR Admin')
+                        @if(auth()->user()->role === 'hrAdmin')
                             <button class="text-blue-600 hover:underline text-sm" @click="openAttachmentModal('/storage/' + selectedForm.file_path)">
                                 View Attachment
                             </button>
@@ -188,7 +188,7 @@
         </div>
     </div>
 
-    @if(auth()->user()->role === 'HR Admin')
+    @if(auth()->user()->role === 'hrAdmin')
     <!-- Attachment Modal (HR Admin only) -->
     <div class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
          x-show="showAttachmentModal"

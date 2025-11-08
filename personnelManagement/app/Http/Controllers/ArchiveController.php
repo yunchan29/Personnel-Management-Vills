@@ -10,11 +10,6 @@ class ArchiveController extends Controller
 {
     public function index()
     {
-        // Verify user has HR Admin role
-        if (Auth::user()->role !== 'hrAdmin') {
-            abort(403, 'Unauthorized. Only HR Admin can access archives.');
-        }
-
         // Get archived applications (not users)
         $applications = Application::with(['user', 'job'])
             ->where('is_archived', true)
@@ -25,11 +20,6 @@ class ArchiveController extends Controller
 
     public function restore($id)
     {
-        // Verify user has HR Admin role
-        if (Auth::user()->role !== 'hrAdmin') {
-            abort(403, 'Unauthorized. Only HR Admin can restore applications.');
-        }
-
         $application = Application::findOrFail($id);
 
         // Restore to previous status if available, otherwise fallback to "Pending"
@@ -44,11 +34,6 @@ class ArchiveController extends Controller
 
     public function destroy($id)
     {
-        // Verify user has HR Admin role
-        if (Auth::user()->role !== 'hrAdmin') {
-            abort(403, 'Unauthorized. Only HR Admin can delete applications.');
-        }
-
         $application = Application::findOrFail($id);
 
         $application->delete(); // permanently delete application only

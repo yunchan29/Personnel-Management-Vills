@@ -49,7 +49,7 @@ class InitialApplicationController extends Controller
 
         $jobs = $jobsQuery->get();
 
-        $applicationsQuery = Application::with('user', 'job')->latest();
+        $applicationsQuery = Application::with('user.resume', 'job')->latest();
 
         if ($request->filled('company_name')) {
             $applicationsQuery->whereHas('job', function ($q) use ($request) {
@@ -75,27 +75,27 @@ class InitialApplicationController extends Controller
     ])->get();
 
     // Main applicants list (exclude hired + declined)
-    $applications = Application::with(['user', 'job', 'interview', 'trainingSchedule'])
+    $applications = Application::with(['user.resume', 'job', 'interview', 'trainingSchedule'])
         ->where('job_id', $jobId)
         ->whereNotIn('status', ['hired', 'declined'])
         ->get();
 
     // Approved applicants (approved + for_interview, but still exclude hired/declined just in case)
-    $approvedApplicants = Application::with(['user', 'job', 'trainingSchedule'])
+    $approvedApplicants = Application::with(['user.resume', 'job', 'trainingSchedule'])
         ->where('job_id', $jobId)
         ->whereIn('status', ['approved', 'for_interview'])
         ->whereNotIn('status', ['hired', 'declined'])
         ->get();
 
     // Interview applicants
-    $interviewApplicants = Application::with(['user', 'job', 'trainingSchedule'])
+    $interviewApplicants = Application::with(['user.resume', 'job', 'trainingSchedule'])
         ->where('job_id', $jobId)
         ->whereIn('status', ['interviewed', 'scheduled_for_training'])
         ->whereNotIn('status', ['hired', 'declined'])
         ->get();
 
     // For training applicants
-    $forTrainingApplicants = Application::with(['user', 'job', 'trainingSchedule'])
+    $forTrainingApplicants = Application::with(['user.resume', 'job', 'trainingSchedule'])
         ->where('job_id', $jobId)
         ->where('status', 'for_evaluation')
         ->whereNotIn('status', ['hired', 'declined'])

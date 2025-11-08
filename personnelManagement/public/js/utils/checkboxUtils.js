@@ -3,7 +3,7 @@
  * Shared checkbox management functions for bulk selection
  */
 
-export const CheckboxUtils = {
+window.CheckboxUtils = {
     /**
      * Toggle all visible checkboxes
      * @param {Event} event - The checkbox change event

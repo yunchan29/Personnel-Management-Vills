@@ -402,7 +402,7 @@ provinceSelect.addEventListener('change', () => {
     const provCode = provinceSelect.value;
     citySelect.innerHTML = '<option value="">-- Select City --</option>';
     barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
-    @if(auth()->user()->role === 'employee' || in_array(auth()->user()->role, ['HR Admin', 'HR Staff']))
+    @if(auth()->user()->role === 'employee' || in_array(auth()->user()->role, ['hrAdmin', 'hrStaff']))
     citySelect.disabled = true;
     barangaySelect.disabled = true;
     @endif
@@ -435,7 +435,7 @@ provinceSelect.addEventListener('change', () => {
 citySelect.addEventListener('change', () => {
     const cityCode = citySelect.value;
     barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
-    @if(auth()->user()->role === 'employee' || in_array(auth()->user()->role, ['HR Admin', 'HR Staff']))
+    @if(auth()->user()->role === 'employee' || in_array(auth()->user()->role, ['hrAdmin', 'hrStaff']))
     barangaySelect.disabled = true;
     @endif
     if (!cityCode) return;

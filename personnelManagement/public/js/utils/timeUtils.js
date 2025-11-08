@@ -3,7 +3,7 @@
  * Shared time conversion and formatting functions
  */
 
-export const TimeUtils = {
+window.TimeUtils = {
     /**
      * Convert 12-hour time to 24-hour format
      * @param {number} hour - Hour in 12-hour format (1-12)

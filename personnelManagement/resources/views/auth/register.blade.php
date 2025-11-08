@@ -1,5 +1,6 @@
 <!-- Register Modal -->
 <div x-show="activeModal === 'register'"
+     x-data="registerModal()"
      x-transition:enter="transition ease-out duration-300"
      x-transition:enter-start="opacity-0"
      x-transition:enter-end="opacity-100"
@@ -100,7 +101,8 @@
                         <!-- Birthdate -->
                         <div class="w-1/2"
                              x-data="birthdatePicker()"
-                             x-init="init()">
+                             x-init="init()"
+                             @update-birth-date.window="registerForm.birth_date = $event.detail">
                             <label for="reg_birth_date" class="block text-gray-700 mb-1 text-sm">Birthdate <span class="text-red-500">*</span></label>
                             <div class="relative">
                                 <input type="text"
@@ -324,3 +326,232 @@
         </div>
     </div>
 </div>
+
+<!-- Birthdate Picker Script -->
+<script>
+    function birthdatePicker() {
+      return {
+        // Constants
+        minYear: 1900,
+        maxYear: new Date().getFullYear() - 18,
+        minAge: 18,
+
+        // Day names
+        dayNames: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+
+        // Month names
+        months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+
+        // State
+        showPicker: false,
+        pickerYear: new Date().getFullYear() - 18,
+        pickerMonth: new Date().getMonth(),
+        selectedDate: null,
+        ageError: '',
+
+        // Initialization
+        init() {
+          // Component initialized
+        },
+
+        // Computed: Calendar days grid
+        get calendarDays() {
+          const firstDay = new Date(this.pickerYear, this.pickerMonth, 1).getDay();
+          const daysInMonth = new Date(this.pickerYear, this.pickerMonth + 1, 0).getDate();
+          const days = [];
+
+          // Empty cells for days before month starts
+          for (let i = 0; i < firstDay; i++) {
+            days.push({ day: null, disabled: true });
+          }
+
+          // Calculate max allowed date (18 years ago from today)
+          const today = new Date();
+          const maxDate = new Date(today.getFullYear() - this.minAge, today.getMonth(), today.getDate());
+
+          // Generate days of the month
+          for (let i = 1; i <= daysInMonth; i++) {
+            const date = new Date(this.pickerYear, this.pickerMonth, i);
+            const isFuture = date > maxDate;
+            const isSelected = this.selectedDate &&
+                              date.toDateString() === this.selectedDate.toDateString();
+
+            days.push({
+              day: i,
+              disabled: isFuture,
+              isFuture,
+              isSelected
+            });
+          }
+
+          return days;
+        },
+
+        // Methods
+        togglePicker() {
+          this.showPicker = !this.showPicker;
+        },
+
+        closePicker() {
+          this.showPicker = false;
+        },
+
+        validateAge(date) {
+          const today = new Date();
+          const birthDate = new Date(date);
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const monthDiff = today.getMonth() - birthDate.getMonth();
+
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+
+          return age >= this.minAge;
+        },
+
+        selectDay(day) {
+          if (!day) return;
+
+          this.selectedDate = new Date(this.pickerYear, this.pickerMonth, day);
+
+          // Validate age requirement
+          if (!this.validateAge(this.selectedDate)) {
+            this.ageError = `You must be at least ${this.minAge} years old to register`;
+            // Dispatch event to clear birth_date in parent component
+            this.$dispatch('update-birth-date', '');
+            return;
+          }
+
+          // Clear error and format date
+          this.ageError = '';
+          const month = String(this.pickerMonth + 1).padStart(2, '0');
+          const dayStr = String(day).padStart(2, '0');
+          const formattedDate = `${month}/${dayStr}/${this.pickerYear}`;
+
+          // Dispatch event to update birth_date in parent component
+          this.$dispatch('update-birth-date', formattedDate);
+
+          // Close picker
+          this.closePicker();
+        },
+
+        navigateToPreviousMonth() {
+          if (this.pickerMonth === 0) {
+            this.pickerMonth = 11;
+            this.pickerYear--;
+          } else {
+            this.pickerMonth--;
+          }
+        },
+
+        navigateToNextMonth() {
+          const today = new Date();
+          const maxYear = today.getFullYear() - this.minAge;
+          const maxMonth = today.getMonth();
+
+          if (this.pickerMonth === 11) {
+            if (this.pickerYear < maxYear) {
+              this.pickerMonth = 0;
+              this.pickerYear++;
+            }
+          } else {
+            // Check if we can advance to next month
+            if (this.pickerYear < maxYear || (this.pickerYear === maxYear && this.pickerMonth < maxMonth)) {
+              this.pickerMonth++;
+            }
+          }
+        }
+      };
+    }
+
+    // Register Modal Component
+    function registerModal() {
+        return {
+            // Register form
+            registerForm: {
+                first_name: '',
+                last_name: '',
+                email: '',
+                birth_date: '',
+                gender: '',
+                password: '',
+                password_confirmation: '',
+                terms: false
+            },
+            registerErrors: [],
+            registerLoading: false,
+            showRegPassword: false,
+            showRegConfirmPassword: false,
+            showPasswordRules: false,
+            passwordRules: {
+                length: false,
+                lowercase: false,
+                uppercase: false,
+                number: false,
+                special: false,
+                match: false
+            },
+
+            // Validate register password
+            validateRegisterPassword() {
+                const password = this.registerForm.password;
+                const confirm = this.registerForm.password_confirmation;
+
+                this.passwordRules.length = password.length >= 8;
+                this.passwordRules.lowercase = /[a-z]/.test(password);
+                this.passwordRules.uppercase = /[A-Z]/.test(password);
+                this.passwordRules.number = /[0-9]/.test(password);
+                this.passwordRules.special = /[@$!%*#?&]/.test(password);
+                this.passwordRules.match = password && confirm && password === confirm;
+            },
+
+            // Check if register form is valid
+            get isRegisterFormValid() {
+                return this.passwordRules.length &&
+                       this.passwordRules.lowercase &&
+                       this.passwordRules.uppercase &&
+                       this.passwordRules.number &&
+                       this.passwordRules.special &&
+                       this.passwordRules.match &&
+                       this.registerForm.terms;
+            },
+
+            // Submit register form
+            async submitRegister() {
+                this.registerLoading = true;
+                this.registerErrors = [];
+
+                try {
+                    const response = await axios.post('/register', this.registerForm, {
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                        }
+                    });
+
+                    if (response.data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Registration Successful!',
+                            text: response.data.message || 'Your account has been created!',
+                            confirmButtonColor: '#BD6F22',
+                            timer: 2500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = response.data.redirect || '/home';
+                        });
+                    }
+                } catch (error) {
+                    if (error.response?.data?.errors) {
+                        this.registerErrors = Object.values(error.response.data.errors).flat();
+                    } else if (error.response?.data?.message) {
+                        this.registerErrors = [error.response.data.message];
+                    } else {
+                        this.registerErrors = ['An error occurred. Please try again.'];
+                    }
+                } finally {
+                    this.registerLoading = false;
+                }
+            }
+        };
+    }
+</script>
