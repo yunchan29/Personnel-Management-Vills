@@ -68,245 +68,150 @@
                     <!-- First Name and Last Name -->
                     <div class="flex space-x-2 mb-4">
                         <div class="w-1/2">
-                            <label for="reg_first_name" class="block text-gray-700 mb-1">First Name <span class="text-red-500">*</span></label>
+                            <label for="reg_first_name" class="block text-gray-700 mb-1 text-sm">First Name <span class="text-red-500">*</span></label>
                             <input type="text"
                                    x-model="registerForm.first_name"
                                    id="reg_first_name"
                                    required
-                                   class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+                                   class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
                         </div>
                         <div class="w-1/2">
-                            <label for="reg_last_name" class="block text-gray-700 mb-1">Last Name <span class="text-red-500">*</span></label>
+                            <label for="reg_last_name" class="block text-gray-700 mb-1 text-sm">Last Name <span class="text-red-500">*</span></label>
                             <input type="text"
                                    x-model="registerForm.last_name"
                                    id="reg_last_name"
                                    required
-                                   class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+                                   class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
                         </div>
                     </div>
 
                     <!-- Email -->
                     <div class="mb-4">
-                        <label for="reg_email" class="block text-gray-700 mb-1">Email Address <span class="text-red-500">*</span></label>
+                        <label for="reg_email" class="block text-gray-700 mb-1 text-sm">Email Address <span class="text-red-500">*</span></label>
                         <input type="email"
                                x-model="registerForm.email"
                                id="reg_email"
                                required
-                               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+                               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
                     </div>
 
                     <!-- Birthdate and Gender -->
                     <div class="flex space-x-2 mb-4">
-                        <div class="w-1/2 relative" x-data="{
-                            showPicker: false,
-                            pickerYear: new Date().getFullYear() - 18,
-                            pickerMonth: new Date().getMonth(),
-                            selectedDate: null,
-                            ageError: '',
-
-                            get monthName() {
-                                const months = ['January', 'February', 'March', 'April', 'May', 'June',
-                                              'July', 'August', 'September', 'October', 'November', 'December'];
-                                return months[this.pickerMonth];
-                            },
-
-                            get calendarDays() {
-                                const firstDay = new Date(this.pickerYear, this.pickerMonth, 1).getDay();
-                                const daysInMonth = new Date(this.pickerYear, this.pickerMonth + 1, 0).getDate();
-                                const days = [];
-
-                                // Empty cells for days before month starts
-                                for (let i = 0; i < firstDay; i++) {
-                                    days.push({ day: null, disabled: true });
-                                }
-
-                                // Days of the month
-                                const today = new Date();
-                                const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-
-                                for (let i = 1; i <= daysInMonth; i++) {
-                                    const date = new Date(this.pickerYear, this.pickerMonth, i);
-                                    const isFuture = date > maxDate;
-                                    const isSelected = this.selectedDate &&
-                                                      date.toDateString() === this.selectedDate.toDateString();
-                                    days.push({ day: i, disabled: isFuture, isFuture, isSelected });
-                                }
-
-                                return days;
-                            },
-
-                            validateAge(date) {
-                                const today = new Date();
-                                const birthDate = new Date(date);
-                                let age = today.getFullYear() - birthDate.getFullYear();
-                                const monthDiff = today.getMonth() - birthDate.getMonth();
-
-                                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                                    age--;
-                                }
-
-                                return age >= 18;
-                            },
-
-                            selectDay(day) {
-                                if (day) {
-                                    this.selectedDate = new Date(this.pickerYear, this.pickerMonth, day);
-
-                                    if (!this.validateAge(this.selectedDate)) {
-                                        this.ageError = 'You must be at least 18 years old to register';
-                                        registerForm.birth_date = '';
-                                        return;
-                                    }
-
-                                    this.ageError = '';
-                                    const month = String(this.pickerMonth + 1).padStart(2, '0');
-                                    const dayStr = String(day).padStart(2, '0');
-                                    registerForm.birth_date = `${month}/${dayStr}/${this.pickerYear}`;
-                                    this.showPicker = false;
-                                }
-                            },
-
-                            prevMonth() {
-                                if (this.pickerMonth === 0) {
-                                    this.pickerMonth = 11;
-                                    this.pickerYear--;
-                                } else {
-                                    this.pickerMonth--;
-                                }
-                            },
-
-                            nextMonth() {
-                                const today = new Date();
-                                const maxYear = today.getFullYear() - 18;
-                                const maxMonth = today.getMonth();
-
-                                if (this.pickerMonth === 11) {
-                                    if (this.pickerYear < maxYear) {
-                                        this.pickerMonth = 0;
-                                        this.pickerYear++;
-                                    }
-                                } else {
-                                    // Check if we can go to next month
-                                    if (this.pickerYear < maxYear || (this.pickerYear === maxYear && this.pickerMonth < maxMonth)) {
-                                        this.pickerMonth++;
-                                    }
-                                }
-                            }
-                        }">
-                            <label for="reg_birth_date" class="block text-gray-700 mb-1">Birthdate <span class="text-red-500">*</span></label>
+                        <!-- Birthdate -->
+                        <div class="w-1/2"
+                             x-data="birthdatePicker()"
+                             x-init="init()">
+                            <label for="reg_birth_date" class="block text-gray-700 mb-1 text-sm">Birthdate <span class="text-red-500">*</span></label>
                             <div class="relative">
                                 <input type="text"
                                        x-model="registerForm.birth_date"
-                                       @click="showPicker = !showPicker"
+                                       @click="togglePicker"
                                        id="reg_birth_date"
                                        readonly
                                        required
                                        placeholder="MM/DD/YYYY"
-                                       class="w-full px-4 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22] cursor-pointer bg-white">
-                                <svg @click="showPicker = !showPicker" class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                       class="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22] cursor-pointer bg-white">
+                                <svg @click="togglePicker"
+                                     class="absolute right-2 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 cursor-pointer"
+                                     fill="none"
+                                     stroke="currentColor"
+                                     viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                 </svg>
-                            </div>
 
-                            <!-- Age Validation Error -->
-                            <div x-show="ageError"
-                                 x-transition
-                                 class="absolute left-0 top-full mt-1 text-xs text-red-600 whitespace-nowrap"
-                                 x-text="ageError"
-                                 x-cloak>
-                            </div>
+                                <!-- Age Validation Error -->
+                                <div x-show="ageError"
+                                     x-transition
+                                     class="absolute left-0 top-full mt-1 text-xs text-red-600 whitespace-nowrap z-10"
+                                     x-text="ageError"
+                                     x-cloak>
+                                </div>
 
-                            <!-- Modern Date Picker Dropup -->
-                            <div x-show="showPicker"
-                                 @click.away="showPicker = false"
-                                 x-transition:enter="transition ease-out duration-200"
-                                 x-transition:enter-start="opacity-0 scale-95 translate-y-2"
-                                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                                 x-transition:leave="transition ease-in duration-150"
-                                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                                 x-transition:leave-end="opacity-0 scale-95 translate-y-2"
-                                 class="absolute left-0 md:left-auto md:right-0 bottom-full mb-2 z-[9999] bg-white border border-gray-200 rounded-xl shadow-2xl p-3 w-[280px] sm:w-80"
-                                 x-cloak>
+                                <!-- Date Picker Dropdown - Specialized for Register Modal -->
+                                <div x-show="showPicker"
+                                     @click.away="closePicker"
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 scale-95"
+                                     x-transition:enter-end="opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100 scale-100"
+                                     x-transition:leave-end="opacity-0 scale-95"
+                                     class="absolute left-0 top-full mt-2 z-[99999] bg-white border-2 border-[#BD6F22] rounded-xl shadow-2xl p-3 w-[280px]"
+                                     x-cloak>
 
-                                <!-- Header with Month/Year Navigation -->
-                                <div class="flex items-center justify-between mb-3">
-                                    <button type="button"
-                                            @click="prevMonth"
-                                            class="p-1.5 hover:bg-gray-100 rounded-lg transition flex-shrink-0">
-                                        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                                        </svg>
-                                    </button>
+                                    <!-- Header: Month/Year Navigation -->
+                                    <div class="flex items-center justify-between mb-3">
+                                        <button type="button"
+                                                @click="navigateToPreviousMonth"
+                                                class="p-1.5 hover:bg-gray-100 rounded-lg transition flex-shrink-0"
+                                                aria-label="Previous month">
+                                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                            </svg>
+                                        </button>
 
-                                    <div class="flex items-center gap-1.5 flex-1 justify-center">
-                                        <select x-model.number="pickerMonth"
-                                                class="px-2 py-1 border border-gray-300 rounded-lg text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#BD6F22] flex-shrink-0">
-                                            <option value="0">Jan</option>
-                                            <option value="1">Feb</option>
-                                            <option value="2">Mar</option>
-                                            <option value="3">Apr</option>
-                                            <option value="4">May</option>
-                                            <option value="5">Jun</option>
-                                            <option value="6">Jul</option>
-                                            <option value="7">Aug</option>
-                                            <option value="8">Sep</option>
-                                            <option value="9">Oct</option>
-                                            <option value="10">Nov</option>
-                                            <option value="11">Dec</option>
-                                        </select>
+                                        <div class="flex items-center gap-1.5 flex-1 justify-center">
+                                            <select x-model.number="pickerMonth"
+                                                    class="px-2 py-1 border border-gray-300 rounded-lg text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#BD6F22] flex-shrink-0">
+                                                <template x-for="(month, index) in months" :key="index">
+                                                    <option :value="index" x-text="month"></option>
+                                                </template>
+                                            </select>
 
-                                        <input type="number"
-                                               x-model.number="pickerYear"
-                                               min="1900"
-                                               :max="new Date().getFullYear() - 18"
-                                               class="w-16 sm:w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+                                            <input type="number"
+                                                   x-model.number="pickerYear"
+                                                   :min="minYear"
+                                                   :max="maxYear"
+                                                   class="w-16 sm:w-20 px-2 py-1 border border-gray-300 rounded-lg text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+                                        </div>
+
+                                        <button type="button"
+                                                @click="navigateToNextMonth"
+                                                class="p-1.5 hover:bg-gray-100 rounded-lg transition flex-shrink-0"
+                                                aria-label="Next month">
+                                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                            </svg>
+                                        </button>
                                     </div>
 
-                                    <button type="button"
-                                            @click="nextMonth"
-                                            class="p-1.5 hover:bg-gray-100 rounded-lg transition flex-shrink-0">
-                                        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                        </svg>
-                                    </button>
-                                </div>
+                                    <!-- Day Names Header -->
+                                    <div class="grid grid-cols-7 gap-0.5 mb-1">
+                                        <template x-for="day in dayNames" :key="day">
+                                            <div class="text-center text-[10px] font-semibold text-gray-500 py-1" x-text="day"></div>
+                                        </template>
+                                    </div>
 
-                                <!-- Day Names -->
-                                <div class="grid grid-cols-7 gap-0.5 mb-1.5">
-                                    <div class="text-center text-[10px] sm:text-xs font-semibold text-gray-500 py-1">Su</div>
-                                    <div class="text-center text-[10px] sm:text-xs font-semibold text-gray-500 py-1">Mo</div>
-                                    <div class="text-center text-[10px] sm:text-xs font-semibold text-gray-500 py-1">Tu</div>
-                                    <div class="text-center text-[10px] sm:text-xs font-semibold text-gray-500 py-1">We</div>
-                                    <div class="text-center text-[10px] sm:text-xs font-semibold text-gray-500 py-1">Th</div>
-                                    <div class="text-center text-[10px] sm:text-xs font-semibold text-gray-500 py-1">Fr</div>
-                                    <div class="text-center text-[10px] sm:text-xs font-semibold text-gray-500 py-1">Sa</div>
-                                </div>
-
-                                <!-- Calendar Grid -->
-                                <div class="grid grid-cols-7 gap-0.5 sm:gap-1">
-                                    <template x-for="(dayObj, index) in calendarDays" :key="index">
-                                        <button type="button"
-                                                @click="selectDay(dayObj.day)"
-                                                :disabled="dayObj.disabled"
-                                                :class="{
-                                                    'invisible': !dayObj.day,
-                                                    'bg-[#BD6F22] text-white font-semibold hover:bg-[#a35718]': dayObj.isSelected,
-                                                    'opacity-40 cursor-not-allowed': dayObj.isFuture,
-                                                    'hover:bg-gray-100': !dayObj.disabled && !dayObj.isSelected && !dayObj.isFuture
-                                                }"
-                                                class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg text-xs sm:text-sm flex items-center justify-center transition-colors">
-                                            <span x-text="dayObj.day"></span>
-                                        </button>
-                                    </template>
+                                    <!-- Calendar Grid -->
+                                    <div class="grid grid-cols-7 gap-0.5">
+                                        <template x-for="(dayObj, index) in calendarDays" :key="index">
+                                            <button type="button"
+                                                    @click="selectDay(dayObj.day)"
+                                                    :disabled="dayObj.disabled"
+                                                    :class="{
+                                                        'invisible': !dayObj.day,
+                                                        'bg-[#BD6F22] text-white font-semibold hover:bg-[#a35718]': dayObj.isSelected,
+                                                        'opacity-40 cursor-not-allowed': dayObj.isFuture,
+                                                        'hover:bg-gray-100 text-gray-700': !dayObj.disabled && !dayObj.isSelected && !dayObj.isFuture,
+                                                        'text-gray-800': dayObj.day && !dayObj.isSelected && !dayObj.isFuture
+                                                    }"
+                                                    class="w-9 h-9 rounded text-xs flex items-center justify-center transition-colors">
+                                                <span x-text="dayObj.day"></span>
+                                            </button>
+                                        </template>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Gender -->
                         <div class="w-1/2">
-                            <label for="reg_gender" class="block text-gray-700 mb-1">Gender <span class="text-red-500">*</span></label>
+                            <label for="reg_gender" class="block text-gray-700 mb-1 text-sm">Gender <span class="text-red-500">*</span></label>
                             <select x-model="registerForm.gender"
                                     id="reg_gender"
                                     required
-                                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+                                    class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
                                 <option value="" disabled>Gender</option>
                                 <option value="male">Male</option>
                                 <option value="female">Female</option>
@@ -317,7 +222,7 @@
 
                     <!-- Password Field -->
                     <div class="mb-4">
-                        <label for="reg_password" class="block text-gray-700 mb-1">Password <span class="text-red-500">*</span></label>
+                        <label for="reg_password" class="block text-gray-700 mb-1 text-sm">Password <span class="text-red-500">*</span></label>
                         <div class="relative">
                             <input :type="showRegPassword ? 'text' : 'password'"
                                    x-model="registerForm.password"
@@ -325,27 +230,27 @@
                                    @focus="showPasswordRules = true"
                                    id="reg_password"
                                    required
-                                   class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22] pr-20">
+                                   class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22] pr-16">
                             <button type="button"
                                     @click="showRegPassword = !showRegPassword"
-                                    class="absolute right-3 top-2 text-sm text-[#BD6F22]"
+                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-[#BD6F22]"
                                     x-text="showRegPassword ? 'Hide' : 'Show'"></button>
                         </div>
                     </div>
 
-                    <!-- Confirm Password -->
+                    <!-- Re-type Password -->
                     <div class="mb-4">
-                        <label for="reg_password_confirmation" class="block text-gray-700 mb-1">Re-type Password <span class="text-red-500">*</span></label>
+                        <label for="reg_password_confirmation" class="block text-gray-700 mb-1 text-sm">Re-type Password <span class="text-red-500">*</span></label>
                         <div class="relative">
                             <input :type="showRegConfirmPassword ? 'text' : 'password'"
                                    x-model="registerForm.password_confirmation"
                                    @input="validateRegisterPassword"
                                    id="reg_password_confirmation"
                                    required
-                                   class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22] pr-20">
+                                   class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BD6F22] pr-16">
                             <button type="button"
                                     @click="showRegConfirmPassword = !showRegConfirmPassword"
-                                    class="absolute right-3 top-2 text-sm text-[#BD6F22]"
+                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-[#BD6F22]"
                                     x-text="showRegConfirmPassword ? 'Hide' : 'Show'"></button>
                         </div>
                     </div>

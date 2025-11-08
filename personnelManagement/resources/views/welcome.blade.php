@@ -593,6 +593,138 @@
         }
       }
     }
+
+    // Birthdate Picker Component
+    function birthdatePicker() {
+      return {
+        // Constants
+        minYear: 1900,
+        maxYear: new Date().getFullYear() - 18,
+        minAge: 18,
+
+        // Day names
+        dayNames: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+
+        // Month names
+        months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+
+        // State
+        showPicker: false,
+        pickerYear: new Date().getFullYear() - 18,
+        pickerMonth: new Date().getMonth(),
+        selectedDate: null,
+        ageError: '',
+
+        // Initialization
+        init() {
+          // Component initialized
+        },
+
+        // Computed: Calendar days grid
+        get calendarDays() {
+          const firstDay = new Date(this.pickerYear, this.pickerMonth, 1).getDay();
+          const daysInMonth = new Date(this.pickerYear, this.pickerMonth + 1, 0).getDate();
+          const days = [];
+
+          // Empty cells for days before month starts
+          for (let i = 0; i < firstDay; i++) {
+            days.push({ day: null, disabled: true });
+          }
+
+          // Calculate max allowed date (18 years ago from today)
+          const today = new Date();
+          const maxDate = new Date(today.getFullYear() - this.minAge, today.getMonth(), today.getDate());
+
+          // Generate days of the month
+          for (let i = 1; i <= daysInMonth; i++) {
+            const date = new Date(this.pickerYear, this.pickerMonth, i);
+            const isFuture = date > maxDate;
+            const isSelected = this.selectedDate &&
+                              date.toDateString() === this.selectedDate.toDateString();
+
+            days.push({
+              day: i,
+              disabled: isFuture,
+              isFuture,
+              isSelected
+            });
+          }
+
+          return days;
+        },
+
+        // Methods
+        togglePicker() {
+          this.showPicker = !this.showPicker;
+        },
+
+        closePicker() {
+          this.showPicker = false;
+        },
+
+        validateAge(date) {
+          const today = new Date();
+          const birthDate = new Date(date);
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const monthDiff = today.getMonth() - birthDate.getMonth();
+
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+
+          return age >= this.minAge;
+        },
+
+        selectDay(day) {
+          if (!day) return;
+
+          this.selectedDate = new Date(this.pickerYear, this.pickerMonth, day);
+
+          // Validate age requirement
+          if (!this.validateAge(this.selectedDate)) {
+            this.ageError = `You must be at least ${this.minAge} years old to register`;
+            registerForm.birth_date = '';
+            return;
+          }
+
+          // Clear error and format date
+          this.ageError = '';
+          const month = String(this.pickerMonth + 1).padStart(2, '0');
+          const dayStr = String(day).padStart(2, '0');
+          registerForm.birth_date = `${month}/${dayStr}/${this.pickerYear}`;
+
+          // Close picker
+          this.closePicker();
+        },
+
+        navigateToPreviousMonth() {
+          if (this.pickerMonth === 0) {
+            this.pickerMonth = 11;
+            this.pickerYear--;
+          } else {
+            this.pickerMonth--;
+          }
+        },
+
+        navigateToNextMonth() {
+          const today = new Date();
+          const maxYear = today.getFullYear() - this.minAge;
+          const maxMonth = today.getMonth();
+
+          if (this.pickerMonth === 11) {
+            if (this.pickerYear < maxYear) {
+              this.pickerMonth = 0;
+              this.pickerYear++;
+            }
+          } else {
+            // Check if we can advance to next month
+            if (this.pickerYear < maxYear || (this.pickerYear === maxYear && this.pickerMonth < maxMonth)) {
+              this.pickerMonth++;
+            }
+          }
+        }
+      };
+    }
   </script>
 
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
