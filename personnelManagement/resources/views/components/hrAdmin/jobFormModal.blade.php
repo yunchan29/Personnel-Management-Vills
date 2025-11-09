@@ -166,30 +166,33 @@
                 </div>
             </div>
 
-            <div class="flex justify-end items-center mt-6 flex-wrap gap-3">
+            <div class="flex justify-end items-center mt-6 gap-3">
 
                 {{-- Delete Button (only if not expired) --}}
                 <template x-if="isEdit && !isExpired">
-                    <form 
-                        :id="`delete-form-${job.id}`"
-                        :action="`/hrAdmin/jobPosting/${job.id}`" 
-                        method="POST"
-                    >
-                        @csrf
-                        @method('DELETE')
-                        <button 
-                            type="button"
-                            @click="confirmDelete(job.id)"
-                            class="px-4 py-2 w-[110px] bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm"
+                    <div>
+                        <form
+                            :id="`delete-form-${job.id}`"
+                            :action="`/hrAdmin/jobPosting/${job.id}`"
+                            method="POST"
+                            class="inline"
                         >
-                            Delete
-                        </button>
-                    </form>
+                            @csrf
+                            @method('DELETE')
+                            <button
+                                type="button"
+                                @click="confirmDelete(job.id)"
+                                class="px-4 py-2 w-[110px] bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm"
+                            >
+                                Delete
+                            </button>
+                        </form>
+                    </div>
                 </template>
 
                 {{-- Update / Save Button --}}
-                <button 
-                    type="submit" 
+                <button
+                    type="submit"
                     class="px-4 py-2 w-[110px] bg-[#BD6F22] text-white rounded-md hover:bg-[#a65e1d] transition text-sm"
                 >
                     <span x-text="isEdit ? 'Update' : 'Save'"></span>

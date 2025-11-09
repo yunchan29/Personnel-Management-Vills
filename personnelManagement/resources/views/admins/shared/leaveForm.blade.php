@@ -3,7 +3,7 @@
 @section('content')
 <div class="max-w-7xl mx-auto px-6 py-8"
      x-data="draggableModal()"
-     x-init="initDrag()"
+     x-init="initDrag(); checkFlashMessage()"
 >
     <h1 class="text-2xl font-semibold text-[#BD6F22] mb-6">Leave Form</h1>
 
@@ -63,7 +63,7 @@
                                 x-text="selectedForm.user.first_name + ' ' + selectedForm.user.last_name">
                             </div>
                             <p class="text-sm text-gray-800">Position: <span x-text="selectedForm.user.position || 'N/A'"></span></p>
-                            <p class="text-sm text-gray-800">ID Number: <span x-text="selectedForm.user.employee_id || 'N/A'"></span></p>
+                            <p class="text-sm text-gray-800">Company: <span x-text="selectedForm.user.company || 'N/A'"></span></p>
                         </div>
                         <button @click="openModal" title="Open as Modal">
                             <svg class="w-5 h-5 text-gray-500 hover:text-[#BD6F22]" fill="none" stroke="currentColor" stroke-width="2"
@@ -108,11 +108,11 @@
                     </div>
 
                     <div class="flex justify-end gap-2" x-show="selectedForm.status === 'Pending'">
-                        <form method="POST" :action="`/hrAdmin/leave-forms/${selectedForm.id}/approve`">
+                        <form method="POST" :action="`{{ auth()->user()->role === 'hrAdmin' ? '/hrAdmin' : '/hrStaff' }}/leave-forms/${selectedForm.id}/approve`" @submit.prevent="confirmApprove($event, selectedForm.id)">
                             @csrf
                             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">Approve</button>
                         </form>
-                        <form method="POST" :action="`/hrAdmin/leave-forms/${selectedForm.id}/decline`">
+                        <form method="POST" :action="`{{ auth()->user()->role === 'hrAdmin' ? '/hrAdmin' : '/hrStaff' }}/leave-forms/${selectedForm.id}/decline`" @submit.prevent="confirmDecline($event, selectedForm.id)">
                             @csrf
                             <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm">Decline</button>
                         </form>
@@ -141,7 +141,7 @@
                     <div class="text-[#BD6F22] font-semibold text-lg mb-2"
                          x-text="selectedForm.user.first_name + ' ' + selectedForm.user.last_name"></div>
                     <p class="text-sm text-gray-800">Position: <span x-text="selectedForm.user.position || 'N/A'"></span></p>
-                    <p class="text-sm text-gray-800 mb-4">ID Number: <span x-text="selectedForm.user.employee_id || 'N/A'"></span></p>
+                    <p class="text-sm text-gray-800 mb-4">Company: <span x-text="selectedForm.user.company || 'N/A'"></span></p>
 
                     <div class="mb-3">
                         <label class="block text-sm text-gray-700 mb-1">Date Range:</label>
@@ -174,11 +174,11 @@
                     </div>
 
                     <div class="flex justify-end gap-2" x-show="selectedForm.status === 'Pending'">
-                        <form method="POST" :action="`/hrAdmin/leave-forms/${selectedForm.id}/approve`">
+                        <form method="POST" :action="`{{ auth()->user()->role === 'hrAdmin' ? '/hrAdmin' : '/hrStaff' }}/leave-forms/${selectedForm.id}/approve`" @submit.prevent="confirmApprove($event, selectedForm.id)">
                             @csrf
                             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">Approve</button>
                         </form>
-                        <form method="POST" :action="`/hrAdmin/leave-forms/${selectedForm.id}/decline`">
+                        <form method="POST" :action="`{{ auth()->user()->role === 'hrAdmin' ? '/hrAdmin' : '/hrStaff' }}/leave-forms/${selectedForm.id}/decline`" @submit.prevent="confirmDecline($event, selectedForm.id)">
                             @csrf
                             <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm">Decline</button>
                         </form>
@@ -234,6 +234,23 @@ function draggableModal() {
             if (formData) {
                 try {
                     this.selectedForm = JSON.parse(formData);
+
+                    // Compute position and company from user's applications
+                    if (this.selectedForm.user && this.selectedForm.user.applications) {
+                        // Get the most recent application with a job
+                        const latestApp = this.selectedForm.user.applications
+                            .filter(app => app.job)
+                            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+
+                        if (latestApp && latestApp.job) {
+                            this.selectedForm.user.position = latestApp.job.job_title || 'N/A';
+                            this.selectedForm.user.company = latestApp.job.company_name || 'N/A';
+                        } else {
+                            this.selectedForm.user.position = 'N/A';
+                            this.selectedForm.user.company = 'N/A';
+                        }
+                    }
+
                     this.showModal = false;
                     this.showAttachmentModal = false;
                 } catch (e) {
@@ -259,6 +276,26 @@ function draggableModal() {
             this.doDrag = this.doDrag.bind(this);
             this.stopDrag = this.stopDrag.bind(this);
         },
+        checkFlashMessage() {
+            @if(session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: '{{ session('success') }}',
+                    confirmButtonColor: '#BD6F22',
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            @endif
+            @if(session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: '{{ session('error') }}',
+                    confirmButtonColor: '#BD6F22'
+                });
+            @endif
+        },
         startDrag(event) {
             this.dragging = true;
             this.offsetX = event.clientX - this.x;
@@ -275,6 +312,58 @@ function draggableModal() {
             this.dragging = false;
             document.removeEventListener('mousemove', this.doDrag);
             document.removeEventListener('mouseup', this.stopDrag);
+        },
+        async confirmApprove(event, formId) {
+            const result = await Swal.fire({
+                title: 'Approve Leave Request?',
+                text: 'Are you sure you want to approve this leave request?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#16a34a',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, Approve',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true
+            });
+
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Processing...',
+                    text: 'Please wait while we approve the leave request.',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                event.target.submit();
+            }
+        },
+        async confirmDecline(event, formId) {
+            const result = await Swal.fire({
+                title: 'Decline Leave Request?',
+                text: 'Are you sure you want to decline this leave request?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, Decline',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true
+            });
+
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Processing...',
+                    text: 'Please wait while we decline the leave request.',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                event.target.submit();
+            }
         }
     };
 }

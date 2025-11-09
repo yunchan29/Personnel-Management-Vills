@@ -111,12 +111,34 @@
                         <!-- Card Body -->
                         <div class="p-5 space-y-3 border-t border-gray-100">
                             <!-- Qualifications -->
-                            @if($job->qualifications)
+                            @if(!empty($job->qualifications))
                                 <div>
                                     <p class="text-sm font-semibold text-gray-700 mb-2">Qualifications:</p>
-                                    <div class="text-sm text-gray-600">
-                                        {!! nl2br(e($job->qualifications)) !!}
-                                    </div>
+                                    <ul class="list-disc ml-5 text-sm text-gray-600 space-y-1">
+                                        @if(is_array($job->qualifications))
+                                            @foreach($job->qualifications as $qualification)
+                                                <li>{{ $qualification }}</li>
+                                            @endforeach
+                                        @else
+                                            <li>{!! nl2br(e($job->qualifications)) !!}</li>
+                                        @endif
+                                    </ul>
+                                </div>
+                            @endif
+
+                            <!-- Additional Information -->
+                            @if(!empty($job->additional_info))
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-700 mb-2">Additional Information:</p>
+                                    <ul class="list-disc ml-5 text-sm text-gray-600 space-y-1">
+                                        @if(is_array($job->additional_info))
+                                            @foreach($job->additional_info as $info)
+                                                <li>{{ $info }}</li>
+                                            @endforeach
+                                        @else
+                                            <li>{!! nl2br(e($job->additional_info)) !!}</li>
+                                        @endif
+                                    </ul>
                                 </div>
                             @endif
 

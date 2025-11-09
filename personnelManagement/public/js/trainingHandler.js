@@ -144,12 +144,14 @@ document.addEventListener('alpine:init', () => {
                         element: ref,
                         singleMode: false,
                         format: 'MM/DD/YYYY',
+                        delimiter: ' - ',
                         numberOfMonths: 2,
                         numberOfColumns: 2,
                         autoApply: true,
+                        allowRepick: true,
                         startDate: start,
                         endDate: end,
-                        minDate: new Date(),
+                        minDate: new Date()
                     });
                 } else {
                     if (start && end) {

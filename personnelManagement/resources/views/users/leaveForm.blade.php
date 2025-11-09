@@ -212,8 +212,12 @@ function leaveFormApp() {
                     element: this.$refs.dateRange,
                     singleMode: false,
                     format: 'MM/DD/YYYY',
+                    delimiter: ' - ',
+                    minDate: new Date(),
                     numberOfMonths: 2,
-                    numberOfColumns: 2
+                    numberOfColumns: 2,
+                    autoApply: true,
+                    allowRepick: true
                 });
             }
         },

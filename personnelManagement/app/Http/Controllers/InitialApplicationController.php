@@ -26,6 +26,10 @@ class InitialApplicationController extends Controller
                 $query->whereIn('status', [
                     ApplicationStatus::PENDING->value,
                     ApplicationStatus::TO_REVIEW->value,
+                    ApplicationStatus::APPROVED->value,
+                    ApplicationStatus::FOR_INTERVIEW->value,
+                    ApplicationStatus::INTERVIEWED->value,
+                    ApplicationStatus::SCHEDULED_FOR_TRAINING->value,
                 ]);
             }
         ]);
@@ -81,12 +85,16 @@ class InitialApplicationController extends Controller
 {
     $job = Job::findOrFail($jobId);
 
-    // Jobs with filtered application count (only pending and to_review - matches Applicants tab)
+    // Jobs with filtered application count (Applicants + Interview + Training tabs, excluding evaluated)
     $jobs = Job::withCount([
         'applications as applications_count' => function ($query) {
             $query->whereIn('status', [
                 ApplicationStatus::PENDING->value,
                 ApplicationStatus::TO_REVIEW->value,
+                ApplicationStatus::APPROVED->value,
+                ApplicationStatus::FOR_INTERVIEW->value,
+                ApplicationStatus::INTERVIEWED->value,
+                ApplicationStatus::SCHEDULED_FOR_TRAINING->value,
             ]);
         }
     ])->get();

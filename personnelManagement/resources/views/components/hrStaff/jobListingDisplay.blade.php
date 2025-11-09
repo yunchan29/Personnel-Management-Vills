@@ -24,6 +24,7 @@
     </div>
 
     {{-- Qualifications --}}
+    @if(!empty($job->qualifications))
     <div class="flex items-start text-sm text-gray-600 mb-3">
         <img src="{{ asset('images/briefcaseblack.png') }}" alt="Qualifications" class="w-5 h-5 mr-2 mt-1">
         <div>
@@ -35,11 +36,14 @@
             </ul>
         </div>
     </div>
+    @endif
 
     {{-- Additional Info --}}
     @if(!empty($job->additional_info))
         <div class="flex items-start text-sm text-gray-600 mb-3" x-show="expanded">
-            <img src="{{ asset('images/info.png') }}" alt="Info" class="w-5 h-5 mr-2 mt-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2 mt-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             <div>
                 <strong>Additional Info:</strong>
                 <ul class="list-disc ml-6">
@@ -58,10 +62,10 @@
     </div>
 
     {{-- Expand Button --}}
-    @if(count($job->qualifications) > 3 || !empty($job->additional_info))
+    @if((is_array($job->qualifications) && count($job->qualifications) > 3) || !empty($job->additional_info))
         <div class="flex justify-center w-full mb-3">
-            <button 
-                @click="expanded = !expanded" 
+            <button
+                @click="expanded = !expanded"
                 class="text-[#BD6F22] text-xs hover:underline"
             >
                 <span x-text="expanded ? 'See Less' : 'See More'"></span>

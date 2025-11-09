@@ -15,7 +15,7 @@ class LeaveFormController extends Controller
 
     if (in_array($user->role, ['hrAdmin', 'hrStaff'])) {
         // HR Admin and HR Staff can view all leave forms
-        $leaveForms = LeaveForm::with('user')->latest()->get();
+        $leaveForms = LeaveForm::with(['user.applications.job'])->latest()->get();
 
         return view('admins.shared.leaveForm', compact('leaveForms'));
     }
@@ -61,29 +61,47 @@ class LeaveFormController extends Controller
 
     public function approve($id)
     {
-        // Verify user has HR role
-        if (!in_array(Auth::user()->role, ['hrAdmin', 'hrStaff'])) {
-            abort(403, 'Unauthorized. Only HR personnel can approve leave requests.');
+        try {
+            // Verify user has HR role
+            if (!in_array(Auth::user()->role, ['hrAdmin', 'hrStaff'])) {
+                abort(403, 'Unauthorized. Only HR personnel can approve leave requests.');
+            }
+
+            $form = LeaveForm::findOrFail($id);
+
+            if ($form->status !== 'Pending') {
+                return back()->with('error', 'This leave request has already been processed.');
+            }
+
+            $form->status = 'Approved';
+            $form->save();
+
+            return back()->with('success', 'Leave request approved successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to approve leave request. Please try again.');
         }
-
-        $form = LeaveForm::findOrFail($id);
-        $form->status = 'Approved';
-        $form->save();
-
-        return back()->with('success', 'Leave request approved.');
     }
 
     public function decline($id)
     {
-        // Verify user has HR role
-        if (!in_array(Auth::user()->role, ['hrAdmin', 'hrStaff'])) {
-            abort(403, 'Unauthorized. Only HR personnel can decline leave requests.');
+        try {
+            // Verify user has HR role
+            if (!in_array(Auth::user()->role, ['hrAdmin', 'hrStaff'])) {
+                abort(403, 'Unauthorized. Only HR personnel can decline leave requests.');
+            }
+
+            $form = LeaveForm::findOrFail($id);
+
+            if ($form->status !== 'Pending') {
+                return back()->with('error', 'This leave request has already been processed.');
+            }
+
+            $form->status = 'Declined';
+            $form->save();
+
+            return back()->with('success', 'Leave request declined successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to decline leave request. Please try again.');
         }
-
-        $form = LeaveForm::findOrFail($id);
-        $form->status = 'Declined';
-        $form->save();
-
-        return back()->with('success', 'Leave request declined.');
     }
 }
