@@ -6,6 +6,13 @@
             <img src="/images/villsName.png" alt="Vills Manpower Recruitment Agency" class="h-8 sm:h-20 w-auto">
         </div>
 
+        <!-- Description -->
+        <div class="text-center mb-3">
+            <p class="text-sm sm:text-base text-white/90 max-w-2xl mx-auto px-4">
+                Vills Manpower Recruitment Agency is a trusted and dedicated provider of recruitment solutions, committed to connecting top talent with leading companies.
+            </p>
+        </div>
+
         <!-- Divider -->
         <div class="border-t border-white/30 my-2"></div>
 

@@ -19,9 +19,10 @@ class Job extends Model
     'additional_info',
 ];
 
+    // Removed array casting - qualifications and additional_info are now stored as text/string
     protected $casts = [
-        'qualifications' => 'array',
-        'additional_info' => 'array',
+        // 'qualifications' => 'array',
+        // 'additional_info' => 'array',
     ];
 
 public function applications()

@@ -11,48 +11,6 @@
             <p class="text-gray-600">Find your dream job and start your career journey</p>
         </div>
 
-        <!-- Quick Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <!-- Total Applications -->
-            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="bg-white/20 rounded-lg p-3">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                    </div>
-                    <span class="text-3xl font-bold">{{ count($appliedJobIds ?? []) }}</span>
-                </div>
-                <p class="text-sm font-medium text-blue-100">Total Applications</p>
-            </div>
-
-            <!-- Available Jobs -->
-            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="bg-white/20 rounded-lg p-3">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                        </svg>
-                    </div>
-                    <span class="text-3xl font-bold">{{ count($jobs ?? []) }}</span>
-                </div>
-                <p class="text-sm font-medium text-green-100">Available Jobs</p>
-            </div>
-
-            <!-- Resume Status -->
-            <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="bg-white/20 rounded-lg p-3">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <span class="text-2xl font-bold">{{ isset($resume) && $resume?->resume ? 'Active' : 'None' }}</span>
-                </div>
-                <p class="text-sm font-medium text-orange-100">Resume Status</p>
-            </div>
-        </div>
-
         <!-- Search and Filter Section -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
             <div class="flex flex-col md:flex-row gap-4">
@@ -67,7 +25,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Industry</label>
                     <select onchange="window.location.href='?industry='+encodeURIComponent(this.value)" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-[#BD6F22] focus:ring-2 focus:ring-orange-100 transition">
                         @php
-                            $currentIndustry = is_string($industry ?? null) ? $industry : '';
+                            $currentIndustry = isset($industry) && is_string($industry) ? $industry : '';
                             $userPreference = auth()->user()->job_industry;
                             $industries = [
                                 "Accounting", "Administration", "Architecture", "Arts and Design",
@@ -84,15 +42,14 @@
                             ];
                         @endphp
 
-                        <option value="">All Industries</option>
-
                         @if(!empty($userPreference) && is_string($userPreference))
-                            <option value="{{ $userPreference }}" {{ $currentIndustry === $userPreference ? 'selected' : '' }} class="font-semibold bg-blue-50">
+                            <option value="{{ $userPreference }}" {{ $currentIndustry === $userPreference ? 'selected' : '' }} class="font-semibold">
                                 ⭐ {{ $userPreference }} (Your Preference)
                             </option>
+                            <option disabled>──────────</option>
                         @endif
 
-                        <option disabled>──────────</option>
+                        <option value="" {{ $currentIndustry === '' ? 'selected' : '' }}>All Industries</option>
 
                         @foreach($industries as $industryOption)
                             @if($industryOption !== $userPreference)
@@ -104,93 +61,101 @@
                     </select>
                 </div>
             </div>
+        </div>
 
+        <div class="mb-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Available Job Openings</h2>
         </div>
 
         <!-- Job Listings -->
-        <div class="mb-6">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Available Job Openings</h2>
-        </div>
-
-        <div id="jobGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div id="jobGrid" class="space-y-4">
             @forelse($jobs ?? [] as $job)
-                <div class="job-card border border-gray-200 rounded-xl shadow-lg overflow-hidden bg-white hover:shadow-xl transition-all duration-300 hover:border-[#BD6F22]"
+                <div class="job-card accordion-item border border-gray-200 rounded-xl shadow-md overflow-hidden bg-white hover:shadow-lg transition-all duration-300"
                      data-title="{{ strtolower($job->job_title) }}"
                      data-company="{{ strtolower($job->company_name) }}"
                      data-location="{{ strtolower($job->location ?? '') }}">
 
-                    <!-- Card Header -->
-                    <div class="bg-gradient-to-br from-orange-50 to-white p-5 border-b border-gray-100">
-                        <h3 class="text-lg font-bold text-gray-900 mb-2">{{ $job->job_title }}</h3>
-                        <div class="flex items-center gap-2 text-sm text-gray-700 mb-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                            </svg>
-                            <span class="font-medium">{{ $job->company_name }}</span>
-                        </div>
-                        @if($job->location)
-                            <div class="flex items-center gap-2 text-sm text-gray-600">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                </svg>
-                                <span>{{ $job->location }}</span>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- Card Body -->
-                    <div class="p-5 space-y-3">
-                        <!-- Qualifications -->
-                        @if($job->qualifications)
-                            <div>
-                                <p class="text-xs font-semibold text-gray-700 mb-1">Qualifications:</p>
-                                <div class="text-xs text-gray-600 max-h-20 overflow-hidden qualifications-content">
-                                    {!! nl2br(e($job->qualifications)) !!}
+                    <!-- Accordion Header - Always Visible -->
+                    <button type="button" class="accordion-header w-full text-left bg-gradient-to-br from-orange-50 to-white p-5 hover:from-orange-100 hover:to-orange-50 transition-colors duration-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-gray-900 mb-2">{{ $job->job_title }}</h3>
+                                <div class="flex flex-wrap gap-4">
+                                    <div class="flex items-center gap-2 text-sm text-gray-700">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                        </svg>
+                                        <span class="font-medium">{{ $job->company_name }}</span>
+                                    </div>
+                                    @if($job->location)
+                                        <div class="flex items-center gap-2 text-sm text-gray-600">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            </svg>
+                                            <span>{{ $job->location }}</span>
+                                        </div>
+                                    @endif
                                 </div>
-                                @if(strlen($job->qualifications) > 100)
-                                    <button type="button" class="text-xs text-[#BD6F22] hover:text-[#a75e1c] font-medium mt-1 toggle-qualifications">
-                                        See More
+                            </div>
+                            <div class="ml-4">
+                                <svg class="w-6 h-6 text-gray-500 accordion-icon transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </button>
+
+                    <!-- Accordion Content - Collapsible -->
+                    <div class="accordion-content hidden">
+                        <!-- Card Body -->
+                        <div class="p-5 space-y-3 border-t border-gray-100">
+                            <!-- Qualifications -->
+                            @if($job->qualifications)
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-700 mb-2">Qualifications:</p>
+                                    <div class="text-sm text-gray-600">
+                                        {!! nl2br(e($job->qualifications)) !!}
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Vacancies & Deadline -->
+                            <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                                <div class="flex items-center gap-1 text-sm text-gray-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                    <span class="font-medium">{{ $job->vacancies }} positions</span>
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    Posted {{ $job->created_at->diffForHumans() }}
+                                </div>
+                            </div>
+
+                            <div class="text-sm text-gray-600">
+                                <span class="font-medium">Deadline:</span> {{ \Carbon\Carbon::parse($job->apply_until)->format('M d, Y') }}
+                            </div>
+
+                            <!-- Apply Button -->
+                            <div class="pt-3">
+                                @if(in_array($job->id, $appliedJobIds ?? []))
+                                    <button disabled class="w-full py-2.5 bg-gray-400 text-white rounded-lg font-semibold cursor-not-allowed opacity-60">
+                                        Already Applied
+                                    </button>
+                                @elseif(!isset($resume) || !$resume?->resume)
+                                    <button disabled class="w-full py-2.5 bg-gray-300 text-gray-600 rounded-lg font-semibold cursor-not-allowed" title="Upload resume first">
+                                        Upload Resume First
+                                    </button>
+                                @else
+                                    <button type="button"
+                                            class="apply-btn w-full py-2.5 bg-[#BD6F22] text-white rounded-lg font-semibold hover:bg-[#a75e1c] transition-all duration-200 shadow-sm hover:shadow-md"
+                                            data-job-id="{{ $job->id }}">
+                                        Apply Now
                                     </button>
                                 @endif
                             </div>
-                        @endif
-
-                        <!-- Vacancies & Deadline -->
-                        <div class="flex items-center justify-between pt-2 border-t border-gray-100">
-                            <div class="flex items-center gap-1 text-xs text-gray-600">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                </svg>
-                                <span class="font-medium">{{ $job->vacancies }} positions</span>
-                            </div>
-                            <div class="text-xs text-gray-500">
-                                Posted {{ $job->created_at->diffForHumans() }}
-                            </div>
                         </div>
-
-                        <div class="text-xs text-gray-600">
-                            <span class="font-medium">Deadline:</span> {{ \Carbon\Carbon::parse($job->apply_until)->format('M d, Y') }}
-                        </div>
-                    </div>
-
-                    <!-- Card Footer -->
-                    <div class="p-5 bg-gray-50 border-t border-gray-100">
-                        @if(in_array($job->id, $appliedJobIds ?? []))
-                            <button disabled class="w-full py-2.5 bg-gray-400 text-white rounded-lg font-semibold cursor-not-allowed opacity-60">
-                                Already Applied
-                            </button>
-                        @elseif(!isset($resume) || !$resume?->resume)
-                            <button disabled class="w-full py-2.5 bg-gray-300 text-gray-600 rounded-lg font-semibold cursor-not-allowed" title="Upload resume first">
-                                Upload Resume First
-                            </button>
-                        @else
-                            <button type="button"
-                                    class="apply-btn w-full py-2.5 bg-[#BD6F22] text-white rounded-lg font-semibold hover:bg-[#a75e1c] transition-all duration-200 shadow-sm hover:shadow-md"
-                                    data-job-id="{{ $job->id }}">
-                                Apply Now
-                            </button>
-                        @endif
                     </div>
                 </div>
             @empty
@@ -210,6 +175,25 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Accordion functionality
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', function () {
+                const accordionItem = this.closest('.accordion-item');
+                const content = accordionItem.querySelector('.accordion-content');
+                const icon = this.querySelector('.accordion-icon');
+
+                // Toggle content visibility
+                content.classList.toggle('hidden');
+
+                // Rotate icon
+                if (content.classList.contains('hidden')) {
+                    icon.style.transform = 'rotate(0deg)';
+                } else {
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            });
+        });
+
         // Search functionality
         const searchInput = document.getElementById('jobSearch');
         const jobCards = document.querySelectorAll('.job-card');
@@ -226,20 +210,6 @@
                     card.style.display = 'block';
                 } else {
                     card.style.display = 'none';
-                }
-            });
-        });
-
-        // Toggle qualifications
-        document.querySelectorAll('.toggle-qualifications').forEach(button => {
-            button.addEventListener('click', function () {
-                const content = this.previousElementSibling;
-                if (content.classList.contains('max-h-20')) {
-                    content.classList.remove('max-h-20', 'overflow-hidden');
-                    this.textContent = 'See Less';
-                } else {
-                    content.classList.add('max-h-20', 'overflow-hidden');
-                    this.textContent = 'See More';
                 }
             });
         });

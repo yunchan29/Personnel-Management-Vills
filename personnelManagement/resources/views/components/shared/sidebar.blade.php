@@ -11,7 +11,7 @@
     <aside
         x-show="isDesktop"
         :class="open ? 'w-40' : 'w-16'"
-        class="hidden sm:flex sticky top-0 bg-white shadow-md h-screen transition-all duration-300 flex-col"
+        class="hidden sm:flex sticky top-0 bg-white shadow-md h-screen max-h-screen overflow-y-auto transition-all duration-300 flex-col"
     >
         <!-- Toggle -->
         <div class="flex justify-center items-center p-4 mb-2">

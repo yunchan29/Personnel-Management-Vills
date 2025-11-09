@@ -16,14 +16,24 @@ class ApplicantJobController extends Controller
     $user = auth()->user();
     $resume = $user->resume ?? null;
 
-    // ✅ Load ALL jobs by default, only filter when explicitly requested
+    // ✅ Apply user's preferred industry by default on page load
     $industry = null;
 
-    // Only apply industry filter if explicitly provided in query string
     if ($request->has('industry')) {
+        // User explicitly selected a filter
         $rawIndustry = $request->query('industry');
+        // Ensure it's a string, not an array - prevent htmlspecialchars error
+        if (is_array($rawIndustry)) {
+            $rawIndustry = null;
+        }
         // Empty string means "All Industries" - show all jobs
         $industry = ($rawIndustry !== '' && $rawIndustry !== null) ? $rawIndustry : null;
+    } else {
+        // No filter selected - apply user's preferred industry by default
+        $userPreference = $user->job_industry;
+        if (!empty($userPreference) && is_string($userPreference)) {
+            $industry = $userPreference;
+        }
     }
 
     $jobs = Job::latest()

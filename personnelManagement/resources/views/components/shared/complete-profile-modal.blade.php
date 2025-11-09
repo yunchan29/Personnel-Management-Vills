@@ -122,6 +122,7 @@ document.addEventListener('DOMContentLoaded', function () {
         user.birth_date && user.civil_status && user.nationality &&
         user.mobile_number && user.full_address && user.province &&
         user.city && user.barangay && user.profile_picture &&
+        user.job_industry &&
         user.active_status !== 'Active';
 
     // Determine which route to use

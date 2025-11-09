@@ -51,6 +51,12 @@
                 <button type="button" id="tab-work-btn" class="tab-btn text-gray-600 hover:text-[#BD6F22] pb-2">
                     Work Experience
                 </button>
+
+                @if(auth()->user()->role === 'applicant')
+                <button type="button" id="tab-preference-btn" class="tab-btn text-gray-600 hover:text-[#BD6F22] pb-2">
+                    Preference
+                </button>
+                @endif
             </nav>
         </div>
 
@@ -62,6 +68,12 @@
         <div id="tab-work" class="tab-content hidden">
             <x-shared.work-experience :experiences="$experiences" :user="$user" />
         </div>
+
+        @if(auth()->user()->role === 'applicant')
+        <div id="tab-preference" class="tab-content hidden">
+            <x-shared.preference :user="$user" />
+        </div>
+        @endif
 
     </div>
 </div>
@@ -154,7 +166,7 @@ function validateAllTabsAndSubmit() {
     // ✅ Validate all other form sections
     window.formSections = window.formSections || {};
     const sections = window.formSections;
-    const order = ['personal', 'work'];
+    const order = @if(auth()->user()->role === 'applicant') ['personal', 'work', 'preference'] @else ['personal', 'work'] @endif;
 
     for (const key of order) {
         const section = sections[key];
@@ -291,30 +303,53 @@ function validateAllTabsAndSubmit() {
         const personalTab = document.getElementById('tab-personal');
         const workTab = document.getElementById('tab-work');
 
+        @if(auth()->user()->role === 'applicant')
+        const preferenceBtn = document.getElementById('tab-preference-btn');
+        const preferenceTab = document.getElementById('tab-preference');
+        @endif
+
         function activateTab(tab) {
+            // Hide all tabs
+            personalTab.classList.add('hidden');
+            workTab.classList.add('hidden');
+            @if(auth()->user()->role === 'applicant')
+            preferenceTab.classList.add('hidden');
+            @endif
+
+            // Remove active state from all buttons
+            personalBtn.classList.remove('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
+            personalBtn.classList.add('text-gray-600');
+            workBtn.classList.remove('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
+            workBtn.classList.add('text-gray-600');
+            @if(auth()->user()->role === 'applicant')
+            preferenceBtn.classList.remove('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
+            preferenceBtn.classList.add('text-gray-600');
+            @endif
+
+            // Show selected tab and activate button
             if (tab === 'personal') {
                 personalTab.classList.remove('hidden');
-                workTab.classList.add('hidden');
                 personalBtn.classList.add('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
-                workBtn.classList.remove('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
-                workBtn.classList.add('text-gray-600');
-
-                // Disable required when user's on personal information tab
-                job_industry.removeAttribute('required');
-            } else {
-                personalTab.classList.add('hidden');
+                personalBtn.classList.remove('text-gray-600');
+            } else if (tab === 'work') {
                 workTab.classList.remove('hidden');
                 workBtn.classList.add('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
-                personalBtn.classList.remove('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
-                personalBtn.classList.add('text-gray-600');
-
-                // Enable required on visible fields
-                job_industry.setAttribute('required', 'required');
+                workBtn.classList.remove('text-gray-600');
             }
+            @if(auth()->user()->role === 'applicant')
+            else if (tab === 'preference') {
+                preferenceTab.classList.remove('hidden');
+                preferenceBtn.classList.add('text-[#BD6F22]', 'border-b-2', 'border-[#BD6F22]');
+                preferenceBtn.classList.remove('text-gray-600');
+            }
+            @endif
         }
 
         personalBtn.addEventListener('click', () => activateTab('personal'));
         workBtn.addEventListener('click', () => activateTab('work'));
+        @if(auth()->user()->role === 'applicant')
+        preferenceBtn.addEventListener('click', () => activateTab('preference'));
+        @endif
     });
 
     function validateImage(input) {
