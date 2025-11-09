@@ -95,19 +95,19 @@
         </thead>
         <tbody>
           @forelse($applications as $application)
+            {{-- Controller already filters by approved/for_interview statuses --}}
             <tr
               data-applicant-id="{{ $application->id }}"
               data-interview-start="{{ optional($application->interview)?->start_date ? \Carbon\Carbon::parse($application->interview->start_date)->format('Y-m-d H:i') : '' }}"
               data-interview-end="{{ optional($application->interview)?->end_date ? \Carbon\Carbon::parse($application->interview->end_date)->format('Y-m-d H:i') : '' }}"
-              data-status="{{ $application->status }}"
-              x-show="(['approved', 'for_interview', 'interviewed', 'declined'].includes('{{ $application->status }}')) 
-                      && (showAll || '{{ optional($application->interview)?->scheduled_at }}' === '') 
+              data-status="{{ $application->status->value }}"
+              x-show="(showAll || '{{ optional($application->interview)?->scheduled_at }}' === '')
                       && !removedApplicants.includes({{ $application->id }})"
               class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out">
 
              
           <td class="py-3 px-4">
-             @if ($application->status !== 'interviewed')
+             @if ($application->status->value !== 'interviewed')
           <label class="relative inline-flex items-center cursor-pointer">
                     <input 
                   type="checkbox"
@@ -183,28 +183,8 @@
 
               <!-- Status -->
               <td class="py-3 px-4">
-                  <!-- Passed -->
-                  <span x-show="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'interviewed'"
-                        class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-                      Interviewed
-                  </span>
-
-                  <!-- Failed -->
-                  <span x-show="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'declined'"
-                        class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-                      Failed
-                  </span>
-
-                  <!-- For Interview -->
-                  <span x-show="(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}') === 'for_interview'"
-                        class="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-                      For Interview
-                  </span>
-
-                  <!-- Pending -->
-                  <span x-show="!['interviewed','declined','for_interview'].includes(applicants.find(a => a.id === {{ $application->id }})?.status || '{{ $application->status }}')"
-                        class="text-xs bg-gray-200 text-gray-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-                      Pending
+                  <span class="text-xs px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap {{ $application->status_badge_class }}">
+                      {{ $application->status_label }}
                   </span>
               </td>
             </tr>

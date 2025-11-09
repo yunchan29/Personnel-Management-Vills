@@ -16,13 +16,14 @@ class ApplicantJobController extends Controller
     $user = auth()->user();
     $resume = $user->resume ?? null;
 
-    // ✅ Use only user's preferred industry if NOT manually filtered
-    $rawIndustry = $request->query('industry');
-    $industry = $request->has('industry') ? $rawIndustry : ($user->job_industry ?? null);
+    // ✅ Load ALL jobs by default, only filter when explicitly requested
+    $industry = null;
 
-    // If manually cleared (e.g. `?industry=`), force it to null
-    if ($request->has('industry') && $rawIndustry === '') {
-        $industry = null;
+    // Only apply industry filter if explicitly provided in query string
+    if ($request->has('industry')) {
+        $rawIndustry = $request->query('industry');
+        // Empty string means "All Industries" - show all jobs
+        $industry = ($rawIndustry !== '' && $rawIndustry !== null) ? $rawIndustry : null;
     }
 
     $jobs = Job::latest()
@@ -139,7 +140,7 @@ class ApplicantJobController extends Controller
         'philhealth_number' => $file201->philhealth_number ?? null,
         'tin_id_number' => $file201->tin_id_number ?? null,
         'pagibig_number' => $file201->pagibig_number ?? null,
-        'status' => 'Pending',
+        'status' => 'pending', // lowercase to match enum
     ]);
 
     return response()->json([

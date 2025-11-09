@@ -50,7 +50,7 @@
 </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left text-gray-700">
+                <table class="min-w-full text-sm text-left text-gray-700">
                 <thead class="border-b font-semibold bg-gray-50">
                     <tr>
                         <th class="py-3 px-4"></th>
@@ -61,10 +61,12 @@
                         <th class="py-3 px-4">Training Schedule</th>
                         <th class="py-3 px-4">Training Time</th>
                         <th class="py-3 px-4">Location</th>
+                        <th class="py-3 px-4">Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($applications as $application)
+                        {{-- Controller already filters by interviewed/scheduled_for_training statuses --}}
                         @php
                             $fullName = $application->user->first_name . ' ' . $application->user->last_name;
                             $training = $application->trainingSchedule;
@@ -78,11 +80,10 @@
 
                             <tr
                                 data-applicant-id="{{ $application->id }}"
-                                data-status="{{ $application->status }}"
+                                data-status="{{ $application->status->value }}"
                                 data-training-range="{{ $trainingRange }}"
                                 x-cloak
-                                x-show="(showAll || '{{ $application->training_schedule }}' === '') 
-                                        && ['interviewed', 'scheduled_for_training'].includes('{{ $application->status }}') 
+                                x-show="(showAll || '{{ $application->training_schedule }}' === '')
                                         && !removedApplicants.includes({{ $application->id }})"
                                 class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out"
                             >
@@ -151,10 +152,17 @@
                             <td class="py-3 px-4 text-sm text-gray-700">
                                 {{ $application->trainingSchedule->location ?? 'N/A' }}
                             </td>
+
+                            <!-- Status -->
+                            <td class="py-3 px-4 text-sm">
+                                <span class="px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap {{ $application->status_badge_class }}">
+                                    {{ $application->status_label }}
+                                </span>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="py-6 text-center text-gray-500">No applicants yet.</td>
+                            <td colspan="9" class="py-6 text-center text-gray-500">No applicants yet.</td>
                         </tr>
                     @endforelse
                 </tbody>

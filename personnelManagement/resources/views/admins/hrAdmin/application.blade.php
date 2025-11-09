@@ -76,105 +76,110 @@
     </div>
 
     {{-- Job Postings Tab --}}
-    <div 
-        x-data="{ search: '' }" 
-        x-show="$store.applications.tab === 'postings'" 
+    <div
+        x-show="$store.applications.tab === 'postings'"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 translate-y-2"
         x-transition:enter-end="opacity-100 translate-y-0"
         class="space-y-6"
     >
-        {{-- Search + Sort --}}
-<div class="flex items-center mb-6 gap-4">
-    {{-- Search --}}
-    <div class="flex items-center flex-1">
-        <label for="search" class="mr-4 font-medium text-sm block">Search Position</label>
-        <input 
-            type="text"
-            id="search"
-            name="search"
-            x-model="search"
-            class="flex-1 border border-gray-300 rounded-md p-2 text-sm"
-            placeholder="Enter job title..."
-        >
-    </div>
-    {{-- Filters --}}
-    <div x-data="{ open: false }" class="relative">
-        <button type="button" 
-            @click="open = !open" 
-            class="border border-gray-300 rounded-md px-4 py-2 text-sm bg-white">
-            Filters ▾
-        </button>
+        {{-- Search + Filters --}}
+        <div class="mb-6 bg-white border border-gray-200 rounded-lg shadow-sm p-4" x-data="{ showFilters: {{ request('company_name') || request('sort') ? 'true' : 'false' }} }">
+            <form method="GET" action="{{ route('hrAdmin.application') }}" class="space-y-4">
 
-        <div x-show="open" 
-            @click.away="open = false"
-            class="absolute mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+                {{-- Search Bar with Filter Toggle --}}
+                <div class="flex items-center gap-2 border border-gray-300 rounded-md px-3 py-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                        type="text"
+                        name="search"
+                        value="{{ request('search') }}"
+                        class="flex-1 border-0 focus:ring-0 text-sm p-0"
+                        placeholder="Search by job title, company, location, or qualifications..."
+                    >
 
-            <form method="GET" action="{{ route('hrAdmin.application') }}" class="space-y-3">
-                
-                {{-- Company --}}
-                <div>
-                    <p class="font-medium text-sm mb-1">Company</p>
-                    @foreach($companies as $company)
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" name="company_name[]" value="{{ $company }}"
-                                {{ collect(request('company_name'))->contains($company) ? 'checked' : '' }}>
-                            <span class="text-sm">{{ $company }}</span>
-                        </label>
-                    @endforeach
+                    {{-- Filter Toggle Button --}}
+                    <button
+                        type="button"
+                        @click="showFilters = !showFilters"
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition whitespace-nowrap"
+                        :class="showFilters ? 'bg-[#BD6F22] text-white' : 'text-gray-500 hover:text-[#BD6F22] hover:bg-gray-50'"
+                        title="Toggle filters"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        <span>Filters</span>
+                    </button>
                 </div>
 
-                {{-- Sort --}}
-                <div>
-                    <p class="font-medium text-sm mb-1">Sort</p>
-                    <label class="flex items-center space-x-2">
-                        <input type="radio" name="sort" value="latest" {{ request('sort') === 'latest' ? 'checked' : '' }}>
-                        <span class="text-sm">Latest</span>
-                    </label>
-                    <label class="flex items-center space-x-2">
-                        <input type="radio" name="sort" value="oldest" {{ request('sort') === 'oldest' ? 'checked' : '' }}>
-                        <span class="text-sm">Oldest</span>
-                    </label>
-                    <label class="flex items-center space-x-2">
-                        <input type="radio" name="sort" value="position_asc" {{ request('sort') === 'position_asc' ? 'checked' : '' }}>
-                        <span class="text-sm">Position (A–Z)</span>
-                    </label>
-                    <label class="flex items-center space-x-2">
-                        <input type="radio" name="sort" value="position_desc" {{ request('sort') === 'position_desc' ? 'checked' : '' }}>
-                        <span class="text-sm">Position (Z–A)</span>
-                    </label>
-                </div>
+                {{-- Filter Row (Collapsible) --}}
+                <div
+                    x-show="showFilters"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 -translate-y-2"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 -translate-y-2"
+                    class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-gray-200"
+                >
 
-                <button type="submit" class="mt-2 bg-blue-500 text-white px-4 py-1 rounded-md text-sm">
-                    Apply
-                </button>
+                    {{-- Company Dropdown --}}
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Company</label>
+                        <select
+                            name="company_name"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#BD6F22] focus:border-[#BD6F22]"
+                        >
+                            <option value="">All Companies</option>
+                            @foreach($companies as $company)
+                                <option value="{{ $company }}" {{ request('company_name') === $company ? 'selected' : '' }}>
+                                    {{ $company }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Sort By --}}
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Sort By</label>
+                        <select
+                            name="sort"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#BD6F22] focus:border-[#BD6F22]"
+                        >
+                            <option value="latest" {{ request('sort') === 'latest' || !request('sort') ? 'selected' : '' }}>Latest First</option>
+                            <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Oldest First</option>
+                            <option value="position_asc" {{ request('sort') === 'position_asc' ? 'selected' : '' }}>Position (A-Z)</option>
+                            <option value="position_desc" {{ request('sort') === 'position_desc' ? 'selected' : '' }}>Position (Z-A)</option>
+                        </select>
+                    </div>
+
+                    {{-- Action Buttons --}}
+                    <div class="flex items-end gap-2">
+                        <button
+                            type="submit"
+                            class="flex-1 bg-[#BD6F22] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#a75e1c] transition"
+                        >
+                            Apply Filters
+                        </button>
+                        <a
+                            href="{{ route('hrAdmin.application') }}"
+                            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 transition"
+                        >
+                            Clear
+                        </a>
+                    </div>
+                </div>
             </form>
         </div>
-    </div>
-</div>
 
 
         {{-- Job Listings --}}
         @forelse($jobs as $job)
-            @php
-                $jobTitle = Js::from(strtolower($job->job_title));
-                $companyName = Js::from(strtolower($job->company_name));
-                $location = Js::from(strtolower($job->location));
-                $qualifications = Js::from(strtolower(implode(' ', $job->qualifications)));
-                $additionalInfo = Js::from(strtolower(implode(' ', $job->additional_info ?? [])));
-            @endphp
-
-            <div 
-                x-show="search === '' 
-                    || {{ $jobTitle }}.includes(search.toLowerCase()) 
-                    || {{ $companyName }}.includes(search.toLowerCase()) 
-                    || {{ $location }}.includes(search.toLowerCase()) 
-                    || {{ $qualifications }}.includes(search.toLowerCase()) 
-                    || {{ $additionalInfo }}.includes(search.toLowerCase())"
-                x-transition
-            >
-                <x-hrAdmin.applicationJobListing :job="$job" />
-            </div>
+            <x-hrAdmin.applicationJobListing :job="$job" />
         @empty
             <p class="text-center text-gray-500">No job applications available.</p>
         @endforelse
@@ -246,7 +251,7 @@
         class="space-y-4"
     >
         @if(isset($interviewApplicants) && $interviewApplicants->isNotEmpty())
-            @include('admins.hrAdmin.trainingSchedule',['interviewApplicants' => $interviewApplicants])
+            @include('admins.hrAdmin.trainingSchedule',['applications' => $interviewApplicants])
         @else
             <p class="text-center text-gray-500">No approved applicants for training yet.</p>
         @endif

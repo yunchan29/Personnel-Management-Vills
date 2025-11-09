@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\TrainingScheduleSetMail;
 use App\Mail\TrainingScheduleRescheduledMail;
 use Carbon\Carbon;
+use App\Enums\ApplicationStatus;
 
 class TrainingScheduleController extends Controller
 {
@@ -71,7 +72,7 @@ class TrainingScheduleController extends Controller
                 ->send(new TrainingScheduleSetMail($newSchedule));
         }
 
-        $application->status = 'scheduled_for_training';
+        $application->setStatus(ApplicationStatus::SCHEDULED_FOR_TRAINING);
         $application->save();
 
         return response()->json([
@@ -145,7 +146,7 @@ class TrainingScheduleController extends Controller
             }
 
             // update status
-            $application->status = 'scheduled_for_training';
+            $application->setStatus(ApplicationStatus::SCHEDULED_FOR_TRAINING);
             $application->save();
         }
 

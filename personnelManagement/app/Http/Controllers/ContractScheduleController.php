@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Application;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ContractSigningInvitationMail;
 
 class ContractScheduleController extends Controller
 {
@@ -30,6 +32,12 @@ class ContractScheduleController extends Controller
 
         // Ensure applicant passed evaluation
         if (!$application->evaluation || $application->evaluation->result !== 'Passed') {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Applicant must pass training evaluation before setting a contract signing schedule.'
+                ], 400);
+            }
             return redirect()->back()->with('error', 'Applicant must pass training evaluation before setting a contract signing schedule.');
         }
 
@@ -38,9 +46,23 @@ class ContractScheduleController extends Controller
             'contract_signing_schedule' => $schedule,
         ]);
 
-        
+        // Send email invitation to the applicant
+        try {
+            Mail::to($application->user->email)->send(new ContractSigningInvitationMail($application));
+        } catch (\Exception $e) {
+            \Log::error('Failed to send contract signing invitation email: ' . $e->getMessage());
+            // Continue execution even if email fails
+        }
 
-        return redirect()->back()->with('success', 'Contract signing schedule set successfully.');
+        // Check if it's an AJAX request
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Contract signing invitation sent successfully.'
+            ], 200);
+        }
+
+        return redirect()->back()->with('success', 'Contract signing invitation sent successfully.');
     }
 
 
@@ -61,6 +83,12 @@ public function storeDates(Request $request, $applicationId)
 
     // Ensure contract signing schedule exists before saving dates
     if (!$application->contract_signing_schedule) {
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You must set a contract signing schedule before assigning contract dates.'
+            ], 400);
+        }
         return redirect()->back()->with('error', 'You must set a contract signing schedule before assigning contract dates.');
     }
 
@@ -79,6 +107,14 @@ public function storeDates(Request $request, $applicationId)
         'contract_start' => $startDate->format('Y-m-d'),
         'contract_end'   => $endDate->format('Y-m-d'),
     ]);
+
+    // Check if it's an AJAX request
+    if ($request->wantsJson() || $request->ajax()) {
+        return response()->json([
+            'success' => true,
+            'message' => 'Contract dates saved successfully.'
+        ], 200);
+    }
 
     return redirect()->back()->with('success', 'Contract dates saved successfully.');
 }

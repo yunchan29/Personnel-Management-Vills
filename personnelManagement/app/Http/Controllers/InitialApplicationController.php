@@ -15,15 +15,29 @@ use App\Mail\FailInterviewMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User; // ✅ needed for archiving
+use App\Enums\ApplicationStatus;
 
 class InitialApplicationController extends Controller
 {
     public function index(Request $request)
     {
-        $jobsQuery = Job::withCount('applications');
+        $jobsQuery = Job::withCount([
+            'applications as applications_count' => function ($query) {
+                $query->whereIn('status', [
+                    ApplicationStatus::PENDING->value,
+                    ApplicationStatus::TO_REVIEW->value,
+                ]);
+            }
+        ]);
 
         if ($request->filled('search')) {
-            $jobsQuery->where('job_title', 'like', '%' . $request->search . '%');
+            $searchTerm = $request->search;
+            $jobsQuery->where(function($query) use ($searchTerm) {
+                $query->where('job_title', 'like', '%' . $searchTerm . '%')
+                      ->orWhere('company_name', 'like', '%' . $searchTerm . '%')
+                      ->orWhere('location', 'like', '%' . $searchTerm . '%')
+                      ->orWhere('qualifications', 'like', '%' . $searchTerm . '%');
+            });
         }
 
         if ($request->filled('company_name')) {
@@ -67,38 +81,51 @@ class InitialApplicationController extends Controller
 {
     $job = Job::findOrFail($jobId);
 
-    // Jobs with filtered application count (exclude hired + declined)
+    // Jobs with filtered application count (only pending and to_review - matches Applicants tab)
     $jobs = Job::withCount([
         'applications as applications_count' => function ($query) {
-            $query->whereNotIn('status', ['hired', 'declined']);
+            $query->whereIn('status', [
+                ApplicationStatus::PENDING->value,
+                ApplicationStatus::TO_REVIEW->value,
+            ]);
         }
     ])->get();
 
-    // Main applicants list (exclude hired + declined)
+    // Applicants tab - Only pending and to_review statuses
     $applications = Application::with(['user.resume', 'job', 'interview', 'trainingSchedule'])
         ->where('job_id', $jobId)
-        ->whereNotIn('status', ['hired', 'declined'])
+        ->whereIn('status', [
+            ApplicationStatus::PENDING->value,
+            ApplicationStatus::TO_REVIEW->value,
+        ])
         ->get();
 
-    // Approved applicants (approved + for_interview, but still exclude hired/declined just in case)
-    $approvedApplicants = Application::with(['user.resume', 'job', 'trainingSchedule'])
+    // Interview tab - Approved and for_interview statuses
+    $approvedApplicants = Application::with(['user.resume', 'job', 'interview', 'trainingSchedule'])
         ->where('job_id', $jobId)
-        ->whereIn('status', ['approved', 'for_interview'])
-        ->whereNotIn('status', ['hired', 'declined'])
+        ->whereIn('status', [
+            ApplicationStatus::APPROVED->value,
+            ApplicationStatus::FOR_INTERVIEW->value,
+        ])
         ->get();
 
-    // Interview applicants
+    // Training tab - Interviewed and scheduled_for_training statuses
     $interviewApplicants = Application::with(['user.resume', 'job', 'trainingSchedule'])
         ->where('job_id', $jobId)
-        ->whereIn('status', ['interviewed', 'scheduled_for_training'])
-        ->whereNotIn('status', ['hired', 'declined'])
+        ->whereIn('status', [
+            ApplicationStatus::INTERVIEWED->value,
+            ApplicationStatus::SCHEDULED_FOR_TRAINING->value,
+        ])
         ->get();
 
-    // For training applicants
-    $forTrainingApplicants = Application::with(['user.resume', 'job', 'trainingSchedule'])
+    // Evaluation tab - Trained and for_evaluation statuses
+    $forTrainingApplicants = Application::with(['user.resume', 'job', 'trainingSchedule', 'evaluation'])
         ->where('job_id', $jobId)
-        ->where('status', 'for_evaluation')
-        ->whereNotIn('status', ['hired', 'declined'])
+        ->whereIn('status', [
+            ApplicationStatus::TRAINED->value,
+            ApplicationStatus::FOR_EVALUATION->value,
+            ApplicationStatus::PASSED_EVALUATION->value,
+        ])
         ->get();
 
     $companies = Job::select('company_name')->distinct()->pluck('company_name');
@@ -122,47 +149,37 @@ class InitialApplicationController extends Controller
         $application = Application::with(['user', 'job'])->findOrFail($id);
 
         $validated = $request->validate([
-            'status' => 'required|string|in:approved,declined,interviewed,for_interview,trained,fail_interview'
+            'status' => 'required|string|in:approved,declined,interviewed,for_interview,trained,failed_interview,fail_interview'
         ]);
 
         // ✅ SECURITY FIX: Wrap in database transaction for data consistency
         DB::transaction(function () use ($application, $validated, $request) {
             $oldStatus = $application->status;
-            $application->status = $validated['status'];
+            $application->setStatus($validated['status']); // Use setStatus which handles enum conversion
             $application->save();
 
-            if (in_array($validated['status'], ['interviewed', 'fail_interview'])) {
-                DB::table('interviews')
-                    ->where('application_id', $application->id)
-                    ->update(['status' => 'completed']);
-            }
+            // Observer now handles interview status sync automatically
 
-            if ($oldStatus !== $application->status) {
-                switch ($application->status) {
-                    case 'approved':
+            if ($oldStatus != $application->status) {
+                $status = $application->status;
+
+                switch ($status) {
+                    case ApplicationStatus::APPROVED:
                         Mail::to($application->user->email)->send(new ApprovedLetterMail($application));
                         break;
 
-                    case 'declined':
+                    case ApplicationStatus::DECLINED:
                         Mail::to($application->user->email)->send(new DeclinedLetterMail($application));
-
-                        // ✅ Archive user when declined
-                        $application->is_archived = true;
-                        $application->save();
-
+                        // Observer handles archiving automatically
                         break;
 
-                    case 'interviewed':
+                    case ApplicationStatus::INTERVIEWED:
                         Mail::to($application->user->email)->send(new PassInterviewMail($application));
                         break;
 
-                    case 'fail_interview':
+                    case ApplicationStatus::FAILED_INTERVIEW:
                         Mail::to($application->user->email)->send(new FailInterviewMail($application));
-
-                        // ✅ Archive user when failed interview
-                        $application->is_archived = true;
-                        $application->save();
-
+                        // Observer handles archiving automatically
                         break;
                 }
             }
@@ -182,7 +199,7 @@ class InitialApplicationController extends Controller
         $validator = Validator::make($request->all(), [
             'ids' => 'required|array',   // match frontend
             'ids.*' => 'exists:applications,id',
-            'status' => 'required|string|in:approved,declined,interviewed,fail_interview,for_interview,trained'
+            'status' => 'required|string|in:approved,declined,interviewed,failed_interview,fail_interview,for_interview,trained'
         ]);
 
         if ($validator->fails()) {
@@ -198,42 +215,36 @@ class InitialApplicationController extends Controller
         $updatedCount = DB::transaction(function () use ($validated) {
             $applications = Application::with(['user', 'job'])
                 ->whereIn('id', $validated['ids'])
-                ->where('status', '!=', $validated['status'])
                 ->get();
 
             foreach ($applications as $application) {
                 $oldStatus = $application->status;
-                $application->status = $validated['status'];
+                $application->setStatus($validated['status']); // Use setStatus method
                 $application->save();
 
-                // 🔔 Sync interview record if interviewed or failed interview
-                if (in_array($validated['status'], ['interviewed', 'fail_interview'])) {
-                    DB::table('interviews')
-                        ->where('application_id', $application->id)
-                        ->update(['status' => 'completed']);
-                }
+                // Observer now handles interview and training status sync automatically
 
-                // 🔔 Send mails and archive rules
-                if ($oldStatus !== $application->status) {
-                    switch ($application->status) {
-                        case 'approved':
+                // 🔔 Send mails
+                if ($oldStatus != $application->status) {
+                    $status = $application->status;
+
+                    switch ($status) {
+                        case ApplicationStatus::APPROVED:
                             Mail::to($application->user->email)->send(new ApprovedLetterMail($application));
                             break;
 
-                        case 'declined':
+                        case ApplicationStatus::DECLINED:
                             Mail::to($application->user->email)->send(new DeclinedLetterMail($application));
-                            $application->is_archived = true;
-                            $application->save();
+                            // Observer handles archiving
                             break;
 
-                        case 'interviewed': // Pass
+                        case ApplicationStatus::INTERVIEWED:
                             Mail::to($application->user->email)->send(new PassInterviewMail($application));
                             break;
 
-                        case 'fail_interview': // Fail
+                        case ApplicationStatus::FAILED_INTERVIEW:
                             Mail::to($application->user->email)->send(new FailInterviewMail($application));
-                            $application->is_archived = true;
-                            $application->save();
+                            // Observer handles archiving
                             break;
                     }
                 }

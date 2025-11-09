@@ -71,6 +71,14 @@ class UserController extends Controller
         return $this->show();
     }
 
+    public function editHrStaff() {
+        return $this->edit();
+    }
+
+    public function updateHrStaff(Request $request) {
+        return $this->update($request);
+    }
+
     public function toggleVisibility(Request $request)
     {
         $request->validate([
@@ -82,6 +90,51 @@ class UserController extends Controller
         $user->save();
 
         return redirect()->back()->with('success', 'Account status updated.');
+    }
+
+    /**
+     * Get employee details for the modal
+     */
+    public function getEmployeeDetails($id)
+    {
+        $employee = User::with(['job', 'applications'])
+            ->where('id', $id)
+            ->firstOrFail();
+
+        // Get the latest application for this employee
+        $latestApplication = $employee->applications()->latest()->first();
+
+        return response()->json([
+            'id' => $employee->id,
+            'full_name' => $employee->full_name,
+            'first_name' => $employee->first_name,
+            'middle_name' => $employee->middle_name,
+            'last_name' => $employee->last_name,
+            'suffix' => $employee->suffix,
+            'profile_picture' => $employee->profile_picture,
+            'email' => $employee->email,
+            'mobile_number' => $employee->mobile_number,
+            'phone_number' => $employee->mobile_number,
+            'address' => $employee->full_address,
+            'birth_date' => $employee->birth_date,
+            'birth_place' => $employee->birth_place,
+            'age' => $employee->age,
+            'gender' => $employee->gender,
+            'civil_status' => $employee->civil_status,
+            'religion' => $employee->religion,
+            'nationality' => $employee->nationality,
+            'province' => $employee->province,
+            'city' => $employee->city,
+            'barangay' => $employee->barangay,
+            'street_details' => $employee->street_details,
+            'postal_code' => $employee->postal_code,
+            'job_title' => $employee->job->job_title ?? 'N/A',
+            'company_name' => $employee->job->company_name ?? 'N/A',
+            'active_status' => $employee->active_status,
+            'contract_start' => $latestApplication?->contract_start?->format('M d, Y'),
+            'contract_end' => $latestApplication?->contract_end?->format('M d, Y'),
+            'application_status' => $latestApplication?->status ?? 'N/A',
+        ]);
     }
 
     private function showProfileByRole($role) {

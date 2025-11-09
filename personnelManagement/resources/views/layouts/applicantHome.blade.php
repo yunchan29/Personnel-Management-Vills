@@ -35,6 +35,7 @@
     <x-shared.complete-profile-modal
         :isIncomplete="!auth()->user()->is_profile_complete"
         :profileRoute="route('applicant.profile')"
+        :settingsRoute="route('applicant.settings')"
         title="Complete Your Profile"
         message="Please complete your profile to apply for jobs and access all features."
         buttonText="Go to Profile"

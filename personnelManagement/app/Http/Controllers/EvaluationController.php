@@ -11,6 +11,7 @@ use App\Models\Job;
 use App\Models\User;
 use App\Mail\PassedEvaluationMail;
 use App\Mail\FailedEvaluationMail;
+use App\Enums\ApplicationStatus;
 
 class EvaluationController extends Controller
 {
@@ -56,7 +57,7 @@ class EvaluationController extends Controller
 
         if ($validated['result'] === 'passed') {
             // ✅ Update application status
-            $application->status = 'passed';
+            $application->setStatus(ApplicationStatus::PASSED_EVALUATION);
             $application->save();
 
             // 🔽 Decrement job vacancies
@@ -70,9 +71,8 @@ class EvaluationController extends Controller
             }
 
         } else {
-            // 1️⃣ Auto-archive
-            $application->is_archived = true;
-            $application->status = 'failed';
+            // 1️⃣ Update status to failed (observer handles auto-archiving)
+            $application->setStatus(ApplicationStatus::FAILED_EVALUATION);
             $application->save();
         }
     });
@@ -110,7 +110,7 @@ class EvaluationController extends Controller
     /**
      * Promote an applicant to employee manually via "Add" button
      */
-    public function promoteApplicant($applicationId)
+    public function promoteApplicant(Request $request, $applicationId)
     {
         $application = Application::with('user', 'job')->findOrFail($applicationId);
         $user = $application->user;
@@ -123,8 +123,16 @@ class EvaluationController extends Controller
         }
 
         // Mark application as hired
-        $application->status = 'hired';
+        $application->setStatus(ApplicationStatus::HIRED);
         $application->save();
+
+        // Check if it's an AJAX request
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "{$user->full_name} has been promoted to employee."
+            ], 200);
+        }
 
         return redirect()->back()->with('success', "{$user->full_name} has been promoted to employee.");
     }

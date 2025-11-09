@@ -22,7 +22,7 @@ class LeaveFormController extends Controller
 
     // Regular employee view
     $leaveForms = LeaveForm::where('user_id', $user->id)->latest()->get();
-    return view('employee.leaveForm', compact('leaveForms'));
+    return view('users.leaveForm', compact('leaveForms'));
 }
 
 

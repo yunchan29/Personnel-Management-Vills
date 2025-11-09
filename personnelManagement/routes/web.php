@@ -81,7 +81,21 @@ Route::prefix('applicant')->name('applicant.')->middleware(['auth', 'role:applic
 // ✅ Employee-related routes with auth middleware
 Route::prefix('employee')->name('employee.')->middleware(['auth', 'role:employee'])->group(function () {
     // Dashboard route
-    Route::get('/dashboard', function () {return view('users.dashboard');})->name('dashboard');
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+
+        // Get pending leave forms for the employee
+        $leaveForms = \App\Models\LeaveForm::where('user_id', $user->id)
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // Get requirements/notifications (you can customize this based on your requirements system)
+        // For now, I'll leave it as an empty collection - you can integrate with your actual requirements system
+        $requirements = collect([]);
+
+        return view('users.dashboard', compact('leaveForms', 'requirements'));
+    })->name('dashboard');
 
     // Profile routes to edit and update user profile
     Route::get('/profile', [UserController::class, 'showEmployee'])->name('profile');
@@ -192,6 +206,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/user/change-password', [UserController::class, 'changePassword'])->name('user.changePassword');
     Route::delete('/user/delete-account', [UserController::class, 'deleteAccount'])->name('user.deleteAccount');
 
+    // Employee Details API for modal
+    Route::get('/users/{id}/details', [UserController::class, 'getEmployeeDetails'])->name('users.details');
+
+    // File 201 (Requirements) view for employees
+    Route::get('/file-201/{id}', [File201Controller::class, 'showApplicantFiles'])->name('file201.show');
+
     // ✅ SECURITY FIX: Secure file serving routes with authentication
     Route::get('/secure/resume/{filename}', [\App\Http\Controllers\SecureFileController::class, 'serveResume'])->name('secure.resume');
     Route::get('/secure/other-file/{filename}', [\App\Http\Controllers\SecureFileController::class, 'serveOtherFile'])->name('secure.otherFile');
@@ -258,6 +278,11 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware(['auth', 'role:hrStaff'])
             'pendingEvaluationCount'
         ));
     })->name('dashboard');
+
+    // Profile Management
+    Route::get('/profile', [UserController::class, 'showHrStaff'])->name('profile');
+    Route::get('/profile/edit', [UserController::class, 'editHrStaff'])->name('profile.edit');
+    Route::put('/profile', [UserController::class, 'updateHrStaff'])->name('profile.update');
 
     // Employees
     Route::get('/employees', [EmployeeController::class, 'index'])->name('employees');

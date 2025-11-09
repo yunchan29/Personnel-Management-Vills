@@ -5,19 +5,24 @@
     <x-shared.complete-profile-modal
         :isIncomplete="!auth()->user()->is_profile_complete"
         :profileRoute="route('applicant.profile')"
+        :settingsRoute="route('applicant.settings')"
     />
 
     Props:
     - isIncomplete (boolean): Whether the user's profile is incomplete
-    - profileRoute (string): The route to redirect to when user clicks the button
+    - profileRoute (string): The route to redirect to when user clicks the button (for profile fields)
+    - settingsRoute (string): The route to redirect to settings (when only active toggle is missing)
     - title (string, optional): Custom modal title. Default: "Complete Your Profile"
     - message (string, optional): Custom modal message. Default: "Please complete your profile to access all features."
     - buttonText (string, optional): Custom button text. Default: "Go to Profile"
+
+    Note: The component automatically detects if only the active status toggle is missing and redirects to settings instead of profile.
 --}}
 
 @props([
     'isIncomplete' => false,
     'profileRoute' => '#',
+    'settingsRoute' => '#',
     'title' => 'Complete Your Profile',
     'message' => 'Please complete your profile to access all features.',
     'buttonText' => 'Go to Profile'
@@ -104,10 +109,30 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalContent = document.getElementById('modalContent');
     const goToProfileBtn = document.getElementById('goToProfileBtn');
     const profileRoute = @json($profileRoute);
+    const settingsRoute = @json($settingsRoute);
     const currentUrl = window.location.href;
     const isProfilePage = currentUrl.includes('/profile');
     const isSettingsPage = currentUrl.includes('/settings');
     let allowNavigation = false; // Flag to allow navigation when button is clicked
+
+    // Check if user data is available and determine what's missing
+    const user = @json(auth()->user());
+    const onlyMissingActiveStatus = user &&
+        user.first_name && user.last_name && user.gender &&
+        user.birth_date && user.civil_status && user.nationality &&
+        user.mobile_number && user.full_address && user.province &&
+        user.city && user.barangay && user.profile_picture &&
+        user.active_status !== 'Active';
+
+    // Determine which route to use
+    const targetRoute = onlyMissingActiveStatus ? settingsRoute : profileRoute;
+    console.log('Only missing active status:', onlyMissingActiveStatus);
+    console.log('Target route:', targetRoute);
+
+    // Update button text based on what's missing
+    if (onlyMissingActiveStatus) {
+        goToProfileBtn.textContent = 'Go to Settings';
+    }
 
     console.log('Modal Elements:', {
         modal: !!modal,
@@ -239,12 +264,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Handle button click - allow navigation to profile only
+    // Handle button click - allow navigation to profile or settings
     goToProfileBtn.addEventListener('click', function () {
         // Mark as intentional navigation - disable beforeunload warning
         allowNavigation = true;
         sessionStorage.setItem('allowProfileNavigation', 'true');
-        window.location.href = profileRoute;
+        window.location.href = targetRoute;
     });
 
     // Show modal on page load if not on profile or settings page

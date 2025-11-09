@@ -23,7 +23,7 @@ class StaffArchiveController extends Controller
         return view('admins.shared.archive', compact('applications'));
     }
 
-    public function store($id)
+    public function store(Request $request, $id)
     {
         // Verify user has HR Staff role
         if (Auth::user()->role !== 'hrStaff') {
@@ -35,6 +35,14 @@ class StaffArchiveController extends Controller
         $application->update([
             'is_archived' => true,
         ]);
+
+        // Check if it's an AJAX request
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Application archived successfully.'
+            ], 200);
+        }
 
         return redirect()->back()->with('success', 'Application archived successfully.');
     }

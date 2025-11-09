@@ -10,6 +10,7 @@ use App\Mail\InterviewRescheduleMail;
 use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
+use App\Enums\ApplicationStatus;
 
 class InterviewController extends Controller
 {
@@ -62,7 +63,7 @@ class InterviewController extends Controller
             // Update application status
             $application = Application::find($validated['application_id']);
             if ($application) {
-                $application->status = 'for_interview';
+                $application->setStatus(ApplicationStatus::FOR_INTERVIEW);
                 $application->save();
             }
 
@@ -138,7 +139,7 @@ class InterviewController extends Controller
                 // Update application status
                 $application = Application::find($applicant['application_id']);
                 if ($application) {
-                    $application->status = 'for_interview';
+                    $application->setStatus(ApplicationStatus::FOR_INTERVIEW);
                     $application->save();
                 }
 
@@ -206,7 +207,7 @@ class InterviewController extends Controller
                         // Update application status just to be sure
                         $application = Application::find($applicant['application_id']);
                         if ($application) {
-                            $application->status = 'for_interview';
+                            $application->setStatus(ApplicationStatus::FOR_INTERVIEW);
                             $application->save();
                         }
 

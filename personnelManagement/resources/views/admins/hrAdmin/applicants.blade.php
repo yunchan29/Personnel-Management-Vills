@@ -117,7 +117,7 @@
                     <path d="M22 10v6M2 10l10-5 10 5-10 5L2 10z"></path>
                     <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
                     </svg>
-                    <span class="text-sm" x-text="`Mass Approve (${selectedApplicants.length})`"></span>
+                    <span class="text-sm" x-text="`Approve (${selectedApplicants.length})`"></span>
                 </button>
                 </div>
 
@@ -133,7 +133,7 @@
                     <path d="M22 10v6M2 10l10-5 10 5-10 5L2 10z"></path>
                     <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
                     </svg>
-                    <span class="text-sm" x-text="`Mass Decline (${selectedApplicants.length})`"></span>
+                    <span class="text-sm" x-text="`Decline (${selectedApplicants.length})`"></span>
                 </button>
                 </div>
         </div>
@@ -155,10 +155,11 @@
             <tbody>
                 @forelse($applications as $application)
                     @if($application->user->active_status === 'Active')
+                    {{-- Controller already filters by pending/to_review statuses --}}
                     <tr
                         data-applicant-id="{{ $application->id }}"
-                        data-status="{{ $application->status }}"
-                        x-show="(showAll || (!['approved', 'interviewed', 'for_interview', 'scheduled_for_training','trained', 'hired', 'fail_interview'].includes('{{ $application->status }}'))) && !removedApplicants.includes({{ $application->id }})"
+                        data-status="{{ $application->status->value }}"
+                        x-show="!removedApplicants.includes({{ $application->id }})"
                         x-transition:enter="transition ease-out duration-500"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"
@@ -231,59 +232,20 @@
                         <!-- Status -->
 
                         <td class="py-3 px-4">
-                            @if($application->status === 'interviewed')
-                                <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-                                    Interviewed
-                                </span>
-                            @elseif($application->status === 'fail_interview')
-                                <span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-                                    Failed Interview
-                                </span>
-                            @elseif($application->status === 'approved')
-                                <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-                                    Approved
-                                </span>
-                            @elseif($application->status === 'for_interview')
-                                <span class="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-                                    For Interview
-                                </span>
-                            @elseif($application->status === 'scheduled_for_training')
-                                <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-                                    Scheduled for Training
-                                </span>
-                            @elseif($application->status === 'declined')
-                                <span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-                                    Declined
-                                </span>
-                            @elseif($application->status === 'hired')
-                                <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-                                    Hired
-                                </span>
-                            @else
-                                <span class="text-xs bg-gray-200 text-gray-800 px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap">
-                                    {{ ucfirst(str_replace('_', ' ', $application->status)) }}
-                                </span>
-                            @endif
+                            <span class="text-xs px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap {{ $application->status_badge_class }}">
+                                {{ $application->status_label }}
+                            </span>
                         </td>
                     </tr>
                     @endif
                 @empty
                     <tr>
-                        <td colspan="8" class="py-6 text-center text-gray-500">No applicants yet.</td>
+                        <td colspan="8" class="py-6 text-center text-gray-500">No applicants pending approval.</td>
                     </tr>
                 @endforelse
             </tbody>
             </table>
         </div>
-    </div>
-
-    <!-- Toggle Button -->
-    <div class="flex justify-center mb-4">
-        <button
-            @click="showAll = !showAll"
-            class="px-4 py-2 bg-[#bd6f2200] text-black text-sm font-medium hover:text-[#a95e1d]">
-            <span x-text="showAll ? 'Show Only Pending Applicants' : 'Show All Applicants'"></span>
-        </button>
     </div>
 
     <!-- Feedback Toast -->

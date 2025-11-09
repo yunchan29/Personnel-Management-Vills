@@ -25,7 +25,7 @@
             'applicant' => route('applicant.profile'),
             'employee' => route('employee.profile'),
             'hrAdmin' => route('hrAdmin.profile'),
-            'hrStaff' => route('hrAdmin.profile'),
+            'hrStaff' => route('hrStaff.profile'),
         ];
         $roleTextMap = [
             'hrAdmin' => 'HR Admin',

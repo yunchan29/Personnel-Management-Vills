@@ -11,6 +11,7 @@ use App\Mail\RequirementsLetterMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Http\Traits\FileValidationTrait;
+use App\Enums\ApplicationStatus;
 
 class File201Controller extends Controller
 {
@@ -27,18 +28,25 @@ class File201Controller extends Controller
     }
 
     /**
-     * HR Staff: View an applicant's requirements (for perfEval + requirementsModal).
+     * HR Staff: View an applicant/employee's requirements (for perfEval + requirementsModal + employees page).
      */
    public function showApplicantFiles($applicantId)
 {
-    // ✅ SECURITY FIX: Verify HR staff can only access files of applicants who have active applications
-    $hasActiveApplication = Application::where('user_id', $applicantId)
-        ->whereIn('status', ['pending', 'approved', 'for_interview', 'interviewed', 'scheduled_for_training', 'for_evaluation', 'passed'])
-        ->exists();
+    // ✅ SECURITY FIX: Verify the user exists and has at least one application
+    $user = User::find($applicantId);
 
-    if (!$hasActiveApplication) {
+    if (!$user) {
         return response()->json([
-            'error' => 'Unauthorized access. Applicant not found or no active application.'
+            'error' => 'User not found.'
+        ], 404);
+    }
+
+    // Check if user has any application (regardless of status, to support both applicants and employees)
+    $hasApplication = Application::where('user_id', $applicantId)->exists();
+
+    if (!$hasApplication) {
+        return response()->json([
+            'error' => 'No application found for this user.'
         ], 403);
     }
 

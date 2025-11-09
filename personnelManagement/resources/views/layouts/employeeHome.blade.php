@@ -30,6 +30,7 @@
     <x-shared.complete-profile-modal
         :isIncomplete="!auth()->user()->is_profile_complete"
         :profileRoute="route('employee.profile')"
+        :settingsRoute="route('employee.settings')"
         title="Complete Your Profile"
         message="Please complete your profile to access all employee features and benefits."
         buttonText="Go to Profile"

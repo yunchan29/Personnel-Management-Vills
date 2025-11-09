@@ -78,11 +78,11 @@
     </thead>
     <tbody>
         @forelse ($applicants->filter(function($app) {
-            return $app->status === 'scheduled_for_training'
+            return in_array($app->status->value, ['trained', 'for_evaluation', 'scheduled_for_training'])
                 && $app->trainingSchedule;
         })->sortBy(fn($app) => $app->evaluation ? 1 : 0) as $applicant)
         <tr
-            x-show="showAll || '{{ $applicant->status }}' !== 'hired'"
+            x-show="showAll || '{{ $applicant->status->value }}' !== 'hired'"
             class="border-b hover:bg-gray-50"
         >
             <!-- Checkbox -->
@@ -281,13 +281,14 @@
                         <th class="py-3 px-4">Company</th>
                         <th class="py-3 px-4">Training End Date</th>
                         <th class="py-3 px-4">Score</th>
+                        <th class="py-3 px-4">Invitation Sent</th>
                         <th class="py-3 px-4">Requirements</th>
                     </tr>
                 </thead>
                 <tbody>
                     @php
                         $passers = $applicants->filter(function($app) {
-                            return ($app->status === 'passed' || $app->status === 'scheduled_for_training')
+                            return in_array($app->status->value, ['passed_evaluation', 'trained', 'for_evaluation', 'scheduled_for_training'])
                                 && $app->trainingSchedule
                                 && $app->evaluation
                                 && ($app->evaluation->total_score ?? 0) >= 70;
@@ -305,7 +306,8 @@
                                     :value="JSON.stringify({
                                         application_id: {{ $applicant->id }},
                                         user_id: {{ $applicant->user_id }},
-                                        name: '{{ $applicant->user->full_name }}'
+                                        name: '{{ $applicant->user->full_name }}',
+                                        has_invitation: {{ $applicant->contract_signing_schedule ? 'true' : 'false' }}
                                     })"
                                     :checked="selectedPassers.some(a => a.application_id === {{ $applicant->id }})"
                                     @change="
@@ -353,6 +355,25 @@
                             </span>
                         </td>
 
+                        <!-- Invitation Sent Status -->
+                        <td class="py-3 px-4 align-middle whitespace-nowrap text-center">
+                            @if($applicant->contract_signing_schedule)
+                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Sent
+                                </span>
+                            @else
+                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Pending
+                                </span>
+                            @endif
+                        </td>
+
                         <!-- Requirements Button -->
                         <td class="py-3 px-4 align-middle whitespace-nowrap">
                             <button
@@ -368,7 +389,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center py-6 text-gray-500 italic">
+                        <td colspan="8" class="text-center py-6 text-gray-500 italic">
                             No applicants have passed the evaluation yet.
                         </td>
                     </tr>
@@ -380,17 +401,17 @@
 
     <!-- Hidden Forms for Bulk Actions -->
     @foreach ($applicants->filter(function($app) {
-        return $app->status === 'scheduled_for_training' && $app->trainingSchedule;
+        return in_array($app->status->value, ['trained', 'for_evaluation', 'scheduled_for_training']) && $app->trainingSchedule;
     }) as $applicant)
         <!-- Promote Form -->
-        @if($applicant->status !== 'hired')
+        @if($applicant->status->value !== 'hired')
         <form method="POST" action="{{ route('hrStaff.evaluation.promote', $applicant->id) }}" style="display: none;" id="promote-form-{{ $applicant->id }}">
             @csrf
         </form>
         @endif
 
         <!-- Archive Form -->
-        @if($applicant->status !== 'hired')
+        @if($applicant->status->value !== 'hired')
         <form action="{{ route('hrStaff.archive.store', $applicant->id) }}" method="POST" style="display: none;" id="archive-form-{{ $applicant->id }}" class="archive-form">
             @csrf
         </form>
@@ -570,6 +591,24 @@ function actionDropdown() {
                     let successCount = 0;
                     let errorCount = 0;
 
+                    // Show loading modal
+                    Swal.fire({
+                        title: 'Processing...',
+                        html: `
+                            <div class="flex flex-col items-center">
+                                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#BD6F22] mb-4"></div>
+                                <p class="text-sm text-gray-600">Promoting <strong>${this.selectedApplicants.length}</strong> applicant(s) to employee...</p>
+                                <p class="text-xs text-gray-500 mt-2">Setting contract dates and updating records...</p>
+                            </div>
+                        `,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
                     for (const applicant of this.selectedApplicants) {
                         try {
                             // Set contract dates
@@ -637,6 +676,24 @@ function actionDropdown() {
                 cancelButtonText: 'Cancel'
             }).then(async (result) => {
                 if (result.isConfirmed) {
+                    // Show loading modal
+                    Swal.fire({
+                        title: 'Processing...',
+                        html: `
+                            <div class="flex flex-col items-center">
+                                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#BD6F22] mb-4"></div>
+                                <p class="text-sm text-gray-600">Archiving <strong>${this.selectedApplicants.length}</strong> applicant(s)...</p>
+                                <p class="text-xs text-gray-500 mt-2">Please wait...</p>
+                            </div>
+                        `,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
                     let successCount = 0;
                     let errorCount = 0;
 
@@ -1113,7 +1170,8 @@ function actionDropdown() {
                         }
                     });
                 },
-                preConfirm: () => {
+                showLoaderOnConfirm: true,
+                preConfirm: async () => {
                     const contractDate = document.getElementById('bulk_contract_date').value;
                     const contractHour = document.getElementById('bulk_contract_hour').value;
                     const contractMinute = document.getElementById('bulk_contract_minute').value;
@@ -1124,14 +1182,11 @@ function actionDropdown() {
                         return false;
                     }
 
-                    return {
+                    const invitationData = {
                         contract_date: contractDate,
                         contract_signing_time: `${contractHour}:${contractMinute} ${contractPeriod}`
                     };
-                }
-            }).then(async (result) => {
-                if (result.isConfirmed && result.value) {
-                    const invitationData = result.value;
+
                     let successCount = 0;
                     let errorCount = 0;
 
@@ -1155,12 +1210,21 @@ function actionDropdown() {
                         }
                     }
 
+                    return {
+                        successCount: successCount,
+                        errorCount: errorCount
+                    };
+                }
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    const finalResult = result.value;
                     Swal.fire({
                         title: 'Complete!',
-                        html: `<p>Invitations sent successfully: <strong>${successCount}</strong></p>
-                               ${errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${errorCount}</strong></p>` : ''}`,
-                        icon: errorCount > 0 ? 'warning' : 'success',
-                        confirmButtonColor: '#BD6F22'
+                        html: `<p>Invitations sent successfully: <strong>${finalResult.successCount}</strong></p>
+                               ${finalResult.errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${finalResult.errorCount}</strong></p>` : ''}`,
+                        icon: finalResult.errorCount > 0 ? 'warning' : 'success',
+                        confirmButtonColor: '#BD6F22',
+                        allowOutsideClick: false
                     }).then(() => {
                         window.location.reload();
                     });
@@ -1174,6 +1238,21 @@ function actionDropdown() {
                 Swal.fire({
                     title: 'No Selection',
                     text: 'Please select at least one applicant to promote.',
+                    icon: 'warning',
+                    confirmButtonColor: '#BD6F22'
+                });
+                return;
+            }
+
+            // Check if all selected applicants have received an invitation
+            const passersWithoutInvitation = selectedPassers.filter(p => !p.has_invitation);
+            if (passersWithoutInvitation.length > 0) {
+                const names = passersWithoutInvitation.map(p => p.name).join(', ');
+                Swal.fire({
+                    title: 'Invitation Required',
+                    html: `<p class="text-sm text-gray-700">The following applicant(s) must receive a contract signing invitation before they can be promoted:</p>
+                           <p class="mt-2 font-semibold text-gray-900">${names}</p>
+                           <p class="mt-2 text-sm text-gray-600">Please send them an invitation first by using the "Send Invitation" button.</p>`,
                     icon: 'warning',
                     confirmButtonColor: '#BD6F22'
                 });
@@ -1238,7 +1317,8 @@ function actionDropdown() {
                     startInput.addEventListener('change', calculateEnd);
                     periodSelect.addEventListener('change', calculateEnd);
                 },
-                preConfirm: () => {
+                showLoaderOnConfirm: true,
+                preConfirm: async () => {
                     const contractStart = document.getElementById('bulk_passer_promote_contract_start').value;
                     const contractPeriod = document.getElementById('bulk_passer_promote_contract_period').value;
 
@@ -1247,14 +1327,11 @@ function actionDropdown() {
                         return false;
                     }
 
-                    return {
+                    const contractData = {
                         contract_start: contractStart,
                         period: contractPeriod
                     };
-                }
-            }).then(async (result) => {
-                if (result.isConfirmed && result.value) {
-                    const contractData = result.value;
+
                     let successCount = 0;
                     let errorCount = 0;
 
@@ -1290,12 +1367,21 @@ function actionDropdown() {
                         }
                     }
 
+                    return {
+                        successCount: successCount,
+                        errorCount: errorCount
+                    };
+                }
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    const finalResult = result.value;
                     Swal.fire({
                         title: 'Complete!',
-                        html: `<p>Successfully promoted: <strong>${successCount}</strong></p>
-                               ${errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${errorCount}</strong></p>` : ''}`,
-                        icon: errorCount > 0 ? 'warning' : 'success',
-                        confirmButtonColor: '#BD6F22'
+                        html: `<p>Successfully promoted: <strong>${finalResult.successCount}</strong></p>
+                               ${finalResult.errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${finalResult.errorCount}</strong></p>` : ''}`,
+                        icon: finalResult.errorCount > 0 ? 'warning' : 'success',
+                        confirmButtonColor: '#BD6F22',
+                        allowOutsideClick: false
                     }).then(() => {
                         window.location.reload();
                     });
@@ -1326,6 +1412,24 @@ function actionDropdown() {
                 cancelButtonText: 'Cancel'
             }).then(async (result) => {
                 if (result.isConfirmed) {
+                    // Show loading modal
+                    Swal.fire({
+                        title: 'Processing...',
+                        html: `
+                            <div class="flex flex-col items-center">
+                                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#BD6F22] mb-4"></div>
+                                <p class="text-sm text-gray-600">Archiving <strong>${selectedPassers.length}</strong> applicant(s)...</p>
+                                <p class="text-xs text-gray-500 mt-2">Please wait...</p>
+                            </div>
+                        `,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
                     let successCount = 0;
                     let errorCount = 0;
 
@@ -1670,6 +1774,17 @@ function evaluationModal(applicants) {
                 }
             }).then(async (result) => {
                 if (result.isConfirmed && result.value) {
+                    // Show loading state
+                    Swal.fire({
+                        title: 'Sending invitation...',
+                        html: 'Please wait while we send the contract signing invitation.',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
                     // Submit contract signing schedule
                     try {
                         const response = await fetch(`/hrStaff/contract-schedule/${applicationId}`, {
@@ -1687,8 +1802,8 @@ function evaluationModal(applicants) {
                             title: 'Success!',
                             text: 'Contract signing invitation sent successfully.',
                             icon: 'success',
-                            timer: 1500,
-                            showConfirmButton: false
+                            confirmButtonColor: '#BD6F22',
+                            allowOutsideClick: false
                         }).then(() => {
                             window.location.reload();
                         });
@@ -1697,12 +1812,12 @@ function evaluationModal(applicants) {
                             title: 'Error',
                             text: error.message,
                             icon: 'error',
-                            confirmButtonColor: '#BD6F22'
-                        }).then(() => {
-                            window.location.reload();
+                            confirmButtonColor: '#BD6F22',
+                            allowOutsideClick: false
                         });
                     }
                 } else {
+                    // User clicked skip - just reload
                     window.location.reload();
                 }
             });
