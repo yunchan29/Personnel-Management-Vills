@@ -10,13 +10,29 @@
         <!-- Header -->
 <div class="flex justify-between items-center mb-4">
     <h2 class="text-lg font-semibold" style="color: #BD6F22;">Personal Information</h2>
-    @if($editable)
-    <button type="button"
-            class="px-4 py-2 bg-[#BD6F22] text-white rounded-md shadow"
-            @click="$store.editMode.isEditing = !$store.editMode.isEditing"
-            x-text="$store.editMode.isEditing ? 'Cancel' : 'Edit'">
-    </button>
-    @endif
+    <div class="flex gap-2">
+        @if($editable)
+        <button type="button"
+                class="px-4 py-2 bg-[#BD6F22] text-white rounded-md shadow"
+                @click="toggleEdit()"
+                x-text="isEditing ? 'Cancel' : 'Edit'">
+        </button>
+        <button type="button"
+                class="px-4 py-2 bg-green-600 text-white rounded-md shadow"
+                @click="savePersonalInfo()"
+                x-show="isEditing"
+                x-cloak>
+            Save
+        </button>
+        @else
+        <!-- For non-editable users (employees, HR), show only Save button -->
+        <button type="button"
+                class="px-4 py-2 bg-green-600 text-white rounded-md shadow"
+                onclick="document.getElementById('personalInfoForm').submit()">
+            Save
+        </button>
+        @endif
+    </div>
 </div>
 
     <!-- Personal Info Grid -->
@@ -52,8 +68,8 @@
                     <select
                         name="suffix"
                         @if($editable)
-                        x-bind:disabled="!$store.editMode.isEditing"
-                        x-bind:class="$store.editMode.isEditing
+                        x-bind:disabled="!isEditing"
+                        x-bind:class="isEditing
                             ? 'w-full border border-gray-300 rounded-md shadow-sm px-3 py-2'
                             : 'w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-gray-100 cursor-not-allowed'"
                         @else
@@ -76,11 +92,11 @@
                         @if($editable)
                         x-bind:readonly="
                             {{ $isAlwaysLocked ? 'true' : 'false' }} ||
-                            {{ $isConditionallyLocked ? 'true' : '!$store.editMode.isEditing' }}
+                            {{ $isConditionallyLocked ? 'true' : '!isEditing' }}
                         "
                         x-bind:class="(
                             {{ $isAlwaysLocked ? 'true' : 'false' }} ||
-                            {{ $isConditionallyLocked ? 'true' : '!$store.editMode.isEditing' }}
+                            {{ $isConditionallyLocked ? 'true' : '!isEditing' }}
                         )
                             ? 'w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-gray-100 cursor-not-allowed'
                             : 'w-full border border-gray-300 rounded-md shadow-sm px-3 py-2'
@@ -126,10 +142,10 @@
     id="civil_status"
     class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
     @if($editable)
-    :class="$store.editMode.isEditing
+    :class="isEditing
         ? 'bg-white cursor-pointer'
         : 'bg-gray-100 cursor-not-allowed'"
-    :disabled="!$store.editMode.isEditing"
+    :disabled="!isEditing"
     @endif
 >
     <option value="">-- Select Civil Status --</option>
@@ -156,8 +172,8 @@
                value="{{ old('religion', $user->religion) }}"
                class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
                @if($editable)
-               :class="$store.editMode.isEditing ? 'bg-white cursor-text' : 'bg-gray-100 cursor-not-allowed'"
-               :readonly="!$store.editMode.isEditing"
+               :class="isEditing ? 'bg-white cursor-text' : 'bg-gray-100 cursor-not-allowed'"
+               :readonly="!isEditing"
                @endif
                >
     </div>
@@ -172,9 +188,9 @@
         name="nationality"
         id="nationality"
         @if($editable)
-        x-bind:disabled="{{ $user->nationality ? 'true' : '!$store.editMode.isEditing' }}"
+        x-bind:disabled="{{ $user->nationality ? 'true' : '!isEditing' }}"
         x-bind:class="(
-            {{ $user->nationality ? 'true' : '!$store.editMode.isEditing' }}
+            {{ $user->nationality ? 'true' : '!isEditing' }}
         )
             ? 'w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-gray-100 cursor-not-allowed'
             : 'w-full border border-gray-300 rounded-md shadow-sm px-3 py-2'
@@ -216,10 +232,10 @@
         placeholder="e.g., 09123456789 or +639123456789"
         class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
         @if($editable)
-        :class="$store.editMode.isEditing
+        :class="isEditing
             ? 'bg-white cursor-text'
             : 'bg-gray-100 cursor-not-allowed'"
-        :readonly="!$store.editMode.isEditing"
+        :readonly="!isEditing"
         @input="validateMobileNumber($event)"
         @endif
     >
@@ -234,14 +250,14 @@
 <div class="mb-4">
     <label class="block text-sm text-gray-700">Full Address</label>
     <!-- Editable -->
-    <input type="text" name="full_address" id="full_address"
-           value="{{ old('full_address', $user->full_address) }}"
-           class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
-           @if($editable)
-           :class="$store.editMode.isEditing ? 'bg-white cursor-text' : 'bg-gray-100 cursor-not-allowed'"
-           :readonly="!$store.editMode.isEditing"
-           @endif
-           >
+    <input
+        type="text"
+        name="full_address"
+        id="full_address"
+        value="{{ old('full_address', $user->full_address) }}"
+        class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-gray-100 cursor-not-allowed"
+        readonly
+    >
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -253,8 +269,8 @@
         <input type="text" name="street_details" value="{{ old('street_details', $user->street_details ?? '') }}"
                class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
                @if($editable)
-               :class="$store.editMode.isEditing ? 'bg-white cursor-text' : 'bg-gray-100 cursor-not-allowed'"
-               :readonly="!$store.editMode.isEditing"
+               :class="isEditing ? 'bg-white cursor-text' : 'bg-gray-100 cursor-not-allowed'"
+               :readonly="!isEditing"
                @endif
                >
     </div>
@@ -268,8 +284,8 @@
                value="{{ old('postal_code', $user->postal_code ?? '') }}"
                class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
                @if($editable)
-               :class="$store.editMode.isEditing ? 'bg-white cursor-text' : 'bg-gray-100 cursor-not-allowed'"
-               :readonly="!$store.editMode.isEditing"
+               :class="isEditing ? 'bg-white cursor-text' : 'bg-gray-100 cursor-not-allowed'"
+               :readonly="!isEditing"
                @endif
                >
     </div>
@@ -284,10 +300,10 @@
         <select id="province" name="province"
                 class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
                 @if($editable)
-                :class="$store.editMode.isEditing
+                :class="isEditing
                     ? 'bg-white cursor-pointer'
                     : 'bg-gray-100 cursor-not-allowed'"
-                :disabled="!$store.editMode.isEditing"
+                :disabled="!isEditing"
                 @endif
                 >
             <option value="">-- Select Province --</option>
@@ -302,10 +318,10 @@
         <select id="city" name="city"
                 class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
                 @if($editable)
-                :class="$store.editMode.isEditing
+                :class="isEditing
                     ? 'bg-white cursor-pointer'
                     : 'bg-gray-100 cursor-not-allowed'"
-                :disabled="!$store.editMode.isEditing"
+                :disabled="!isEditing"
                 @endif
                 >
             <option value="">-- Select City --</option>
@@ -320,10 +336,10 @@
         <select id="barangay" name="barangay"
                 class="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
                 @if($editable)
-                :class="$store.editMode.isEditing
+                :class="isEditing
                     ? 'bg-white cursor-pointer'
                     : 'bg-gray-100 cursor-not-allowed'"
-                :disabled="!$store.editMode.isEditing"
+                :disabled="!isEditing"
                 @endif
                 >
             <option value="">-- Select Barangay --</option>
@@ -341,7 +357,7 @@
 function personalForm() {
     return {
         isEditing: false,
-        civil_status: user.civil_status ?? '',
+        civil_status: '{{ $user->civil_status ?? '' }}',
         isNewAccount: {{ $user->created_at ? 'false' : 'true' }},
         mobileError: '',
         locks: {
@@ -369,6 +385,77 @@ function personalForm() {
             } else {
                 this.mobileError = '';
             }
+        },
+        savePersonalInfo() {
+            // Validate profile picture
+            const profilePicInput = document.getElementById('profile_picture');
+            const previewImage = document.getElementById('previewImage');
+            const hasExistingPic = previewImage && !previewImage.src.includes('default.png');
+
+            if (!hasExistingPic && (!profilePicInput || !profilePicInput.files.length)) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Profile Picture',
+                    text: 'Please upload a profile picture before submitting.',
+                    confirmButtonColor: '#BD6F22'
+                });
+                return;
+            }
+
+            // Validate required dropdowns
+            const requiredDropdowns = [
+                { id: 'civil_status', label: 'Civil Status' },
+                { id: 'nationality', label: 'Nationality' },
+                { id: 'province', label: 'Province' },
+                { id: 'city', label: 'City / Municipality' },
+                { id: 'barangay', label: 'Barangay' },
+            ];
+
+            for (const field of requiredDropdowns) {
+                const el = document.getElementById(field.id);
+                if (el && (!el.value || el.value.trim() === '')) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Incomplete Information',
+                        text: `Please select your ${field.label} before submitting.`,
+                        confirmButtonColor: '#BD6F22'
+                    });
+                    el.focus();
+                    return;
+                }
+            }
+
+            // Validate mobile number
+            const mobileNumberInput = document.getElementById('mobile_number');
+            const mobileNumberPattern = /^09\d{9}$/;
+
+            if (!mobileNumberInput || mobileNumberInput.value.trim() === '') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Mobile Number',
+                    text: 'Please enter your mobile number before submitting.',
+                    confirmButtonColor: '#BD6F22'
+                });
+                mobileNumberInput.focus();
+                return;
+            } else if (!mobileNumberPattern.test(mobileNumberInput.value.trim())) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Mobile Number',
+                    text: 'Please enter a valid 11-digit mobile number starting with 09.',
+                    confirmButtonColor: '#BD6F22'
+                });
+                mobileNumberInput.focus();
+                return;
+            }
+
+            // Update full address before submitting
+            if (typeof updateFullAddress === 'function') {
+                updateFullAddress();
+            }
+
+            // Submit the form
+            document.getElementById('personalInfoForm').submit();
         }
     }
 }

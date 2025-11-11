@@ -8,7 +8,14 @@ x-init="$nextTick(() => {
 class="space-y-6">
 
     <!-- Preferred Classification -->
-    <h3 class="text-lg font-semibold text-[#BD6F22]">Preferred Classification</h3>
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-[#BD6F22]">Preferred Classification</h3>
+        <button type="button"
+                @click="savePreference()"
+                class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
+            Save
+        </button>
+    </div>
     <div class="mt-2">
         <!-- Job Industry -->
         <div>
@@ -53,6 +60,15 @@ function preferenceForm() {
             }
 
             return true;
+        },
+        savePreference() {
+            // Validate before submitting
+            if (!this.validate()) {
+                return;
+            }
+
+            // Submit the form
+            document.getElementById('preferenceForm').submit();
         }
     };
 }

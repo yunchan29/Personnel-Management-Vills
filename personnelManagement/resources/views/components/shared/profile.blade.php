@@ -1,12 +1,5 @@
 @props(['user', 'experiences', 'updateRoute'])
 
-<form id="profileForm"
-      action="{{ $updateRoute }}"
-      method="POST"
-      enctype="multipart/form-data">
-
-    @csrf
-    @method('PUT')
 <!-- Profile Picture + Form Row -->
 <div class="flex flex-col md:flex-row gap-6">
 
@@ -25,23 +18,15 @@
                         style="background-color: #BD6F22;">
                     Edit Picture
                 </button>
-
-                <input type="file"
-                    id="profile_picture"
-                    name="profile_picture"
-                    accept="image/jpeg, image/png"
-                    onchange="validateImage(this)"
-                    class="hidden">
             </div>
-
         </div>
     </div>
 
 <!-- Right Column -->
 <div class="w-full md:flex-1">
-    <div class="max-w-4xl w-full mx-auto px-4 md:px-6 flex flex-col">
+    <div class="max-w-4xl w-full mx-auto flex flex-col">
 
-        <!-- Tab Title + Buttons -->
+        <!-- Tab Title -->
         <div class="flex flex-col md:flex-row justify-between items-center md:items-start mb-4 gap-2">
             <nav class="flex space-x-4 text-sm font-medium">
                 <button type="button" id="tab-personal-btn" class="tab-btn text-[#BD6F22] border-b-2 border-[#BD6F22] pb-2">
@@ -62,16 +47,41 @@
 
         <!-- Tab Content -->
         <div id="tab-personal" class="tab-content">
-            <x-shared.personal-information :user="$user" :editable="auth()->user()->role === 'applicant'" />
+            <form id="personalInfoForm"
+                  action="{{ route(auth()->user()->role . '.profile.updatePersonalInfo') }}"
+                  method="POST"
+                  enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
+                <input type="file"
+                    id="profile_picture"
+                    name="profile_picture"
+                    accept="image/jpeg, image/png"
+                    onchange="validateImage(this)"
+                    class="hidden">
+                <x-shared.personal-information :user="$user" :editable="auth()->user()->role === 'applicant'" />
+            </form>
         </div>
 
         <div id="tab-work" class="tab-content hidden">
-            <x-shared.work-experience :experiences="$experiences" :user="$user" />
+            <form id="workExperienceForm"
+                  action="{{ route(auth()->user()->role . '.profile.updateWorkExperience') }}"
+                  method="POST">
+                @csrf
+                @method('PUT')
+                <x-shared.work-experience :experiences="$experiences" :user="$user" />
+            </form>
         </div>
 
         @if(auth()->user()->role === 'applicant')
         <div id="tab-preference" class="tab-content hidden">
-            <x-shared.preference :user="$user" />
+            <form id="preferenceForm"
+                  action="{{ route(auth()->user()->role . '.profile.updatePreference') }}"
+                  method="POST">
+                @csrf
+                @method('PUT')
+                <x-shared.preference :user="$user" />
+            </form>
         </div>
         @endif
 
@@ -79,112 +89,9 @@
 </div>
 
 </div>
-        <!-- Submit Button -->
- <div class="mt-6 text-right" @if(auth()->user()->role === 'applicant') x-show="$store.editMode.isEditing" @endif>
-        <button
-            type="button"
-            onclick="validateAllTabsAndSubmit()"
-            class="text-white px-6 py-2 rounded transition"
-            style="background-color: #BD6F22;">
-            Save
-    </button>
-</div>
-
-</form>
 
 
 <!-- Scripts -->
-<!-- Validate All Tabs and Submit Script -->
-<script>
-function validateAllTabsAndSubmit() {
-    const profilePicInput = document.getElementById('profile_picture');
-    const previewImage = document.getElementById('previewImage');
-    const hasExistingPic = previewImage && !previewImage.src.includes('default.png');
-
-    // ✅ Validate profile picture
-    if (!hasExistingPic && (!profilePicInput || !profilePicInput.files.length)) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Missing Profile Picture',
-            text: 'Please upload a profile picture before submitting.',
-            confirmButtonColor: '#BD6F22'
-        });
-        return;
-    }
-
-    @if(auth()->user()->role === 'applicant')
-    // ✅ Validate civil status, nationality, province, city, barangay
-    const requiredDropdowns = [
-        { id: 'civil_status', label: 'Civil Status' },
-        { id: 'nationality', label: 'Nationality' },
-        { id: 'province', label: 'Province' },
-        { id: 'city', label: 'City / Municipality' },
-        { id: 'barangay', label: 'Barangay' },
-    ];
-
-    for (const field of requiredDropdowns) {
-        const el = document.getElementById(field.id);
-        if (el && (!el.value || el.value.trim() === '')) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Incomplete Information',
-                text: `Please select your ${field.label} before submitting.`,
-                confirmButtonColor: '#BD6F22'
-            });
-            // Optionally focus the empty field for convenience
-            el.focus();
-            return;
-        }
-
-    }
-    // ✅ Validate mobile number (must match 09XXXXXXXXX format)
-    const mobileNumberInput = document.getElementById('mobile_number');
-    const mobileNumberPattern = /^09\d{9}$/;
-
-    if (!mobileNumberInput || mobileNumberInput.value.trim() === '') {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Missing Mobile Number',
-            text: 'Please enter your mobile number before submitting.',
-            confirmButtonColor: '#BD6F22'
-        });
-        mobileNumberInput.focus();
-        return;
-    } else if (!mobileNumberPattern.test(mobileNumberInput.value.trim())) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Invalid Mobile Number',
-            text: 'Please enter a valid 11-digit mobile number starting with 09.',
-            confirmButtonColor: '#BD6F22'
-        });
-        mobileNumberInput.focus();
-        return;
-    }
-    @endif
-
-
-    // ✅ Validate all other form sections
-    window.formSections = window.formSections || {};
-    const sections = window.formSections;
-    const order = @if(auth()->user()->role === 'applicant') ['personal', 'work', 'preference'] @else ['personal', 'work'] @endif;
-
-    for (const key of order) {
-        const section = sections[key];
-        if (section && typeof section.validate === 'function') {
-            const valid = section.validate();
-            if (!valid) {
-                document.querySelector(`#tab-${key}-btn`)?.click();
-                return;
-            }
-        }
-    }
-
-    updateFullAddress();
-    document.getElementById('profileForm').submit();
-}
-</script>
-
-
 <!-- Auto-Fill Full Address Script -->
 <script>
     function updateFullAddress() {
@@ -277,19 +184,6 @@ function validateAllTabsAndSubmit() {
     });
     @endif
 </script>
-
-</script>
-
-@if(auth()->user()->role === 'applicant')
-    <!-- Alpine.js Store for Edit Mode -->
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.store('editMode', {
-                isEditing: false
-            })
-        })
-    </script>
-@endif
 
 
 <!-- SweetAlert2 for notifications -->
@@ -412,13 +306,20 @@ const oldProvince = @json(old('province', $user->province));
 const oldCity = @json(old('city', $user->city));
 const oldBarangay = @json(old('barangay', $user->barangay));
 
+// Store mappings of names to codes
+const provinceNameToCode = {};
+const cityNameToCode = {};
+
 fetch('https://psgc.gitlab.io/api/provinces/')
     .then(res => res.json())
     .then(data => {
         data
             .sort((a, b) => a.name.localeCompare(b.name))
             .forEach(province => {
-                provinceSelect.add(new Option(province.name, province.code));
+                // Store name-to-code mapping
+                provinceNameToCode[province.name] = province.code;
+                // Save NAME as value instead of code
+                provinceSelect.add(new Option(province.name, province.name));
             });
 
         if (oldProvince) {
@@ -434,9 +335,12 @@ fetch('https://psgc.gitlab.io/api/provinces/')
     });
 
 provinceSelect.addEventListener('change', () => {
-    const provCode = provinceSelect.value;
+    const provinceName = provinceSelect.value;
+    const provCode = provinceNameToCode[provinceName];
     citySelect.innerHTML = '<option value="">-- Select City --</option>';
     barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
+    // Clear city mapping for new province
+    Object.keys(cityNameToCode).forEach(key => delete cityNameToCode[key]);
     @if(auth()->user()->role === 'employee' || in_array(auth()->user()->role, ['hrAdmin', 'hrStaff']))
     citySelect.disabled = true;
     barangaySelect.disabled = true;
@@ -449,7 +353,12 @@ provinceSelect.addEventListener('change', () => {
     ]).then(([cities, municipalities]) => {
         [...cities, ...municipalities]
             .sort((a, b) => a.name.localeCompare(b.name))
-            .forEach(loc => citySelect.add(new Option(loc.name, loc.code)));
+            .forEach(loc => {
+                // Store name-to-code mapping
+                cityNameToCode[loc.name] = loc.code;
+                // Save NAME as value instead of code
+                citySelect.add(new Option(loc.name, loc.name));
+            });
          @if(auth()->user()->role === 'applicant')
          // ✅ Only select city *after* options are loaded
        if (oldCity && provinceSelect.value === oldProvince) {
@@ -468,7 +377,8 @@ provinceSelect.addEventListener('change', () => {
 });
 
 citySelect.addEventListener('change', () => {
-    const cityCode = citySelect.value;
+    const cityName = citySelect.value;
+    const cityCode = cityNameToCode[cityName];
     barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
     @if(auth()->user()->role === 'employee' || in_array(auth()->user()->role, ['hrAdmin', 'hrStaff']))
     barangaySelect.disabled = true;

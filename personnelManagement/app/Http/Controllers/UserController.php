@@ -295,4 +295,150 @@ class UserController extends Controller
 
         return redirect('/')->with('success', 'Your account has been deleted.');
     }
+
+    /**
+     * Update personal information only
+     */
+    public function updatePersonalInfo(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return redirect()->back()->with('error', 'Unauthorized');
+        }
+
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'suffix' => 'nullable|string|max:10',
+            'birth_date' => 'required|date',
+            'birth_place' => 'nullable|string|max:255',
+            'age' => 'nullable|integer',
+            'gender' => 'nullable|string|max:10',
+            'civil_status' => 'nullable|string|max:50',
+            'religion' => 'nullable|string|max:100',
+            'nationality' => 'nullable|string|max:100',
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'mobile_number' => ['nullable', 'string', 'max:15', 'regex:/^(09|\+639)\d{9}$/'],
+            'full_address' => 'nullable|string|max:255',
+            'province' => 'nullable|string|max:100',
+            'city' => 'nullable|string|max:100',
+            'barangay' => 'nullable|string|max:100',
+            'street_details' => 'nullable|string|max:255',
+            'postal_code' => 'nullable|string|max:20',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+        ]);
+
+        if ($request->hasFile('profile_picture')) {
+            $file = $request->file('profile_picture');
+
+            $uploadResult = $this->validateAndStoreFile(
+                $file,
+                'profile_pictures',
+                ['jpeg', 'png', 'gif'],
+                'public'
+            );
+
+            if (!$uploadResult['success']) {
+                return redirect()->back()->withErrors([
+                    'profile_picture' => $uploadResult['error']
+                ])->withInput();
+            }
+
+            $validated['profile_picture'] = $uploadResult['path'];
+        }
+
+        Log::info("Updating personal information:", [
+            'user_id' => $user->id,
+            'data'    => $validated,
+        ]);
+
+        $user->fill($validated);
+        $user->save();
+
+        return redirect()
+            ->route("{$user->role}.profile")
+            ->with('success', 'Personal information updated successfully!');
+    }
+
+    /**
+     * Update work experience only
+     */
+    public function updateWorkExperience(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return redirect()->back()->with('error', 'Unauthorized');
+        }
+
+        $validated = $request->validate([
+            'work_experience.*.job_title' => 'nullable|string|max:255',
+            'work_experience.*.company_name' => 'nullable|string|max:255',
+            'work_experience.*.start_date' => 'nullable|date',
+            'work_experience.*.end_date' => 'nullable|date|after_or_equal:work_experience.*.start_date',
+        ]);
+
+        Log::info("Updating work experience:", [
+            'user_id' => $user->id,
+            'data'    => $validated,
+        ]);
+
+        if ($request->has('work_experience')) {
+            WorkExperience::where('user_id', $user->id)->delete();
+
+            foreach ($request->input('work_experience') as $exp) {
+                $isEmpty = empty($exp['job_title']) &&
+                        empty($exp['company_name']) &&
+                        empty($exp['start_date']) &&
+                        empty($exp['end_date']);
+
+                if ($isEmpty) {
+                    continue;
+                }
+
+                WorkExperience::create([
+                    'user_id' => $user->id,
+                    'job_title' => $exp['job_title'],
+                    'company_name' => $exp['company_name'],
+                    'start_date' => $exp['start_date'],
+                    'end_date' => $exp['end_date'],
+                ]);
+            }
+        }
+
+        return redirect()
+            ->route("{$user->role}.profile")
+            ->with('success', 'Work experience updated successfully!');
+    }
+
+    /**
+     * Update preference only (for applicants)
+     */
+    public function updatePreference(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return redirect()->back()->with('error', 'Unauthorized');
+        }
+
+        if ($user->role !== 'applicant') {
+            return redirect()->back()->with('error', 'Only applicants can update preferences');
+        }
+
+        $validated = $request->validate([
+            'job_industry' => 'nullable|string|max:255',
+        ]);
+
+        Log::info("Updating preference:", [
+            'user_id' => $user->id,
+            'data'    => $validated,
+        ]);
+
+        $user->job_industry = $request->input('job_industry');
+        $user->save();
+
+        return redirect()
+            ->route("{$user->role}.profile")
+            ->with('success', 'Preference updated successfully!');
+    }
 }

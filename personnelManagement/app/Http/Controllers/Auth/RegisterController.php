@@ -97,25 +97,22 @@ class RegisterController extends Controller
             'role'       => 'applicant',
         ]);
 
-        auth()->login($user);
+        // Generate verification code
+        $code = $user->generateVerificationCode();
 
-        // Determine redirect URL based on role
-        $redirectUrl = match ($user->role) {
-            'applicant' => route('applicant.dashboard'),
-            'employee'  => route('employee.dashboard'),
-            'hrAdmin'   => route('hrAdmin.dashboard'),
-            'hrStaff'   => route('hrStaff.dashboard'),
-            default     => route('login'),
-        };
+        // Send verification code via email
+        $user->notify(new \App\Notifications\VerifyEmailCodeNotification($code));
+
+        // Store email in session for verification page (user is NOT logged in)
+        session(['verification_email' => $user->email]);
 
         return $this->successResponse(
-            'Welcome! Your account has been successfully created.',
-            $redirectUrl,
+            'Account created successfully! Please check your email for the verification code.',
+            route('verification.notice'),
             [
                 'user' => [
                     'name' => $user->first_name . ' ' . $user->last_name,
                     'email' => $user->email,
-                    'role' => $user->role,
                 ]
             ]
         );

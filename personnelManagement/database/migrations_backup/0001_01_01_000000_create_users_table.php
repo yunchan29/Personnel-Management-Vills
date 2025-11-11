@@ -13,57 +13,33 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->uuid('uuid')->unique();
 
-            // Personal Information
             $table->string('first_name');
             $table->string('last_name');
             $table->string('middle_name')->nullable();
             $table->string('suffix', 10)->nullable();
             $table->enum('gender', ['Male', 'Female', 'Other'])->nullable();
-
-            // Birth Information
+           
             $table->date('birth_date')->nullable();
             $table->string('birth_place')->nullable();
             $table->integer('age')->nullable();
 
-            // Personal Details
             $table->string('civil_status', 50)->nullable();
             $table->string('religion', 100)->nullable();
             $table->string('nationality', 100)->nullable();
 
-            // Contact Information
             $table->string('email')->unique();
-            $table->enum('active_status', ['Active', 'Inactive'])->default('Active');
             $table->string('mobile_number', 15)->nullable();
             $table->string('profile_picture')->nullable();
 
-            // Address Information
             $table->string('full_address')->nullable();
             $table->string('province', 100)->nullable();
             $table->string('city', 100)->nullable();
             $table->string('barangay', 100)->nullable();
-            $table->string('street_details')->nullable();
-            $table->string('postal_code')->nullable();
 
-            // Employment Information
-            $table->string('role')->default('applicant');
-            $table->unsignedBigInteger('job_id')->nullable();
-            $table->string('job_industry')->nullable();
-
-            // Authentication
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
-
-            // Activity Tracking
-            $table->timestamp('last_login_at')->nullable();
-            $table->timestamp('last_activity_at')->nullable();
-            $table->string('last_login_ip')->nullable();
-
-            // Status
-            $table->boolean('is_archived')->default(false);
-
             $table->timestamps();
         });
 

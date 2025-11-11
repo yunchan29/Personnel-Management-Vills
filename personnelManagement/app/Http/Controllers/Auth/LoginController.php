@@ -42,6 +42,22 @@ class LoginController extends Controller
 
             $user = Auth::user();
 
+            // ✅ EMAIL VERIFICATION: Check if email is verified
+            if (!$user->hasVerifiedEmail()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                // Store email in session for verification page
+                session(['verification_email' => $user->email]);
+
+                return $this->errorResponse(
+                    ['email' => ['Please verify your email address before logging in.']],
+                    'Email not verified. Please check your email for the verification code.',
+                    ['redirect' => route('verification.notice')]
+                );
+            }
+
             // ✅ SECURITY FIX: Clear failed login attempts on successful login
             LoginAttempt::clearAttempts($credentials['email']);
 

@@ -3,7 +3,7 @@
         @if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff']))
         <i class="fas fa-cog mr-2"></i>
         @endif
-        Settings
+        Account Settings
     </h1>
 
     <!-- Change Password Section -->
@@ -12,7 +12,7 @@
             @if(in_array(auth()->user()->role, ['hrAdmin', 'hrStaff']))
             <i class="fas fa-lock mr-2"></i>Account Security
             @else
-            Account Settings
+            Change Password
             @endif
         </h3>
 
@@ -20,8 +20,6 @@
         <p class="text-gray-500 mb-4 text-sm">
             Update your password regularly to keep your account secure.
         </p>
-        @else
-        <h4 class="text-md font-medium text-gray-700 mb-2">Change Password</h4>
         @endif
 
         <form method="POST" action="{{ route('user.changePassword') }}"

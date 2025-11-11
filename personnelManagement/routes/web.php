@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\JobController; 
 use App\Http\Controllers\ApplicantJobController;
@@ -42,12 +43,21 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:3,1'); // 3 attempts per minute
 
+// Email Verification routes (no auth required - user not logged in yet)
+Route::get('/email/verify', [VerifyEmailController::class, 'notice'])->name('verification.notice');
+Route::post('/email/verify', [VerifyEmailController::class, 'verify'])
+    ->middleware('throttle:6,1')
+    ->name('verification.verify');
+Route::post('/email/resend', [VerifyEmailController::class, 'resend'])
+    ->middleware('throttle:3,1')
+    ->name('verification.resend');
+
 // Job listing route (public)
 Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');
 
 
 // ✅ Applicant-related routes with auth middleware
-Route::prefix('applicant')->name('applicant.')->middleware(['auth', 'role:applicant'])->group(function () {
+Route::prefix('applicant')->name('applicant.')->middleware(['auth', 'verified', 'role:applicant'])->group(function () {
 
     // Dashboard
     Route::get('dashboard', [ApplicantJobController::class, 'dashboard'])->name('dashboard');
@@ -56,6 +66,9 @@ Route::prefix('applicant')->name('applicant.')->middleware(['auth', 'role:applic
     Route::get('/profile', [UserController::class, 'show'])->name('profile');
     Route::get('/profile/edit', [UserController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [UserController::class, 'update'])->name('profile.update');
+    Route::put('/profile/personal-info', [UserController::class, 'updatePersonalInfo'])->name('profile.updatePersonalInfo');
+    Route::put('/profile/work-experience', [UserController::class, 'updateWorkExperience'])->name('profile.updateWorkExperience');
+    Route::put('/profile/preference', [UserController::class, 'updatePreference'])->name('profile.updatePreference');
 
     // Settings
     Route::get('/settings', fn () => view('users.settings'))->name('settings');
@@ -79,7 +92,7 @@ Route::prefix('applicant')->name('applicant.')->middleware(['auth', 'role:applic
 
 
 // ✅ Employee-related routes with auth middleware
-Route::prefix('employee')->name('employee.')->middleware(['auth', 'role:employee'])->group(function () {
+Route::prefix('employee')->name('employee.')->middleware(['auth', 'verified', 'role:employee'])->group(function () {
     // Dashboard route
     Route::get('/dashboard', function () {
         $user = auth()->user();
@@ -101,6 +114,8 @@ Route::prefix('employee')->name('employee.')->middleware(['auth', 'role:employee
     Route::get('/profile', [UserController::class, 'showEmployee'])->name('profile');
     Route::get('/profile/edit', [UserController::class, 'editEmployee'])->name('profile.edit');
     Route::put('/profile', [UserController::class, 'updateEmployee'])->name('profile.update');
+    Route::put('/profile/personal-info', [UserController::class, 'updatePersonalInfo'])->name('profile.updatePersonalInfo');
+    Route::put('/profile/work-experience', [UserController::class, 'updateWorkExperience'])->name('profile.updateWorkExperience');
 
     // Resume routes (Upload and delete)
     Route::get('/application', [ResumeController::class, 'show'])->name('application');
@@ -124,7 +139,7 @@ Route::prefix('employee')->name('employee.')->middleware(['auth', 'role:employee
 
 
 // ✅ HRadmin-related routes with auth middleware
-Route::prefix('hrAdmin')->name('hrAdmin.')->middleware(['auth', 'role:hrAdmin'])->group(function () {
+Route::prefix('hrAdmin')->name('hrAdmin.')->middleware(['auth', 'verified', 'role:hrAdmin'])->group(function () {
 
     // Dashboard (with chart data passed directly)
     Route::get('/dashboard', [DashboardChartController::class, 'index'])->name('dashboard');
@@ -133,6 +148,8 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware(['auth', 'role:hrAdmin'])
     Route::get('/profile', [UserController::class, 'showHrAdmin'])->name('profile');
     Route::get('/profile/edit', [UserController::class, 'editHrAdmin'])->name('profile.edit');
     Route::put('/profile', [UserController::class, 'updateHrAdmin'])->name('profile.update');
+    Route::put('/profile/personal-info', [UserController::class, 'updatePersonalInfo'])->name('profile.updatePersonalInfo');
+    Route::put('/profile/work-experience', [UserController::class, 'updateWorkExperience'])->name('profile.updateWorkExperience');
 
     // Application Viewing
     Route::get('/application', [InitialApplicationController::class, 'index'])->name('application');
@@ -247,7 +264,7 @@ Route::post('/apply/{job}', [ApplicantJobController::class, 'apply'])->name('job
 //hi
 
 // ✅ HRstaff-related routes with auth middleware
-Route::prefix('hrStaff')->name('hrStaff.')->middleware(['auth', 'role:hrStaff'])->group(function () {
+Route::prefix('hrStaff')->name('hrStaff.')->middleware(['auth', 'verified', 'role:hrStaff'])->group(function () {
 
     // Dashboard route
     Route::get('/dashboard', function () {
@@ -283,6 +300,8 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware(['auth', 'role:hrStaff'])
     Route::get('/profile', [UserController::class, 'showHrStaff'])->name('profile');
     Route::get('/profile/edit', [UserController::class, 'editHrStaff'])->name('profile.edit');
     Route::put('/profile', [UserController::class, 'updateHrStaff'])->name('profile.update');
+    Route::put('/profile/personal-info', [UserController::class, 'updatePersonalInfo'])->name('profile.updatePersonalInfo');
+    Route::put('/profile/work-experience', [UserController::class, 'updateWorkExperience'])->name('profile.updateWorkExperience');
 
     // Employees
     Route::get('/employees', [EmployeeController::class, 'index'])->name('employees');

@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use App\Models\Resume;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
 
@@ -38,6 +39,8 @@ class User extends Authenticatable
         'mobile_number',
         'profile_picture',
         'email_verified_at',
+        'verification_code',
+        'verification_code_expires_at',
 
         'full_address',
         'province',
@@ -89,6 +92,7 @@ class User extends Authenticatable
             'is_archived' => 'boolean', // ✅ for archiving
             'last_login_at' => 'datetime',
             'last_activity_at' => 'datetime',
+            'verification_code_expires_at' => 'datetime',
         ];
     }
 
@@ -173,6 +177,58 @@ public function workExperiences()
 public function job()
 {
     return $this->belongsTo(Job::class);
+}
+
+/**
+ * Generate a 6-digit verification code and set expiration
+ */
+public function generateVerificationCode(): string
+{
+    $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+    $this->verification_code = $code;
+    $this->verification_code_expires_at = now()->addMinutes(15); // Code expires in 15 minutes
+    $this->save();
+
+    return $code;
+}
+
+/**
+ * Verify the provided code
+ */
+public function verifyCode(string $code): bool
+{
+    if (!$this->verification_code || !$this->verification_code_expires_at) {
+        return false;
+    }
+
+    if (now()->greaterThan($this->verification_code_expires_at)) {
+        return false; // Code expired
+    }
+
+    if ($this->verification_code !== $code) {
+        return false; // Code doesn't match
+    }
+
+    // Mark email as verified
+    $this->email_verified_at = now();
+    $this->verification_code = null;
+    $this->verification_code_expires_at = null;
+    $this->save();
+
+    return true;
+}
+
+/**
+ * Check if verification code is expired
+ */
+public function isVerificationCodeExpired(): bool
+{
+    if (!$this->verification_code_expires_at) {
+        return true;
+    }
+
+    return now()->greaterThan($this->verification_code_expires_at);
 }
 
 

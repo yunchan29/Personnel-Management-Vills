@@ -71,12 +71,17 @@ class="space-y-6">
         </div>
     </template>
 
-    <!-- Add Work Experience Button -->
-    <div>
+    <!-- Add Work Experience Button and Save Button -->
+    <div class="flex gap-2 justify-between">
         <button type="button"
                 @click="addExperience()"
                 class="px-4 py-2 bg-[#BD6F22] text-white rounded hover:bg-[#a65e1d] transition">
             Add Work Experience
+        </button>
+        <button type="button"
+                @click="saveWorkExperience()"
+                class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
+            Save
         </button>
     </div>
 </div>
@@ -150,6 +155,15 @@ function workExperienceForm(existing = []) {
             }
 
             return true;
+        },
+        saveWorkExperience() {
+            // Validate before submitting
+            if (!this.validate()) {
+                return;
+            }
+
+            // Submit the form
+            document.getElementById('workExperienceForm').submit();
         }
     };
 }
