@@ -24,9 +24,9 @@ class DatabaseSeeder extends Seeder
         $this->command->newLine();
         $this->command->info('✅ Database seeding completed successfully!');
         $this->command->info('📧 Login credentials:');
-        $this->command->info('   HR Admin: hradmin@villspms.com / password');
-        $this->command->info('   HR Staff: hrstaff@villspms.com / password');
-        $this->command->info('   Employees: juan.delacruz@villspms.com / password (and 4 more)');
-        $this->command->info('   Applicants: carlo.santos0@applicant.com / password (and 14 more)');
+        $this->command->info('   HR Admin: hradmin@villspms.com / Password123!');
+        $this->command->info('   HR Staff: hrstaff@villspms.com / Password123!');
+        $this->command->info('   Employees: juan.delacruz@villspms.com / Password123! (and 4 more)');
+        $this->command->info('   Applicants: carlo.santos0@applicant.com / Password123! (and 14 more)');
     }
 }

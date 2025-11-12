@@ -68,16 +68,46 @@
     @if(auth()->user()->role === 'applicant')
     <!-- Account Status -->
     <div class="border-t border-gray-300 pt-4 mb-6"
-        x-data="{ status: '{{ auth()->user()->active_status }}' }">
+        x-data="{
+            status: '{{ auth()->user()->active_status }}',
+            handleToggle() {
+                if (this.status === 'Active') {
+                    // Show confirmation when turning OFF
+                    Swal.fire({
+                        title: 'Deactivate Account?',
+                        text: 'Your profile will be hidden from HR and they won\'t be able to contact you.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, deactivate',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#BD6F22',
+                        cancelButtonColor: '#bbb',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.status = 'Inactive';
+                            this.$nextTick(() => {
+                                this.$refs.statusForm.submit();
+                            });
+                        }
+                    });
+                } else {
+                    // No confirmation when turning ON
+                    this.status = 'Active';
+                    this.$nextTick(() => {
+                        this.$refs.statusForm.submit();
+                    });
+                }
+            }
+        }">
         <h4 class="text-md font-medium text-gray-700 mb-2">Account Status</h4>
 
-        <form method="POST" action="{{ route('applicant.user.toggleVisibility') }}">
+        <form method="POST" action="{{ route('applicant.user.toggleVisibility') }}" x-ref="statusForm">
             @csrf
             <input type="hidden" name="active_status" :value="status">
 
             <button
-                type="submit"
-                @click.prevent="status = status === 'Active' ? 'Inactive' : 'Active'; $nextTick(() => $el.form.submit())"
+                type="button"
+                @click="handleToggle()"
                 class="inline-flex items-center gap-2"
             >
                 <!-- Toggle Icon -->

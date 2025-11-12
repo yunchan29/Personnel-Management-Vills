@@ -150,6 +150,7 @@ public function getIsProfileCompleteAttribute(): bool
            $this->city &&
            $this->barangay &&
            $this->profile_picture &&
+           $this->job_industry &&
            $this->active_status === 'Active';
 }
 

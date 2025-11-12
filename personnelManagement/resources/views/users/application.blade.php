@@ -150,22 +150,30 @@
 
                 <form action="{{ auth()->user()->role === 'applicant' ? route('applicant.application.store') : route('employee.application.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
-                    <div class="flex flex-col md:flex-row items-start md:items-end gap-4">
-                        <label class="w-full md:flex-1">
-                            <span class="block mb-2 text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="w-full md:flex-1">
+                            <label class="block mb-2 text-sm font-semibold text-gray-700 flex items-center gap-2">
                                 <svg class="w-4 h-4 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                                 </svg>
                                 Upload Your Resume (PDF only)
-                            </span>
-                            <input
-                                type="file"
-                                name="resume_file"
-                                id="resumeInput"
-                                accept=".pdf"
-                                required
-                                class="w-full border-2 border-gray-300 rounded-lg px-3 py-2.5 bg-white file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-[#BD6F22] file:text-white hover:file:bg-[#a75e1c] file:rounded-md transition focus:border-[#BD6F22] focus:ring-2 focus:ring-orange-100"
-                            >
+                            </label>
+                            <div class="flex gap-4">
+                                <input
+                                    type="file"
+                                    name="resume_file"
+                                    id="resumeInput"
+                                    accept=".pdf"
+                                    required
+                                    class="flex-1 border-2 border-gray-300 rounded-lg px-3 py-2.5 bg-white file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-[#BD6F22] file:text-white hover:file:bg-[#a75e1c] file:rounded-md transition focus:border-[#BD6F22] focus:ring-2 focus:ring-orange-100"
+                                >
+                                <button type="submit" class="md:hidden px-8 py-2.5 bg-[#BD6F22] text-white rounded-lg font-semibold hover:bg-[#a75e1c] transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 whitespace-nowrap">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                    </svg>
+                                    Upload Resume
+                                </button>
+                            </div>
                             <p id="fileName" class="text-xs text-gray-600 mt-2"></p>
 
                             @error('resume_file')
@@ -176,14 +184,16 @@
                                     {{ $message }}
                                 </p>
                             @enderror
-                        </label>
+                        </div>
 
-                        <button type="submit" class="px-8 py-2.5 bg-[#BD6F22] text-white rounded-lg font-semibold hover:bg-[#a75e1c] transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                            </svg>
-                            Upload Resume
-                        </button>
+                        <div class="hidden md:block md:self-end">
+                            <button type="submit" class="px-8 py-2.5 bg-[#BD6F22] text-white rounded-lg font-semibold hover:bg-[#a75e1c] transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 whitespace-nowrap">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                </svg>
+                                Upload Resume
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

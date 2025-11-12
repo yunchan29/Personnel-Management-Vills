@@ -244,6 +244,13 @@
         @if(auth()->user()->role === 'applicant')
         preferenceBtn.addEventListener('click', () => activateTab('preference'));
         @endif
+
+        // Check URL parameter for tab on page load
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        if (tabParam) {
+            activateTab(tabParam);
+        }
     });
 
     function validateImage(input) {

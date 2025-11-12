@@ -309,7 +309,7 @@
                 <p class="text-orange-100">Here's what's happening with your account today</p>
             </div>
 
-            <!-- Requirements Section -->
+            {{-- Requirements Section - Temporarily Commented Out
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="bg-gradient-to-br from-blue-50 to-white px-6 py-5 border-b border-gray-200">
                     <div class="flex items-center gap-3">
@@ -359,6 +359,7 @@
                     @endif
                 </div>
             </div>
+            --}}
 
             <!-- Leave Forms Status Section -->
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -449,9 +450,9 @@
         </div>
 
         <!-- Right Sidebar -->
-        <div class="w-96 space-y-6">
+        <div class="w-96 flex flex-col gap-6">
             <!-- Mini Calendar -->
-            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden flex-shrink-0">
                 <div class="bg-gradient-to-br from-indigo-50 to-white px-6 py-4 border-b border-gray-200">
                     <div class="flex items-center gap-2">
                         <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -468,11 +469,11 @@
             </div>
 
             <!-- Quick Actions -->
-            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden flex-grow flex flex-col">
                 <div class="bg-gradient-to-br from-orange-50 to-white px-6 py-4 border-b border-gray-200">
                     <h3 class="font-bold text-gray-900">Quick Actions</h3>
                 </div>
-                <div class="p-4 space-y-3">
+                <div class="p-4 space-y-3 flex-grow flex flex-col justify-between">
                     <a href="{{ route('employee.profile') }}" class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
                         <div class="bg-blue-100 text-blue-600 rounded-lg p-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

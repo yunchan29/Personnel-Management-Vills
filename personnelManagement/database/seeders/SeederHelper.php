@@ -118,6 +118,21 @@ class SeederHelper
      */
     public static function generateProfilePicture(string $firstName, string $lastName, string $filename): string
     {
+        $path = 'profile_pictures/' . $filename;
+        $fullPath = storage_path('app/public/' . $path);
+
+        // Create directory if it doesn't exist
+        $dir = dirname($fullPath);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        // Check if GD library is available
+        if (!function_exists('imagecreatetruecolor')) {
+            // Generate SVG image instead
+            return self::generateSVGProfilePicture($firstName, $lastName, $filename);
+        }
+
         // Create 400x400 image
         $width = 400;
         $height = 400;
@@ -165,6 +180,46 @@ class SeederHelper
         }
 
         // Save to storage
+        imagepng($image, $fullPath);
+        imagedestroy($image);
+
+        return $path;
+    }
+
+    /**
+     * Generate an SVG profile picture as fallback when GD is not available
+     */
+    private static function generateSVGProfilePicture(string $firstName, string $lastName, string $filename): string
+    {
+        // Get initials
+        $initials = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
+
+        // Random background color (soft pastel colors in hex)
+        $colors = [
+            '#6495ED', // Cornflower blue
+            '#FFB6C1', // Light pink
+            '#98FB98', // Pale green
+            '#FFDAB9', // Peach
+            '#DDA0DD', // Plum
+            '#ADD8E6', // Light blue
+            '#F08080', // Light coral
+            '#90EE90', // Light green
+        ];
+        $bgColor = $colors[array_rand($colors)];
+
+        // Create SVG content
+        $svg = <<<SVG
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="{$bgColor}"/>
+  <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="120" fill="white" text-anchor="middle" dominant-baseline="central">
+    {$initials}
+  </text>
+</svg>
+SVG;
+
+        // Change filename to .svg
+        $filename = str_replace('.png', '.svg', $filename);
         $path = 'profile_pictures/' . $filename;
         $fullPath = storage_path('app/public/' . $path);
 
@@ -174,8 +229,7 @@ class SeederHelper
             mkdir($dir, 0755, true);
         }
 
-        imagepng($image, $fullPath);
-        imagedestroy($image);
+        file_put_contents($fullPath, $svg);
 
         return $path;
     }
@@ -281,51 +335,52 @@ class SeederHelper
 
     /**
      * Get job industries list from the application
+     * This must match the list in resources/views/components/shared/preference.blade.php
      */
     public static function getJobIndustries(): array
     {
         return [
-            'Accounting',
-            'Administration',
-            'Architecture',
-            'Arts and Design',
-            'Automotive',
-            'Banking and Finance',
-            'BPO',
-            'Construction',
-            'Customer Service',
-            'Data and Analytics',
-            'Education',
-            'Engineering',
-            'Entertainment',
-            'Environmental Services',
-            'Food and Beverage',
-            'Government',
-            'Healthcare',
-            'Hospitality',
-            'Human Resources',
-            'IT',
-            'Insurance',
-            'Legal',
-            'Logistics',
-            'Manufacturing',
-            'Marketing',
-            'Media',
-            'Nonprofit',
-            'Pharmaceuticals',
-            'PR',
-            'Real Estate',
-            'Retail',
-            'Sales',
-            'Science',
-            'Skilled Trades',
-            'Sports',
-            'Telecommunications',
-            'Tourism',
-            'Transportation',
-            'Utilities',
-            'Warehouse',
-            'Writing'
+            "Accounting",
+            "Administration",
+            "Architecture",
+            "Arts and Design",
+            "Automotive",
+            "Banking and Finance",
+            "Business Process Outsourcing (BPO)",
+            "Construction",
+            "Customer Service",
+            "Data and Analytics",
+            "Education",
+            "Engineering",
+            "Entertainment",
+            "Environmental Services",
+            "Food and Beverage",
+            "Government",
+            "Healthcare",
+            "Hospitality",
+            "Human Resources",
+            "Information Technology",
+            "Insurance",
+            "Legal",
+            "Logistics and Supply Chain",
+            "Manufacturing",
+            "Marketing",
+            "Media and Communications",
+            "Nonprofit",
+            "Pharmaceuticals",
+            "Public Relations",
+            "Real Estate",
+            "Retail",
+            "Sales",
+            "Science and Research",
+            "Skilled Trades",
+            "Sports and Recreation",
+            "Telecommunications",
+            "Tourism",
+            "Transportation",
+            "Utilities",
+            "Warehouse and Distribution",
+            "Writing and Publishing"
         ];
     }
 }

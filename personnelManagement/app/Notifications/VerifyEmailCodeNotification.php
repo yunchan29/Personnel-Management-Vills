@@ -38,12 +38,10 @@ class VerifyEmailCodeNotification extends Notification
     {
         return (new MailMessage)
                     ->subject('Verify Your Email Address - VillsPMS')
-                    ->greeting('Hello ' . $notifiable->first_name . '!')
-                    ->line('Thank you for registering with Vills Manpower Personnel Management System.')
-                    ->line('To complete your registration, please use the verification code below:')
-                    ->line('**Verification Code:** ' . $this->code)
-                    ->line('This code will expire in 15 minutes.')
-                    ->line('If you did not create an account, no further action is required.');
+                    ->view('emails.verify-email', [
+                        'user' => $notifiable,
+                        'code' => $this->code
+                    ]);
     }
 
     /**

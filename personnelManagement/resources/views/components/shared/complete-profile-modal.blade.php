@@ -55,31 +55,16 @@
             </p>
 
             <!-- Key Information List -->
-            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            <div id="missingItemsList" class="bg-gray-50 rounded-lg p-4 mb-6">
                 <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
                     <svg class="w-5 h-5 mr-2 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    Required Information:
+                    Missing Information:
                 </h3>
-                <ul class="space-y-2 text-sm text-gray-600">
-                    <li class="flex items-start">
-                        <span class="text-[#BD6F22] mr-2">•</span>
-                        <span>Personal Information</span>
-                    </li>
-                    <li class="flex items-start">
-                        <span class="text-[#BD6F22] mr-2">•</span>
-                        <span>Contact Details</span>
-                    </li>
-                    <li class="flex items-start">
-                        <span class="text-[#BD6F22] mr-2">•</span>
-                        <span>Preference</span>
-                    </li>
-                    <li class="flex items-start">
-                        <span class="text-[#BD6F22] mr-2">•</span>
-                        <span>Active Toggle Switch in Settings</span>
-                    </li>
+                <ul id="missingItemsContent" class="space-y-2 text-sm text-gray-600">
+                    <!-- Dynamically populated by JavaScript -->
                 </ul>
             </div>
 
@@ -117,23 +102,147 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Check if user data is available and determine what's missing
     const user = @json(auth()->user());
-    const onlyMissingActiveStatus = user &&
-        user.first_name && user.last_name && user.gender &&
-        user.birth_date && user.civil_status && user.nationality &&
-        user.mobile_number && user.full_address && user.province &&
-        user.city && user.barangay && user.profile_picture &&
-        user.job_industry &&
-        user.active_status !== 'Active';
 
-    // Determine which route to use
-    const targetRoute = onlyMissingActiveStatus ? settingsRoute : profileRoute;
-    console.log('Only missing active status:', onlyMissingActiveStatus);
-    console.log('Target route:', targetRoute);
+    // Define required fields with their display names and which page they're on
+    const requiredFields = {
+        profile: [
+            { key: 'first_name', label: 'First Name' },
+            { key: 'last_name', label: 'Last Name' },
+            { key: 'gender', label: 'Gender' },
+            { key: 'birth_date', label: 'Birth Date' },
+            { key: 'civil_status', label: 'Civil Status' },
+            { key: 'nationality', label: 'Nationality' },
+            { key: 'mobile_number', label: 'Mobile Number' },
+            { key: 'full_address', label: 'Full Address' },
+            { key: 'province', label: 'Province' },
+            { key: 'city', label: 'City' },
+            { key: 'barangay', label: 'Barangay' },
+            { key: 'profile_picture', label: 'Profile Picture' },
+            { key: 'job_industry', label: 'Job Industry Preference' }
+        ],
+        settings: [
+            { key: 'active_status', label: 'Active Status', checkValue: 'Active' }
+        ]
+    };
 
-    // Update button text based on what's missing
-    if (onlyMissingActiveStatus) {
-        goToProfileBtn.textContent = 'Go to Settings';
+    // Find missing fields
+    const missingProfileFields = [];
+    const missingSettingsFields = [];
+
+    // Check profile fields
+    let hasAnyMissingPersonalInfoField = false;
+    let hasAnyMissingPreferenceField = false;
+
+    requiredFields.profile.forEach(field => {
+        if (!user[field.key]) {
+            // Separate job_industry (Preference) from other personal info fields
+            if (field.key === 'job_industry') {
+                hasAnyMissingPreferenceField = true;
+            } else {
+                hasAnyMissingPersonalInfoField = true;
+            }
+        }
+    });
+
+    // If any personal info field is missing, just add "Personal Information" once
+    if (hasAnyMissingPersonalInfoField) {
+        missingProfileFields.push('Personal Information');
     }
+
+    // Add Job Industry Preference separately if missing
+    if (hasAnyMissingPreferenceField) {
+        missingProfileFields.push('Preference');
+    }
+
+    // Check settings fields
+    requiredFields.settings.forEach(field => {
+        if (field.checkValue) {
+            if (user[field.key] !== field.checkValue) {
+                missingSettingsFields.push(field.label);
+            }
+        } else {
+            if (!user[field.key]) {
+                missingSettingsFields.push(field.label);
+            }
+        }
+    });
+
+    // Determine which route to use based on what's missing
+    let targetRoute, buttonText, primaryMissingItems, secondaryMissingItems, targetTab;
+
+    if (missingProfileFields.length > 0) {
+        // Profile fields are missing - prioritize profile page first
+        targetRoute = profileRoute;
+        buttonText = 'Go to Profile';
+        primaryMissingItems = missingProfileFields;
+        secondaryMissingItems = missingSettingsFields; // Also show settings if needed
+
+        // Determine which tab to open on profile page
+        if (hasAnyMissingPreferenceField && !hasAnyMissingPersonalInfoField) {
+            // Only preference is missing - go directly to preference tab
+            targetTab = 'preference';
+            targetRoute = profileRoute + '?tab=preference';
+        } else {
+            // Personal info is missing - stay on default (personal) tab
+            targetTab = 'personal';
+        }
+    } else if (missingSettingsFields.length > 0) {
+        // Only settings fields are missing
+        targetRoute = settingsRoute;
+        buttonText = 'Go to Settings';
+        primaryMissingItems = missingSettingsFields;
+        secondaryMissingItems = [];
+        targetTab = null;
+    } else {
+        // Nothing missing (shouldn't happen, but fallback)
+        targetRoute = profileRoute;
+        buttonText = 'Go to Profile';
+        primaryMissingItems = ['Unknown fields'];
+        secondaryMissingItems = [];
+        targetTab = null;
+    }
+
+    // Populate the missing items list with ALL missing items
+    const missingItemsContent = document.getElementById('missingItemsContent');
+    if (missingItemsContent) {
+        let htmlContent = '';
+
+        // Add primary missing items (from the page we're directing to)
+        if (primaryMissingItems.length > 0) {
+            htmlContent += primaryMissingItems.map(item => `
+                <li class="flex items-start">
+                    <span class="text-red-500 mr-2">✗</span>
+                    <span>${item}</span>
+                </li>
+            `).join('');
+        }
+
+        // Add secondary missing items with a note
+        if (secondaryMissingItems.length > 0) {
+            htmlContent += `
+                <li class="flex items-start mt-3 pt-3 border-t border-gray-300">
+                    <span class="text-yellow-500 mr-2">⚠</span>
+                    <span class="font-semibold">Also needed (in Settings):</span>
+                </li>
+            `;
+            htmlContent += secondaryMissingItems.map(item => `
+                <li class="flex items-start ml-4">
+                    <span class="text-yellow-500 mr-2">✗</span>
+                    <span>${item}</span>
+                </li>
+            `).join('');
+        }
+
+        missingItemsContent.innerHTML = htmlContent;
+    }
+
+    // Update button text
+    goToProfileBtn.textContent = buttonText;
+
+    console.log('Missing profile fields:', missingProfileFields);
+    console.log('Missing settings fields:', missingSettingsFields);
+    console.log('Target route:', targetRoute);
+    console.log('Button text:', buttonText);
 
     console.log('Modal Elements:', {
         modal: !!modal,
@@ -279,6 +388,16 @@ document.addEventListener('DOMContentLoaded', function () {
         showModal();
     } else {
         console.log('Not showing modal - on profile or settings page');
+
+        // If on profile page and only preference is missing, switch to preference tab
+        if (isProfilePage && targetTab === 'preference') {
+            console.log('Already on profile page, switching to preference tab');
+            // Check if tab button exists and click it
+            const preferenceTabBtn = document.getElementById('tab-preference-btn');
+            if (preferenceTabBtn) {
+                preferenceTabBtn.click();
+            }
+        }
     }
 
     // Detect if user is trying to navigate away (not reload)
