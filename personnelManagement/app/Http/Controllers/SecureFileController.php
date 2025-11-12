@@ -122,7 +122,7 @@ class SecureFileController extends Controller
         $user = auth()->user();
 
         // Profile pictures are less sensitive but still need auth
-        // Users can view their own, HR can view applicants/employees, employees can view each other
+        // Users can view their own, HR can view anyone's, employees can view each other
 
         $filePath = storage_path('app/public/profile_pictures/' . $filename);
 
@@ -133,6 +133,23 @@ class SecureFileController extends Controller
                 return response()->file($defaultPath);
             }
             abort(404, 'File not found.');
+        }
+
+        // Verify ownership: Check if this picture belongs to a user in the system
+        $pictureOwner = \App\Models\User::where('profile_picture', 'LIKE', '%' . $filename)->first();
+
+        if (!$pictureOwner) {
+            abort(403, 'Unauthorized access to this file.');
+        }
+
+        // Authorization check: User can view their own or HR can view anyone's
+        if ($user->id !== $pictureOwner->id && !in_array($user->role, ['hrAdmin', 'hrStaff'])) {
+            // For employees viewing each other's pictures (e.g., in employee directory)
+            // Allow if both are employees (have role 'employee' or similar)
+            // This can be adjusted based on your business rules
+            if ($user->role !== 'employee' || $pictureOwner->role !== 'employee') {
+                abort(403, 'Unauthorized. You can only view your own profile picture or HR can view all.');
+            }
         }
 
         // Determine mime type

@@ -15,10 +15,12 @@ class DatabaseSeeder extends Seeder
         $this->command->newLine();
 
         // Order matters! Jobs must be created before applications
+        // Work experiences are created after applications to reflect job-related experience
         $this->call([
             UserSeeder::class,
             JobSeeder::class,
             ApplicationSeeder::class,
+            WorkExperienceSeeder::class,
         ]);
 
         $this->command->newLine();

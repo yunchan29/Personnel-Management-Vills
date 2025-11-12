@@ -36,6 +36,11 @@ class EvaluationController extends Controller
                 + $validated['participation_score']
                 + $validated['professionalism_score'];
 
+    // Validate total score is within expected range (0-100)
+    if ($totalScore < 0 || $totalScore > 100) {
+        return back()->withErrors(['scores' => 'Total score must be between 0 and 100. Current total: ' . $totalScore]);
+    }
+
     $user = $application->user;
     $job = $application->job;
 
@@ -60,14 +65,19 @@ class EvaluationController extends Controller
             $application->setStatus(ApplicationStatus::PASSED_EVALUATION);
             $application->save();
 
-            // 🔽 Decrement job vacancies
+            // 🔽 Decrement job vacancies (atomic operation to prevent race conditions)
             if ($job && $job->vacancies > 0) {
-                $job->vacancies -= 1;
+                // Use atomic decrement to prevent concurrent updates
+                $job->decrement('vacancies');
+
+                // Reload the model to get updated vacancy count
+                $job->refresh();
+
                 if ($job->vacancies <= 0) {
                     // optionally mark job as closed
                     // $job->status = 'closed';
+                    // $job->save();
                 }
-                $job->save();
             }
 
         } else {

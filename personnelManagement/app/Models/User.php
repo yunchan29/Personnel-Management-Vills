@@ -38,9 +38,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'mobile_number',
         'profile_picture',
-        'email_verified_at',
-        'verification_code',
-        'verification_code_expires_at',
 
         'full_address',
         'province',
@@ -51,10 +48,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'postal_code',
         'active_status',
         'job_industry',
-
-        'last_login_at',
-        'last_activity_at',
-        'last_login_ip',
     ];
 
     /**
@@ -64,9 +57,15 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array<int, string>
      */
     protected $guarded = [
-        'role',           // Prevent role escalation attacks
-        'is_archived',    // Prevent users from archiving themselves
+        'role',                           // Prevent role escalation attacks
+        'is_archived',                    // Prevent users from archiving themselves
         'remember_token',
+        'email_verified_at',              // System-set only, prevents verification bypass
+        'verification_code',              // System-set only, prevents code manipulation
+        'verification_code_expires_at',   // System-set only, prevents expiration bypass
+        'last_login_at',                  // System-set only, prevents session manipulation
+        'last_activity_at',               // System-set only, prevents activity tracking bypass
+        'last_login_ip',                  // System-set only, prevents IP spoofing
     ];
 
     /**

@@ -20,7 +20,17 @@ class TrainingScheduleController extends Controller
             'start_date' => 'required|date',
             'end_date'   => 'required|date|after_or_equal:start_date',
             'start_time' => 'required|date_format:H:i:s',
-            'end_time'   => 'required|date_format:H:i:s',
+            'end_time'   => ['required', 'date_format:H:i:s', function ($attribute, $value, $fail) use ($request) {
+                // If start and end dates are the same, validate that end_time > start_time
+                if ($request->start_date === $request->end_date) {
+                    $startTime = \Carbon\Carbon::parse($request->start_time);
+                    $endTime = \Carbon\Carbon::parse($value);
+
+                    if ($endTime->lte($startTime)) {
+                        $fail('The end time must be after the start time when training occurs on the same day.');
+                    }
+                }
+            }],
             'location'   => 'required|string|max:255',
         ]);
 
@@ -50,12 +60,18 @@ class TrainingScheduleController extends Controller
                 $existingSchedule->location                     !== $request->location
             );
 
+            $emailSent = true;
             if ($isChanged) {
                 $existingSchedule->update(array_merge($data, ['status' => 'rescheduled']));
                 $existingSchedule->load('application.user', 'application.job');
 
-                Mail::to($application->user->email)
-                    ->send(new TrainingScheduleRescheduledMail($existingSchedule));
+                try {
+                    Mail::to($application->user->email)
+                        ->send(new TrainingScheduleRescheduledMail($existingSchedule));
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send training reschedule email: ' . $e->getMessage());
+                    $emailSent = false;
+                }
             }
             // else nothing changed, no email
         } else {
@@ -68,8 +84,14 @@ class TrainingScheduleController extends Controller
 
             $newSchedule->load('application.user', 'application.job');
 
-            Mail::to($application->user->email)
-                ->send(new TrainingScheduleSetMail($newSchedule));
+            $emailSent = true;
+            try {
+                Mail::to($application->user->email)
+                    ->send(new TrainingScheduleSetMail($newSchedule));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send training schedule email: ' . $e->getMessage());
+                $emailSent = false;
+            }
         }
 
         $application->setStatus(ApplicationStatus::SCHEDULED_FOR_TRAINING);
@@ -77,7 +99,10 @@ class TrainingScheduleController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Training schedule set successfully.'
+            'message' => $emailSent
+                ? 'Training schedule set successfully.'
+                : 'Training schedule saved. Note: Email notification could not be sent.',
+            'email_sent' => $emailSent
         ]);
     }
 

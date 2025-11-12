@@ -238,6 +238,15 @@
           if (token && email) {
             this.activeModal = 'resetPassword';
           }
+
+          // Listen for custom events to open modals
+          window.addEventListener('open-login-modal', () => {
+            this.activeModal = 'login';
+          });
+
+          window.addEventListener('open-register-modal', () => {
+            this.activeModal = 'register';
+          });
         }
       }
     }

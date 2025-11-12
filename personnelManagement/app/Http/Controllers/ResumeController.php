@@ -115,14 +115,29 @@ class ResumeController extends Controller
     {
         $application = Application::where('user_id', auth()->id())->findOrFail($id);
 
-        // Delete the resume snapshot file if it exists
-        if ($application->resume_snapshot && \Storage::exists($application->resume_snapshot)) {
-            \Storage::delete($application->resume_snapshot);
+        // State validation: Only allow deletion of applications in certain states
+        $deletableStates = ['pending', 'failed', 'rejected'];
+
+        if (!in_array($application->status, $deletableStates)) {
+            return back()->with('error',
+                "Cannot delete this application. Applications can only be deleted when in 'Pending', 'Failed', or 'Rejected' status. Current status: {$application->status}");
         }
 
-        // Delete the application
-        $application->delete();
+        try {
+            \DB::transaction(function () use ($application) {
+                // Delete the resume snapshot file if it exists
+                if ($application->resume_snapshot && \Storage::disk('public')->exists($application->resume_snapshot)) {
+                    \Storage::disk('public')->delete($application->resume_snapshot);
+                }
 
-        return back()->with('success', 'Application deleted successfully.');
+                // Delete the application
+                $application->delete();
+            });
+
+            return back()->with('success', 'Application deleted successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete application: ' . $e->getMessage());
+            return back()->with('error', 'Failed to delete application. Please try again.');
+        }
     }
 }

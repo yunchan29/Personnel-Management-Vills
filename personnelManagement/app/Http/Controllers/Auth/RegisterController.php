@@ -51,11 +51,9 @@ class RegisterController extends Controller
             'email'        => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'birth_date'   => ['required', 'date_format:m/d/Y'],
             'gender'       => ['required', 'string'],
-            'password'     => self::getPasswordRules(),
+            'password'     => config('validation.password'),
             'terms' => ['accepted'],
-        ], [
-            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*#?&).'
-        ]);
+        ], config('validation.password_messages'));
 
         if ($validator->fails()) {
             return $this->errorResponse(

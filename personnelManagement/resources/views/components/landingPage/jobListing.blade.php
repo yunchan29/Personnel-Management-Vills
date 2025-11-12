@@ -22,7 +22,43 @@
   }
 </style>
 
-<div x-data="{ selectedJob: null, showModal: false }">
+<div x-data="{
+  selectedJob: null,
+  showModal: false,
+  promptLogin() {
+    Swal.fire({
+      title: 'Login Required',
+      text: 'Please login or create an account to apply for this position.',
+      icon: 'info',
+      showCancelButton: true,
+      confirmButtonText: 'Login',
+      cancelButtonText: 'Create Account',
+      confirmButtonColor: '#BD9168',
+      cancelButtonColor: '#8C5A3C',
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Open login modal
+        if (window.Alpine && Alpine.store('modalManager')) {
+          Alpine.store('modalManager').activeModal = 'login';
+        } else {
+          // Fallback: trigger Alpine component on parent
+          const event = new CustomEvent('open-login-modal');
+          window.dispatchEvent(event);
+        }
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        // Open register modal
+        if (window.Alpine && Alpine.store('modalManager')) {
+          Alpine.store('modalManager').activeModal = 'register';
+        } else {
+          // Fallback: trigger Alpine component on parent
+          const event = new CustomEvent('open-register-modal');
+          window.dispatchEvent(event);
+        }
+      }
+    });
+  }
+}">
 
   <!-- Section Title -->
   <div class="mb-6 sm:mb-8 px-2">
@@ -41,14 +77,14 @@
             <p>Deadline: <span class="font-semibold">{{ \Carbon\Carbon::parse($job->apply_until)->format('F d, Y') }}</span></p>
           </div>
           <!-- Apply Now (Card) -->
-         <a href="{{ route('login') }}"
+         <button @click="promptLogin()"
    class="w-28 sm:w-32 bg-[#BD9168] text-white text-xs sm:text-sm py-2 rounded-md hover:bg-[#a37653]
           flex items-center justify-center gap-1 sm:gap-2 transition text-center flex-shrink-0">
   <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
   </svg>
   Apply Now
-</a>
+</button>
 
         </div>
 
@@ -130,13 +166,13 @@
 
     <!-- Footer -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-4">
-      <a href="{{ route('login') }}"
+      <button @click="promptLogin()"
          class="inline-flex items-center bg-[#BD9168] text-white px-4 py-2 text-sm rounded-md hover:bg-[#a37653] transition">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
         </svg>
         Apply Now
-      </a>
+      </button>
 
       <div class="flex flex-col text-sm text-gray-600">
         <p>Posted: <span class="font-semibold" x-text="selectedJob?.posted"></span></p>

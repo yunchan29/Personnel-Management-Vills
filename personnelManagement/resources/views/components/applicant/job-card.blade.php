@@ -37,12 +37,25 @@
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         },
                     })
-                    .then(response => {
-                        if (response.ok) {
+                    .then(response => response.json().then(data => ({ status: response.status, body: data })))
+                    .then(({ status, body }) => {
+                        if (status === 200) {
                             Swal.fire('Applied!', 'Your application has been submitted.', 'success')
                                 .then(() => { this.hasApplied = true; });
+                        } else if (status === 422 && body.expired) {
+                            // Job has expired
+                            Swal.fire({
+                                title: 'Job Expired',
+                                text: body.message || 'This job posting has expired and is no longer accepting applications.',
+                                icon: 'warning',
+                                confirmButtonColor: '#BD6F22',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                window.location.reload(); // Reload to remove expired job from view
+                            });
                         } else {
-                            Swal.fire('Failed!', 'Failed to apply. Please try again.', 'error');
+                            // Other errors (profile incomplete, training conflict, etc.)
+                            Swal.fire('Failed!', body.message || 'Failed to apply. Please try again.', 'error');
                         }
                     })
                     .catch(error => {

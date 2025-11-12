@@ -20,7 +20,7 @@ class InterviewController extends Controller
             $validated = $request->validate([
                 'application_id' => 'required|exists:applications,id',
                 'user_id'        => 'required|exists:users,id',
-                'scheduled_at'   => 'required|date',
+                'scheduled_at'   => 'required|date|after:now',
             ]);
 
             $interview = Interview::where('application_id', $validated['application_id'])

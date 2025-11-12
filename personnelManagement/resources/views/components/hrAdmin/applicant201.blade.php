@@ -7,6 +7,7 @@
     <h3 class="text-lg font-semibold text-[#BD6F22] mb-3">Government Documents</h3>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         @php
+            $file201 = $user->file201;
             $sss = $file201->sss_number ?? '-';
             $philhealth = $file201->philhealth_number ?? '-';
             $pagibig = $file201->pagibig_number ?? '-';

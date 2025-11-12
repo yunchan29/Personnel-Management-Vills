@@ -97,6 +97,15 @@ class UserController extends Controller
      */
     public function getEmployeeDetails($id)
     {
+        $currentUser = auth()->user();
+
+        // Authorization: Only HR Admin or the user themselves can view details
+        if ($currentUser->role !== 'hrAdmin' && $currentUser->id != $id) {
+            return response()->json([
+                'message' => 'Unauthorized. You can only view your own details or must be an HR administrator.'
+            ], 403);
+        }
+
         $employee = User::with(['job', 'applications'])
             ->where('id', $id)
             ->firstOrFail();
@@ -254,10 +263,8 @@ class UserController extends Controller
     public function changePassword(Request $request) {
         $request->validate([
             'current_password' => 'required',
-            'new_password' => RegisterController::getPasswordRules(),
-        ], [
-            'new_password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*#?&).'
-        ]);
+            'new_password' => config('validation.password'),
+        ], config('validation.password_messages'));
 
         $user = Auth::user();
 

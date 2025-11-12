@@ -70,62 +70,6 @@ class UserSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
 
-        // Create Sample Employees
-        $employeeNames = [
-            ['Juan', 'Dela Cruz', 'Santos'],
-            ['Maria', 'Garcia', 'Reyes'],
-            ['Jose', 'Ramos', 'Mendoza'],
-            ['Ana', 'Torres', 'Santos'],
-            ['Pedro', 'Gonzales', 'Rivera'],
-        ];
-
-        // Define cities with their barangays and postal codes
-        $laguna_locations = [
-            ['city' => 'Los Baños', 'barangays' => ['Balian', 'Dambo', 'Galalan', 'Isla (Pob.)', 'Mabato-Azufre', 'San Jose (Pob.)'], 'postal' => '4030'],
-            ['city' => 'City of Calamba', 'barangays' => ['Baclaran', 'Banaybanay', 'Banlic', 'Butong', 'Bigaa', 'Casile', 'Gulod', 'Mamatid'], 'postal' => '4027'],
-            ['city' => 'City of Cabuyao', 'barangays' => ['Baclaran', 'Banaybanay', 'Banlic', 'Butong', 'Bigaa', 'Casile'], 'postal' => '4025'],
-            ['city' => 'City of San Pablo', 'barangays' => ['San Antonio 1 (Pob.)', 'San Buenaventura (Pob.)', 'San Cristobal (Pob.)', 'San Diego (Pob.)'], 'postal' => '4000'],
-            ['city' => 'City of Santa Rosa', 'barangays' => ['Aplaya', 'Balibago', 'Caingin', 'Dila', 'Labas', 'Macabling', 'Malitlit'], 'postal' => '4026'],
-        ];
-
-        foreach ($employeeNames as $index => $name) {
-            $civilStatuses = ['Single', 'Married', 'Widowed'];
-            $religions = ['Catholic', 'Christian', 'Islam', 'Buddhist'];
-            $jobIndustries = SeederHelper::getJobIndustries();
-
-            // Pick a random location
-            $location = $laguna_locations[array_rand($laguna_locations)];
-            $barangay = $location['barangays'][array_rand($location['barangays'])];
-            $street = rand(1, 999) . ' Street';
-
-            $profilePic = SeederHelper::generateProfilePicture($name[0], $name[1], strtolower($name[0]) . '_' . strtolower($name[1]) . '.png');
-            User::create([
-                'first_name' => $name[0],
-                'last_name' => $name[1],
-                'middle_name' => $name[2],
-                'email' => strtolower($name[0]) . '.' . strtolower($name[1]) . '@villspms.com',
-                'password' => Hash::make('Password123!'),
-                'role' => 'employee',
-                'gender' => in_array($name[0], ['Maria', 'Ana']) ? 'Female' : 'Male',
-                'birth_date' => now()->subYears(rand(25, 50))->format('Y-m-d'),
-                'age' => rand(25, 50),
-                'civil_status' => $civilStatuses[array_rand($civilStatuses)],
-                'nationality' => 'Filipino',
-                'religion' => $religions[array_rand($religions)],
-                'mobile_number' => '0917' . rand(1000000, 9999999),
-                'province' => 'Laguna',
-                'city' => $location['city'],
-                'barangay' => $barangay,
-                'street_details' => $street,
-                'postal_code' => $location['postal'],
-                'full_address' => "{$street}, {$barangay}, {$location['city']}, Laguna {$location['postal']}",
-                'profile_picture' => $profilePic,
-                'job_industry' => $jobIndustries[array_rand($jobIndustries)],
-                'active_status' => 'Active',
-                'email_verified_at' => now(),
-            ]);
-        }
-
-        $this->command->info('Created 2 admin users and 5 employee users');
+        $this->command->info('Created 2 admin users (HR Admin and HR Staff)');
     }
 }

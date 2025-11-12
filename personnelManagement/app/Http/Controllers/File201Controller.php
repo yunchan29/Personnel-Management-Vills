@@ -32,6 +32,13 @@ class File201Controller extends Controller
      */
    public function showApplicantFiles($applicantId)
 {
+    // Authorization: HR Admin and HR Staff can view File 201 documents
+    if (!in_array(auth()->user()->role, ['hrAdmin', 'hrStaff'])) {
+        return response()->json([
+            'error' => 'Unauthorized. Only HR personnel can view File 201 documents.'
+        ], 403);
+    }
+
     // ✅ SECURITY FIX: Verify the user exists and has at least one application
     $user = User::find($applicantId);
 
@@ -169,12 +176,23 @@ class File201Controller extends Controller
                         return redirect()->back()->withErrors(['file' => $uploadResult['error']]);
                     }
 
-                    // ✅ Prevent duplicate type uploads
-                    $alreadyExists = OtherFile::where('user_id', auth()->id())
+                    // ✅ Handle duplicate type uploads: Replace existing file
+                    $existingFile = OtherFile::where('user_id', auth()->id())
                         ->where('type', $doc['type'])
-                        ->exists();
+                        ->first();
 
-                    if (!$alreadyExists) {
+                    if ($existingFile) {
+                        // Delete old file from storage
+                        if ($existingFile->file_path && \Storage::disk('public')->exists($existingFile->file_path)) {
+                            \Storage::disk('public')->delete($existingFile->file_path);
+                        }
+
+                        // Update with new file path
+                        $existingFile->update([
+                            'file_path' => $uploadResult['path'],
+                        ]);
+                    } else {
+                        // Create new entry
                         OtherFile::create([
                             'user_id'   => auth()->id(),
                             'type'      => $doc['type'],

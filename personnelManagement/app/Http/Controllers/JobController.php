@@ -161,6 +161,15 @@ class JobController extends Controller
     public function destroy($id)
     {
         $job = Job::findOrFail($id);
+
+        // Check for existing applications before deletion
+        $applicationsCount = $job->applications()->count();
+
+        if ($applicationsCount > 0) {
+            return redirect()->route('hrAdmin.jobPosting')->with('error',
+                "Cannot delete this job. It has {$applicationsCount} application(s). Please archive or handle applications first.");
+        }
+
         $job->delete();
 
         return redirect()->route('hrAdmin.jobPosting')->with('success', 'Job deleted successfully.');

@@ -12,6 +12,7 @@ public function index(Request $request)
     $search = $request->input('search');
 
     $jobs = Job::query()
+        ->notExpired()
         ->when($search, function ($query, $search) {
             $query->where('job_title', 'like', '%' . $search . '%')
                   ->orWhere('location', 'like', '%' . $search . '%');

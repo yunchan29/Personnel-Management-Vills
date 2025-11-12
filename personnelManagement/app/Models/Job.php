@@ -15,6 +15,7 @@ class Job extends Model
     'location',
     'vacancies',
     'apply_until',
+    'status',
     'qualifications',
     'additional_info',
 ];
@@ -23,6 +24,14 @@ class Job extends Model
         'qualifications' => 'array',
         'additional_info' => 'array',
     ];
+
+    /**
+     * Scope a query to only include jobs that have not expired.
+     */
+    public function scopeNotExpired($query)
+    {
+        return $query->whereDate('apply_until', '>=', \Carbon\Carbon::today());
+    }
 
 public function applications()
 {

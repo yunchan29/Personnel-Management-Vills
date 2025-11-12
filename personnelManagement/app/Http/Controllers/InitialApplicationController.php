@@ -100,7 +100,7 @@ class InitialApplicationController extends Controller
     ])->get();
 
     // Applicants tab - Only pending and to_review statuses
-    $applications = Application::with(['user.resume', 'job', 'interview', 'trainingSchedule'])
+    $applications = Application::with(['user.resume', 'user.file201', 'user.workExperiences', 'job', 'interview', 'trainingSchedule'])
         ->where('job_id', $jobId)
         ->whereIn('status', [
             ApplicationStatus::PENDING->value,
@@ -109,7 +109,7 @@ class InitialApplicationController extends Controller
         ->get();
 
     // Interview tab - Approved and for_interview statuses
-    $approvedApplicants = Application::with(['user.resume', 'job', 'interview', 'trainingSchedule'])
+    $approvedApplicants = Application::with(['user.resume', 'user.file201', 'user.workExperiences', 'job', 'interview', 'trainingSchedule'])
         ->where('job_id', $jobId)
         ->whereIn('status', [
             ApplicationStatus::APPROVED->value,
@@ -118,7 +118,7 @@ class InitialApplicationController extends Controller
         ->get();
 
     // Training tab - Interviewed and scheduled_for_training statuses
-    $interviewApplicants = Application::with(['user.resume', 'job', 'trainingSchedule'])
+    $interviewApplicants = Application::with(['user.resume', 'user.file201', 'user.workExperiences', 'job', 'trainingSchedule'])
         ->where('job_id', $jobId)
         ->whereIn('status', [
             ApplicationStatus::INTERVIEWED->value,

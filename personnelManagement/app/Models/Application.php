@@ -12,11 +12,6 @@ class Application extends Model
         'user_id',
         'job_id',
         'resume_snapshot',
-        'licenses',
-        'sss_number',
-        'philhealth_number',
-        'tin_id_number',
-        'pagibig_number',
         'contract_signing_schedule',
         'contract_start',
         'contract_end',
@@ -33,7 +28,6 @@ class Application extends Model
     ];
 
     protected $casts = [
-        'licenses' => 'array',
         'interview_schedule' => 'datetime',
         'reviewed_at' => 'datetime',
         'is_archived' => 'boolean', // ✅ for archiving

@@ -200,8 +200,12 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware(['auth', 'verified', 'rol
     Route::get('/leave-forms', [LeaveFormController::class, 'index'])->name('leaveForm');
     Route::post('/leave-forms', [LeaveFormController::class, 'store'])->name('leaveForms.store');
     Route::delete('/leave-forms/{id}', [LeaveFormController::class, 'destroy'])->name('leaveForms.destroy');
-    Route::post('/leave-forms/{id}/approve', [LeaveFormController::class, 'approve'])->name('leaveForms.approve');
-    Route::post('/leave-forms/{id}/decline', [LeaveFormController::class, 'decline'])->name('leaveForms.decline');
+    Route::post('/leave-forms/{id}/approve', [LeaveFormController::class, 'approve'])
+        ->middleware('throttle:30,1') // 30 approvals per minute max
+        ->name('leaveForms.approve');
+    Route::post('/leave-forms/{id}/decline', [LeaveFormController::class, 'decline'])
+        ->middleware('throttle:30,1') // 30 declines per minute max
+        ->name('leaveForms.decline');
 
     // Employee Listing
     Route::get('/employees', [EmployeeController::class, 'index'])->name('employees');
@@ -210,7 +214,9 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware(['auth', 'verified', 'rol
     Route::get('/settings', fn() => view('admins.shared.settings'))->name('settings');
 
     // Training Schedule
-    Route::post('/training-schedule/{id}', [TrainingScheduleController::class, 'setTrainingDate'])->name('training.schedule.set');
+    Route::post('/training-schedule/{id}', [TrainingScheduleController::class, 'setTrainingDate'])
+        ->middleware('throttle:20,1') // 20 schedules per minute max
+        ->name('training.schedule.set');
 
 });
 
@@ -223,11 +229,15 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/user/change-password', [UserController::class, 'changePassword'])->name('user.changePassword');
     Route::delete('/user/delete-account', [UserController::class, 'deleteAccount'])->name('user.deleteAccount');
 
-    // Employee Details API for modal
-    Route::get('/users/{id}/details', [UserController::class, 'getEmployeeDetails'])->name('users.details');
+    // Employee Details API for modal (rate limited to prevent abuse)
+    Route::get('/users/{id}/details', [UserController::class, 'getEmployeeDetails'])
+        ->middleware('throttle:60,1') // 60 requests per minute
+        ->name('users.details');
 
-    // File 201 (Requirements) view for employees
-    Route::get('/file-201/{id}', [File201Controller::class, 'showApplicantFiles'])->name('file201.show');
+    // File 201 (Requirements) view for employees (rate limited to prevent scraping)
+    Route::get('/file-201/{id}', [File201Controller::class, 'showApplicantFiles'])
+        ->middleware('throttle:30,1') // 30 requests per minute
+        ->name('file201.show');
 
     // ✅ SECURITY FIX: Secure file serving routes with authentication
     Route::get('/secure/resume/{filename}', [\App\Http\Controllers\SecureFileController::class, 'serveResume'])->name('secure.resume');
@@ -257,7 +267,9 @@ Route::post('/reset-password', [\App\Http\Controllers\Auth\ForgotPasswordControl
     ->name('password.update');
 
 // Apply route for applicants (di ko pa na sosort nag eerror pa eh)
-Route::post('/apply/{job}', [ApplicantJobController::class, 'apply'])->name('jobs.apply');
+Route::post('/apply/{job}', [ApplicantJobController::class, 'apply'])
+    ->middleware('throttle:10,1') // 10 applications per minute max
+    ->name('jobs.apply');
 
 
 //hello

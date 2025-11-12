@@ -47,22 +47,31 @@ class ContractScheduleController extends Controller
         ]);
 
         // Send email invitation to the applicant
+        $emailSent = true;
         try {
             Mail::to($application->user->email)->send(new ContractSigningInvitationMail($application));
         } catch (\Exception $e) {
             \Log::error('Failed to send contract signing invitation email: ' . $e->getMessage());
-            // Continue execution even if email fails
+            $emailSent = false;
         }
 
         // Check if it's an AJAX request
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Contract signing invitation sent successfully.'
+                'message' => $emailSent
+                    ? 'Contract signing invitation sent successfully.'
+                    : 'Schedule saved successfully. Note: Email notification could not be sent.',
+                'email_sent' => $emailSent
             ], 200);
         }
 
-        return redirect()->back()->with('success', 'Contract signing invitation sent successfully.');
+        return redirect()->back()->with(
+            $emailSent ? 'success' : 'warning',
+            $emailSent
+                ? 'Contract signing invitation sent successfully.'
+                : 'Schedule saved successfully. Note: Email notification could not be sent.'
+        );
     }
 
 
@@ -75,7 +84,7 @@ class ContractScheduleController extends Controller
 public function storeDates(Request $request, $applicationId)
 {
     $request->validate([
-        'contract_start' => 'required|date',
+        'contract_start' => 'required|date|after_or_equal:today',
         'period'         => 'required|in:6m,1y', // make sure period is valid
     ]);
 

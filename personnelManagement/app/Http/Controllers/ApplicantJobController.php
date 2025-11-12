@@ -63,7 +63,15 @@ class ApplicantJobController extends Controller
 {
     $user = auth()->user();
     $file201 = $user->file201;
-    
+
+    // Check if job has expired
+    if (\Carbon\Carbon::parse($job->apply_until)->lt(\Carbon\Carbon::today())) {
+        return response()->json([
+            'message' => 'This job posting has expired and is no longer accepting applications.',
+            'expired' => true
+        ], 422);
+    }
+
     // merge submitted data into user profile for validation
     $user->fill($request->only(['full_address', 'city', 'province']));
 
@@ -116,19 +124,7 @@ class ApplicantJobController extends Controller
         ], 403);
     }
 
-    // Prevent duplicate application (if not failed)
-    $existing = Application::where('user_id', $user->id)
-        ->where('job_id', $job->id)
-        ->whereNotIn('status', ['failed']) // allow retry only if not failed
-        ->first();
-
-    if ($existing) {
-        return response()->json([
-            'message' => 'You have already applied for this job.'
-        ], 409);
-    }
-
-    // Snapshot resume
+    // Snapshot resume before transaction
     $resumePath = $user->resume->resume;
     $resumeSnapshotPath = null;
 
@@ -140,18 +136,43 @@ class ApplicantJobController extends Controller
         $resumeSnapshotPath = $snapshotFilename;
     }
 
-    // Create application
-    Application::create([
-        'user_id' => $user->id,
-        'job_id' => $job->id,
-        'resume_snapshot' => $resumeSnapshotPath,
-        'licenses' => $file201->licenses ?? [],
-        'sss_number' => $file201->sss_number ?? null,
-        'philhealth_number' => $file201->philhealth_number ?? null,
-        'tin_id_number' => $file201->tin_id_number ?? null,
-        'pagibig_number' => $file201->pagibig_number ?? null,
-        'status' => 'pending', // lowercase to match enum
-    ]);
+    // Use transaction with pessimistic locking to prevent race conditions
+    try {
+        \DB::transaction(function () use ($user, $job, $resumeSnapshotPath, $file201) {
+            // Lock check: Prevent duplicate application (if not failed)
+            $existing = Application::where('user_id', $user->id)
+                ->where('job_id', $job->id)
+                ->whereNotIn('status', ['failed']) // allow retry only if not failed
+                ->lockForUpdate() // Pessimistic lock
+                ->first();
+
+            if ($existing) {
+                throw new \Exception('You have already applied for this job.');
+            }
+
+            // Create application within transaction
+            Application::create([
+                'user_id' => $user->id,
+                'job_id' => $job->id,
+                'resume_snapshot' => $resumeSnapshotPath,
+                'licenses' => $file201->licenses ?? [],
+                'sss_number' => $file201->sss_number ?? null,
+                'philhealth_number' => $file201->philhealth_number ?? null,
+                'tin_id_number' => $file201->tin_id_number ?? null,
+                'pagibig_number' => $file201->pagibig_number ?? null,
+                'status' => 'pending', // lowercase to match enum
+            ]);
+        });
+    } catch (\Exception $e) {
+        // Clean up resume snapshot if transaction fails
+        if ($resumeSnapshotPath && \Storage::disk('public')->exists($resumeSnapshotPath)) {
+            \Storage::disk('public')->delete($resumeSnapshotPath);
+        }
+
+        return response()->json([
+            'message' => $e->getMessage()
+        ], 409);
+    }
 
     return response()->json([
         'message' => 'Your application was submitted successfully.'

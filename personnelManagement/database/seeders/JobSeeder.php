@@ -21,6 +21,7 @@ class JobSeeder extends Seeder
                 'location' => 'Quezon City, Metro Manila',
                 'vacancies' => 15,
                 'apply_until' => Carbon::now()->addDays(30)->format('Y-m-d'),
+                'status' => 'active',
                 'qualifications' => [
                     'At least 18 years old',
                     'High school graduate or equivalent',
@@ -42,6 +43,7 @@ class JobSeeder extends Seeder
                 'location' => 'Makati City, Metro Manila',
                 'vacancies' => 8,
                 'apply_until' => Carbon::now()->addDays(20)->format('Y-m-d'),
+                'status' => 'active',
                 'qualifications' => [
                     'Nursing Aide NC II Certificate',
                     'At least 1 year experience in hospital setting',
@@ -63,6 +65,7 @@ class JobSeeder extends Seeder
                 'location' => 'Pasig City, Metro Manila',
                 'vacancies' => 3,
                 'apply_until' => Carbon::now()->addDays(15)->format('Y-m-d'),
+                'status' => 'active',
                 'qualifications' => [
                     'College degree in Business or related field',
                     'Minimum 3 years supervisory experience',
@@ -84,6 +87,7 @@ class JobSeeder extends Seeder
                 'location' => 'Taguig City, Metro Manila',
                 'vacancies' => 10,
                 'apply_until' => Carbon::now()->addDays(25)->format('Y-m-d'),
+                'status' => 'active',
                 'qualifications' => [
                     'High school graduate',
                     'At least 6 months experience in food service',
@@ -105,6 +109,7 @@ class JobSeeder extends Seeder
                 'location' => 'Quezon City, Metro Manila',
                 'vacancies' => 20,
                 'apply_until' => Carbon::now()->addDays(40)->format('Y-m-d'),
+                'status' => 'active',
                 'qualifications' => [
                     'College level or graduate',
                     'Excellent English communication skills',
@@ -127,6 +132,7 @@ class JobSeeder extends Seeder
                 'location' => 'Manila City, Metro Manila',
                 'vacancies' => 5,
                 'apply_until' => Carbon::now()->addDays(18)->format('Y-m-d'),
+                'status' => 'active',
                 'qualifications' => [
                     'NC II or NC III Electrical Installation Certification',
                     'Minimum 2 years hands-on experience',
@@ -148,6 +154,7 @@ class JobSeeder extends Seeder
                 'location' => 'Various locations in Metro Manila',
                 'vacancies' => 25,
                 'apply_until' => Carbon::now()->addDays(35)->format('Y-m-d'),
+                'status' => 'active',
                 'qualifications' => [
                     'High school graduate',
                     'Valid Security Guard License',
@@ -169,7 +176,8 @@ class JobSeeder extends Seeder
                 'job_industry' => 'Retail',
                 'location' => 'Ortigas, Pasig City',
                 'vacancies' => 12,
-                'apply_until' => Carbon::now()->addDays(22)->format('Y-m-d'),
+                'apply_until' => Carbon::now()->subDays(5)->format('Y-m-d'), // Expired for testing
+                'status' => 'expired',
                 'qualifications' => [
                     'College level or graduate',
                     'Pleasant personality with good communication skills',
@@ -191,6 +199,7 @@ class JobSeeder extends Seeder
                 'location' => 'Caloocan City, Metro Manila',
                 'vacancies' => 10,
                 'apply_until' => Carbon::now()->addDays(28)->format('Y-m-d'),
+                'status' => 'active',
                 'qualifications' => [
                     'High school graduate or vocational course graduate',
                     'Experience in machine operation preferred',
@@ -211,7 +220,8 @@ class JobSeeder extends Seeder
                 'job_industry' => 'Administrative',
                 'location' => 'BGC, Taguig City',
                 'vacancies' => 4,
-                'apply_until' => Carbon::now()->addDays(12)->format('Y-m-d'),
+                'apply_until' => Carbon::now()->subDays(10)->format('Y-m-d'), // Expired for testing
+                'status' => 'expired',
                 'qualifications' => [
                     'Bachelor\'s degree in any field',
                     'Proficient in MS Office (Word, Excel, PowerPoint)',

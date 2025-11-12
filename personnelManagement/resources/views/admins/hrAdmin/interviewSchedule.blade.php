@@ -1,4 +1,4 @@
-<div x-data="applicantsHandler()" x-init="init(); pageContext = 'interview'" class="relative">
+<div x-data="applicantsHandler()" x-init="init(); pageContext = 'interview'; showAll = true" class="relative">
   <div x-data="interviewHandler($data)">
     <!-- Applicants Table -->
     <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg w-full">
