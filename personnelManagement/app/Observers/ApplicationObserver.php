@@ -29,13 +29,16 @@ class ApplicationObserver
     {
         // Only proceed if status was changed
         if (!$application->wasChanged('status')) {
+            Log::info("ApplicationObserver: No status change for application {$application->id}");
             return;
         }
 
         $newStatus = $application->status;
         $oldStatus = $application->getOriginal('status');
 
-        Log::info("Application {$application->id} status changed from {$oldStatus} to {$newStatus}");
+        Log::info("ApplicationObserver: Application {$application->id} status changed from {$oldStatus?->value} to {$newStatus->value}", [
+            'is_archived' => $application->is_archived
+        ]);
 
         // Sync with Interview table
         if ($newStatus === ApplicationStatus::FOR_INTERVIEW) {
@@ -53,11 +56,11 @@ class ApplicationObserver
                     ->update(['status' => 'completed']);
             }
         } elseif ($newStatus === ApplicationStatus::FAILED_INTERVIEW) {
-            // Mark interview as failed
+            // Mark interview as failed (using 'cancelled' status)
             if ($application->interview) {
                 DB::table('interviews')
                     ->where('application_id', $application->id)
-                    ->update(['status' => 'failed']);
+                    ->update(['status' => 'cancelled']);
             }
         }
 
@@ -85,10 +88,19 @@ class ApplicationObserver
             ApplicationStatus::FAILED_EVALUATION,
             ApplicationStatus::REJECTED
         ])) {
+            Log::info("ApplicationObserver: Status is in auto-archive list", [
+                'status' => $newStatus->value,
+                'currently_archived' => $application->is_archived
+            ]);
             if (!$application->is_archived) {
+                Log::info("ApplicationObserver: Auto-archiving application {$application->id}");
                 $application->is_archived = true;
                 $application->saveQuietly(); // Prevent infinite loop
             }
+        } else {
+            Log::info("ApplicationObserver: Status NOT in auto-archive list", [
+                'status' => $newStatus->value
+            ]);
         }
     }
 

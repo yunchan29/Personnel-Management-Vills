@@ -191,7 +191,7 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware(['auth', 'verified', 'rol
     Route::get('/files', fn() => view('users.files'))->name('files');
 
   Route::get('/archive', [ArchiveController::class, 'index'])->name('archive.index');
-  Route::post('/archive/{id}/restore', [ArchiveController::class, 'restore'])->name('archive.restore');
+  Route::get('/archive/{id}', [ArchiveController::class, 'show'])->name('archive.show');
   Route::delete('/archive/{id}', [ArchiveController::class, 'destroy'])->name('archive.destroy');
 
 
@@ -348,9 +348,9 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware(['auth', 'verified', 'rol
 
     // Archive
     Route::get('/archive', [StaffArchiveController::class, 'index'])->name('archive.index');
+    Route::get('/archive/{id}', [StaffArchiveController::class, 'show'])->name('archive.show');
     Route::post('/archive/{id}', [StaffArchiveController::class, 'store'])->name('archive.store');
     Route::put('/archive/{id}/restore', [StaffArchiveController::class, 'restore'])->name('archive.restore');
-    Route::delete('/archive/{id}', [StaffArchiveController::class, 'destroy'])->name('archive.destroy');
 
     // Settings / Change Password
     Route::get('/settings', function () {

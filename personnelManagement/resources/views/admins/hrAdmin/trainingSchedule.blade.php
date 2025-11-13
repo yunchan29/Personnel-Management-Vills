@@ -83,7 +83,7 @@
                                 data-status="{{ $application->status->value }}"
                                 data-training-range="{{ $trainingRange }}"
                                 x-cloak
-                                x-show="(showAll || '{{ $application->training_schedule }}' === '')
+                                x-show="(showAll || {{ $application->trainingSchedule ? 'false' : 'true' }})
                                         && !removedApplicants.includes({{ $application->id }})"
                                 class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out"
                             >
@@ -97,7 +97,12 @@
                                     application_id: {{ $application->id }},
                                     user_id: {{ $application->user_id }},
                                     name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
-                                    has_training: {{ $application->trainingSchedule ? 'true' : 'false' }}
+                                    has_training: {{ $application->trainingSchedule ? 'true' : 'false' }},
+                                    training_start_date: '{{ optional($application->trainingSchedule)?->start_date ?? '' }}',
+                                    training_end_date: '{{ optional($application->trainingSchedule)?->end_date ?? '' }}',
+                                    training_start_time: '{{ optional($application->trainingSchedule)?->start_time ?? '' }}',
+                                    training_end_time: '{{ optional($application->trainingSchedule)?->end_time ?? '' }}',
+                                    training_location: '{{ optional($application->trainingSchedule)?->location ?? '' }}',
                                 })"
                                 :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
                                 @change="toggleItem($event, {{ $application->id }}); updateMasterCheckbox()"
@@ -155,9 +160,21 @@
 
                             <!-- Status -->
                             <td class="py-3 px-4 text-sm">
-                                <span class="px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap {{ $application->status_badge_class }}">
-                                    {{ $application->status_label }}
-                                </span>
+                                @if ($application->trainingSchedule && $application->trainingSchedule->status === 'rescheduled')
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 whitespace-nowrap">
+                                        <!-- Lucide: Clock icon -->
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2"
+                                             stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                        </svg>
+                                        Rescheduled Training
+                                    </span>
+                                @else
+                                    <span class="px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap {{ $application->status_badge_class }}">
+                                        {{ $application->status_label }}
+                                    </span>
+                                @endif
                             </td>
                         </tr>
                     @empty

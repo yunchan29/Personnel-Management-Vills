@@ -99,10 +99,10 @@ class UserController extends Controller
     {
         $currentUser = auth()->user();
 
-        // Authorization: Only HR Admin or the user themselves can view details
-        if ($currentUser->role !== 'hrAdmin' && $currentUser->id != $id) {
+        // Authorization: Only HR Admin, HR Staff, or the user themselves can view details
+        if (!in_array($currentUser->role, ['hrAdmin', 'hrStaff']) && $currentUser->id != $id) {
             return response()->json([
-                'message' => 'Unauthorized. You can only view your own details or must be an HR administrator.'
+                'message' => 'Unauthorized. You can only view your own details or must be HR personnel.'
             ], 403);
         }
 

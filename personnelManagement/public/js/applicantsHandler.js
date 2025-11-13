@@ -253,7 +253,7 @@ document.addEventListener('alpine:init', () => {
                                 "X-CSRF-TOKEN": csrfToken
                             },
                             body: JSON.stringify({
-                                ids: this.selectedApplicants.map(app => app.id ?? app.application_id), // 🔥 FIXED
+                                ids: this.selectedApplicants.map(app => app.application_id ?? app.id),
                                 status: status
                             })
                         });
@@ -263,7 +263,7 @@ document.addEventListener('alpine:init', () => {
 
                         // ✅ remove rows
                         this.selectedApplicants.forEach(app => {
-                            const id = app.id ?? app.application_id;
+                            const id = app.application_id ?? app.id;
                             document.querySelector(`[data-applicant-id="${id}"]`)?.remove();
                         });
                         this.selectedApplicants = [];

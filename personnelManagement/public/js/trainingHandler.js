@@ -65,8 +65,47 @@ document.addEventListener('alpine:init', () => {
                 });
             }
 
-            // ✅ lahat may training, proceed
-            this.openSetTraining(null, null, '', null, 'bulk');
+            // 🔹 Check if all selected applicants share the same schedule
+            const trainingData = this.selectedApplicants.map(a => ({
+                start_date: a.training_start_date,
+                end_date: a.training_end_date,
+                start_time: a.training_start_time,
+                end_time: a.training_end_time,
+                location: a.training_location
+            }));
+
+            // Create unique keys for comparison
+            const uniqueSchedules = [...new Set(trainingData.map(t =>
+                `${t.start_date}|${t.end_date}|${t.start_time}|${t.end_time}|${t.location}`
+            ))];
+
+            let sharedSchedule = null;
+            let dateRange = '';
+
+            if (uniqueSchedules.length === 1 && trainingData[0].start_date && trainingData[0].end_date) {
+                // All share the same schedule - prepare data for pre-population
+                const shared = trainingData[0];
+
+                // Format date range
+                const startDate = new Date(shared.start_date);
+                const endDate = new Date(shared.end_date);
+                const fmt = (d) => {
+                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                    const dd = String(d.getDate()).padStart(2, '0');
+                    const yyyy = d.getFullYear();
+                    return `${mm}/${dd}/${yyyy}`;
+                };
+                dateRange = `${fmt(startDate)} - ${fmt(endDate)}`;
+
+                sharedSchedule = {
+                    start_time: shared.start_time,
+                    end_time: shared.end_time,
+                    location: shared.location
+                };
+            }
+
+            // ✅ lahat may training, proceed with pre-populated data if available
+            this.openSetTraining(null, null, dateRange, sharedSchedule, 'bulk');
         },
 
         openSetTraining(applicantId = null, fullName = '', range = '', schedule = null, mode = 'single') {

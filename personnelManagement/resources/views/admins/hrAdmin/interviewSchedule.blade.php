@@ -109,7 +109,7 @@
           <td class="py-3 px-4">
              @if ($application->status->value !== 'interviewed')
           <label class="relative inline-flex items-center cursor-pointer">
-                    <input 
+                    <input
                   type="checkbox"
                   class="applicant-checkbox"
                   :value="JSON.stringify({
@@ -117,6 +117,7 @@
                       user_id: {{ $application->user_id }},
                       name: '{{ $application->user->first_name }} {{ $application->user->last_name }}',
                       has_schedule: {{ $application->interview ? 'true' : 'false' }},
+                      scheduled_at: '{{ optional($application->interview)?->scheduled_at ?? '' }}',
                   })"
                   :checked="selectedApplicants.some(a => a.application_id === {{ $application->id }})"
                  @change="toggleItem($event, {{ $application->id }}); updateMasterCheckbox()"
@@ -144,9 +145,9 @@
             <!-- Interview Schedule -->
             <td class="py-3 px-4 whitespace-nowrap">
             @if(optional($application->interview)?->scheduled_at)
-            {{ \Carbon\Carbon::parse($application->interview->scheduled_at)->format('M d, Y h:i A') }}
+                {{ \Carbon\Carbon::parse($application->interview->scheduled_at)->format('M d, Y h:i A') }}
             @else
-            Not Set
+                Not Set
             @endif
             </td>
               <!-- Resume -->
@@ -183,9 +184,21 @@
 
               <!-- Status -->
               <td class="py-3 px-4">
-                  <span class="text-xs px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap {{ $application->status_badge_class }}">
-                      {{ $application->status_label }}
-                  </span>
+                  @if ($application->interview && $application->interview->status === 'rescheduled')
+                      <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 whitespace-nowrap">
+                          <!-- Lucide: Clock icon -->
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2"
+                               stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <polyline points="12 6 12 12 16 14"></polyline>
+                          </svg>
+                          Rescheduled
+                      </span>
+                  @else
+                      <span class="text-xs px-2 py-1 rounded-full transition-colors duration-300 whitespace-nowrap {{ $application->status_badge_class }}">
+                          {{ $application->status_label }}
+                      </span>
+                  @endif
               </td>
             </tr>
           @empty

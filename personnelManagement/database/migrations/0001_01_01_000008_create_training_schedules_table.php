@@ -23,7 +23,6 @@ return new class extends Migration
             $table->time('end_time')->nullable();
             $table->string('location')->nullable();
             $table->enum('status', ['scheduled', 'rescheduled', 'completed', 'cancelled'])->default('scheduled');
-            $table->text('remarks')->nullable();
             $table->timestamps();
         });
     }

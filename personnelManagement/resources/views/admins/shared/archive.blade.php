@@ -21,9 +21,6 @@
           <th class="py-3 px-4">Job Title</th>
           <th class="py-3 px-4">Company</th>
           <th class="py-3 px-4">Archived On</th>
-          @if(auth()->user()->role === 'hrStaff')
-          <th class="py-3 px-4">Reason</th>
-          @endif
           <th class="py-3 px-4">Actions</th>
         </tr>
       </thead>
@@ -38,57 +35,18 @@
       <td class="py-3 px-4">{{ $application->job->job_title ?? 'N/A' }}</td>
       <td class="py-3 px-4">{{ $application->job->company_name ?? 'N/A' }}</td>
       <td class="py-3 px-4 italic">
-        @if(auth()->user()->role === 'hrAdmin')
-          {{ $application->archived_at
-              ? \Carbon\Carbon::parse($application->archived_at)->format('F d, Y')
-              : '—' }}
-        @else
-          {{ \Carbon\Carbon::parse($application->updated_at)->format('F d, Y') }}
-        @endif
+        {{ \Carbon\Carbon::parse($application->updated_at)->format('F d, Y') }}
       </td>
-
-      @if(auth()->user()->role === 'hrStaff')
-      <td class="py-3 px-4 italic">
-        @if($application->evaluation && $application->evaluation->result === 'failed')
-          Failed Evaluation
-        @else
-          Manually Archived
-        @endif
-      </td>
-      @endif
 
       <td class="py-3 px-4 flex gap-3">
-        @if(auth()->user()->role === 'hrAdmin')
-          {{-- HR Admin Restore --}}
-          <form action="{{ route('hrAdmin.archive.restore', $application->id) }}" method="POST" class="restore-form">
-            @csrf
-            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">
-              Restore
-            </button>
-          </form>
+        {{-- Details Button --}}
+        <button type="button" onclick="openArchiveDetailsModal({{ $application->id }})" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
+          Details
+        </button>
 
+        @if(auth()->user()->role === 'hrAdmin')
           {{-- HR Admin Delete --}}
           <form action="{{ route('hrAdmin.archive.destroy', $application->id) }}" method="POST" class="delete-form">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
-              Delete
-            </button>
-          </form>
-        @else
-          {{-- HR Staff: Only allow restore for manually archived passed applicants --}}
-          @if(!$application->evaluation || ($application->evaluation->result === 'passed'))
-            <form action="{{ route('hrStaff.archive.restore', $application->id) }}" method="POST" class="restore-form">
-              @csrf
-              @method('PUT')
-              <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">
-                Restore
-              </button>
-            </form>
-          @endif
-
-          {{-- HR Staff Delete (always allowed) --}}
-          <form action="{{ route('hrStaff.archive.destroy', $application->id) }}" method="POST" class="delete-form">
             @csrf
             @method('DELETE')
             <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
@@ -100,7 +58,7 @@
     </tr>
   @empty
     <tr>
-      <td colspan="{{ auth()->user()->role === 'hrStaff' ? '7' : '6' }}" class="py-6 text-center text-gray-500">
+      <td colspan="6" class="py-6 text-center text-gray-500">
         No archived {{ auth()->user()->role === 'hrAdmin' ? 'applicants' : 'applications' }}.
       </td>
     </tr>
@@ -111,7 +69,10 @@
   </div>
 </div>
 
-{{-- SweetAlert for delete/restore confirmation --}}
+{{-- Include Archive Details Modal --}}
+<x-shared.modals.archiveDetails />
+
+{{-- SweetAlert for delete confirmation --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // Delete confirmation
@@ -135,27 +96,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Restore confirmation
-    document.querySelectorAll('.restore-form').forEach(form => {
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            Swal.fire({
-                title: 'Restore this {{ auth()->user()->role === 'hrAdmin' ? 'employee' : 'application' }}?',
-                text: "{{ auth()->user()->role === 'hrAdmin' ? 'They will be reactivated and moved back from archive.' : 'This application will be restored.' }}",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#28a745',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Yes, restore!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
-            });
-        });
-    });
-
     // Success Toast
     @if(session('success'))
         Swal.fire({
@@ -165,6 +105,19 @@ document.addEventListener('DOMContentLoaded', function () {
             title: "{{ session('success') }}",
             showConfirmButton: false,
             timer: 2500,
+            timerProgressBar: true
+        });
+    @endif
+
+    // Error Toast
+    @if(session('error'))
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: "{{ session('error') }}",
+            showConfirmButton: false,
+            timer: 3000,
             timerProgressBar: true
         });
     @endif

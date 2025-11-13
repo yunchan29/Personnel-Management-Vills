@@ -78,7 +78,6 @@ class TrainingScheduleController extends Controller
             $newSchedule = TrainingSchedule::create(array_merge($data, [
                 'application_id' => $application->id,
                 'user_id'        => $application->user_id,
-                'remarks'        => null,
                 'status'         => 'scheduled'
             ]));
 
@@ -159,7 +158,6 @@ class TrainingScheduleController extends Controller
                 $newSchedule = TrainingSchedule::create(array_merge($data, [
                     'application_id' => $application->id,
                     'user_id'        => $application->user_id,
-                    'remarks'        => null,
                     'status'         => 'scheduled'
                 ]));
 

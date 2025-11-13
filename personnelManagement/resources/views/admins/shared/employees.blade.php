@@ -10,6 +10,9 @@
     requirementsFile201: null,
     requirementsOtherFiles: [],
     requirementsApplicantId: null,
+    requirementsContractStart: null,
+    requirementsContractEnd: null,
+    requirementsApplicationStatus: null,
     searchQuery: '',
     filterCompany: 'all',
     filterContractStatus: 'all',
@@ -28,9 +31,12 @@
             this.loading = false;
         }
     },
-    async openRequirements(employeeId, employeeName) {
+    async openRequirements(employeeId, employeeName, contractStart = null, contractEnd = null, applicationStatus = null) {
         this.requirementsApplicantId = employeeId;
         this.requirementsApplicantName = employeeName;
+        this.requirementsContractStart = contractStart;
+        this.requirementsContractEnd = contractEnd;
+        this.requirementsApplicationStatus = applicationStatus;
         try {
             const response = await fetch(`/file-201/${employeeId}`);
             if (!response.ok) throw new Error('Failed to fetch requirements');
@@ -47,6 +53,9 @@
         this.requirementsOpen = false;
         this.requirementsFile201 = null;
         this.requirementsOtherFiles = [];
+        this.requirementsContractStart = null;
+        this.requirementsContractEnd = null;
+        this.requirementsApplicationStatus = null;
     },
     hasMissingRequirements() {
         const requiredDocs = ['Barangay Clearance', 'NBI Clearance', 'Police Clearance', 'Medical Certificate', 'Birth Certificate'];
@@ -287,7 +296,7 @@
                                 <p class="text-sm text-gray-600">Phone Number</p>
                                 <p class="font-medium" x-text="selectedEmployee.phone_number || '—'"></p>
                             </div>
-                            <div class="md:col-span-2">
+                            <div>
                                 <p class="text-sm text-gray-600">Address</p>
                                 <p class="font-medium" x-text="selectedEmployee.address || '—'"></p>
                             </div>
@@ -307,11 +316,50 @@
                     <!-- Application Status -->
                     <div>
                         <h3 class="text-lg font-semibold text-gray-800 mb-3">Application Status</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                             <div>
                                 <p class="text-sm text-gray-600">Status</p>
                                 <p class="font-medium" x-text="selectedEmployee.application_status"></p>
                             </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Contract Status</p>
+                                <template x-if="selectedEmployee.contract_start && selectedEmployee.contract_end">
+                                    <span
+                                        class="inline-block px-2 py-1 text-xs font-semibold rounded"
+                                        x-data="{
+                                            getContractStatus() {
+                                                if (!selectedEmployee.contract_start || !selectedEmployee.contract_end) return { text: 'N/A', class: 'bg-gray-100 text-gray-600' };
+
+                                                const today = new Date();
+                                                const startDate = new Date(selectedEmployee.contract_start);
+                                                const endDate = new Date(selectedEmployee.contract_end);
+
+                                                if (startDate > today) {
+                                                    return { text: 'Pending', class: 'bg-blue-100 text-blue-800' };
+                                                } else if (endDate < today) {
+                                                    return { text: 'Expired', class: 'bg-red-100 text-red-800' };
+                                                } else {
+                                                    const daysUntilExpiry = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+                                                    if (daysUntilExpiry <= 30) {
+                                                        return { text: 'Expiring', class: 'bg-yellow-100 text-yellow-800' };
+                                                    } else {
+                                                        return { text: 'Active', class: 'bg-green-100 text-green-800' };
+                                                    }
+                                                }
+                                            }
+                                        }"
+                                        :class="getContractStatus().class"
+                                        x-text="getContractStatus().text"
+                                    ></span>
+                                </template>
+                                <template x-if="!selectedEmployee.contract_start || !selectedEmployee.contract_end">
+                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-600">
+                                        N/A
+                                    </span>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <p class="text-sm text-gray-600">Contract Start</p>
                                 <p class="font-medium" x-text="selectedEmployee.contract_start || '—'"></p>
@@ -326,7 +374,7 @@
                     <!-- Action Buttons -->
                     <div class="flex gap-3 pt-4 border-t">
                         <button
-                            @click="openRequirements(selectedEmployee.id, selectedEmployee.full_name)"
+                            @click="openRequirements(selectedEmployee.id, selectedEmployee.full_name, selectedEmployee.contract_start, selectedEmployee.contract_end, selectedEmployee.application_status)"
                             class="bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded shadow hover:bg-blue-700">
                             View Requirements
                         </button>
@@ -371,23 +419,75 @@
                     Requirements for <span x-text="requirementsApplicantName"></span>
                 </h2>
 
-                <!-- File201 details -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 bg-gray-50 p-4 rounded-lg">
-                    <template x-for="[label, value] in [
-                        ['SSS Number', requirementsFile201?.sss_number ?? '—'],
-                        ['PhilHealth Number', requirementsFile201?.philhealth_number ?? '—'],
-                        ['Pag-IBIG Number', requirementsFile201?.pagibig_number ?? '—'],
-                        ['TIN ID Number', requirementsFile201?.tin_id_number ?? '—']
-                    ]" :key="label">
+                <!-- Contract Status Section -->
+                <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h3 class="text-md font-semibold text-gray-800 mb-3">Contract Status</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-600" x-text="label"></label>
-                            <p class="text-gray-800 font-medium break-words" x-text="value"></p>
+                            <label class="block text-sm font-medium text-gray-600">Application Status</label>
+                            <p class="text-gray-800 font-medium" x-text="requirementsApplicationStatus || '—'"></p>
                         </div>
-                    </template>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600">Contract Start</label>
+                            <p class="text-gray-800 font-medium" x-text="requirementsContractStart || '—'"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600">Contract End</label>
+                            <p class="text-gray-800 font-medium" x-text="requirementsContractEnd || 'Ongoing'"></p>
+                        </div>
+                    </div>
+                    <div class="mt-3" x-show="requirementsContractStart && requirementsContractEnd">
+                        <label class="block text-sm font-medium text-gray-600">Status</label>
+                        <span
+                            class="inline-block px-2 py-1 text-xs font-semibold rounded mt-1"
+                            x-data="{
+                                getContractStatus() {
+                                    if (!requirementsContractStart || !requirementsContractEnd) return { text: 'N/A', class: 'bg-gray-100 text-gray-600' };
+
+                                    const today = new Date();
+                                    const startDate = new Date(requirementsContractStart);
+                                    const endDate = new Date(requirementsContractEnd);
+
+                                    if (startDate > today) {
+                                        return { text: 'Pending', class: 'bg-blue-100 text-blue-800' };
+                                    } else if (endDate < today) {
+                                        return { text: 'Expired', class: 'bg-red-100 text-red-800' };
+                                    } else {
+                                        const daysUntilExpiry = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+                                        if (daysUntilExpiry <= 30) {
+                                            return { text: 'Expiring', class: 'bg-yellow-100 text-yellow-800' };
+                                        } else {
+                                            return { text: 'Active', class: 'bg-green-100 text-green-800' };
+                                        }
+                                    }
+                                }
+                            }"
+                            :class="getContractStatus().class"
+                            x-text="getContractStatus().text"
+                        ></span>
+                    </div>
+                </div>
+
+                <!-- File201 details -->
+                <div class="mb-6">
+                    <h3 class="text-md font-semibold text-gray-800 mb-3">Government IDs</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                        <template x-for="[label, value] in [
+                            ['SSS Number', requirementsFile201?.sss_number ?? '—'],
+                            ['PhilHealth Number', requirementsFile201?.philhealth_number ?? '—'],
+                            ['Pag-IBIG Number', requirementsFile201?.pagibig_number ?? '—'],
+                            ['TIN ID Number', requirementsFile201?.tin_id_number ?? '—']
+                        ]" :key="label">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600" x-text="label"></label>
+                                <p class="text-gray-800 font-medium break-words" x-text="value"></p>
+                            </div>
+                        </template>
+                    </div>
                 </div>
                 <!-- Required Documents -->
                 <div>
-                    <h3 class="text-lg sm:text-xl font-bold text-[#BD6F22] mb-4">Required Documents</h3>
+                    <h3 class="text-md font-semibold text-gray-800 mb-3">Required Documents</h3>
                     <ul class="space-y-3">
                         <template x-for="doc in ['Barangay Clearance', 'NBI Clearance', 'Police Clearance', 'Medical Certificate', 'Birth Certificate']" :key="doc">
                             <li

@@ -19,7 +19,6 @@ return new class extends Migration
             $table->dateTime('scheduled_at');
             $table->dateTime('rescheduled_at')->nullable();
             $table->enum('status', ['scheduled', 'rescheduled', 'completed', 'cancelled'])->default('scheduled');
-            $table->text('remarks')->nullable();
             $table->timestamps();
         });
     }

@@ -15,16 +15,8 @@ class Application extends Model
         'contract_signing_schedule',
         'contract_start',
         'contract_end',
-    ];
-
-    /**
-     * The attributes that are guarded from mass assignment.
-     *
-     * @var array<int, string>
-     */
-    protected $guarded = [
-        'status',       // Prevent unauthorized status changes
-        'is_archived',  // Prevent unauthorized archiving
+        'status',        // Allow HR Staff to update status
+        'is_archived',   // Allow HR Staff to archive/unarchive
     ];
 
     protected $casts = [

@@ -12,9 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         // Applications table indexes
+        // Note: user_id and job_id already have indexes via foreign key constraints
         Schema::table('applications', function (Blueprint $table) {
-            $table->index('user_id', 'idx_applications_user_id');
-            $table->index('job_id', 'idx_applications_job_id');
             $table->index('status', 'idx_applications_status');
             $table->index('is_archived', 'idx_applications_is_archived');
             $table->index('created_at', 'idx_applications_created_at');
@@ -35,8 +34,8 @@ return new class extends Migration
         });
 
         // Leave forms table indexes
+        // Note: user_id already has an index via foreign key constraint
         Schema::table('leave_forms', function (Blueprint $table) {
-            $table->index('user_id', 'idx_leave_forms_user_id');
             $table->index('status', 'idx_leave_forms_status');
             $table->index('created_at', 'idx_leave_forms_created_at');
         });
@@ -48,9 +47,8 @@ return new class extends Migration
     public function down(): void
     {
         // Drop Applications indexes
+        // Note: user_id and job_id indexes are managed by foreign key constraints
         Schema::table('applications', function (Blueprint $table) {
-            $table->dropIndex('idx_applications_user_id');
-            $table->dropIndex('idx_applications_job_id');
             $table->dropIndex('idx_applications_status');
             $table->dropIndex('idx_applications_is_archived');
             $table->dropIndex('idx_applications_created_at');
@@ -71,8 +69,8 @@ return new class extends Migration
         });
 
         // Drop Leave forms indexes
+        // Note: user_id index is managed by foreign key constraint
         Schema::table('leave_forms', function (Blueprint $table) {
-            $table->dropIndex('idx_leave_forms_user_id');
             $table->dropIndex('idx_leave_forms_status');
             $table->dropIndex('idx_leave_forms_created_at');
         });

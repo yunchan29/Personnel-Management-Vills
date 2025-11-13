@@ -234,7 +234,28 @@ document.addEventListener('alpine:init', () => {
                         });
                         return;
                     }
-                } 
+
+                    // 🔹 Check if all selected applicants share the same schedule
+                    const schedules = this.selectedApplicants.map(a => a.scheduled_at).filter(s => s);
+                    const uniqueSchedules = [...new Set(schedules)];
+
+                    if (uniqueSchedules.length === 1 && uniqueSchedules[0]) {
+                        // All share the same schedule - pre-populate the form
+                        const sharedSchedule = uniqueSchedules[0];
+                        const [datePart, timePartRaw = '00:00:00'] = sharedSchedule.split(' ');
+                        const hour24 = parseInt(timePartRaw.split(':')[0], 10);
+                        const hour12 = hour24 % 12 || 12;
+                        const period = hour24 < 12 ? 'AM' : 'PM';
+
+                        this.interviewDate = datePart;
+                        this.interviewTime = hour12;
+                        this.interviewPeriod = period;
+                        this.originalNormalizedDT = `${datePart} ${String(hour24).padStart(2,'0')}:00:00`;
+                    } else {
+                        // Different schedules - reset form
+                        this.resetInterviewForm();
+                    }
+                }
                 // 🔸 Validation for bulk-schedule
                 else if (type === 'bulk') {
                     const alreadyScheduled = this.selectedApplicants.filter(a => a.has_schedule);
@@ -245,12 +266,13 @@ document.addEventListener('alpine:init', () => {
                         });
                         return;
                     }
-                } 
+                    // Reset form for new schedules
+                    this.resetInterviewForm();
+                }
 
                 // ✅ If passed all validations, open modal
                 this.interviewMode = type;
                 this.interviewApplicant = null;
-                this.resetInterviewForm();
                 this.showInterviewModal = true;
         },
 
