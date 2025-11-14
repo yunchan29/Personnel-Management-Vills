@@ -215,4 +215,53 @@ class StaffArchiveController extends Controller
         return redirect()->route('hrStaff.archive.index')
             ->with('success', $message);
     }
+
+    public function bulkRestore(Request $request)
+    {
+        // Verify user has HR Staff role
+        if (Auth::user()->role !== 'hrStaff') {
+            abort(403, 'Unauthorized. Only HR Staff can restore applications.');
+        }
+
+        $request->validate([
+            'ids' => 'required|json'
+        ]);
+
+        $ids = json_decode($request->ids, true);
+
+        if (!is_array($ids) || empty($ids)) {
+            return redirect()->route('hrStaff.archive.index')
+                ->with('error', 'No items selected for restoration.');
+        }
+
+        // Get all applications that can be restored (failed_evaluation status only)
+        $applications = Application::whereIn('id', $ids)
+            ->where('is_archived', true)
+            ->where('status', ApplicationStatus::FAILED_EVALUATION)
+            ->get();
+
+        if ($applications->isEmpty()) {
+            return redirect()->route('hrStaff.archive.index')
+                ->with('error', 'No valid applications found for restoration. Only failed evaluation applications can be restored.');
+        }
+
+        $restoredCount = 0;
+
+        foreach ($applications as $application) {
+            // Delete old evaluation (for re-evaluation scenario)
+            if ($application->evaluation) {
+                $application->evaluation->delete();
+            }
+
+            // Restore to for_evaluation status by default
+            $application->is_archived = false;
+            $application->status = ApplicationStatus::FOR_EVALUATION;
+            $application->save();
+
+            $restoredCount++;
+        }
+
+        return redirect()->route('hrStaff.archive.index')
+            ->with('success', "Successfully restored {$restoredCount} application(s) to For Evaluation status.");
+    }
 }

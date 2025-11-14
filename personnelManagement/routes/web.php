@@ -187,10 +187,20 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware(['auth', 'verified', 'rol
     Route::get('/job-posting/{id}', [JobController::class, 'show'])->name('jobPosting.show');
     Route::delete('/jobPosting/{id}', [JobController::class, 'destroy'])->name('jobPosting.destroy');
 
+    // Job Posting - Additional Actions
+    Route::post('/jobPosting/{id}/repost', [JobController::class, 'repost'])->name('jobPosting.repost');
+    Route::post('/jobPosting/{id}/quick-extend', [JobController::class, 'quickExtend'])->name('jobPosting.quickExtend');
+
+    // Job Posting - Bulk Operations
+    Route::post('/jobPosting/bulk-extend', [JobController::class, 'bulkExtend'])->name('jobPosting.bulkExtend');
+    Route::delete('/jobPosting/bulk-delete', [JobController::class, 'bulkDelete'])->name('jobPosting.bulkDelete');
+    Route::post('/jobPosting/bulk-update-status', [JobController::class, 'bulkUpdateStatus'])->name('jobPosting.bulkUpdateStatus');
+
     // 201 Files: Government IDs and Licenses
     Route::get('/files', fn() => view('users.files'))->name('files');
 
   Route::get('/archive', [ArchiveController::class, 'index'])->name('archive.index');
+  Route::delete('/archive/bulk-destroy', [ArchiveController::class, 'bulkDestroy'])->name('archive.bulkDestroy');
   Route::get('/archive/{id}', [ArchiveController::class, 'show'])->name('archive.show');
   Route::delete('/archive/{id}', [ArchiveController::class, 'destroy'])->name('archive.destroy');
 
@@ -348,6 +358,7 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware(['auth', 'verified', 'rol
 
     // Archive
     Route::get('/archive', [StaffArchiveController::class, 'index'])->name('archive.index');
+    Route::put('/archive/bulk-restore', [StaffArchiveController::class, 'bulkRestore'])->name('archive.bulkRestore');
     Route::get('/archive/{id}', [StaffArchiveController::class, 'show'])->name('archive.show');
     Route::post('/archive/{id}', [StaffArchiveController::class, 'store'])->name('archive.store');
     Route::put('/archive/{id}/restore', [StaffArchiveController::class, 'restore'])->name('archive.restore');

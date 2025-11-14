@@ -162,7 +162,7 @@
 </section>
 @endsection
 
-<!-- SweetAlert for success message -->
+<!-- SweetAlert for messages -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 @if(session('success'))
@@ -172,6 +172,32 @@
             title: 'Success!',
             text: '{{ session('success') }}',
             icon: 'success',
+            confirmButtonColor: '#BD6F22'
+        });
+    });
+</script>
+@endif
+
+@if(session('error'))
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        Swal.fire({
+            title: 'Error!',
+            text: '{{ session('error') }}',
+            icon: 'error',
+            confirmButtonColor: '#BD6F22'
+        });
+    });
+</script>
+@endif
+
+@if(session('warning'))
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        Swal.fire({
+            title: 'Warning!',
+            text: '{{ session('warning') }}',
+            icon: 'warning',
             confirmButtonColor: '#BD6F22'
         });
     });

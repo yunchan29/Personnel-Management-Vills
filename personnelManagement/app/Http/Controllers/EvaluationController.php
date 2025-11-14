@@ -74,9 +74,9 @@ class EvaluationController extends Controller
                 $job->refresh();
 
                 if ($job->vacancies <= 0) {
-                    // optionally mark job as closed
-                    // $job->status = 'closed';
-                    // $job->save();
+                    // Mark job as filled when all vacancies are taken
+                    $job->status = 'filled';
+                    $job->save();
                 }
             }
 

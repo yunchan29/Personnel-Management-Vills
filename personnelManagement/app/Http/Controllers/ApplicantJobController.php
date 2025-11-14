@@ -38,6 +38,7 @@ class ApplicantJobController extends Controller
 
     $jobs = Job::latest()
         ->whereDate('apply_until', '>=', \Carbon\Carbon::today()) // 👈 filter expired jobs
+        ->where('vacancies', '>', 0) // 👈 filter jobs with no available vacancies
         ->when($industry, fn($query) => $query->where('job_industry', $industry))
         ->get();
 
@@ -69,6 +70,14 @@ class ApplicantJobController extends Controller
         return response()->json([
             'message' => 'This job posting has expired and is no longer accepting applications.',
             'expired' => true
+        ], 422);
+    }
+
+    // Check if job has available vacancies
+    if ($job->vacancies <= 0) {
+        return response()->json([
+            'message' => 'This job posting has no available vacancies at the moment.',
+            'filled' => true
         ], 422);
     }
 

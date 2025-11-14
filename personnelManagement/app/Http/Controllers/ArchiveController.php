@@ -102,4 +102,31 @@ class ArchiveController extends Controller
         return redirect()->route('hrAdmin.archive.index')
             ->with('success', 'Application permanently deleted.');
     }
+
+    public function bulkDestroy(Request $request)
+    {
+        // Authorization: Only HR Admin can permanently delete archived applications
+        if (auth()->user()->role !== 'hrAdmin') {
+            abort(403, 'Unauthorized. Only HR administrators can permanently delete applications.');
+        }
+
+        $request->validate([
+            'ids' => 'required|json'
+        ]);
+
+        $ids = json_decode($request->ids, true);
+
+        if (!is_array($ids) || empty($ids)) {
+            return redirect()->route('hrAdmin.archive.index')
+                ->with('error', 'No items selected for deletion.');
+        }
+
+        // Delete all selected archived applications
+        $deletedCount = Application::whereIn('id', $ids)
+            ->where('is_archived', true)
+            ->delete();
+
+        return redirect()->route('hrAdmin.archive.index')
+            ->with('success', "Successfully deleted {$deletedCount} archived application(s).");
+    }
 }
