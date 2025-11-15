@@ -7,7 +7,7 @@
 
     @if($jobs->isNotEmpty())
         <!-- Search and Add Button Row -->
-        <div class="flex flex-col md:flex-row md:justify-between gap-4 mb-6">
+        <div class="flex flex-col md:flex-row md:justify-between gap-4 mb-1">
  <form method="GET" action="{{ route('hrAdmin.jobPosting') }}" class="flex w-full md:flex-1 items-center gap-2" x-data="{ open: false }">
 
     <!-- Filters dropdown (company + sort) -->
@@ -116,7 +116,7 @@
                     @click="$dispatch('open-job-modal')"
                     class="bg-[#BD6F22] text-white px-6 py-2 rounded-md hover:bg-[#a65e1d] transition w-full md:w-auto"
                 >
-                    Add Job Advertisement
+                    Add Job Post
                 </button>
             </div>
         </div>

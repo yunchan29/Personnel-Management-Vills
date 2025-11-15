@@ -1,7 +1,6 @@
 {{-- Job Listing Display --}}
 <div
     x-data="{
-        expandedId: null,
         selectedJobs: [],
         selectAll: false,
         toggleSelectAll() {
@@ -10,76 +9,100 @@
             } else {
                 this.selectedJobs = [];
             }
-        },
-        get hasSelection() {
-            return this.selectedJobs.length > 0;
         }
     }"
-    class="mt-10"
+    class="mt-2"
 >
-    {{-- Bulk Actions Bar - Minimalist --}}
-    <div x-show="hasSelection" x-transition class="mb-6 py-3 border-y border-gray-200">
+    {{-- Bulk Actions Bar --}}
+    <div
+        x-show="selectedJobs.length > 0"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0 -translate-y-2"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 -translate-y-2"
+        class="mb-6 bg-gradient-to-r from-[#BD6F22]/5 to-[#BD6F22]/10 border border-[#BD6F22]/20 rounded-lg p-4 shadow-sm"
+    >
         <div class="flex flex-wrap items-center gap-4">
-            {{-- Selection Count --}}
-            <span class="text-sm text-gray-600">
-                <span x-text="selectedJobs.length" class="font-medium text-gray-900"></span> selected
-            </span>
+            {{-- Select All Checkbox --}}
+            <div class="flex items-center gap-2">
+                <input
+                    type="checkbox"
+                    id="select-all-jobs"
+                    x-model="selectAll"
+                    @change="toggleSelectAll()"
+                    class="w-5 h-5 text-[#BD6F22] border-gray-300 rounded focus:ring-2 focus:ring-[#BD6F22]/20 focus:ring-offset-0 cursor-pointer transition-colors"
+                >
+                <label for="select-all-jobs" class="text-sm font-medium text-gray-700 cursor-pointer select-none whitespace-nowrap">
+                    Select All
+                </label>
+            </div>
 
-            <div class="h-4 w-px bg-gray-300"></div>
+            {{-- Selection Count --}}
+            <div class="flex items-center gap-2">
+                <div class="bg-[#BD6F22] text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                    <span x-text="selectedJobs.length"></span>
+                </div>
+                <span class="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <span x-text="selectedJobs.length === 1 ? 'job' : 'jobs'"></span> selected
+                </span>
+            </div>
 
             {{-- Quick Extend --}}
-            <form method="POST" action="{{ route('hrAdmin.jobPosting.bulkExtend') }}" class="flex items-center gap-2">
+            <form method="POST" action="{{ route('hrAdmin.jobPosting.bulkExtend') }}" class="flex items-center gap-2 m-0">
                 @csrf
                 <input type="hidden" name="job_ids" :value="JSON.stringify(selectedJobs)">
-                <select name="days" class="text-sm border-0 border-b border-gray-300 py-1 px-0 focus:border-gray-900 focus:ring-0" required>
-                    <option value="" disabled selected>Extend</option>
+                <label class="text-xs font-medium text-gray-600 whitespace-nowrap">Extend:</label>
+                <select name="days" class="text-sm border border-[#BD6F22]/30 rounded-md py-1.5 px-3 focus:border-[#BD6F22] focus:ring-2 focus:ring-[#BD6F22]/20 focus:outline-none bg-white" required>
+                    <option value="" disabled selected>Select days</option>
                     <option value="7">+7 days</option>
                     <option value="14">+14 days</option>
                     <option value="30">+30 days</option>
                     <option value="60">+60 days</option>
                 </select>
+                <button type="submit" class="bg-[#BD6F22] text-white px-3 py-1.5 rounded-md text-xs font-medium hover:bg-[#a65e1d] transition-colors whitespace-nowrap">
+                    Apply
+                </button>
             </form>
 
             {{-- Status Update --}}
-            <form method="POST" action="{{ route('hrAdmin.jobPosting.bulkUpdateStatus') }}" class="flex items-center gap-2">
+            <form method="POST" action="{{ route('hrAdmin.jobPosting.bulkUpdateStatus') }}" class="flex items-center gap-2 m-0">
                 @csrf
                 <input type="hidden" name="job_ids" :value="JSON.stringify(selectedJobs)">
-                <select name="status" class="text-sm border-0 border-b border-gray-300 py-1 px-0 focus:border-gray-900 focus:ring-0" required>
-                    <option value="" disabled selected>Status</option>
+                <label class="text-xs font-medium text-gray-600 whitespace-nowrap">Status:</label>
+                <select name="status" class="text-sm border border-[#BD6F22]/30 rounded-md py-1.5 px-3 focus:border-[#BD6F22] focus:ring-2 focus:ring-[#BD6F22]/20 focus:outline-none bg-white" required>
+                    <option value="" disabled selected>Change to</option>
                     <option value="active">Active</option>
                     <option value="expired">Expired</option>
                     <option value="filled">Filled</option>
                 </select>
+                <button type="submit" class="bg-[#BD6F22] text-white px-3 py-1.5 rounded-md text-xs font-medium hover:bg-[#a65e1d] transition-colors whitespace-nowrap">
+                    Apply
+                </button>
             </form>
 
             {{-- Delete --}}
-            <form method="POST" action="{{ route('hrAdmin.jobPosting.bulkDelete') }}" onsubmit="return confirm('Delete selected jobs?')" class="inline">
+            <form method="POST" action="{{ route('hrAdmin.jobPosting.bulkDelete') }}" onsubmit="return confirm('Are you sure you want to delete the selected jobs? This action cannot be undone.')" class="flex items-center m-0">
                 @csrf
                 @method('DELETE')
                 <input type="hidden" name="job_ids" :value="JSON.stringify(selectedJobs)">
-                <button type="submit" class="text-sm text-red-600 hover:text-red-800">
+                <button type="submit" class="flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-md transition-colors font-medium whitespace-nowrap">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                     Delete
                 </button>
             </form>
 
-            <div class="ml-auto"></div>
-
             {{-- Clear --}}
-            <button @click="selectedJobs = []; selectAll = false" class="text-sm text-gray-500 hover:text-gray-700">
+            <button @click="selectedJobs = []; selectAll = false" class="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-3 py-1.5 rounded-md transition-colors font-medium whitespace-nowrap">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
                 Clear
             </button>
         </div>
-    </div>
-
-    {{-- Select All Checkbox --}}
-    <div class="mb-4 flex items-center gap-2">
-        <input
-            type="checkbox"
-            x-model="selectAll"
-            @change="toggleSelectAll()"
-            class="rounded border-gray-300"
-        >
-        <label class="text-sm font-medium text-gray-700">Select All</label>
     </div>
 
     <div class="grid gap-6 sm:grid-cols-1 md:grid-cols-2 items-start">
@@ -88,35 +111,25 @@
             $isExpired = \Carbon\Carbon::now()->gt(\Carbon\Carbon::parse($job->apply_until));
         @endphp
         <div
+            class="bg-white border rounded-lg shadow-sm p-6 flex flex-col justify-between transition-all duration-300 relative {{ $isExpired ? 'opacity-50' : '' }}"
             x-data="{
                 id: {{ $job->id }},
                 qualifications: {{ Js::from($job->qualifications) }},
                 additionalInfo: {{ Js::from($job->additional_info ?? []) }},
                 expanded: false,
-                showAll: false,
-                init() {
-                    this.$watch('expanded', value => {
-                        if (value) {
-                            this.$root.expandedId = this.id;
-                        } else {
-                            this.showAll = false;
-                        }
-                    });
-                    this.$watch('$root.expandedId', value => {
-                        this.expanded = value === this.id;
-                    });
-                }
+                showAll: false
             }"
-            x-init="init"
-            class="bg-white border rounded-lg shadow-sm p-6 flex flex-col justify-between transition-all duration-300 relative {{ $isExpired ? 'opacity-50' : '' }}"
+            @expanded-change.window="if ($event.detail === {{ $job->id }}) expanded = true; else if (expanded) expanded = false"
         >
             {{-- Selection Checkbox --}}
-            <div class="absolute top-2 left-2">
+            <div class="absolute top-4 left-4">
                 <input
                     type="checkbox"
-                    :value="{{ $job->id }}"
-                    x-model="$root.selectedJobs"
-                    class="rounded border-gray-300"
+                    x-model="selectedJobs"
+                    value="{{ $job->id }}"
+                    :id="'job-checkbox-' + {{ $job->id }}"
+                    class="w-5 h-5 text-[#BD6F22] border-gray-300 rounded focus:ring-2 focus:ring-[#BD6F22]/20 focus:ring-offset-0 cursor-pointer transition-all hover:border-[#BD6F22]"
+                    :class="{ 'ring-2 ring-[#BD6F22]/30': selectedJobs.includes({{ $job->id }}) }"
                 >
             </div>
 
@@ -132,7 +145,7 @@
             @endif
 
             {{-- Header --}}
-            <div class="flex justify-between items-start mb-4 mt-4">
+            <div class="flex justify-between items-start mb-4 mt-2 ml-8">
                 <div>
                     <h4 class="text-lg font-semibold text-[#BD6F22]">{{ $job->job_title }}</h4>
                     <p class="text-gray-700 text-sm">{{ $job->company_name }}</p>
@@ -239,11 +252,14 @@
             {{-- See More / See Less --}}
             <template x-if="qualifications.length > 3 || additionalInfo.length > 0">
                 <div class="flex justify-center w-full">
-                    <button 
+                    <button
                         @click="
-                            if (!expanded) $root.expandedId = id;
+                            if (!expanded) {
+                                $dispatch('expanded-change', id);
+                                expanded = true;
+                            }
                             showAll = !showAll;
-                        " 
+                        "
                         class="text-[#BD6F22] text-xs hover:underline mb-2"
                     >
                         <span x-text="showAll ? 'See Less' : 'See More'"></span>
@@ -296,7 +312,7 @@
                 {{-- Applications Count Badge --}}
                 @if($job->applications_count > 0)
                     <span class="ml-auto bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium">
-                        {{ $job->applications_count }} application{{ $job->applications_count > 1 ? 's' : '' }}
+                        {{ $job->applications_count }} have applied to this job{{ $job->applications_count > 1 ? 's' : '' }}
                     </span>
                 @endif
             </div>

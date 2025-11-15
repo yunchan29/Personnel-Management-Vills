@@ -20,6 +20,7 @@ use App\Http\Controllers\TrainingScheduleController;
 use App\Http\Controllers\InitialApplicationController;
 use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\DashboardChartController;
+use App\Http\Controllers\DashboardReportController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ArchiveController; 
 use App\Http\Controllers\StaffArchiveController;
@@ -143,6 +144,9 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware(['auth', 'verified', 'rol
 
     // Dashboard (with chart data passed directly)
     Route::get('/dashboard', [DashboardChartController::class, 'index'])->name('dashboard');
+
+    // Dashboard PDF Report
+    Route::get('/dashboard/report', [DashboardReportController::class, 'generatePDF'])->name('dashboard.report');
 
     // Profile Management
     Route::get('/profile', [UserController::class, 'showHrAdmin'])->name('profile');

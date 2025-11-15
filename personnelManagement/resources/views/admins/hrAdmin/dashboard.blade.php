@@ -9,85 +9,356 @@
   </h1>
   <hr class="mb-6">
 
+    <!-- Filter & Report Section -->
+  <div class="bg-white rounded-md shadow-md border border-gray-200 p-5 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold text-gray-800 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+        </svg>
+        Filter & Reports
+      </h2>
+    </div>
+
+    <form id="filterForm" method="GET" action="{{ route('hrAdmin.dashboard') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+      <!-- Company Filter -->
+      <div>
+        <label for="company" class="block text-sm font-medium text-gray-700 mb-2">Company</label>
+        <select name="company" id="company" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
+          <option value="">All Companies</option>
+          @foreach($chartData['companies'] ?? [] as $company)
+            <option value="{{ $company }}" {{ request('company') == $company ? 'selected' : '' }}>
+              {{ $company }}
+            </option>
+          @endforeach
+        </select>
+      </div>
+
+      <!-- Start Date -->
+      <div>
+        <label for="start_date" class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+        <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
+      </div>
+
+      <!-- End Date -->
+      <div>
+        <label for="end_date" class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+        <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
+      </div>
+
+      <!-- Apply Filters Button -->
+      <div>
+        <button type="submit" class="w-full bg-[#BD6F22] hover:bg-[#A55E1A] text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          Apply Filters
+        </button>
+      </div>
+
+      <!-- Generate PDF Button -->
+      <div>
+        <button type="button" id="generatePdfBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          Generate PDF
+        </button>
+      </div>
+    </form>
+
+    <!-- Active Filters Display -->
+    @if(request('company') || request('start_date') || request('end_date'))
+    <div class="mt-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded flex items-start justify-between">
+      <div class="flex items-start">
+        <svg class="w-5 h-5 text-blue-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div>
+          <p class="text-sm font-medium text-blue-800">Active Filters:</p>
+          <p class="text-xs text-blue-600 mt-1">
+            @if(request('company'))
+              Company: <span class="font-semibold">{{ request('company') }}</span>
+            @endif
+            @if(request('start_date'))
+              | From: <span class="font-semibold">{{ request('start_date') }}</span>
+            @endif
+            @if(request('end_date'))
+              | To: <span class="font-semibold">{{ request('end_date') }}</span>
+            @endif
+          </p>
+        </div>
+      </div>
+      <a href="{{ route('hrAdmin.dashboard') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Clear All</a>
+    </div>
+    @endif
+  </div>
+
   <!-- Stat Cards -->
   <div class="flex justify-center mb-6">
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl w-full">
-      <div class="bg-white shadow-md rounded-md p-4 text-center border border-gray-200 stat-card cursor-pointer" data-type="job">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+      <div class="bg-white shadow-md rounded-md p-4 text-center border border-gray-200 stat-card">
         <div class="text-3xl font-bold" id="total-jobs">{{ $stats['jobs'] ?? 0 }}</div>
         <div class="text-sm mt-1 text-[#BD6F22]">Total Job Posted</div>
       </div>
-      <div class="bg-white shadow-md rounded-md p-4 text-center border border-gray-200 stat-card cursor-pointer" data-type="applicants">
+      <div class="bg-white shadow-md rounded-md p-4 text-center border border-gray-200 stat-card">
         <div class="text-3xl font-bold" id="total-applicants">{{ $stats['applicants'] ?? 0 }}</div>
         <div class="text-sm mt-1 text-[#BD6F22]">Applicants</div>
       </div>
-      <div class="bg-white shadow-md rounded-md p-4 text-center border border-gray-200 stat-card cursor-pointer" data-type="employee">
+      <div class="bg-white shadow-md rounded-md p-4 text-center border border-gray-200 stat-card">
         <div class="text-3xl font-bold" id="total-employees">{{ $stats['employees'] ?? 0 }}</div>
         <div class="text-sm mt-1 text-[#BD6F22]">Employees</div>
       </div>
     </div>
   </div>
 
-  <!-- Charts Section -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Line Chart -->
-    <div class="lg:col-span-2 bg-white p-4 rounded-md shadow-md border border-gray-200 h-80 flex flex-col">
-      <div class="flex items-center mb-4 space-x-4">
-        <button class="chart-tab active-tab" data-type="job">Jobs Posted</button>
-        <button class="chart-tab" data-type="applicants">Applicants</button>
-        <button class="chart-tab" data-type="employee">Employees</button>
-      </div>
-      <div class="flex-1">
-        <canvas id="lineChart"></canvas>
+  <!-- Row 2: Key Insights Grid (3 columns) -->
+  <div class="grid grid-cols-1 lg:grid-cols-10 gap-6 mb-6">
+    <!-- Application Funnel Chart (40%) -->
+    <div class="lg:col-span-4 bg-white p-6 rounded-md shadow-md border border-gray-200">
+      <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+        Application Pipeline
+      </h2>
+      <div class="h-64">
+        <canvas id="funnelChart"></canvas>
       </div>
     </div>
 
-    <!-- Pie Chart -->
-    <div class="bg-white p-4 rounded-md shadow-md border border-gray-200 flex flex-col">
-      <h1 class="font-semibold text-lg mb-2">Leave forms</h1>
-      <div class="flex-1 relative h-64">
-        <canvas id="pieChart" class="absolute inset-0 w-full h-full"></canvas>
+    <!-- Interview Statistics (30%) -->
+    <div class="lg:col-span-3 bg-white p-6 rounded-md shadow-md border border-gray-200">
+      <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        Interviews
+      </h2>
+      <div class="h-48 mb-4">
+        <canvas id="interviewPieChart"></canvas>
+      </div>
+      @if($interviewStats['upcoming_7days'] > 0)
+      <div class="p-3 bg-amber-50 border-l-4 border-amber-500 rounded text-sm">
+        <p class="font-semibold text-amber-800">{{ $interviewStats['upcoming_7days'] }} upcoming interview(s)</p>
+        <p class="text-amber-600 text-xs mt-1">in the next 7 days</p>
+      </div>
+      @endif
+    </div>
+
+    <!-- Training Metrics (30%) -->
+    <div class="lg:col-span-3 bg-white p-6 rounded-md shadow-md border border-gray-200">
+      <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Training & Evaluation
+      </h2>
+
+      <!-- Pass Rate Gauge -->
+      <div class="mb-4">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm font-medium text-gray-700">Pass Rate</span>
+          <span class="text-lg font-bold text-green-600" id="training-pass-rate">0%</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-3">
+          <div class="bg-green-500 h-3 rounded-full transition-all duration-500" id="training-pass-bar" style="width: 0%"></div>
+        </div>
       </div>
 
-      <!-- Custom Legend -->
-      <div class="flex justify-center space-x-10 mt-6 text-sm">
-        <div class="flex flex-col items-center">
-          <span class="w-3 h-3 rounded-full mb-1" style="background-color: #e6c8a7;"></span>
-          <span>Pending</span>
-          <span class="font-bold text-base" id="pending-count">{{ $leaveData['pending'] ?? 0 }}</span>
+      <!-- Average Score -->
+      <div class="mb-4">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm font-medium text-gray-700">Average Score</span>
+          <span class="text-lg font-bold text-[#BD6F22]">{{ $trainingStats['avg_score'] ?? 0 }}</span>
         </div>
-        <div class="flex flex-col items-center">
-          <span class="w-3 h-3 rounded-full mb-1" style="background-color: #d6a15b;"></span>
-          <span>Approved</span>
-          <span class="font-bold text-base" id="approved-count">{{ $leaveData['approved'] ?? 0 }}</span>
+        <div class="w-full bg-gray-200 rounded-full h-3">
+          <div class="bg-[#BD6F22] h-3 rounded-full transition-all duration-500" style="width: {{ $trainingStats['avg_score'] ?? 0 }}%"></div>
         </div>
-        <div class="flex flex-col items-center">
-          <span class="w-3 h-3 rounded-full mb-1" style="background-color: #a85a18;"></span>
-          <span>Rejected</span>
-          <span class="font-bold text-base" id="rejected-count">{{ $leaveData['rejected'] ?? 0 }}</span>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-2 gap-2 mt-4">
+        <div class="bg-green-50 p-2 rounded text-center border border-green-200">
+          <div class="text-xl font-bold text-green-600">{{ $trainingStats['passed'] ?? 0 }}</div>
+          <div class="text-xs text-gray-600">Passed</div>
+        </div>
+        <div class="bg-red-50 p-2 rounded text-center border border-red-200">
+          <div class="text-xl font-bold text-red-600">{{ $trainingStats['failed'] ?? 0 }}</div>
+          <div class="text-xs text-gray-600">Failed</div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Row 3: Performance Metrics (2 columns) -->
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
+    <!-- Monthly Trends Line Chart (60%) -->
+    <div class="lg:col-span-3 bg-white p-6 rounded-md shadow-md border border-gray-200">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-gray-800 flex items-center">
+          <svg class="w-5 h-5 mr-2 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          Monthly Trends
+        </h2>
+        <div class="flex space-x-2">
+          <button class="chart-tab active-tab" data-type="job">Jobs</button>
+          <button class="chart-tab" data-type="applicants">Applicants</button>
+          <button class="chart-tab" data-type="employee">Employees</button>
+        </div>
+      </div>
+      <div class="h-64">
+        <canvas id="lineChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Job Insights (40%) -->
+    <div class="lg:col-span-2 bg-white p-6 rounded-md shadow-md border border-gray-200">
+      <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        Job Insights
+      </h2>
+
+      <!-- Job Status Grid -->
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="bg-green-50 p-3 rounded-lg border border-green-200">
+          <div class="text-2xl font-bold text-green-600">{{ $jobMetrics['active'] ?? 0 }}</div>
+          <div class="text-xs text-gray-600">Active</div>
+        </div>
+        <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+          <div class="text-2xl font-bold text-blue-600">{{ $jobMetrics['filled'] ?? 0 }}</div>
+          <div class="text-xs text-gray-600">Filled</div>
+        </div>
+        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+          <div class="text-2xl font-bold text-gray-600">{{ $jobMetrics['expired'] ?? 0 }}</div>
+          <div class="text-xs text-gray-600">Expired</div>
+        </div>
+        <div class="bg-amber-50 p-3 rounded-lg border border-amber-200">
+          <div class="text-2xl font-bold text-amber-600">{{ $jobMetrics['expiring_soon'] ?? 0 }}</div>
+          <div class="text-xs text-gray-600">Expiring Soon</div>
+        </div>
+      </div>
+
+      <!-- Fill Rate -->
+      <div class="p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border border-orange-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600">Fill Rate</p>
+            <p class="text-3xl font-bold text-[#BD6F22]">{{ $jobMetrics['fill_rate'] ?? 0 }}%</p>
+          </div>
+          <svg class="w-10 h-10 text-[#BD6F22] opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 4: Additional Analytics (3 columns) -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Top Jobs Chart -->
+    <div class="bg-white p-6 rounded-md shadow-md border border-gray-200">
+      <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        Top Jobs
+      </h2>
+      <div class="h-64">
+        <canvas id="topJobsChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Time-to-Hire Card -->
+    <div class="bg-white p-6 rounded-md shadow-md border border-gray-200 flex flex-col justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+          <svg class="w-5 h-5 mr-2 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Time-to-Hire
+        </h2>
+        <div class="text-center py-8">
+          <div class="text-6xl font-bold text-[#BD6F22] mb-2" id="time-to-hire-display">{{ $timeToHire }}</div>
+          <p class="text-gray-600">Average Days</p>
+          <p class="text-sm text-gray-500 mt-2">from application to hire</p>
+        </div>
+      </div>
+
+      <!-- Hiring Efficiency -->
+      <div class="mt-4 p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg border border-orange-200">
+        <p class="text-sm text-gray-700 font-medium mb-1">Hiring Efficiency</p>
+        <p class="text-2xl font-bold text-[#BD6F22]" id="conversion-rate">0%</p>
+        <p class="text-xs text-gray-600">conversion rate</p>
+      </div>
+    </div>
+
+    <!-- Leave Management -->
+    <div class="bg-white p-6 rounded-md shadow-md border border-gray-200">
+      <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        Leave Management
+      </h2>
+
+      <!-- Leave Status Breakdown -->
+      <div class="space-y-4 mb-4">
+        <div class="relative">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-gray-700">Pending</span>
+            <span class="text-sm font-bold text-amber-600">{{ $leaveData['pending'] ?? 0 }}</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-3">
+            <div class="bg-amber-500 h-3 rounded-full transition-all duration-500" id="pending-bar" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="relative">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-gray-700">Approved</span>
+            <span class="text-sm font-bold text-green-600">{{ $leaveData['approved'] ?? 0 }}</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-3">
+            <div class="bg-green-500 h-3 rounded-full transition-all duration-500" id="approved-bar" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="relative">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-gray-700">Rejected</span>
+            <span class="text-sm font-bold text-red-600">{{ $leaveData['rejected'] ?? 0 }}</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-3">
+            <div class="bg-red-500 h-3 rounded-full transition-all duration-500" id="rejected-bar" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Leave Requests -->
+      <div class="p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border border-orange-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600">Total Requests</p>
+            <p class="text-3xl font-bold text-[#BD6F22]" id="total-leaves">0</p>
+          </div>
+          <svg class="w-10 h-10 text-[#BD6F22] opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </section>
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
-.chart-tab {
-  background: none;
-  border: none;
-  font-weight: 500;
-  cursor: pointer;
-  color: #6b7280;
-  padding-bottom: 0.25rem;
-}
-.chart-tab:hover { color: #BD6F22; }
-.active-tab {
-  color: #BD6F22;
-  font-weight: 600;
-  border-bottom: 2px solid #BD6F22;
-}
 .stat-card {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -95,70 +366,202 @@
   transform: translateY(-3px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
-#pieChart {
-  width: 100% !important;
-  height: 100% !important;
+.chart-tab {
+  background: none;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+}
+.chart-tab:hover {
+  background-color: #f3f4f6;
+  color: #BD6F22;
+}
+.active-tab {
+  color: #BD6F22;
+  font-weight: 600;
+  background-color: #FEF3E2;
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    let lineChart;
-
-    // Debug: check what PHP sends
-    const data = @json($chartData ?? []);
+    // ============================================
+    // GET DATA FROM PHP
+    // ============================================
+    const stats = @json($stats ?? ['jobs'=>0, 'applicants'=>0, 'employees'=>0]);
     const leaveData = @json($leaveData ?? ['pending'=>0, 'approved'=>0, 'rejected'=>0]);
-    console.log("Chart Data:", data);
-    console.log("Leave Data:", leaveData);
+    const chartData = @json($chartData ?? ['job'=>[], 'applicants'=>[], 'employee'=>[]]);
+    const pipelineFunnel = @json($pipelineFunnel ?? []);
+    const interviewStats = @json($interviewStats ?? []);
+    const trainingStats = @json($trainingStats ?? []);
+    const topJobs = @json($topJobs ?? []);
 
-    /* ---------------- Line Chart ---------------- */
-    const ctx = document.getElementById('lineChart')?.getContext('2d');
+    console.log("Pipeline Funnel:", pipelineFunnel);
+    console.log("Interview Stats:", interviewStats);
+    console.log("Training Stats:", trainingStats);
+    console.log("Top Jobs:", topJobs);
+
+    // ============================================
+    // ANALYTICS CALCULATIONS
+    // ============================================
+
+    // Calculate Hiring Efficiency
+    const conversionRate = stats.applicants > 0
+        ? ((stats.employees / stats.applicants) * 100).toFixed(1)
+        : 0;
+    document.getElementById('conversion-rate').textContent = conversionRate + '%';
+
+    // Calculate Leave Statistics
+    const totalLeaves = leaveData.pending + leaveData.approved + leaveData.rejected;
+    document.getElementById('total-leaves').textContent = totalLeaves;
+
+    if (totalLeaves > 0) {
+        const pendingPct = ((leaveData.pending / totalLeaves) * 100).toFixed(1);
+        const approvedPct = ((leaveData.approved / totalLeaves) * 100).toFixed(1);
+        const rejectedPct = ((leaveData.rejected / totalLeaves) * 100).toFixed(1);
+
+        document.getElementById('pending-bar').style.width = pendingPct + '%';
+        document.getElementById('approved-bar').style.width = approvedPct + '%';
+        document.getElementById('rejected-bar').style.width = rejectedPct + '%';
+    }
+
+    // Calculate Training Pass Rate
+    const totalEvaluations = trainingStats.total_evaluations || 0;
+    const passRate = totalEvaluations > 0
+        ? ((trainingStats.passed / totalEvaluations) * 100).toFixed(1)
+        : 0;
+    document.getElementById('training-pass-rate').textContent = passRate + '%';
+    document.getElementById('training-pass-bar').style.width = passRate + '%';
+
+    // ============================================
+    // CHART 1: APPLICATION PIPELINE FUNNEL
+    // ============================================
+    const funnelCtx = document.getElementById('funnelChart')?.getContext('2d');
+    if (funnelCtx) {
+        // Define funnel stages in order
+        const funnelStages = ['pending', 'to_review', 'approved', 'for_interview', 'interviewed', 'hired'];
+        const funnelLabels = ['Pending', 'To Review', 'Approved', 'Interview', 'Interviewed', 'Hired'];
+        const funnelData = funnelStages.map(stage => pipelineFunnel[stage] || 0);
+
+        new Chart(funnelCtx, {
+            type: 'bar',
+            data: {
+                labels: funnelLabels,
+                datasets: [{
+                    label: 'Applications',
+                    data: funnelData,
+                    backgroundColor: [
+                        '#FEF3E2',
+                        '#F8DDB4',
+                        '#F2C686',
+                        '#EBAF58',
+                        '#D6A15B',
+                        '#BD6F22'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return 'Applications: ' + ctx.raw;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { beginAtZero: true, grid: { display: false } },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // CHART 2: INTERVIEW PIE CHART
+    // ============================================
+    const interviewPieCtx = document.getElementById('interviewPieChart')?.getContext('2d');
+    if (interviewPieCtx) {
+        new Chart(interviewPieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Scheduled', 'Rescheduled', 'Completed', 'Cancelled'],
+                datasets: [{
+                    data: [
+                        interviewStats.scheduled || 0,
+                        interviewStats.rescheduled || 0,
+                        interviewStats.completed || 0,
+                        interviewStats.cancelled || 0
+                    ],
+                    backgroundColor: ['#3B82F6', '#F59E0B', '#10B981', '#EF4444'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { usePointStyle: true, padding: 10, font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // CHART 3: MONTHLY TRENDS LINE CHART
+    // ============================================
+    let lineChart;
+    const lineCtx = document.getElementById('lineChart')?.getContext('2d');
 
     function generateDatasets(type) {
-        return Object.keys(data[type] ?? {}).map((company, index) => ({
+        return Object.keys(chartData[type] ?? {}).map((company, index) => ({
             label: company,
-            data: data[type][company],
+            data: chartData[type][company],
             tension: 0.4,
             fill: false,
             borderWidth: 2,
             borderColor: `hsl(${index * 70}, 70%, 50%)`,
-            borderDash: index % 2 === 1 ? [6, 4] : [],
             pointRadius: 3,
             pointHoverRadius: 6
         }));
     }
 
     function initLineChart(type = 'job') {
-        return new Chart(ctx, {
+        return new Chart(lineCtx, {
             type: 'line',
-            data: { labels: data.labels ?? [], datasets: generateDatasets(type) },
+            data: { labels: chartData.labels ?? [], datasets: generateDatasets(type) },
             options: {
                 responsive: true,
-                plugins: { 
-                    legend: { 
-                        display: true, 
-                        labels: { usePointStyle: true, pointStyle: 'line', color: '#374151', font: { size: 13 } }, 
-                        onClick: (e) => e.stopPropagation() 
-                    },
-                    tooltip: { 
-                        backgroundColor: '#111827', 
-                        titleColor: '#f9fafb', 
-                        bodyColor: '#f9fafb', 
-                        padding: 10, 
-                        borderColor: '#374151', 
-                        borderWidth: 1 
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 11 } }
                     }
                 },
-                interaction: { intersect: false, mode: 'index' },
                 scales: {
-                    x: { grid: { display: false }, ticks: { color: '#6b7280' } },
-                    y: { beginAtZero: true, grid: { color: '#e5e7eb' }, ticks: { color: '#6b7280' } }
+                    x: { grid: { display: false } },
+                    y: { beginAtZero: true, grid: { color: '#e5e7eb' } }
                 }
             }
         });
     }
 
-    if (ctx) {
+    if (lineCtx) {
         lineChart = initLineChart();
 
         function updateChart(type) {
@@ -171,34 +574,24 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.chart-tab').forEach(btn =>
             btn.addEventListener('click', () => updateChart(btn.dataset.type))
         );
-        document.querySelectorAll('.stat-card').forEach(card =>
-            card.addEventListener('click', () => updateChart(card.dataset.type))
-        );
     }
 
-    /* ---------------- Pie Chart ---------------- */
-    const pieCanvas = document.getElementById('pieChart');
-    if (pieCanvas) {
-        const pieCtx = pieCanvas.getContext('2d');
-        const leaveLabels = ['Pending','Approved','Rejected'];
-        const leaveCounts = [
-            leaveData.pending ?? 0,
-            leaveData.approved ?? 0,
-            leaveData.rejected ?? 0
-        ];
+    // ============================================
+    // CHART 4: TOP JOBS BAR CHART
+    // ============================================
+    const topJobsCtx = document.getElementById('topJobsChart')?.getContext('2d');
+    if (topJobsCtx) {
+        const topJobLabels = topJobs.map(job => job.title.length > 20 ? job.title.substring(0, 20) + '...' : job.title);
+        const topJobCounts = topJobs.map(job => job.count);
 
-        // Update counts in DOM
-        document.getElementById('pending-count').textContent = leaveCounts[0];
-        document.getElementById('approved-count').textContent = leaveCounts[1];
-        document.getElementById('rejected-count').textContent = leaveCounts[2];
-
-        new Chart(pieCtx, {
-            type: 'pie',
+        new Chart(topJobsCtx, {
+            type: 'bar',
             data: {
-                labels: leaveLabels,
+                labels: topJobLabels,
                 datasets: [{
-                    data: leaveCounts,
-                    backgroundColor: ['#e6c8a7','#d6a15b','#a85a18'],
+                    label: 'Applications',
+                    data: topJobCounts,
+                    backgroundColor: '#BD6F22',
                     borderWidth: 0
                 }]
             },
@@ -207,20 +600,67 @@ document.addEventListener('DOMContentLoaded', function () {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
-                    tooltip: { 
+                    tooltip: {
                         callbacks: {
-                            label: function(ctx){
-                                const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
-                                const val = ctx.raw;
-                                const pct = total ? ((val/total)*100).toFixed(1) : 0;
-                                return `${ctx.label}: ${val} (${pct}%)`;
+                            title: function(ctx) {
+                                return topJobs[ctx[0].dataIndex].title;
+                            },
+                            label: function(ctx) {
+                                return 'Applications: ' + ctx.raw;
                             }
                         }
                     }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { beginAtZero: true, grid: { color: '#e5e7eb' } }
                 }
             }
         });
     }
+
+    // ============================================
+    // ANIMATIONS
+    // ============================================
+    function animateValue(element, start, end, duration) {
+        const range = end - start;
+        const increment = range / (duration / 16);
+        let current = start;
+
+        const timer = setInterval(() => {
+            current += increment;
+            if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                element.textContent = Math.round(end);
+                clearInterval(timer);
+            } else {
+                element.textContent = Math.round(current);
+            }
+        }, 16);
+    }
+
+    setTimeout(() => {
+        animateValue(document.getElementById('total-leaves'), 0, totalLeaves, 1000);
+    }, 200);
+
+    // ============================================
+    // PDF GENERATION
+    // ============================================
+    document.getElementById('generatePdfBtn')?.addEventListener('click', function() {
+        // Get current filter values
+        const company = document.getElementById('company').value;
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+
+        // Build query string
+        const params = new URLSearchParams();
+        if (company) params.append('company', company);
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+
+        // Open PDF in new tab
+        const url = '{{ route("hrAdmin.dashboard.report") }}' + (params.toString() ? '?' + params.toString() : '');
+        window.open(url, '_blank');
+    });
 });
 </script>
 @endsection

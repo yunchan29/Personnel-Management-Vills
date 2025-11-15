@@ -10,33 +10,16 @@ use App\Models\Interview;
 use App\Models\TrainingSchedule;
 use App\Models\TrainingEvaluation;
 use App\Models\Job;
+use Barryvdh\DomPDF\Facade\Pdf;
 
-class DashboardChartController extends Controller
+class DashboardReportController extends Controller
 {
-    public function index(Request $request)
+    public function generatePDF(Request $request)
     {
         // Get filter parameters
         $filterCompany = $request->input('company');
         $filterStartDate = $request->input('start_date');
         $filterEndDate = $request->input('end_date');
-
-        // Labels for months
-        $labels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-        // Get distinct company names from jobs table (sanitized)
-        $companiesQuery = DB::table('jobs')->distinct();
-
-        // Apply company filter if selected
-        if ($filterCompany) {
-            $companiesQuery->where('company_name', $filterCompany);
-        }
-
-        $companies = $companiesQuery
-            ->pluck('company_name')
-            ->filter(function($name) {
-                // Ensure only valid company names (extra safety layer)
-                return !empty($name) && is_string($name);
-            });
 
         // Helper function: Apply date filters to query
         $applyDateFilter = function ($query, $filterStartDate, $filterEndDate) {
@@ -49,124 +32,12 @@ class DashboardChartController extends Controller
             return $query;
         };
 
-        // Helper function: Fill missing months with zeros
-        $fillMonths = function ($counts) {
-            $monthlyData = array_fill(0, 12, 0);
-            foreach ($counts as $row) {
-                $monthIndex = (int)$row->month - 1;
-                if ($monthIndex >= 0 && $monthIndex < 12) {
-                    $monthlyData[$monthIndex] = (int)$row->total;
-                }
-            }
-            return $monthlyData;
-        };
-
-        // ==============================
-        // JOB DATA (per company from jobs table)
-        // ==============================
-        $jobData = [];
-        foreach ($companies as $company) {
-            // Safe: $company is from database, WHERE uses parameter binding
-            $query = DB::table('jobs')
-                ->selectRaw('MONTH(created_at) as month, COUNT(*) as total')
-                ->where('company_name', $company);  // Parameter binding prevents SQL injection
-
-            // Apply date filters
-            $query = $applyDateFilter($query, $filterStartDate, $filterEndDate);
-
-            $counts = $query->groupBy('month')
-                ->orderBy('month')
-                ->get();
-
-            $jobData[$company] = $fillMonths($counts);
+        // Get distinct company names
+        $companiesQuery = DB::table('jobs')->distinct();
+        if ($filterCompany) {
+            $companiesQuery->where('company_name', $filterCompany);
         }
-
-        // ==============================
-        // APPLICANTS (per company from applications table)
-        // ==============================
-        $applicantData = [];
-        foreach ($companies as $company) {
-            $query = DB::table('applications')
-                ->join('jobs', 'applications.job_id', '=', 'jobs.id')
-                ->join('users', 'applications.user_id', '=', 'users.id')
-                ->selectRaw('MONTH(applications.created_at) as month, COUNT(*) as total')
-                ->where('users.role', 'applicant')
-                ->where('jobs.company_name', $company);
-
-            // Apply date filters
-            if ($filterStartDate) {
-                $query->whereDate('applications.created_at', '>=', $filterStartDate);
-            }
-            if ($filterEndDate) {
-                $query->whereDate('applications.created_at', '<=', $filterEndDate);
-            }
-
-            $counts = $query->groupBy('month')
-                ->orderBy('month')
-                ->get();
-
-            $applicantData[$company] = $fillMonths($counts);
-        }
-
-        // ==============================
-        // EMPLOYEES (per company from applications table)
-        // ==============================
-        $employeeData = [];
-        foreach ($companies as $company) {
-            $query = DB::table('applications')
-                ->join('jobs', 'applications.job_id', '=', 'jobs.id')
-                ->join('users', 'applications.user_id', '=', 'users.id')
-                ->selectRaw('MONTH(applications.created_at) as month, COUNT(*) as total')
-                ->where('users.role', 'employee')
-                ->where('jobs.company_name', $company);
-
-            // Apply date filters
-            if ($filterStartDate) {
-                $query->whereDate('applications.created_at', '>=', $filterStartDate);
-            }
-            if ($filterEndDate) {
-                $query->whereDate('applications.created_at', '<=', $filterEndDate);
-            }
-
-            $counts = $query->groupBy('month')
-                ->orderBy('month')
-                ->get();
-
-            $employeeData[$company] = $fillMonths($counts);
-        }
-
-        // ==============================
-        // LEAVE FORMS (group by status)
-        // ==============================
-        $leaveQuery = LeaveForm::select('status', DB::raw('COUNT(*) as total'));
-
-        // Apply date filters to leave forms
-        if ($filterStartDate) {
-            $leaveQuery->whereDate('created_at', '>=', $filterStartDate);
-        }
-        if ($filterEndDate) {
-            $leaveQuery->whereDate('created_at', '<=', $filterEndDate);
-        }
-
-        $leaveCounts = $leaveQuery->groupBy('status')->pluck('total', 'status');
-
-        // Normalize leave data (support both string + numeric status codes, always return integers)
-        $leaveData = [
-            'pending'  => (int)($leaveCounts['Pending'] ?? $leaveCounts[0] ?? 0),
-            'approved' => (int)($leaveCounts['Approved'] ?? $leaveCounts[1] ?? 0),
-            'rejected' => (int)($leaveCounts['Declined'] ?? $leaveCounts[2] ?? 0),
-        ];
-
-        // ==============================
-        // Final Chart Data
-        // ==============================
-        $chartData = [
-            'labels'     => $labels,
-            'companies'  => $companies,
-            'job'        => $jobData,
-            'applicants' => $applicantData,
-            'employee'   => $employeeData
-        ];
+        $companies = $companiesQuery->pluck('company_name');
 
         // ==============================
         // Totals for Stat Cards
@@ -204,14 +75,12 @@ class DashboardChartController extends Controller
         // ==============================
         $pipelineQuery = Application::select('status', DB::raw('COUNT(*) as count'));
 
-        // Apply company filter
         if ($filterCompany) {
             $pipelineQuery->whereHas('job', function($q) use ($filterCompany) {
                 $q->where('company_name', $filterCompany);
             });
         }
 
-        // Apply date filters
         if ($filterStartDate) {
             $pipelineQuery->whereDate('created_at', '>=', $filterStartDate);
         }
@@ -223,7 +92,6 @@ class DashboardChartController extends Controller
             ->groupBy('status')
             ->get()
             ->mapWithKeys(function ($item) {
-                // Extract the string value from the enum object
                 return [$item->status->value => $item->count];
             })
             ->toArray();
@@ -245,10 +113,6 @@ class DashboardChartController extends Controller
             'rescheduled' => (clone $interviewQuery)->where('status', 'rescheduled')->count(),
             'completed' => (clone $interviewQuery)->where('status', 'completed')->count(),
             'cancelled' => (clone $interviewQuery)->where('status', 'cancelled')->count(),
-            'upcoming_7days' => (clone $interviewQuery)->where('status', 'scheduled')
-                ->where('scheduled_at', '>=', now())
-                ->where('scheduled_at', '<=', now()->addDays(7))
-                ->count(),
         ];
 
         // ==============================
@@ -279,7 +143,7 @@ class DashboardChartController extends Controller
         ];
 
         // ==============================
-        // TIME-TO-HIRE (Average days from application to hire)
+        // TIME-TO-HIRE
         // ==============================
         $timeToHireQuery = DB::table('applications')
             ->where('status', 'hired')
@@ -317,10 +181,6 @@ class DashboardChartController extends Controller
             'active' => (clone $jobMetricsQuery)->where('status', 'active')->count(),
             'filled' => $filledJobs,
             'expired' => (clone $jobMetricsQuery)->where('status', 'expired')->count(),
-            'expiring_soon' => (clone $jobMetricsQuery)->where('apply_until', '<=', now()->addDays(7))
-                ->where('apply_until', '>=', now())
-                ->where('status', 'active')
-                ->count(),
             'fill_rate' => $totalJobs > 0 ? round(($filledJobs / $totalJobs) * 100, 1) : 0,
         ];
 
@@ -346,62 +206,75 @@ class DashboardChartController extends Controller
             $topJobsQuery->whereDate('created_at', '<=', $filterEndDate);
         }
 
-        $topJobsData = $topJobsQuery
+        $topJobs = $topJobsQuery
             ->orderBy('applications_count', 'desc')
-            ->limit(5)
+            ->limit(10)
             ->get();
 
-        $topJobs = [];
-        foreach ($topJobsData as $job) {
-            $topJobs[] = [
-                'title' => $job->job_title ?? 'Untitled',
-                'company' => $job->company_name ?? 'Unknown',
-                'count' => $job->applications_count ?? 0
-            ];
+        // ==============================
+        // LEAVE FORMS
+        // ==============================
+        $leaveQuery = LeaveForm::select('status', DB::raw('COUNT(*) as total'));
+
+        if ($filterStartDate) {
+            $leaveQuery->whereDate('created_at', '>=', $filterStartDate);
+        }
+        if ($filterEndDate) {
+            $leaveQuery->whereDate('created_at', '<=', $filterEndDate);
         }
 
-        // Ensure all data has proper defaults
-        $pipelineFunnel = $pipelineFunnel ?? [];
-        $interviewStats = array_merge([
-            'total' => 0,
-            'scheduled' => 0,
-            'rescheduled' => 0,
-            'completed' => 0,
-            'cancelled' => 0,
-            'upcoming_7days' => 0
-        ], $interviewStats ?? []);
+        $leaveCounts = $leaveQuery->groupBy('status')->pluck('total', 'status');
 
-        $trainingStats = array_merge([
-            'total_trainings' => 0,
-            'scheduled' => 0,
-            'in_progress' => 0,
-            'completed' => 0,
-            'total_evaluations' => 0,
-            'passed' => 0,
-            'failed' => 0,
-            'avg_score' => 0
-        ], $trainingStats ?? []);
+        $leaveData = [
+            'pending'  => (int)($leaveCounts['Pending'] ?? $leaveCounts[0] ?? 0),
+            'approved' => (int)($leaveCounts['Approved'] ?? $leaveCounts[1] ?? 0),
+            'rejected' => (int)($leaveCounts['Declined'] ?? $leaveCounts[2] ?? 0),
+        ];
 
-        $jobMetrics = array_merge([
-            'active' => 0,
-            'filled' => 0,
-            'expired' => 0,
-            'expiring_soon' => 0,
-            'fill_rate' => 0
-        ], $jobMetrics ?? []);
+        // Calculate hiring efficiency
+        $hiringEfficiency = $stats['applicants'] > 0
+            ? round(($stats['employees'] / $stats['applicants']) * 100, 1)
+            : 0;
 
-        $topJobs = $topJobs ?? [];
+        // Calculate leave approval rate
+        $totalLeaves = $leaveData['pending'] + $leaveData['approved'] + $leaveData['rejected'];
+        $leaveApprovalRate = $totalLeaves > 0
+            ? round(($leaveData['approved'] / $totalLeaves) * 100, 1)
+            : 0;
 
-        return view('admins.hrAdmin.dashboard', compact(
-            'chartData',
-            'stats',
-            'leaveData',
-            'pipelineFunnel',
-            'interviewStats',
-            'trainingStats',
-            'timeToHire',
-            'jobMetrics',
-            'topJobs'
-        ));
+        // Calculate training pass rate
+        $trainingPassRate = $trainingStats['total_evaluations'] > 0
+            ? round(($trainingStats['passed'] / $trainingStats['total_evaluations']) * 100, 1)
+            : 0;
+
+        // Prepare data for PDF
+        $data = [
+            'title' => 'HR Dashboard Report',
+            'generated_date' => now()->format('F d, Y'),
+            'generated_time' => now()->format('h:i A'),
+            'filter_company' => $filterCompany ?? 'All Companies',
+            'filter_start_date' => $filterStartDate ? date('F d, Y', strtotime($filterStartDate)) : 'N/A',
+            'filter_end_date' => $filterEndDate ? date('F d, Y', strtotime($filterEndDate)) : 'N/A',
+            'stats' => $stats,
+            'pipelineFunnel' => $pipelineFunnel,
+            'interviewStats' => $interviewStats,
+            'trainingStats' => $trainingStats,
+            'timeToHire' => $timeToHire,
+            'jobMetrics' => $jobMetrics,
+            'topJobs' => $topJobs,
+            'leaveData' => $leaveData,
+            'totalLeaves' => $totalLeaves,
+            'hiringEfficiency' => $hiringEfficiency,
+            'leaveApprovalRate' => $leaveApprovalRate,
+            'trainingPassRate' => $trainingPassRate,
+        ];
+
+        // Generate PDF
+        $pdf = Pdf::loadView('admins.hrAdmin.dashboard-report', $data);
+        $pdf->setPaper('A4', 'portrait');
+
+        // Download PDF
+        $filename = 'HR_Dashboard_Report_' . now()->format('Y-m-d_His') . '.pdf';
+        return $pdf->download($filename);
     }
 }
