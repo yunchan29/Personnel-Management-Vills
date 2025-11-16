@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\LeaveForm;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Mail\LeaveApproveMail;
+use App\Mail\LeaveDeclineMail;
+use Illuminate\Support\Facades\Mail;
 
 class LeaveFormController extends Controller
 {
@@ -109,13 +112,17 @@ class LeaveFormController extends Controller
 
                 $form->status = 'Approved';
                 $form->save();
-            });
+          
 
-            return back()->with('success', 'Leave request approved successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage() ?: 'Failed to approve leave request. Please try again.');
+            // 🔔 Send email to employee
+            Mail::to($form->user->email)->send(new LeaveApproveMail($form));
+                });
+
+             return back()->with('success', 'Leave request approved and email sent.');
+            } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+            }
         }
-    }
 
     public function decline($id)
     {
@@ -135,11 +142,13 @@ class LeaveFormController extends Controller
 
                 $form->status = 'Declined';
                 $form->save();
-            });
+             // 🔔 Send email to employee
+            Mail::to($form->user->email)->send(new LeaveDeclineMail($form));
+        });
 
-            return back()->with('success', 'Leave request declined successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage() ?: 'Failed to decline leave request. Please try again.');
-        }
+        return back()->with('success', 'Leave request declined and email sent.');
+    } catch (\Exception $e) {
+        return back()->with('error', $e->getMessage());
+    }
     }
 }
