@@ -12,31 +12,40 @@
   </div>
   @endif
 
-  {{-- Bulk Actions Bar --}}
-  <div x-show="selectedItems.length > 0" x-cloak class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-    <div class="flex items-center justify-between">
-      <span class="text-sm font-medium text-gray-700">
-        <span x-text="selectedItems.length"></span> item(s) selected
-      </span>
-      <div class="flex gap-3">
-        @if(auth()->user()->role === 'hrAdmin')
-          {{-- Bulk Delete Button for HR Admin --}}
-          <button type="button" @click="bulkDelete()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium">
-            Delete Selected
-          </button>
-        @else
-          {{-- Bulk Restore Button for HR Staff --}}
-          <button type="button" @click="bulkRestore()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">
-            Restore Selected
-          </button>
-        @endif
-        <button type="button" @click="selectedItems = []; selectAll = false;" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm font-medium">
-          Cancel
+ {{-- Bulk Actions Bar --}}
+<div x-show="selectedItems.length > 0" x-cloak class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+  <div class="flex items-center justify-between">
+    <span class="text-sm font-medium text-gray-700">
+      <span x-text="selectedItems.length"></span> item(s) selected
+    </span>
+
+    <div class="flex gap-3">
+
+      {{-- HR Admin: Delete + Restore --}}
+      @if(auth()->user()->role === 'hrAdmin')
+        <button type="button" @click="bulkRestore()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">
+          Restore Selected
         </button>
-      </div>
+
+        <button type="button" @click="bulkDelete()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium">
+          Delete Selected
+        </button>
+
+      {{-- HR Staff: Restore ONLY --}}
+      @elseif(auth()->user()->role === 'hrStaff')
+        <button type="button" @click="bulkRestore()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">
+          Restore Selected
+        </button>
+      @endif
+
+      <button type="button" @click="selectedItems = []; selectAll = false;" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm font-medium">
+        Cancel
+      </button>
+
     </div>
   </div>
-
+</div>
+  {{-- Archive Table --}}
   <div class="overflow-x-auto bg-white p-4 rounded-lg shadow-lg">
     <table class="min-w-full text-sm text-left text-gray-700">
       <thead class="border-b font-semibold bg-gray-50">
@@ -56,37 +65,46 @@
         </tr>
       </thead>
       <tbody>
-  @forelse($applications as $application)
-    @php
-      // For hrStaff, only failed_evaluation applications can be restored
-      $canRestore = auth()->user()->role === 'hrAdmin' || $application->status === \App\Enums\ApplicationStatus::FAILED_EVALUATION;
-    @endphp
-    <tr class="border-b hover:bg-gray-50">
-      <td class="py-3 px-4">
-        <input type="checkbox"
-               class="archive-checkbox w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-               value="{{ $application->id }}"
-               x-model="selectedItems"
-               @change="updateSelectAll()"
-               {{ !$canRestore ? 'disabled' : '' }}
-               title="{{ !$canRestore && auth()->user()->role === 'hrStaff' ? 'Only Failed Evaluation applications can be restored' : '' }}">
-      </td>
-      <td class="py-3 px-4">
-        {{ $application->user->first_name ?? 'N/A' }}
-        {{ $application->user->last_name ?? '' }}
-      </td>
-      <td class="py-3 px-4">{{ $application->user->email ?? 'N/A' }}</td>
-      <td class="py-3 px-4">{{ $application->job->job_title ?? 'N/A' }}</td>
-      <td class="py-3 px-4">{{ $application->job->company_name ?? 'N/A' }}</td>
-      <td class="py-3 px-4 italic">
-        {{ \Carbon\Carbon::parse($application->updated_at)->format('F d, Y') }}
-      </td>
+ @forelse($applications as $application)
+  @php
+    $restorableStatuses = [
+        \App\Enums\ApplicationStatus::DECLINED,
+        \App\Enums\ApplicationStatus::FAILED_INTERVIEW,
+        \App\Enums\ApplicationStatus::FAILED_EVALUATION
+    ];
 
-      <td class="py-3 px-4 flex gap-3">
-        {{-- Details Button --}}
-        <button type="button" onclick="openArchiveDetailsModal({{ $application->id }})" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
-          Details
-        </button>
+    $canRestore = in_array($application->status, $restorableStatuses);
+  @endphp
+
+  <tr class="border-b hover:bg-gray-50">
+    <td class="py-3 px-4">
+      <input type="checkbox"
+             class="archive-checkbox w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+             value="{{ $application->id }}"
+             x-model="selectedItems"
+             @change="updateSelectAll()"
+             {{ !$canRestore ? 'disabled' : '' }}
+             title="{{ !$canRestore ? 'Only Declined, Failed Interview, and Failed Evaluation applications can be restored' : '' }}">
+    </td>
+
+    <td class="py-3 px-4">
+      {{ $application->user->first_name ?? 'N/A' }}
+      {{ $application->user->last_name ?? '' }}
+    </td>
+
+    <td class="py-3 px-4">{{ $application->user->email ?? 'N/A' }}</td>
+    <td class="py-3 px-4">{{ $application->job->job_title ?? 'N/A' }}</td>
+    <td class="py-3 px-4">{{ $application->job->company_name ?? 'N/A' }}</td>
+
+    <td class="py-3 px-4 italic">
+      {{ \Carbon\Carbon::parse($application->updated_at)->format('F d, Y') }}
+    </td>
+
+    <td class="py-3 px-4 flex gap-3">
+      <button type="button" onclick="openArchiveDetailsModal({{ $application->id }})"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
+        Details
+      </button>
 
         @if(auth()->user()->role === 'hrAdmin')
           {{-- HR Admin Delete --}}
@@ -124,25 +142,22 @@ function archiveManager() {
         selectedItems: [],
         selectAll: false,
         isHrStaff: {{ auth()->user()->role === 'hrStaff' ? 'true' : 'false' }},
+        isHrAdmin: {{ auth()->user()->role === 'hrAdmin' ? 'true' : 'false' }},
+
 
         toggleAll() {
             if (this.selectAll) {
-                if (this.isHrStaff) {
-                    // For hrStaff, only select restorable items (not disabled)
-                    this.selectedItems = Array.from(document.querySelectorAll('.archive-checkbox:not([disabled])')).map(cb => cb.value);
-                } else {
-                    // For hrAdmin, select all items
-                    this.selectedItems = Array.from(document.querySelectorAll('.archive-checkbox')).map(cb => cb.value);
-                }
+                // Both HR Staff and HR Admin can restore, but only restorable items should be selectable
+                this.selectedItems = Array.from(
+                    document.querySelectorAll('.archive-checkbox:not([disabled])')
+                ).map(cb => cb.value);
             } else {
                 this.selectedItems = [];
             }
         },
 
         updateSelectAll() {
-            const checkboxes = this.isHrStaff
-                ? document.querySelectorAll('.archive-checkbox:not([disabled])')
-                : document.querySelectorAll('.archive-checkbox');
+            const checkboxes = document.querySelectorAll('.archive-checkbox:not([disabled])');
             this.selectAll = checkboxes.length > 0 && this.selectedItems.length === checkboxes.length;
         },
 
@@ -245,6 +260,8 @@ function archiveManager() {
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = '{{ route('hrStaff.archive.bulkRestore') }}';
+                                  
+                                  
 
                     const csrfInput = document.createElement('input');
                     csrfInput.type = 'hidden';
