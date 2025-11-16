@@ -199,7 +199,7 @@
 <script>
 function leaveFormApp() {
     return {
-        leaveForms: @json($leaveForms),
+        leaveForms: @json($leaveForms->items()),
         selectedStatus: 'Pending',
         selectedForm: null,
         showSubmitModal: false,
