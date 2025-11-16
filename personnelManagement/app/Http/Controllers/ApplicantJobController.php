@@ -7,6 +7,9 @@ use App\Models\Job;
 use App\Models\Application;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
+use App\Models\Interview;
+use App\Models\TrainingSchedule;
+use Carbon\Carbon;
 
 class ApplicantJobController extends Controller
 {
@@ -50,15 +53,115 @@ class ApplicantJobController extends Controller
          ->whereIn('status', ['scheduled_for_training', 'training_passed'])
          ->exists();
 
+    // Get notifications for applicant
+    $notifications = $this->getApplicantNotifications($user);
+
     return view('users.dashboard', compact(
     'jobs',
     'resume',
     'appliedJobIds',
     'industry',
-    'hasTrainingOrPassed'
+    'hasTrainingOrPassed',
+    'notifications'
 ));
 
 }
+
+    /**
+     * Get notifications for applicant dashboard
+     */
+    private function getApplicantNotifications($user)
+    {
+        $notifications = [];
+        $today = Carbon::today();
+
+        // Get user's applications with interviews and training schedules
+        $applications = Application::with(['job', 'interview', 'trainingSchedule'])
+            ->where('user_id', $user->id)
+            ->whereNotIn('status', ['declined', 'failed_interview', 'failed_evaluation', 'rejected'])
+            ->get();
+
+        foreach ($applications as $application) {
+            // Check for scheduled interviews
+            if ($application->interview && in_array($application->interview->status, ['scheduled', 'rescheduled'])) {
+                $interviewDate = Carbon::parse($application->interview->scheduled_at);
+                $daysUntil = $today->diffInDays($interviewDate, false);
+
+                if ($daysUntil >= 0 && $daysUntil <= 7) {
+                    $notifications[] = [
+                        'type' => 'interview',
+                        'title' => 'Interview Scheduled',
+                        'message' => "{$application->job->job_title} at {$application->job->company_name}",
+                        'days_until' => (int)$daysUntil,
+                        'details' => [
+                            'Date' => $interviewDate->format('M d, Y'),
+                            'Time' => $interviewDate->format('h:i A'),
+                        ],
+                        'action_url' => route('applicant.application'),
+                        'action_text' => 'View Details'
+                    ];
+                }
+            }
+
+            // Check for scheduled training
+            if ($application->trainingSchedule && in_array($application->status, ['scheduled_for_training', 'in_training'])) {
+                $trainingStartDate = Carbon::parse($application->trainingSchedule->start_date);
+                $daysUntil = $today->diffInDays($trainingStartDate, false);
+
+                if ($daysUntil >= 0 && $daysUntil <= 7) {
+                    $notifications[] = [
+                        'type' => 'training',
+                        'title' => 'Training Scheduled',
+                        'message' => "{$application->job->job_title} at {$application->job->company_name}",
+                        'days_until' => (int)$daysUntil,
+                        'details' => [
+                            'Starts' => $trainingStartDate->format('M d, Y'),
+                            'Duration' => $trainingStartDate->diffInDays(Carbon::parse($application->trainingSchedule->end_date)) . ' days',
+                        ],
+                        'action_url' => route('applicant.application'),
+                        'action_text' => 'View Details'
+                    ];
+                }
+            }
+
+            // Check for pending evaluation
+            if ($application->status === 'for_evaluation') {
+                $notifications[] = [
+                    'type' => 'evaluation',
+                    'title' => 'Under Evaluation',
+                    'message' => "{$application->job->job_title} at {$application->job->company_name}",
+                    'details' => [
+                        'Status' => 'Training completed',
+                    ],
+                    'action_url' => route('applicant.application'),
+                    'action_text' => 'Check Status'
+                ];
+            }
+
+            // Check for approved applications pending interview
+            if ($application->status === 'approved' && !$application->interview) {
+                $notifications[] = [
+                    'type' => 'application',
+                    'title' => 'Application Approved',
+                    'message' => "{$application->job->job_title} at {$application->job->company_name}",
+                    'details' => [
+                        'Status' => 'Awaiting interview schedule',
+                    ],
+                    'action_url' => route('applicant.application'),
+                    'action_text' => 'View Details'
+                ];
+            }
+        }
+
+        // Sort notifications by urgency (days_until ascending)
+        usort($notifications, function($a, $b) {
+            $aDays = $a['days_until'] ?? 999;
+            $bDays = $b['days_until'] ?? 999;
+            return $aDays <=> $bDays;
+        });
+
+        return $notifications;
+    }
     /* Apply to a specific job. */
     public function apply(Request $request, Job $job)
 {

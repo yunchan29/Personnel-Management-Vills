@@ -151,8 +151,13 @@
             try {
                 const response = await axios.post('{{ route('verification.verify') }}', {
                     email: this.email,
-                    code: codeString,
-                    _token: '{{ csrf_token() }}'
+                    code: codeString
+                }, {
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
                 });
 
                 if (response.data.success) {
@@ -179,8 +184,13 @@
 
             try {
                 const response = await axios.post('{{ route('verification.resend') }}', {
-                    email: this.email,
-                    _token: '{{ csrf_token() }}'
+                    email: this.email
+                }, {
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
                 });
 
                 if (response.data.success) {
@@ -190,6 +200,7 @@
                     this.$refs.input0.focus();
                 }
             } catch (error) {
+                console.error('Resend error:', error);
                 this.messageType = 'error';
                 this.message = error.response?.data?.message || 'Failed to resend code.';
             } finally {
@@ -272,21 +283,84 @@
                         Enter Verification Code
                     </label>
                     <div class="flex justify-center gap-2 mb-2">
-                        <template x-for="i in 6" :key="i">
-                            <input
-                                type="text"
-                                inputmode="numeric"
-                                maxlength="1"
-                                x-model="code[i-1]"
-                                x-ref="'input' + (i-1)"
-                                @input="focusNext(i-1)"
-                                @keydown="focusPrev(i-1, $event)"
-                                @paste="pasteCode($event)"
-                                class="code-input"
-                                :class="errors.code ? 'border-red-500' : ''"
-                                @keyup.enter="verifyCode()"
-                            />
-                        </template>
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="1"
+                            x-model="code[0]"
+                            x-ref="input0"
+                            @input="focusNext(0)"
+                            @keydown="focusPrev(0, $event)"
+                            @paste="pasteCode($event)"
+                            class="code-input"
+                            :class="errors.code ? 'border-red-500' : ''"
+                            @keyup.enter="verifyCode()"
+                        />
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="1"
+                            x-model="code[1]"
+                            x-ref="input1"
+                            @input="focusNext(1)"
+                            @keydown="focusPrev(1, $event)"
+                            @paste="pasteCode($event)"
+                            class="code-input"
+                            :class="errors.code ? 'border-red-500' : ''"
+                            @keyup.enter="verifyCode()"
+                        />
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="1"
+                            x-model="code[2]"
+                            x-ref="input2"
+                            @input="focusNext(2)"
+                            @keydown="focusPrev(2, $event)"
+                            @paste="pasteCode($event)"
+                            class="code-input"
+                            :class="errors.code ? 'border-red-500' : ''"
+                            @keyup.enter="verifyCode()"
+                        />
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="1"
+                            x-model="code[3]"
+                            x-ref="input3"
+                            @input="focusNext(3)"
+                            @keydown="focusPrev(3, $event)"
+                            @paste="pasteCode($event)"
+                            class="code-input"
+                            :class="errors.code ? 'border-red-500' : ''"
+                            @keyup.enter="verifyCode()"
+                        />
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="1"
+                            x-model="code[4]"
+                            x-ref="input4"
+                            @input="focusNext(4)"
+                            @keydown="focusPrev(4, $event)"
+                            @paste="pasteCode($event)"
+                            class="code-input"
+                            :class="errors.code ? 'border-red-500' : ''"
+                            @keyup.enter="verifyCode()"
+                        />
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="1"
+                            x-model="code[5]"
+                            x-ref="input5"
+                            @input="focusNext(5)"
+                            @keydown="focusPrev(5, $event)"
+                            @paste="pasteCode($event)"
+                            class="code-input"
+                            :class="errors.code ? 'border-red-500' : ''"
+                            @keyup.enter="verifyCode()"
+                        />
                     </div>
                     <p x-show="errors.code" x-text="errors.code ? errors.code[0] : ''" class="text-red-600 text-sm text-center mt-2" x-cloak></p>
                 </div>

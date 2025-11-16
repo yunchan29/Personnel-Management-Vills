@@ -10,6 +10,7 @@ use App\Models\Interview;
 use App\Models\TrainingSchedule;
 use App\Models\TrainingEvaluation;
 use App\Models\Job;
+use Carbon\Carbon;
 
 class DashboardChartController extends Controller
 {
@@ -152,9 +153,9 @@ class DashboardChartController extends Controller
 
         // Normalize leave data (support both string + numeric status codes, always return integers)
         $leaveData = [
-            'pending'  => (int)($leaveCounts['Pending'] ?? $leaveCounts[0] ?? 0),
-            'approved' => (int)($leaveCounts['Approved'] ?? $leaveCounts[1] ?? 0),
-            'rejected' => (int)($leaveCounts['Declined'] ?? $leaveCounts[2] ?? 0),
+            'pending'  => (int)(isset($leaveCounts['Pending']) ? $leaveCounts['Pending'] : (isset($leaveCounts[0]) ? $leaveCounts[0] : 0)),
+            'approved' => (int)(isset($leaveCounts['Approved']) ? $leaveCounts['Approved'] : (isset($leaveCounts[1]) ? $leaveCounts[1] : 0)),
+            'rejected' => (int)(isset($leaveCounts['Declined']) ? $leaveCounts['Declined'] : (isset($leaveCounts[2]) ? $leaveCounts[2] : 0)),
         ];
 
         // ==============================
@@ -354,14 +355,14 @@ class DashboardChartController extends Controller
         $topJobs = [];
         foreach ($topJobsData as $job) {
             $topJobs[] = [
-                'title' => $job->job_title ?? 'Untitled',
-                'company' => $job->company_name ?? 'Unknown',
-                'count' => $job->applications_count ?? 0
+                'title' => isset($job->job_title) ? $job->job_title : 'Untitled',
+                'company' => isset($job->company_name) ? $job->company_name : 'Unknown',
+                'count' => isset($job->applications_count) ? $job->applications_count : 0
             ];
         }
 
         // Ensure all data has proper defaults
-        $pipelineFunnel = $pipelineFunnel ?? [];
+        $pipelineFunnel = isset($pipelineFunnel) ? $pipelineFunnel : [];
         $interviewStats = array_merge([
             'total' => 0,
             'scheduled' => 0,
@@ -369,7 +370,7 @@ class DashboardChartController extends Controller
             'completed' => 0,
             'cancelled' => 0,
             'upcoming_7days' => 0
-        ], $interviewStats ?? []);
+        ], isset($interviewStats) ? $interviewStats : []);
 
         $trainingStats = array_merge([
             'total_trainings' => 0,
@@ -380,7 +381,7 @@ class DashboardChartController extends Controller
             'passed' => 0,
             'failed' => 0,
             'avg_score' => 0
-        ], $trainingStats ?? []);
+        ], isset($trainingStats) ? $trainingStats : []);
 
         $jobMetrics = array_merge([
             'active' => 0,
@@ -388,9 +389,12 @@ class DashboardChartController extends Controller
             'expired' => 0,
             'expiring_soon' => 0,
             'fill_rate' => 0
-        ], $jobMetrics ?? []);
+        ], isset($jobMetrics) ? $jobMetrics : []);
 
-        $topJobs = $topJobs ?? [];
+        $topJobs = isset($topJobs) ? $topJobs : [];
+
+        // Get notifications for admin
+        $notifications = $this->getAdminNotifications();
 
         return view('admins.hrAdmin.dashboard', compact(
             'chartData',
@@ -401,7 +405,132 @@ class DashboardChartController extends Controller
             'trainingStats',
             'timeToHire',
             'jobMetrics',
-            'topJobs'
+            'topJobs',
+            'notifications'
         ));
+    }
+
+    /**
+     * Get notifications for admin dashboard
+     */
+    private function getAdminNotifications()
+    {
+        $notifications = [];
+        $today = Carbon::today();
+
+        // 1. Pending Applications (needs approval)
+        $pendingAppsCount = Application::where('status', 'pending')->count();
+        if ($pendingAppsCount > 0) {
+            $notifications[] = [
+                'type' => 'application',
+                'title' => 'Applications Pending Review',
+                'message' => "You have {$pendingAppsCount} application(s) waiting for approval",
+                'details' => [
+                    'Pending Count' => $pendingAppsCount,
+                ],
+                'action_url' => route('hrAdmin.application'),
+                'action_text' => 'Review Applications'
+            ];
+        }
+
+        // 2. Upcoming Interviews (within next 7 days)
+        $upcomingInterviews = Interview::with(['application.job', 'applicant'])
+            ->where('status', 'scheduled')
+            ->whereBetween('scheduled_at', [$today, $today->copy()->addDays(7)])
+            ->orderBy('scheduled_at')
+            ->get();
+
+        foreach ($upcomingInterviews as $interview) {
+            $interviewDate = Carbon::parse($interview->scheduled_at);
+            $daysUntil = $today->diffInDays($interviewDate, false);
+
+            $jobTitle = isset($interview->application->job->job_title) ? $interview->application->job->job_title : 'N/A';
+            $notifications[] = [
+                'type' => 'interview',
+                'title' => 'Upcoming Interview',
+                'message' => "{$interview->applicant->first_name} {$interview->applicant->last_name} - {$jobTitle}",
+                'days_until' => (int)$daysUntil,
+                'details' => [
+                    'Date' => $interviewDate->format('M d, Y'),
+                    'Time' => $interviewDate->format('h:i A'),
+                ],
+                'action_url' => route('hrAdmin.interviews.index'),
+                'action_text' => 'View Schedule'
+            ];
+        }
+
+        // 3. Approved Applications without Interview (needs scheduling)
+        $approvedNoInterview = Application::with(['job', 'user'])
+            ->where('status', 'approved')
+            ->whereDoesntHave('interview')
+            ->get();
+
+        foreach ($approvedNoInterview as $application) {
+            $notifications[] = [
+                'type' => 'application',
+                'title' => 'Schedule Interview',
+                'message' => "{$application->user->first_name} {$application->user->last_name} - {$application->job->job_title}",
+                'details' => [
+                    'Company' => $application->job->company_name,
+                ],
+                'action_url' => route('hrAdmin.applicants', ['id' => $application->job_id]),
+                'action_text' => 'Schedule Now'
+            ];
+        }
+
+        // 4. Upcoming Training Sessions (within next 7 days)
+        $upcomingTraining = TrainingSchedule::with(['application.job', 'application.user'])
+            ->where('status', 'scheduled')
+            ->whereBetween('start_date', [$today, $today->copy()->addDays(7)])
+            ->orderBy('start_date')
+            ->get();
+
+        foreach ($upcomingTraining as $training) {
+            $startDate = Carbon::parse($training->start_date);
+            $daysUntil = $today->diffInDays($startDate, false);
+
+            $trainingJobTitle = isset($training->application->job->job_title) ? $training->application->job->job_title : 'N/A';
+            $notifications[] = [
+                'type' => 'training',
+                'title' => 'Upcoming Training',
+                'message' => "{$training->application->user->first_name} {$training->application->user->last_name} - {$trainingJobTitle}",
+                'days_until' => (int)$daysUntil,
+                'details' => [
+                    'Starts' => $startDate->format('M d, Y'),
+                    'Duration' => $startDate->diffInDays(Carbon::parse($training->end_date)) . ' days',
+                ],
+                'action_url' => route('hrAdmin.application'),
+                'action_text' => 'View Details'
+            ];
+        }
+
+        // 5. Trained Applications Pending Evaluation
+        $pendingEvaluation = Application::with(['job', 'user'])
+            ->where('status', 'trained')
+            ->whereDoesntHave('evaluation')
+            ->get();
+
+        foreach ($pendingEvaluation as $application) {
+            $notifications[] = [
+                'type' => 'evaluation',
+                'title' => 'Needs Evaluation',
+                'message' => "{$application->user->first_name} {$application->user->last_name} - {$application->job->job_title}",
+                'details' => [
+                    'Company' => $application->job->company_name,
+                    'Status' => 'Training completed',
+                ],
+                'action_url' => route('hrAdmin.applicants', ['id' => $application->job_id]),
+                'action_text' => 'Evaluate Now'
+            ];
+        }
+
+        // Sort notifications by urgency (days_until ascending)
+        usort($notifications, function($a, $b) {
+            $aDays = isset($a['days_until']) ? $a['days_until'] : 999;
+            $bDays = isset($b['days_until']) ? $b['days_until'] : 999;
+            return $aDays <=> $bDays;
+        });
+
+        return $notifications;
     }
 }

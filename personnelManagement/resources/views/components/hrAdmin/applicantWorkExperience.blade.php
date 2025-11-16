@@ -1,7 +1,7 @@
 
 <div class="space-y-6">
     <!-- Work Experience Entries -->
-    @if(!empty($experiences) && is_iterable($experiences))
+    @if($experiences && $experiences->count() > 0)
         @foreach($experiences as $index => $experience)
             <div class="border border-dashed border-[#BD6F22] rounded-lg p-4 bg-orange-50 shadow-sm">
                 <h3 class="text-md font-semibold text-[#BD6F22] mb-2">
@@ -44,16 +44,9 @@
             </div>
         @endforeach
     @else
-        <p class="italic text-gray-500">No work experience records available.</p>
-    @endif
-
-    <!-- Preferred Classification -->
-    <h3 class="text-lg font-semibold text-[#BD6F22] mt-6">Preferred Classification</h3>
-    <div class="mt-2">
-        <label class="block mb-2 font-medium">Job Industry</label>
-        <div class="w-full p-2 border rounded bg-gray-100">
-            {{ $user->job_industry ?? '-' }}
+        <div class="text-center py-8">
+            <p class="text-gray-500 italic">This applicant has no work experience.</p>
         </div>
-    </div>
+    @endif
 
 </div>

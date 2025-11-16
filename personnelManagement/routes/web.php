@@ -89,6 +89,11 @@ Route::prefix('applicant')->name('applicant.')->middleware(['auth', 'verified', 
     // Applications listing
     Route::get('/my-applications', [ApplicantJobController::class, 'myApplications'])->name('applicant.applications');
 
+    // Apply for a job
+    Route::post('/apply/{job}', [ApplicantJobController::class, 'apply'])
+        ->middleware('throttle:10,1')
+        ->name('apply');
+
 });
 
 
@@ -279,15 +284,6 @@ Route::get('/reset-password', function (Request $request) {
 Route::post('/reset-password', [\App\Http\Controllers\Auth\ForgotPasswordController::class, 'resetPassword'])
     ->middleware('throttle:5,1') // 5 attempts per minute
     ->name('password.update');
-
-// Apply route for applicants (di ko pa na sosort nag eerror pa eh)
-Route::post('/apply/{job}', [ApplicantJobController::class, 'apply'])
-    ->middleware('throttle:10,1') // 10 applications per minute max
-    ->name('jobs.apply');
-
-
-//hello
-//hi
 
 // ✅ HRstaff-related routes with auth middleware
 Route::prefix('hrStaff')->name('hrStaff.')->middleware(['auth', 'verified', 'role:hrStaff'])->group(function () {

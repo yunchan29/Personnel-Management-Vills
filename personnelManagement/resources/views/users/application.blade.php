@@ -419,7 +419,7 @@ function generateStatusTimeline(application) {
     const stages = [
         {
             key: 'pending',
-            statuses: ['pending', 'to_review'],
+            statuses: ['pending'],
             title: 'Application',
             icon: '📝',
             description: 'Application received and under review'
@@ -565,7 +565,7 @@ function generateStatusTimeline(application) {
     html += '<div class="space-y-4">';
 
     // Interview Details
-    if (application.interview && currentStatus !== 'pending' && currentStatus !== 'to_review') {
+    if (application.interview && currentStatus !== 'pending') {
         html += `
             <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <h4 class="font-semibold text-blue-900 mb-3 flex items-center gap-2">
@@ -690,7 +690,6 @@ function formatDateTime(dateString) {
 function getStatusColorClass(status) {
     const colorMap = {
         'pending': 'bg-gray-100 text-gray-800',
-        'to_review': 'bg-gray-100 text-gray-800',
         'approved': 'bg-green-100 text-green-800',
         'declined': 'bg-red-100 text-red-800',
         'for_interview': 'bg-yellow-100 text-yellow-800',
@@ -711,7 +710,6 @@ function getStatusColorClass(status) {
 function getStatusLabel(status) {
     const labelMap = {
         'pending': 'Pending',
-        'to_review': 'To Review',
         'approved': 'Approved',
         'declined': 'Declined',
         'for_interview': 'For Interview',

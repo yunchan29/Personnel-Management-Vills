@@ -11,6 +11,9 @@
             <p class="text-gray-600">Find your dream job and start your career journey</p>
         </div>
 
+        <!-- Notification Section -->
+        <x-shared.notification-section :notifications="$notifications ?? []" userRole="applicant" />
+
         <!-- Search and Filter Section -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
             <div class="flex flex-col md:flex-row gap-4">

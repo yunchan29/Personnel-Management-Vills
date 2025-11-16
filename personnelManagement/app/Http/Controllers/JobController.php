@@ -51,7 +51,6 @@ class JobController extends Controller
         'applications as applications_count' => function ($query) {
             $query->whereIn('status', [
                 \App\Enums\ApplicationStatus::PENDING->value,
-                \App\Enums\ApplicationStatus::TO_REVIEW->value,
                 \App\Enums\ApplicationStatus::APPROVED->value,
                 \App\Enums\ApplicationStatus::FOR_INTERVIEW->value,
                 \App\Enums\ApplicationStatus::INTERVIEWED->value,

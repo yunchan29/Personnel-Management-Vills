@@ -25,7 +25,6 @@ class InitialApplicationController extends Controller
             'applications as applications_count' => function ($query) {
                 $query->whereIn('status', [
                     ApplicationStatus::PENDING->value,
-                    ApplicationStatus::TO_REVIEW->value,
                     ApplicationStatus::APPROVED->value,
                     ApplicationStatus::FOR_INTERVIEW->value,
                     ApplicationStatus::INTERVIEWED->value,
@@ -90,7 +89,6 @@ class InitialApplicationController extends Controller
         'applications as applications_count' => function ($query) {
             $query->whereIn('status', [
                 ApplicationStatus::PENDING->value,
-                ApplicationStatus::TO_REVIEW->value,
                 ApplicationStatus::APPROVED->value,
                 ApplicationStatus::FOR_INTERVIEW->value,
                 ApplicationStatus::INTERVIEWED->value,
@@ -99,13 +97,10 @@ class InitialApplicationController extends Controller
         }
     ])->get();
 
-    // Applicants tab - Only pending and to_review statuses
+    // Applicants tab - Only pending status
     $applications = Application::with(['user.resume', 'user.file201', 'user.workExperiences', 'job', 'interview', 'trainingSchedule'])
         ->where('job_id', $jobId)
-        ->whereIn('status', [
-            ApplicationStatus::PENDING->value,
-            ApplicationStatus::TO_REVIEW->value,
-        ])
+        ->where('status', ApplicationStatus::PENDING->value)
         ->get();
 
     // Interview tab - Approved and for_interview statuses

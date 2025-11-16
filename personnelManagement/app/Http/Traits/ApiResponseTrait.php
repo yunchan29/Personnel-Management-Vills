@@ -12,7 +12,7 @@ trait ApiResponseTrait
      */
     protected function successResponse(
         string $message,
-        string $redirectUrl,
+        ?string $redirectUrl = null,
         array $data = []
     ): JsonResponse|RedirectResponse {
         if (request()->wantsJson() || request()->expectsJson()) {
@@ -21,6 +21,11 @@ trait ApiResponseTrait
                 'message' => $message,
                 'redirect' => $redirectUrl,
             ], $data));
+        }
+
+        // Handle null redirect URL for non-AJAX requests
+        if ($redirectUrl === null) {
+            return back()->with('success', $message);
         }
 
         return redirect($redirectUrl)->with('success', $message);

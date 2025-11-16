@@ -12,7 +12,6 @@ enum ApplicationStatus: string
 {
     // Initial Application Statuses
     case PENDING = 'pending';
-    case TO_REVIEW = 'to_review';
     case APPROVED = 'approved';
     case DECLINED = 'declined';
 
@@ -42,7 +41,6 @@ enum ApplicationStatus: string
     {
         return match($this) {
             self::PENDING => 'Pending',
-            self::TO_REVIEW => 'To Review',
             self::APPROVED => 'Approved',
             self::DECLINED => 'Declined',
             self::FOR_INTERVIEW => 'For Interview',
@@ -65,7 +63,7 @@ enum ApplicationStatus: string
     public function badgeClass(): string
     {
         return match($this) {
-            self::PENDING, self::TO_REVIEW => 'bg-gray-100 text-gray-800',
+            self::PENDING => 'bg-gray-100 text-gray-800',
             self::APPROVED => 'bg-green-100 text-green-800',
             self::DECLINED, self::REJECTED => 'bg-red-100 text-red-800',
             self::FOR_INTERVIEW => 'bg-yellow-100 text-yellow-800',
@@ -85,7 +83,6 @@ enum ApplicationStatus: string
     {
         return [
             self::PENDING,
-            self::TO_REVIEW,
         ];
     }
 
@@ -172,7 +169,7 @@ enum ApplicationStatus: string
     public function nextStatus(): ?self
     {
         return match($this) {
-            self::PENDING, self::TO_REVIEW => self::APPROVED,
+            self::PENDING => self::APPROVED,
             self::APPROVED, self::FOR_INTERVIEW => self::INTERVIEWED,
             self::INTERVIEWED, self::SCHEDULED_FOR_TRAINING, self::IN_TRAINING => self::TRAINED,
             self::TRAINED, self::FOR_EVALUATION => self::PASSED_EVALUATION,
@@ -190,7 +187,6 @@ enum ApplicationStatus: string
 
         return match($status) {
             'pending' => self::PENDING,
-            'to_review' => self::TO_REVIEW,
             'approved' => self::APPROVED,
             'declined' => self::DECLINED,
             'for_interview' => self::FOR_INTERVIEW,

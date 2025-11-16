@@ -155,7 +155,7 @@
             <tbody>
                 @forelse($applications as $application)
                     @if($application->user->active_status === 'Active')
-                    {{-- Controller already filters by pending/to_review statuses --}}
+                    {{-- Controller already filters by pending status --}}
                     <tr
                         data-applicant-id="{{ $application->id }}"
                         data-status="{{ $application->status->value }}"

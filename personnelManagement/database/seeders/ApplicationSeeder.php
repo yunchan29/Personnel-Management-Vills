@@ -46,7 +46,6 @@ class ApplicationSeeder extends Seeder
         // Define workflow stages with proper progression
         $workflowStages = [
             ['status' => 'pending', 'requires_review' => false, 'requires_interview' => false, 'requires_training' => false],
-            ['status' => 'to_review', 'requires_review' => false, 'requires_interview' => false, 'requires_training' => false],
             ['status' => 'approved', 'requires_review' => true, 'requires_interview' => false, 'requires_training' => false],
             ['status' => 'for_interview', 'requires_review' => true, 'requires_interview' => true, 'requires_training' => false],
             ['status' => 'interviewed', 'requires_review' => true, 'requires_interview' => true, 'requires_training' => false],
