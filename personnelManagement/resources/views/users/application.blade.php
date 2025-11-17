@@ -337,7 +337,6 @@
                     ApplicationStatus::FOR_INTERVIEW,
                     ApplicationStatus::INTERVIEWED,
                     ApplicationStatus::SCHEDULED_FOR_TRAINING,
-                    ApplicationStatus::IN_TRAINING,
                     ApplicationStatus::TRAINED,
                     ApplicationStatus::FOR_EVALUATION,
                     ApplicationStatus::PASSED_EVALUATION
@@ -440,7 +439,7 @@ function generateStatusTimeline(application) {
         },
         {
             key: 'training',
-            statuses: ['scheduled_for_training', 'in_training', 'trained'],
+            statuses: ['scheduled_for_training', 'trained'],
             title: 'Training',
             icon: '📚',
             description: 'Training in progress or completed'
@@ -591,7 +590,7 @@ function generateStatusTimeline(application) {
     }
 
     // Training Schedule Details
-    if (application.training_schedule && ['scheduled_for_training', 'in_training', 'trained', 'for_evaluation', 'passed_evaluation'].includes(currentStatus)) {
+    if (application.training_schedule && ['scheduled_for_training', 'trained', 'for_evaluation', 'passed_evaluation'].includes(currentStatus)) {
         html += `
             <div class="p-4 bg-purple-50 rounded-lg border border-purple-200">
                 <h4 class="font-semibold text-purple-900 mb-3 flex items-center gap-2">
@@ -696,7 +695,6 @@ function getStatusColorClass(status) {
         'interviewed': 'bg-blue-100 text-blue-800',
         'failed_interview': 'bg-red-100 text-red-800',
         'scheduled_for_training': 'bg-blue-100 text-blue-800',
-        'in_training': 'bg-blue-100 text-blue-800',
         'trained': 'bg-purple-100 text-purple-800',
         'for_evaluation': 'bg-purple-100 text-purple-800',
         'passed_evaluation': 'bg-green-100 text-green-800',
@@ -716,7 +714,6 @@ function getStatusLabel(status) {
         'interviewed': 'Interviewed',
         'failed_interview': 'Failed Interview',
         'scheduled_for_training': 'Scheduled for Training',
-        'in_training': 'In Training',
         'trained': 'Trained',
         'for_evaluation': 'For Evaluation',
         'passed_evaluation': 'Passed Evaluation',

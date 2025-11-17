@@ -204,22 +204,10 @@
                     @endif
                 </div>
 
-                <!-- Message - More compact -->
-                <p class="text-xs text-gray-600 mb-2 line-clamp-2">{{ $notification['message'] }}</p>
+                <!-- Message -->
+                <p class="text-sm text-gray-700 mb-3">{{ $notification['message'] }}</p>
 
-                <!-- Details - Simplified for sidebar -->
-                @if(!empty($notification['details']))
-                <div class="space-y-1 mb-3">
-                    @foreach($notification['details'] as $label => $value)
-                        <div class="text-xs text-gray-600">
-                            <span class="font-medium text-gray-700">{{ $label }}:</span>
-                            <span class="ml-1">{{ $value }}</span>
-                        </div>
-                    @endforeach
-                </div>
-                @endif
-
-                <!-- Action Button - Smaller -->
+                <!-- Action Button -->
                 @if(!empty($notification['action_url']))
                 @php
                     $actionButtonText = isset($notification['action_text']) ? $notification['action_text'] : 'View Details';

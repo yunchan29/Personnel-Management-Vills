@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\Interview;
 use App\Models\TrainingSchedule;
+use App\Enums\ApplicationStatus;
 use Carbon\Carbon;
 
 class ApplicantJobController extends Controller
@@ -104,7 +105,7 @@ class ApplicantJobController extends Controller
             }
 
             // Check for scheduled training
-            if ($application->trainingSchedule && in_array($application->status, ['scheduled_for_training', 'in_training'])) {
+            if ($application->trainingSchedule && $application->status === ApplicationStatus::SCHEDULED_FOR_TRAINING->value) {
                 $trainingStartDate = Carbon::parse($application->trainingSchedule->start_date);
                 $daysUntil = $today->diffInDays($trainingStartDate, false);
 

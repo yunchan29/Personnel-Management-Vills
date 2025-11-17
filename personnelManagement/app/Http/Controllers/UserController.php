@@ -150,14 +150,32 @@ class UserController extends Controller
         $user = auth()->user();
         $experiences = $user->workExperiences()->get();
 
-        return view("users.profile", compact('user', 'experiences'));
+        // Map role to correct view path
+        $viewMap = [
+            'applicant' => 'users.profile',
+            'employee' => 'users.profile',
+            'hrAdmin' => 'admins.hrAdmin.profile',
+            'hrStaff' => 'admins.hrStaff.profile',
+        ];
+
+        $view = $viewMap[$role] ?? 'users.profile';
+        return view($view, compact('user', 'experiences'));
     }
 
     private function editProfileByRole($role) {
         $user = auth()->user();
         $experiences = $user->workExperiences()->get();
 
-        return view("users.profile", compact('user', 'experiences'));
+        // Map role to correct view path
+        $viewMap = [
+            'applicant' => 'users.profile',
+            'employee' => 'users.profile',
+            'hrAdmin' => 'admins.hrAdmin.profile',
+            'hrStaff' => 'admins.hrStaff.profile',
+        ];
+
+        $view = $viewMap[$role] ?? 'users.profile';
+        return view($view, compact('user', 'experiences'));
     }
 
     private function updateProfileByRole(Request $request, $role)

@@ -22,7 +22,6 @@ enum ApplicationStatus: string
 
     // Training Statuses
     case SCHEDULED_FOR_TRAINING = 'scheduled_for_training';
-    case IN_TRAINING = 'in_training';
     case TRAINED = 'trained';
 
     // Evaluation Statuses
@@ -47,7 +46,6 @@ enum ApplicationStatus: string
             self::INTERVIEWED => 'Interviewed',
             self::FAILED_INTERVIEW => 'Failed Interview',
             self::SCHEDULED_FOR_TRAINING => 'Scheduled for Training',
-            self::IN_TRAINING => 'In Training',
             self::TRAINED => 'Trained',
             self::FOR_EVALUATION => 'For Evaluation',
             self::PASSED_EVALUATION => 'Passed Evaluation',
@@ -69,7 +67,7 @@ enum ApplicationStatus: string
             self::FOR_INTERVIEW => 'bg-yellow-100 text-yellow-800',
             self::INTERVIEWED => 'bg-blue-100 text-blue-800',
             self::FAILED_INTERVIEW, self::FAILED_EVALUATION => 'bg-red-100 text-red-800',
-            self::SCHEDULED_FOR_TRAINING, self::IN_TRAINING => 'bg-blue-100 text-blue-800',
+            self::SCHEDULED_FOR_TRAINING => 'bg-blue-100 text-blue-800',
             self::TRAINED, self::FOR_EVALUATION => 'bg-purple-100 text-purple-800',
             self::PASSED_EVALUATION => 'bg-green-100 text-green-800',
             self::HIRED => 'bg-green-100 text-green-800',
@@ -171,7 +169,7 @@ enum ApplicationStatus: string
         return match($this) {
             self::PENDING => self::APPROVED,
             self::APPROVED, self::FOR_INTERVIEW => self::INTERVIEWED,
-            self::INTERVIEWED, self::SCHEDULED_FOR_TRAINING, self::IN_TRAINING => self::TRAINED,
+            self::INTERVIEWED, self::SCHEDULED_FOR_TRAINING => self::TRAINED,
             self::TRAINED, self::FOR_EVALUATION => self::PASSED_EVALUATION,
             self::PASSED_EVALUATION => self::HIRED,
             default => null,
@@ -193,7 +191,6 @@ enum ApplicationStatus: string
             'interviewed' => self::INTERVIEWED,
             'failed_interview', 'fail_interview' => self::FAILED_INTERVIEW,
             'scheduled_for_training' => self::SCHEDULED_FOR_TRAINING,
-            'in_training' => self::IN_TRAINING,
             'trained' => self::TRAINED,
             'for_evaluation' => self::FOR_EVALUATION,
             'passed_evaluation', 'passed', 'pass_evaluation' => self::PASSED_EVALUATION,

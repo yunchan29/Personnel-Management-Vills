@@ -418,16 +418,13 @@ class DashboardChartController extends Controller
         $notifications = [];
         $today = Carbon::today();
 
-        // 1. Pending Applications (needs approval)
+        // 1. Pending Applications (needs approval) - Always aggregated
         $pendingAppsCount = Application::where('status', 'pending')->count();
         if ($pendingAppsCount > 0) {
             $notifications[] = [
                 'type' => 'application',
-                'title' => 'Applications Pending Review',
-                'message' => "You have {$pendingAppsCount} application(s) waiting for approval",
-                'details' => [
-                    'Pending Count' => $pendingAppsCount,
-                ],
+                'title' => 'Pending Applications',
+                'message' => "{$pendingAppsCount} " . ($pendingAppsCount == 1 ? 'application' : 'applications') . " pending review",
                 'action_url' => route('hrAdmin.application'),
                 'action_text' => 'Review Applications'
             ];
@@ -440,41 +437,60 @@ class DashboardChartController extends Controller
             ->orderBy('scheduled_at')
             ->get();
 
-        foreach ($upcomingInterviews as $interview) {
+        // Separate urgent (≤2 days) and non-urgent (3-7 days) interviews
+        $urgentInterviews = $upcomingInterviews->filter(function($interview) use ($today) {
+            return $today->diffInDays(Carbon::parse($interview->scheduled_at), false) <= 2;
+        });
+
+        $nonUrgentInterviews = $upcomingInterviews->filter(function($interview) use ($today) {
+            return $today->diffInDays(Carbon::parse($interview->scheduled_at), false) > 2;
+        });
+
+        // Add individual notifications for urgent interviews
+        foreach ($urgentInterviews as $interview) {
             $interviewDate = Carbon::parse($interview->scheduled_at);
             $daysUntil = $today->diffInDays($interviewDate, false);
+            $jobTitle = $interview->application->job->job_title ?? 'N/A';
+            $company = $interview->application->job->company_name ?? '';
+            $jobId = $interview->application->job_id ?? null;
 
-            $jobTitle = isset($interview->application->job->job_title) ? $interview->application->job->job_title : 'N/A';
+            $timeInfo = $daysUntil == 0 ? 'Today' : ($daysUntil == 1 ? 'Tomorrow' : $interviewDate->format('M d'));
+            $timeInfo .= ' at ' . $interviewDate->format('g:i A');
+
             $notifications[] = [
                 'type' => 'interview',
                 'title' => 'Upcoming Interview',
-                'message' => "{$interview->applicant->first_name} {$interview->applicant->last_name} - {$jobTitle}",
+                'message' => "{$interview->applicant->first_name} {$interview->applicant->last_name} - {$jobTitle} at {$company} • {$timeInfo}",
                 'days_until' => (int)$daysUntil,
-                'details' => [
-                    'Date' => $interviewDate->format('M d, Y'),
-                    'Time' => $interviewDate->format('h:i A'),
-                ],
+                'action_url' => $jobId ? route('hrAdmin.applicants', ['id' => $jobId, 'tab' => 'interview']) : route('hrAdmin.interviews.index'),
+                'action_text' => 'View Interview'
+            ];
+        }
+
+        // Aggregate non-urgent interviews
+        if ($nonUrgentInterviews->count() > 0) {
+            $count = $nonUrgentInterviews->count();
+            $notifications[] = [
+                'type' => 'interview',
+                'title' => 'Scheduled Interviews',
+                'message' => "{$count} " . ($count == 1 ? 'interview' : 'interviews') . " scheduled (3-7 days)",
                 'action_url' => route('hrAdmin.interviews.index'),
                 'action_text' => 'View Schedule'
             ];
         }
 
-        // 3. Approved Applications without Interview (needs scheduling)
-        $approvedNoInterview = Application::with(['job', 'user'])
-            ->where('status', 'approved')
+        // 3. Approved Applications without Interview (needs scheduling) - Always aggregated
+        $approvedNoInterviewCount = Application::where('status', 'approved')
             ->whereDoesntHave('interview')
-            ->get();
+            ->count();
 
-        foreach ($approvedNoInterview as $application) {
+        if ($approvedNoInterviewCount > 0) {
             $notifications[] = [
                 'type' => 'application',
-                'title' => 'Schedule Interview',
-                'message' => "{$application->user->first_name} {$application->user->last_name} - {$application->job->job_title}",
-                'details' => [
-                    'Company' => $application->job->company_name,
-                ],
-                'action_url' => route('hrAdmin.applicants', ['id' => $application->job_id]),
-                'action_text' => 'Schedule Now'
+                'title' => 'Schedule Interviews',
+                'message' => "{$approvedNoInterviewCount} " . ($approvedNoInterviewCount == 1 ? 'applicant needs' : 'applicants need') . " interview scheduling",
+                'action_url' => route('hrAdmin.application'),
+                'action_text' => 'Schedule Interviews'
             ];
         }
 
@@ -485,41 +501,62 @@ class DashboardChartController extends Controller
             ->orderBy('start_date')
             ->get();
 
-        foreach ($upcomingTraining as $training) {
+        // Separate urgent (≤2 days) and non-urgent (3-7 days) training
+        $urgentTraining = $upcomingTraining->filter(function($training) use ($today) {
+            return $today->diffInDays(Carbon::parse($training->start_date), false) <= 2;
+        });
+
+        $nonUrgentTraining = $upcomingTraining->filter(function($training) use ($today) {
+            return $today->diffInDays(Carbon::parse($training->start_date), false) > 2;
+        });
+
+        // Add individual notifications for urgent training
+        foreach ($urgentTraining as $training) {
             $startDate = Carbon::parse($training->start_date);
             $daysUntil = $today->diffInDays($startDate, false);
+            $jobTitle = $training->application->job->job_title ?? 'N/A';
+            $company = $training->application->job->company_name ?? '';
+            $jobId = $training->application->job_id ?? null;
 
-            $trainingJobTitle = isset($training->application->job->job_title) ? $training->application->job->job_title : 'N/A';
+            $dateInfo = $daysUntil == 0 ? 'Starts Today' : ($daysUntil == 1 ? 'Starts Tomorrow' : 'Starts ' . $startDate->format('M d'));
+            $duration = $startDate->diffInDays(Carbon::parse($training->end_date));
+            if ($duration > 0) {
+                $dateInfo .= " ({$duration} " . ($duration == 1 ? 'day' : 'days') . ")";
+            }
+
             $notifications[] = [
                 'type' => 'training',
                 'title' => 'Upcoming Training',
-                'message' => "{$training->application->user->first_name} {$training->application->user->last_name} - {$trainingJobTitle}",
+                'message' => "{$training->application->user->first_name} {$training->application->user->last_name} - {$jobTitle} at {$company} • {$dateInfo}",
                 'days_until' => (int)$daysUntil,
-                'details' => [
-                    'Starts' => $startDate->format('M d, Y'),
-                    'Duration' => $startDate->diffInDays(Carbon::parse($training->end_date)) . ' days',
-                ],
-                'action_url' => route('hrAdmin.application'),
-                'action_text' => 'View Details'
+                'action_url' => $jobId ? route('hrAdmin.applicants', ['id' => $jobId, 'tab' => 'training']) : route('hrAdmin.application'),
+                'action_text' => 'View Training'
             ];
         }
 
-        // 5. Trained Applications Pending Evaluation
-        $pendingEvaluation = Application::with(['job', 'user'])
-            ->where('status', 'trained')
-            ->whereDoesntHave('evaluation')
-            ->get();
+        // Aggregate non-urgent training
+        if ($nonUrgentTraining->count() > 0) {
+            $count = $nonUrgentTraining->count();
+            $notifications[] = [
+                'type' => 'training',
+                'title' => 'Scheduled Training',
+                'message' => "{$count} training " . ($count == 1 ? 'session' : 'sessions') . " (3-7 days)",
+                'action_url' => route('hrAdmin.application'),
+                'action_text' => 'View Training'
+            ];
+        }
 
-        foreach ($pendingEvaluation as $application) {
+        // 5. Trained Applications Pending Evaluation - Always aggregated
+        $pendingEvaluationCount = Application::where('status', 'trained')
+            ->whereDoesntHave('evaluation')
+            ->count();
+
+        if ($pendingEvaluationCount > 0) {
             $notifications[] = [
                 'type' => 'evaluation',
-                'title' => 'Needs Evaluation',
-                'message' => "{$application->user->first_name} {$application->user->last_name} - {$application->job->job_title}",
-                'details' => [
-                    'Company' => $application->job->company_name,
-                    'Status' => 'Training completed',
-                ],
-                'action_url' => route('hrAdmin.applicants', ['id' => $application->job_id]),
+                'title' => 'Pending Evaluations',
+                'message' => "{$pendingEvaluationCount} " . ($pendingEvaluationCount == 1 ? 'applicant needs' : 'applicants need') . " evaluation",
+                'action_url' => route('hrAdmin.application'),
                 'action_text' => 'Evaluate Now'
             ];
         }

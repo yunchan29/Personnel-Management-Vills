@@ -1,4 +1,4 @@
-@extends('layouts.hrAdmin')
+@extends('layouts.hrStaff')
 
 @section('content')
     <x-shared.profile

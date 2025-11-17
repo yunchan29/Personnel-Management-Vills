@@ -263,7 +263,6 @@ document.addEventListener('DOMContentLoaded', function() {
             'interviewed': 'bg-indigo-100 text-indigo-800',
             'failed_interview': 'bg-red-100 text-red-800',
             'scheduled_for_training': 'bg-blue-100 text-blue-800',
-            'in_training': 'bg-yellow-100 text-yellow-800',
             'trained': 'bg-green-100 text-green-800',
             'for_evaluation': 'bg-purple-100 text-purple-800',
             'passed_evaluation': 'bg-green-100 text-green-800',
@@ -366,7 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let displayStatus = data.interview.status;
             if (data.status === 'failed_interview') {
                 displayStatus = 'failed';
-            } else if (['interviewed', 'scheduled_for_training', 'in_training', 'trained', 'for_evaluation', 'passed_evaluation', 'hired'].includes(data.status)) {
+            } else if (['interviewed', 'scheduled_for_training', 'trained', 'for_evaluation', 'passed_evaluation', 'hired'].includes(data.status)) {
                 displayStatus = 'completed';
             }
 

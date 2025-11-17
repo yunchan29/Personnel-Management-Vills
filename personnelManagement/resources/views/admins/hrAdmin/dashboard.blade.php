@@ -88,53 +88,8 @@
     </div>
   </div>
 
-  <!-- Row 4: Training & Job Insights (2 columns) -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-    <!-- Training & Evaluation -->
-    <div class="bg-white p-6 rounded-md shadow-md border border-gray-200">
-      <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-        <svg class="w-5 h-5 mr-2 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        Training & Evaluation
-      </h2>
-
-      <!-- Pass Rate Gauge -->
-      <div class="mb-4">
-        <div class="flex justify-between items-center mb-2">
-          <span class="text-sm font-medium text-gray-700">Pass Rate</span>
-          <span class="text-lg font-bold text-green-600" id="training-pass-rate">0%</span>
-        </div>
-        <div class="w-full bg-gray-200 rounded-full h-3">
-          <div class="bg-green-500 h-3 rounded-full transition-all duration-500" id="training-pass-bar" style="width: 0%"></div>
-        </div>
-      </div>
-
-      <!-- Average Score -->
-      <div class="mb-4">
-        <div class="flex justify-between items-center mb-2">
-          <span class="text-sm font-medium text-gray-700">Average Score</span>
-          <span class="text-lg font-bold text-[#BD6F22]">{{ $trainingStats['avg_score'] ?? 0 }}</span>
-        </div>
-        <div class="w-full bg-gray-200 rounded-full h-3">
-          <div class="bg-[#BD6F22] h-3 rounded-full transition-all duration-500" style="width: {{ $trainingStats['avg_score'] ?? 0 }}%"></div>
-        </div>
-      </div>
-
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-2 gap-2 mt-4">
-        <div class="bg-green-50 p-2 rounded text-center border border-green-200">
-          <div class="text-xl font-bold text-green-600">{{ $trainingStats['passed'] ?? 0 }}</div>
-          <div class="text-xs text-gray-600">Passed</div>
-        </div>
-        <div class="bg-red-50 p-2 rounded text-center border border-red-200">
-          <div class="text-xl font-bold text-red-600">{{ $trainingStats['failed'] ?? 0 }}</div>
-          <div class="text-xs text-gray-600">Failed</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Job Insights -->
+  <!-- Row 4: Job Insights (Full Width) -->
+  <div class="mb-6">
     <div class="bg-white p-6 rounded-md shadow-md border border-gray-200">
       <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
         <svg class="w-5 h-5 mr-2 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,36 +98,36 @@
         Job Insights
       </h2>
 
-      <!-- Job Status Grid -->
-      <div class="grid grid-cols-2 gap-3 mb-4">
-        <div class="bg-green-50 p-3 rounded-lg border border-green-200">
-          <div class="text-2xl font-bold text-green-600">{{ $jobMetrics['active'] ?? 0 }}</div>
-          <div class="text-xs text-gray-600">Active</div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+        <!-- Job Status Grid -->
+        <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+          <div class="text-3xl font-bold text-green-600">{{ $jobMetrics['active'] ?? 0 }}</div>
+          <div class="text-sm text-gray-600 mt-1">Active</div>
         </div>
-        <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
-          <div class="text-2xl font-bold text-blue-600">{{ $jobMetrics['filled'] ?? 0 }}</div>
-          <div class="text-xs text-gray-600">Filled</div>
+        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <div class="text-3xl font-bold text-blue-600">{{ $jobMetrics['filled'] ?? 0 }}</div>
+          <div class="text-sm text-gray-600 mt-1">Filled</div>
         </div>
-        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
-          <div class="text-2xl font-bold text-gray-600">{{ $jobMetrics['expired'] ?? 0 }}</div>
-          <div class="text-xs text-gray-600">Expired</div>
+        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div class="text-3xl font-bold text-gray-600">{{ $jobMetrics['expired'] ?? 0 }}</div>
+          <div class="text-sm text-gray-600 mt-1">Expired</div>
         </div>
-        <div class="bg-amber-50 p-3 rounded-lg border border-amber-200">
-          <div class="text-2xl font-bold text-amber-600">{{ $jobMetrics['expiring_soon'] ?? 0 }}</div>
-          <div class="text-xs text-gray-600">Expiring Soon</div>
+        <div class="bg-amber-50 p-4 rounded-lg border border-amber-200">
+          <div class="text-3xl font-bold text-amber-600">{{ $jobMetrics['expiring_soon'] ?? 0 }}</div>
+          <div class="text-sm text-gray-600 mt-1">Expiring Soon</div>
         </div>
-      </div>
 
-      <!-- Fill Rate -->
-      <div class="p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border border-orange-200">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-gray-600">Fill Rate</p>
-            <p class="text-3xl font-bold text-[#BD6F22]">{{ $jobMetrics['fill_rate'] ?? 0 }}%</p>
+        <!-- Fill Rate -->
+        <div class="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
+          <div class="flex items-center justify-between h-full">
+            <div>
+              <p class="text-sm text-gray-600">Fill Rate</p>
+              <p class="text-3xl font-bold text-[#BD6F22]">{{ $jobMetrics['fill_rate'] ?? 0 }}%</p>
+            </div>
+            <svg class="w-8 h-8 text-[#BD6F22] opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
-          <svg class="w-10 h-10 text-[#BD6F22] opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
         </div>
       </div>
     </div>
@@ -426,12 +381,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const chartData = @json($chartData ?? ['job'=>[], 'applicants'=>[], 'employee'=>[]]);
     const pipelineFunnel = @json($pipelineFunnel ?? []);
     const interviewStats = @json($interviewStats ?? []);
-    const trainingStats = @json($trainingStats ?? []);
     const topJobs = @json($topJobs ?? []);
 
     console.log("Pipeline Funnel:", pipelineFunnel);
     console.log("Interview Stats:", interviewStats);
-    console.log("Training Stats:", trainingStats);
     console.log("Top Jobs:", topJobs);
 
     // ============================================
@@ -457,14 +410,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('approved-bar').style.width = approvedPct + '%';
         document.getElementById('rejected-bar').style.width = rejectedPct + '%';
     }
-
-    // Calculate Training Pass Rate
-    const totalEvaluations = trainingStats.total_evaluations || 0;
-    const passRate = totalEvaluations > 0
-        ? ((trainingStats.passed / totalEvaluations) * 100).toFixed(1)
-        : 0;
-    document.getElementById('training-pass-rate').textContent = passRate + '%';
-    document.getElementById('training-pass-bar').style.width = passRate + '%';
 
     // ============================================
     // CHART 1: APPLICATION PIPELINE FUNNEL

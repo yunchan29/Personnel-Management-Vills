@@ -80,9 +80,12 @@ class InitialApplicationController extends Controller
         return view('admins.hrAdmin.application', compact('jobs', 'applications', 'companies'));
     }
 
-    public function viewApplicants($jobId)
+    public function viewApplicants(Request $request, $jobId)
 {
     $job = Job::findOrFail($jobId);
+
+    // Get the tab parameter from the request, default to 'applicants'
+    $selectedTab = $request->input('tab', 'applicants');
 
     // Jobs with filtered application count (Applicants + Interview + Training tabs, excluding evaluated)
     $jobs = Job::withCount([
@@ -137,7 +140,7 @@ class InitialApplicationController extends Controller
         'jobs' => $jobs,
         'applications' => $applications,
         'selectedJob' => $job,
-        'selectedTab' => 'applicants',
+        'selectedTab' => $selectedTab,
         'approvedApplicants' => $approvedApplicants,
         'interviewApplicants' => $interviewApplicants,
         'forTrainingApplicants' => $forTrainingApplicants,
