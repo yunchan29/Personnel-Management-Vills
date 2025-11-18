@@ -473,13 +473,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Archive Information
         document.getElementById('archivedDate').textContent = formatDate(data.updated_at);
 
-        // Set restore form action (only for HR Staff with failed_evaluation status)
+        // Set restore form action (only for HR Staff with restorable statuses)
         const userRole = '{{ auth()->user()->role }}';
         if (userRole === 'hrStaff') {
             const restoreForm = document.getElementById('restoreForm');
             if (restoreForm) {
-                // Only show restore button for failed_evaluation status
-                if (data.status === 'failed_evaluation') {
+                // Define restorable statuses
+                const restorableStatuses = ['declined', 'failed_interview', 'failed_evaluation'];
+
+                // Only show restore button for restorable statuses
+                if (restorableStatuses.includes(data.status)) {
                     restoreForm.classList.remove('hidden');
                     restoreForm.action = `/hrStaff/archive/${data.id}/restore`;
 
@@ -495,6 +498,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     methodInput.name = '_method';
                     methodInput.value = 'PUT';
                     restoreForm.appendChild(methodInput);
+
+                    // Store the status for the restore handler
+                    restoreForm.dataset.applicationStatus = data.status;
                 } else {
                     // Hide restore button for other statuses
                     restoreForm.classList.add('hidden');
@@ -537,56 +543,118 @@ document.addEventListener('DOMContentLoaded', function() {
         restoreForm.addEventListener('submit', function(e) {
             e.preventDefault();
 
-            Swal.fire({
-                title: 'Restore Application',
-                text: 'Where should this applicant be placed after restoration?',
-                icon: 'question',
-                input: 'radio',
-                inputOptions: {
-                    'for_evaluation': 'For Re-evaluation',
-                    'scheduled_for_training': 'Redo training'
-                },
-                inputValidator: (value) => {
-                    if (!value) {
-                        return 'Please select a status option!';
+            const applicationStatus = restoreForm.dataset.applicationStatus;
+
+            // Handle DECLINED - auto-restore without modal
+            if (applicationStatus === 'declined') {
+                Swal.fire({
+                    title: 'Restore Application?',
+                    text: 'This will restore the application to Pending status for reconsideration.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, restore it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        restoreForm.submit();
                     }
-                },
-                showCancelButton: true,
-                confirmButtonColor: '#28a745',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Restore',
-                cancelButtonText: 'Cancel',
-                showLoaderOnConfirm: true,
-                preConfirm: (selectedStatus) => {
-                    // Add the selected status to the form as a hidden input
-                    const existingStatusInput = restoreForm.querySelector('input[name="status"]');
-                    if (existingStatusInput) {
-                        existingStatusInput.remove();
-                    }
+                });
+                return;
+            }
 
-                    const statusInput = document.createElement('input');
-                    statusInput.type = 'hidden';
-                    statusInput.name = 'status';
-                    statusInput.value = selectedStatus;
-                    restoreForm.appendChild(statusInput);
+            // Handle FAILED_INTERVIEW - show modal with choices
+            if (applicationStatus === 'failed_interview') {
+                Swal.fire({
+                    title: 'Restore Application',
+                    text: 'Where should this applicant be placed after restoration?',
+                    icon: 'question',
+                    input: 'radio',
+                    inputOptions: {
+                        'for_interview': 'For Interview (reschedule another interview)',
+                        'approved': 'Approved (skip interview process)'
+                    },
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'Please select a status option!';
+                        }
+                    },
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Restore',
+                    cancelButtonText: 'Cancel',
+                    showLoaderOnConfirm: true,
+                    preConfirm: (selectedStatus) => {
+                        // Add the selected status to the form as a hidden input
+                        const existingStatusInput = restoreForm.querySelector('input[name="status"]');
+                        if (existingStatusInput) {
+                            existingStatusInput.remove();
+                        }
 
-                    // Debug: Log form details
-                    console.log('Form action:', restoreForm.action);
-                    console.log('Form method:', restoreForm.method);
-                    console.log('Form data:');
-                    const formData = new FormData(restoreForm);
-                    for (let [key, value] of formData.entries()) {
-                        console.log(`  ${key}: ${value}`);
-                    }
+                        const statusInput = document.createElement('input');
+                        statusInput.type = 'hidden';
+                        statusInput.name = 'status';
+                        statusInput.value = selectedStatus;
+                        restoreForm.appendChild(statusInput);
 
-                    // Submit the form
-                    restoreForm.submit();
+                        // Submit the form
+                        restoreForm.submit();
 
-                    // Return a promise that never resolves to keep the loader showing
-                    return new Promise(() => {});
-                },
-                allowOutsideClick: () => !Swal.isLoading()
-            });
+                        // Return a promise that never resolves to keep the loader showing
+                        return new Promise(() => {});
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                });
+                return;
+            }
+
+            // Handle FAILED_EVALUATION - show modal with choices
+            if (applicationStatus === 'failed_evaluation') {
+                Swal.fire({
+                    title: 'Restore Application',
+                    text: 'Where should this applicant be placed after restoration?',
+                    icon: 'question',
+                    input: 'radio',
+                    inputOptions: {
+                        'for_evaluation': 'For Re-evaluation',
+                        'scheduled_for_training': 'Redo training'
+                    },
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'Please select a status option!';
+                        }
+                    },
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Restore',
+                    cancelButtonText: 'Cancel',
+                    showLoaderOnConfirm: true,
+                    preConfirm: (selectedStatus) => {
+                        // Add the selected status to the form as a hidden input
+                        const existingStatusInput = restoreForm.querySelector('input[name="status"]');
+                        if (existingStatusInput) {
+                            existingStatusInput.remove();
+                        }
+
+                        const statusInput = document.createElement('input');
+                        statusInput.type = 'hidden';
+                        statusInput.name = 'status';
+                        statusInput.value = selectedStatus;
+                        restoreForm.appendChild(statusInput);
+
+                        // Submit the form
+                        restoreForm.submit();
+
+                        // Return a promise that never resolves to keep the loader showing
+                        return new Promise(() => {});
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                });
+                return;
+            }
         });
     }
 });

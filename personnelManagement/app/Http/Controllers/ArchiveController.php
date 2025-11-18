@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Application;
+use App\Enums\ApplicationStatus;
 use Illuminate\Support\Facades\Auth;
 
 class ArchiveController extends Controller
@@ -128,5 +129,76 @@ class ArchiveController extends Controller
 
         return redirect()->route('hrAdmin.archive.index')
             ->with('success', "Successfully deleted {$deletedCount} archived application(s).");
+    }
+
+    public function bulkRestore(Request $request)
+    {
+        // Authorization: Only HR Admin can restore archived applications
+        if (auth()->user()->role !== 'hrAdmin') {
+            abort(403, 'Unauthorized. Only HR administrators can restore applications.');
+        }
+
+        $request->validate([
+            'ids' => 'required|json'
+        ]);
+
+        $ids = json_decode($request->ids, true);
+
+        if (!is_array($ids) || empty($ids)) {
+            return redirect()->route('hrAdmin.archive.index')
+                ->with('error', 'No items selected for restoration.');
+        }
+
+        // Get all applications that can be restored (all restorable statuses)
+        $restorableStatuses = [
+            ApplicationStatus::DECLINED,
+            ApplicationStatus::FAILED_INTERVIEW,
+            ApplicationStatus::FAILED_EVALUATION
+        ];
+
+        $applications = Application::whereIn('id', $ids)
+            ->where('is_archived', true)
+            ->whereIn('status', $restorableStatuses)
+            ->get();
+
+        if ($applications->isEmpty()) {
+            return redirect()->route('hrAdmin.archive.index')
+                ->with('error', 'No valid applications found for restoration. Only Declined, Failed Interview, and Failed Evaluation applications can be restored.');
+        }
+
+        $restoredCount = 0;
+
+        foreach ($applications as $application) {
+            // Handle restoration based on status
+            if ($application->status === ApplicationStatus::DECLINED) {
+                // Auto-restore DECLINED to PENDING
+                $application->is_archived = false;
+                $application->status = ApplicationStatus::PENDING;
+                $application->save();
+                $restoredCount++;
+
+            } elseif ($application->status === ApplicationStatus::FAILED_INTERVIEW) {
+                // Auto-restore FAILED_INTERVIEW to FOR_INTERVIEW
+                $application->is_archived = false;
+                $application->status = ApplicationStatus::FOR_INTERVIEW;
+                $application->save();
+                $restoredCount++;
+
+            } elseif ($application->status === ApplicationStatus::FAILED_EVALUATION) {
+                // Delete old evaluation (for re-evaluation scenario)
+                if ($application->evaluation) {
+                    $application->evaluation->delete();
+                }
+
+                // Restore to FOR_EVALUATION status by default
+                $application->is_archived = false;
+                $application->status = ApplicationStatus::FOR_EVALUATION;
+                $application->save();
+                $restoredCount++;
+            }
+        }
+
+        return redirect()->route('hrAdmin.archive.index')
+            ->with('success', "Successfully restored {$restoredCount} application(s).");
     }
 }

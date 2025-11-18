@@ -233,7 +233,7 @@ function archiveManager() {
                 Swal.fire({
                     icon: 'error',
                     title: 'Cannot restore',
-                    text: 'None of the selected items can be restored. Only applications with Failed Evaluation status can be restored.',
+                    text: 'None of the selected items can be restored. Only Declined, Failed Interview, and Failed Evaluation applications can be restored.',
                     confirmButtonColor: '#3085d6'
                 });
                 return;
@@ -243,7 +243,7 @@ function archiveManager() {
             const filteredCount = this.selectedItems.length - restorableIds.length;
             let warningText = 'This will restore ' + restorableIds.length + ' archived record(s).';
             if (filteredCount > 0) {
-                warningText += ' (' + filteredCount + ' item(s) skipped - only Failed Evaluation applications can be restored)';
+                warningText += ' (' + filteredCount + ' item(s) skipped - only Declined, Failed Interview, and Failed Evaluation applications can be restored)';
             }
 
             Swal.fire({
@@ -259,9 +259,11 @@ function archiveManager() {
                 if (result.isConfirmed) {
                     const form = document.createElement('form');
                     form.method = 'POST';
-                    form.action = '{{ route('hrStaff.archive.bulkRestore') }}';
-                                  
-                                  
+                    @if(auth()->user()->role === 'hrAdmin')
+                        form.action = '{{ route('hrAdmin.archive.bulkRestore') }}';
+                    @else
+                        form.action = '{{ route('hrStaff.archive.bulkRestore') }}';
+                    @endif
 
                     const csrfInput = document.createElement('input');
                     csrfInput.type = 'hidden';

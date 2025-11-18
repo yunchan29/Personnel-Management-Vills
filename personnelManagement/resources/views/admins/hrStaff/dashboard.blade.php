@@ -33,7 +33,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
           </div>
-          <div class="text-3xl font-bold text-gray-800" id="avg-eval-score">0</div>
+          <div class="text-3xl font-bold text-gray-800" id="avg-eval-score">{{ $averageEvaluationScore ?? 0 }}</div>
           <div class="text-sm mt-1 text-[#BD6F22] font-medium">Avg Evaluation Score</div>
           <div class="text-xs text-gray-500 mt-1">This Month</div>
         </div>
@@ -44,7 +44,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
             </svg>
           </div>
-          <div class="text-3xl font-bold text-gray-800" id="pass-rate-stat">0<span class="text-xl">%</span></div>
+          <div class="text-3xl font-bold text-gray-800" id="pass-rate-stat">{{ $passRateThisMonth ?? 0 }}<span class="text-xl">%</span></div>
           <div class="text-sm mt-1 text-[#BD6F22] font-medium">Pass Rate</div>
           <div class="text-xs text-gray-500 mt-1">This Month</div>
         </div>
@@ -55,22 +55,49 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
             </svg>
           </div>
-          <div class="text-3xl font-bold text-gray-800" id="promotions-count">0</div>
+          <div class="text-3xl font-bold text-gray-800" id="promotions-count">{{ $promotionsThisMonth ?? 0 }}</div>
           <div class="text-sm mt-1 text-[#BD6F22] font-medium">Promotions</div>
           <div class="text-xs text-gray-500 mt-1">This Month</div>
         </div>
       </div>
 
-      <!-- Calendar -->
+      <!-- Promotion Pipeline -->
       <div class="bg-white p-6 rounded-md shadow-md border border-gray-200 mb-6">
         <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
           <svg class="w-5 h-5 mr-2 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          Calendar
+          Promotion Pipeline
         </h2>
-        <div id="calendar">
-          <!-- Calendar will be generated here by JavaScript -->
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Evaluated -->
+          <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <div class="text-2xl font-bold text-blue-600" id="pipeline-evaluated">0</div>
+            <div class="text-sm text-gray-600 mt-1">Evaluated</div>
+            <div class="text-xs text-gray-500 mt-1">Total evaluated</div>
+          </div>
+
+          <!-- Passed -->
+          <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+            <div class="text-2xl font-bold text-green-600" id="pipeline-passed">0</div>
+            <div class="text-sm text-gray-600 mt-1">Passed</div>
+            <div class="text-xs text-gray-500 mt-1">Ready for invitation</div>
+          </div>
+
+          <!-- Invited -->
+          <div class="bg-amber-50 p-4 rounded-lg border border-amber-200">
+            <div class="text-2xl font-bold text-amber-600" id="pipeline-invited">0</div>
+            <div class="text-sm text-gray-600 mt-1">Invited</div>
+            <div class="text-xs text-gray-500 mt-1">Signing scheduled</div>
+          </div>
+
+          <!-- Promoted -->
+          <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+            <div class="text-2xl font-bold text-purple-600" id="pipeline-promoted">0</div>
+            <div class="text-sm text-gray-600 mt-1">Promoted</div>
+            <div class="text-xs text-gray-500 mt-1">Now employees</div>
+          </div>
         </div>
       </div>
 
@@ -186,45 +213,7 @@
         </div>
       </div>
 
-      <!-- Promotion Pipeline -->
-      <div class="bg-white p-6 rounded-md shadow-md border border-gray-200 mb-6">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-          <svg class="w-5 h-5 mr-2 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          Promotion Pipeline
-        </h2>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Evaluated -->
-          <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <div class="text-2xl font-bold text-blue-600" id="pipeline-evaluated">0</div>
-            <div class="text-sm text-gray-600 mt-1">Evaluated</div>
-            <div class="text-xs text-gray-500 mt-1">Total evaluated</div>
-          </div>
-
-          <!-- Passed -->
-          <div class="bg-green-50 p-4 rounded-lg border border-green-200">
-            <div class="text-2xl font-bold text-green-600" id="pipeline-passed">0</div>
-            <div class="text-sm text-gray-600 mt-1">Passed</div>
-            <div class="text-xs text-gray-500 mt-1">Ready for invitation</div>
-          </div>
-
-          <!-- Invited -->
-          <div class="bg-amber-50 p-4 rounded-lg border border-amber-200">
-            <div class="text-2xl font-bold text-amber-600" id="pipeline-invited">0</div>
-            <div class="text-sm text-gray-600 mt-1">Invited</div>
-            <div class="text-xs text-gray-500 mt-1">Signing scheduled</div>
-          </div>
-
-          <!-- Promoted -->
-          <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-            <div class="text-2xl font-bold text-purple-600" id="pipeline-promoted">0</div>
-            <div class="text-sm text-gray-600 mt-1">Promoted</div>
-            <div class="text-xs text-gray-500 mt-1">Now employees</div>
-          </div>
-        </div>
-      </div>
 
     </div>
     <!-- End Main Content Area -->
@@ -242,8 +231,13 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                 </svg>
               </div>
-              <div>
-                <h2 class="text-xl font-bold text-gray-900">Notifications</h2>
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <h2 class="text-xl font-bold text-gray-900">Notifications</h2>
+                  @if(isset($notifications) && count($notifications) > 0)
+                    <span class="bg-[#BD6F22] text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ count($notifications) }}</span>
+                  @endif
+                </div>
                 <p class="text-sm text-gray-600">Recent updates</p>
               </div>
             </div>
@@ -257,8 +251,12 @@
                 - Important (Orange): Training ending within 3 days
                 - Info (Blue): Passed applicants awaiting invitation
               -->
-              <div id="no-notifications" class="p-3 bg-gray-50 rounded-lg border border-gray-200 text-center text-sm text-gray-500">
-                No pending evaluations
+              <div id="no-notifications" class="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center">
+                <svg class="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-sm text-gray-500 font-medium">All caught up!</p>
+                <p class="text-xs text-gray-400 mt-1">No pending notifications at this time</p>
               </div>
             </div>
           </div>
@@ -288,7 +286,6 @@
                 <select name="report_type" id="report_type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
                   <option value="training_evaluation">Training Evaluation Report</option>
                   <option value="employee_promotion">Employee Promotion Report</option>
-                  <option value="training_completion">Training Completion Report</option>
                   <option value="requirements_status">Requirements Status Report</option>
                 </select>
               </div>
@@ -298,23 +295,31 @@
                 <label for="company" class="block text-sm font-medium text-gray-700 mb-2">Company</label>
                 <select name="company" id="company" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
                   <option value="">All Companies</option>
-                  <!-- TODO: Populate companies from database -->
+                  @if(isset($companies))
+                    @foreach($companies as $company)
+                      <option value="{{ $company }}">{{ $company }}</option>
+                    @endforeach
+                  @endif
                 </select>
               </div>
 
               <!-- Job Position Filter -->
               <div>
-                <label for="job_position" class="block text-sm font-medium text-gray-700 mb-2">Job Position</label>
-                <select name="job_position" id="job_position" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
+                <label for="position" class="block text-sm font-medium text-gray-700 mb-2">Job Position</label>
+                <select name="position" id="position" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
                   <option value="">All Positions</option>
-                  <!-- TODO: Populate positions from database -->
+                  @if(isset($positions))
+                    @foreach($positions as $position)
+                      <option value="{{ $position }}">{{ $position }}</option>
+                    @endforeach
+                  @endif
                 </select>
               </div>
 
               <!-- Evaluation Status Filter -->
               <div>
-                <label for="eval_status" class="block text-sm font-medium text-gray-700 mb-2">Evaluation Status</label>
-                <select name="eval_status" id="eval_status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
+                <label for="evaluation_status" class="block text-sm font-medium text-gray-700 mb-2">Evaluation Status</label>
+                <select name="evaluation_status" id="evaluation_status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
                   <option value="">All Statuses</option>
                   <option value="passed">Passed (≥70)</option>
                   <option value="failed">Failed (<70)</option>
@@ -322,15 +327,38 @@
                 </select>
               </div>
 
-              <!-- Date Range -->
+              <!-- Year & Month Selection -->
               <div class="grid grid-cols-2 gap-2">
                 <div>
-                  <label for="start_date" class="block text-xs font-medium text-gray-700 mb-1">Start Date</label>
-                  <input type="date" name="start_date" id="start_date" class="w-full px-2 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
+                  <label for="year" class="block text-sm font-medium text-gray-700 mb-2">Year</label>
+                  <select name="year" id="year" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
+                    <option value="">All Years</option>
+                    @if(isset($years))
+                      @foreach($years as $year)
+                        <option value="{{ $year }}" {{ (isset($currentYear) && $year == $currentYear) ? 'selected' : '' }}>
+                          {{ $year }}
+                        </option>
+                      @endforeach
+                    @endif
+                  </select>
                 </div>
                 <div>
-                  <label for="end_date" class="block text-xs font-medium text-gray-700 mb-1">End Date</label>
-                  <input type="date" name="end_date" id="end_date" class="w-full px-2 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
+                  <label for="month" class="block text-sm font-medium text-gray-700 mb-2">Month</label>
+                  <select name="month" id="month" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
+                    <option value="">All Months</option>
+                    <option value="1" {{ (isset($currentMonth) && $currentMonth == 1) ? 'selected' : '' }}>January</option>
+                    <option value="2" {{ (isset($currentMonth) && $currentMonth == 2) ? 'selected' : '' }}>February</option>
+                    <option value="3" {{ (isset($currentMonth) && $currentMonth == 3) ? 'selected' : '' }}>March</option>
+                    <option value="4" {{ (isset($currentMonth) && $currentMonth == 4) ? 'selected' : '' }}>April</option>
+                    <option value="5" {{ (isset($currentMonth) && $currentMonth == 5) ? 'selected' : '' }}>May</option>
+                    <option value="6" {{ (isset($currentMonth) && $currentMonth == 6) ? 'selected' : '' }}>June</option>
+                    <option value="7" {{ (isset($currentMonth) && $currentMonth == 7) ? 'selected' : '' }}>July</option>
+                    <option value="8" {{ (isset($currentMonth) && $currentMonth == 8) ? 'selected' : '' }}>August</option>
+                    <option value="9" {{ (isset($currentMonth) && $currentMonth == 9) ? 'selected' : '' }}>September</option>
+                    <option value="10" {{ (isset($currentMonth) && $currentMonth == 10) ? 'selected' : '' }}>October</option>
+                    <option value="11" {{ (isset($currentMonth) && $currentMonth == 11) ? 'selected' : '' }}>November</option>
+                    <option value="12" {{ (isset($currentMonth) && $currentMonth == 12) ? 'selected' : '' }}>December</option>
+                  </select>
                 </div>
               </div>
 
@@ -340,16 +368,6 @@
                 <div class="grid grid-cols-2 gap-2">
                   <input type="number" name="min_score" id="min_score" min="0" max="100" placeholder="Min" class="w-full px-2 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
                   <input type="number" name="max_score" id="max_score" min="0" max="100" placeholder="Max" class="w-full px-2 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
-                </div>
-              </div>
-
-              <!-- Quick Filters -->
-              <div class="pt-2 border-t border-gray-200">
-                <label class="block text-xs font-medium text-gray-700 mb-2">Quick Filters</label>
-                <div class="flex flex-wrap gap-2">
-                  <button type="button" class="quick-filter px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors" data-filter="this_week">This Week</button>
-                  <button type="button" class="quick-filter px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors" data-filter="this_month">This Month</button>
-                  <button type="button" class="quick-filter px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors" data-filter="last_month">Last Month</button>
                 </div>
               </div>
 
@@ -479,27 +497,28 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // ============================================
-    // GET DATA FROM PHP (TODO: Pass from controller)
+    // GET DATA FROM PHP
     // ============================================
-    const trainingStats = {
-        passed: 0,
-        failed: 0,
-        total_evaluations: 0,
-        avg_score: 0,
-        avg_knowledge: 0,
-        avg_skill: 0,
-        avg_participation: 0,
-        avg_professionalism: 0
-    };
+    const trainingStats = {!! json_encode($trainingStats ?? [
+        'passed' => 0,
+        'failed' => 0,
+        'total_evaluations' => 0,
+        'avg_score' => 0,
+        'pass_rate' => 0,
+        'avg_knowledge' => 0,
+        'avg_skill' => 0,
+        'avg_participation' => 0,
+        'avg_professionalism' => 0
+    ]) !!};
 
-    const pipelineStats = {
-        evaluated: 0,
-        passed: 0,
-        invited: 0,
-        promoted: 0
-    };
+    const pipelineStats = {!! json_encode($pipelineStats ?? [
+        'evaluated' => 0,
+        'passed' => 0,
+        'invited' => 0,
+        'promoted' => 0
+    ]) !!};
 
-    const notifications = []; // TODO: Pass from controller
+    const notifications = @json($notifications ?? []);
 
     // ============================================
     // CALENDAR GENERATION
@@ -543,24 +562,10 @@ document.addEventListener('DOMContentLoaded', function () {
     calendar.innerHTML = html;
 
     // ============================================
-    // KPI STAT CARDS
-    // ============================================
-    // Average Evaluation Score (This Month)
-    document.getElementById('avg-eval-score').textContent = trainingStats.avg_score || 0;
-
-    // Pass Rate (This Month)
-    const totalEvaluations = trainingStats.total_evaluations || 0;
-    const passRate = totalEvaluations > 0
-        ? ((trainingStats.passed / totalEvaluations) * 100).toFixed(1)
-        : 0;
-    document.getElementById('pass-rate-stat').innerHTML = passRate + '<span class="text-xl">%</span>';
-
-    // Promotions Count (This Month)
-    document.getElementById('promotions-count').textContent = pipelineStats.promoted || 0;
-
-    // ============================================
     // TRAINING & EVALUATION OVERVIEW
     // ============================================
+    const passRate = trainingStats.pass_rate || 0;
+
     document.getElementById('training-pass-rate').textContent = passRate + '%';
     document.getElementById('training-pass-bar').style.width = passRate + '%';
 
@@ -630,6 +635,7 @@ document.addEventListener('DOMContentLoaded', function () {
         notifications.forEach(notif => {
             let badgeColor = 'bg-blue-100 text-blue-800';
             let borderColor = 'border-blue-200';
+            let typeLabel = notif.type.replace(/_/g, ' ').toUpperCase();
 
             if (notif.priority === 'urgent') {
                 badgeColor = 'bg-red-100 text-red-800';
@@ -640,13 +646,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             html += `
-                <div class="p-3 bg-gray-50 rounded-lg border ${borderColor} hover:shadow-md transition-shadow">
+                <div class="p-3 bg-gray-50 rounded-lg border ${borderColor} hover:shadow-md transition-shadow cursor-pointer" onclick="window.location.href='${notif.action_url}'">
                     <div class="flex items-start gap-2">
-                        <span class="${badgeColor} text-xs px-2 py-1 rounded font-medium">${notif.type}</span>
+                        <span class="${badgeColor} text-xs px-2 py-1 rounded font-medium">${typeLabel}</span>
                         <div class="flex-1">
-                            <p class="text-sm font-semibold text-gray-800">${notif.name} - ${notif.position}</p>
+                            <p class="text-sm font-semibold text-gray-800">${notif.applicant_name} - ${notif.position}</p>
+                            <p class="text-xs text-gray-500">${notif.company}</p>
                             <p class="text-xs text-gray-600 mt-1">${notif.message}</p>
-                            ${notif.action ? `<button class="text-xs text-[#BD6F22] hover:underline mt-1">${notif.action}</button>` : ''}
+                            ${notif.action_text ? `<button class="text-xs text-[#BD6F22] hover:underline mt-1 font-medium">${notif.action_text}</button>` : ''}
                         </div>
                     </div>
                 </div>
@@ -662,75 +669,152 @@ document.addEventListener('DOMContentLoaded', function () {
     // FILTER & REPORT FUNCTIONALITY
     // ============================================
 
-    // Quick Filter Buttons
-    document.querySelectorAll('.quick-filter').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const filter = this.dataset.filter;
-            const today = new Date();
-            const startDate = document.getElementById('start_date');
-            const endDate = document.getElementById('end_date');
-
-            if (filter === 'this_week') {
-                const firstDay = new Date(today.setDate(today.getDate() - today.getDay()));
-                const lastDay = new Date(today.setDate(today.getDate() - today.getDay() + 6));
-                startDate.value = firstDay.toISOString().split('T')[0];
-                endDate.value = lastDay.toISOString().split('T')[0];
-            } else if (filter === 'this_month') {
-                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-                const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                startDate.value = firstDay.toISOString().split('T')[0];
-                endDate.value = lastDay.toISOString().split('T')[0];
-            } else if (filter === 'last_month') {
-                const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
-                startDate.value = firstDay.toISOString().split('T')[0];
-                endDate.value = lastDay.toISOString().split('T')[0];
-            }
-        });
-    });
-
-    // Apply Filters
-    document.getElementById('filterForm')?.addEventListener('submit', function(e) {
+    // Apply Filters (AJAX)
+    document.getElementById('filterForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
-        const formData = new FormData(this);
-        const params = new URLSearchParams();
+        const submitBtn = this.querySelector('button[type="submit"]');
 
-        for (const [key, value] of formData.entries()) {
-            if (value) params.append(key, value);
+        if (!submitBtn) return;
+
+        const originalText = submitBtn.innerHTML;
+
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `
+            <svg class="animate-spin h-4 w-4 inline-block mr-2" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 74 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Loading...
+        `;
+
+        try {
+            const formData = new FormData(this);
+            const response = await fetch('{{ route("hrStaff.filterApplications") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(Object.fromEntries(formData))
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showNotification('success', `Found ${result.count} applications matching the filters`);
+                console.log('Filtered results:', result.data);
+                // You can display the results in a modal or update a section of the page here
+            } else {
+                showNotification('error', 'Failed to filter applications');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('error', 'An error occurred while filtering');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
         }
-
-        // TODO: Implement actual filter functionality
-        console.log('Filters applied:', Object.fromEntries(params));
-        alert('Filter functionality will be implemented in the backend.');
     });
 
     // Generate PDF Report
     document.getElementById('generatePdfBtn')?.addEventListener('click', function() {
         const reportType = document.getElementById('report_type').value;
         const company = document.getElementById('company').value;
-        const position = document.getElementById('job_position').value;
-        const status = document.getElementById('eval_status').value;
-        const startDate = document.getElementById('start_date').value;
-        const endDate = document.getElementById('end_date').value;
+        const position = document.getElementById('position').value;
+        const evaluationStatus = document.getElementById('evaluation_status').value;
+        const year = document.getElementById('year').value;
+        const month = document.getElementById('month').value;
+        const minScore = document.getElementById('min_score').value;
+        const maxScore = document.getElementById('max_score').value;
 
         const params = new URLSearchParams();
         if (company) params.append('company', company);
         if (position) params.append('position', position);
-        if (status) params.append('status', status);
-        if (startDate) params.append('start_date', startDate);
-        if (endDate) params.append('end_date', endDate);
+        if (evaluationStatus) params.append('evaluation_status', evaluationStatus);
+        if (year) params.append('year', year);
+        if (month) params.append('month', month);
+        if (minScore) params.append('min_score', minScore);
+        if (maxScore) params.append('max_score', maxScore);
 
-        // TODO: Implement PDF generation route
-        const url = `/hrStaff/reports/${reportType}/pdf?` + params.toString();
-        console.log('Generating PDF:', url);
-        alert('PDF generation will be implemented. Report type: ' + reportType);
-        // window.open(url, '_blank');
+        // Convert report_type format: training_evaluation -> training-evaluation
+        const reportTypeFormatted = reportType.replace(/_/g, '-');
+        const url = `/hrStaff/reports/${reportTypeFormatted}/pdf?` + params.toString();
+
+        // Show loading notification
+        showNotification('info', 'Generating PDF report...');
+
+        // Open PDF in new window
+        window.open(url, '_blank');
     });
 
     // Reset Filters
     document.getElementById('resetFilters')?.addEventListener('click', function() {
         document.getElementById('filterForm').reset();
     });
+
+    // ============================================
+    // TOAST NOTIFICATION HELPER
+    // ============================================
+    function showNotification(type, message) {
+        // Create toast notification element
+        const toast = document.createElement('div');
+        toast.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out translate-x-0`;
+
+        // Set colors based on type
+        let bgColor, textColor, icon;
+        switch(type) {
+            case 'success':
+                bgColor = 'bg-green-500';
+                textColor = 'text-white';
+                icon = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>`;
+                break;
+            case 'error':
+                bgColor = 'bg-red-500';
+                textColor = 'text-white';
+                icon = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>`;
+                break;
+            case 'info':
+                bgColor = 'bg-blue-500';
+                textColor = 'text-white';
+                icon = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>`;
+                break;
+            default:
+                bgColor = 'bg-gray-700';
+                textColor = 'text-white';
+                icon = '';
+        }
+
+        toast.className += ` ${bgColor} ${textColor}`;
+        toast.innerHTML = `
+            <div class="flex items-center gap-3">
+                ${icon}
+                <span class="font-medium">${message}</span>
+            </div>
+        `;
+
+        document.body.appendChild(toast);
+
+        // Slide in animation
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+        }, 10);
+
+        // Remove after 4 seconds
+        setTimeout(() => {
+            toast.style.transform = 'translateX(400px)';
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 300);
+        }, 4000);
+    }
 });
 </script>
 

@@ -210,7 +210,7 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware(['auth', 'verified', 'rol
 
   Route::get('/archive', [ArchiveController::class, 'index'])->name('archive.index');
   Route::delete('/archive/bulk-destroy', [ArchiveController::class, 'bulkDestroy'])->name('archive.bulkDestroy');
-  Route::put('/archive/bulk-restore', [ArchiveController::class, 'bulkRestore'])->name('admin.archive.bulkRestore');
+  Route::put('/archive/bulk-restore', [ArchiveController::class, 'bulkRestore'])->name('archive.bulkRestore');
   Route::get('/archive/{id}', [ArchiveController::class, 'show'])->name('archive.show');
   Route::delete('/archive/{id}', [ArchiveController::class, 'destroy'])->name('archive.destroy');
 
@@ -290,34 +290,13 @@ Route::post('/reset-password', [\App\Http\Controllers\Auth\ForgotPasswordControl
 Route::prefix('hrStaff')->name('hrStaff.')->middleware(['auth', 'verified', 'role:hrStaff'])->group(function () {
 
     // Dashboard route
-    Route::get('/dashboard', function () {
-        // Count applicants in Interview Schedule (with scheduled interview)
-        $interviewScheduleCount = \App\Models\Application::whereIn('status', ['approved', 'for_interview', 'interviewed', 'declined'])
-            ->whereHas('interview', function($query) {
-                $query->whereNotNull('scheduled_at');
-            })
-            ->count();
+    Route::get('/dashboard', [DashboardChartController::class, 'hrStaffDashboard'])->name('dashboard');
 
-        // Count applicants in Training Schedule (with scheduled training)
-        $trainingScheduleCount = \App\Models\Application::whereIn('status', ['interviewed', 'scheduled_for_training'])
-            ->whereHas('trainingSchedule', function($query) {
-                $query->whereNotNull('start_date')
-                      ->whereNotNull('end_date');
-            })
-            ->count();
+    // Filter applications (AJAX)
+    Route::post('/filter-applications', [DashboardChartController::class, 'filterApplications'])->name('filterApplications');
 
-        // Count applicants pending for evaluation (has training schedule but no evaluation)
-        $pendingEvaluationCount = \App\Models\Application::where('status', 'scheduled_for_training')
-            ->whereHas('trainingSchedule')
-            ->whereDoesntHave('evaluation')
-            ->count();
-
-        return view('admins.hrStaff.dashboard', compact(
-            'interviewScheduleCount',
-            'trainingScheduleCount',
-            'pendingEvaluationCount'
-        ));
-    })->name('dashboard');
+    // Generate PDF reports
+    Route::get('/reports/{type}/pdf', [DashboardChartController::class, 'generateReport'])->name('reports.pdf');
 
     // Profile Management
     Route::get('/profile', [UserController::class, 'showHrStaff'])->name('profile');
