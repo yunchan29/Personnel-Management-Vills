@@ -183,7 +183,7 @@
             return $app->status->value === 'hired';
         });
         $pendingApplicants = $applications->filter(function($app) {
-            return in_array($app->status->value, ['trained', 'passed']);
+            return in_array($app->status->value, ['trained', 'passed_evaluation']);
         });
     @endphp
 
@@ -249,7 +249,7 @@
                     <span class="badge badge-pending">{{ strtoupper(str_replace('_', ' ', $application->status->value)) }}</span>
                 </td>
                 <td>
-                    @if($application->evaluation && $application->evaluation->result === 'passed')
+                    @if($application->evaluation && $application->evaluation->result === 'Passed')
                         <span class="badge badge-passed">READY</span>
                     @else
                         <span class="badge badge-pending">REVIEW</span>

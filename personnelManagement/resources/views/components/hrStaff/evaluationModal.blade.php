@@ -55,7 +55,7 @@
         </div>
 
         <!-- Result & Score -->
-        <input type="hidden" name="result" :value="result?.toLowerCase() ?? ''" />
+        <input type="hidden" name="result" :value="result ?? ''" />
 
         <div class="mb-6 text-right text-sm text-gray-700 font-semibold">
             Overall Score: <span x-text="(totalScore ?? 0) + '/100'"></span>

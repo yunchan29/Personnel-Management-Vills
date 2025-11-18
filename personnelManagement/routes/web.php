@@ -295,6 +295,9 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware(['auth', 'verified', 'rol
     // Filter applications (AJAX)
     Route::post('/filter-applications', [DashboardChartController::class, 'filterApplications'])->name('filterApplications');
 
+    // Get positions by company (AJAX)
+    Route::get('/get-positions-by-company', [DashboardChartController::class, 'getPositionsByCompany'])->name('getPositionsByCompany');
+
     // Generate PDF reports
     Route::get('/reports/{type}/pdf', [DashboardChartController::class, 'generateReport'])->name('reports.pdf');
 

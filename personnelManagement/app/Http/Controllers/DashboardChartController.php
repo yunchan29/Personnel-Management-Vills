@@ -11,6 +11,7 @@ use App\Models\TrainingSchedule;
 use App\Models\TrainingEvaluation;
 use App\Models\Job;
 use App\Models\User;
+use App\Models\ContractInvitation;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -276,8 +277,8 @@ class DashboardChartController extends Controller
             'in_progress' => (clone $trainingQuery)->where('status', 'in_progress')->count(),
             'completed' => (clone $trainingQuery)->where('status', 'completed')->count(),
             'total_evaluations' => $totalEvaluations,
-            'passed' => (clone $evalQuery)->where('result', 'passed')->count(),
-            'failed' => (clone $evalQuery)->where('result', 'failed')->count(),
+            'passed' => (clone $evalQuery)->where('result', 'Passed')->count(),
+            'failed' => (clone $evalQuery)->where('result', 'Failed')->count(),
             'avg_score' => $totalEvaluations > 0 ? round((clone $evalQuery)->avg('total_score'), 1) : 0,
         ];
 
@@ -637,7 +638,7 @@ class DashboardChartController extends Controller
             ->whereYear('created_at', now()->year);
 
         $totalCurrentMonth = (clone $currentMonthEvals)->count();
-        $passedCurrentMonth = (clone $currentMonthEvals)->where('result', 'passed')->count();
+        $passedCurrentMonth = (clone $currentMonthEvals)->where('result', 'Passed')->count();
 
         $averageEvaluationScore = round((clone $currentMonthEvals)->avg('total_score') ?? 0, 1);
         $passRateThisMonth = $totalCurrentMonth > 0 ? round(($passedCurrentMonth / $totalCurrentMonth) * 100, 1) : 0;
@@ -650,12 +651,25 @@ class DashboardChartController extends Controller
         // ==============================
         // PROMOTION PIPELINE STATS (All Time)
         // ==============================
+        // Include archived applications with evaluations (failed applicants are auto-archived)
         $pipelineStats = [
-            'evaluated' => Application::whereHas('evaluation')->where('is_archived', false)->count(),
+            'evaluated' => Application::whereHas('evaluation')
+                ->where(function($q) {
+                    $q->where('is_archived', false)->orWhereHas('evaluation');
+                })
+                ->count(),
             'passed' => Application::whereHas('evaluation', function($q) {
-                $q->where('result', 'passed');
-            })->whereIn('status', ['trained', 'passed'])->where('is_archived', false)->count(),
-            'invited' => Application::where('status', 'invited')->where('is_archived', false)->count(),
+                $q->where('result', 'Passed');
+            })
+                ->whereIn('status', ['trained', 'passed_evaluation'])
+                ->where(function($q) {
+                    $q->where('is_archived', false)->orWhereHas('evaluation');
+                })
+                ->count(),
+            'invited' => Application::whereHas('contractInvitations')
+                ->where('is_archived', false)
+                ->distinct()
+                ->count('id'),
             'promoted' => Application::where('status', 'hired')->count()
         ];
 
@@ -663,11 +677,11 @@ class DashboardChartController extends Controller
         // TRAINING & EVALUATION OVERVIEW (All Time)
         // ==============================
         $totalEvals = TrainingEvaluation::count();
-        $passedEvals = TrainingEvaluation::where('result', 'passed')->count();
+        $passedEvals = TrainingEvaluation::where('result', 'Passed')->count();
 
         $trainingStats = [
             'passed' => $passedEvals,
-            'failed' => TrainingEvaluation::where('result', 'failed')->count(),
+            'failed' => TrainingEvaluation::where('result', 'Failed')->count(),
             'total_evaluations' => $totalEvals,
             'avg_score' => round(TrainingEvaluation::avg('total_score') ?? 0, 1),
             'pass_rate' => $totalEvals > 0 ? round(($passedEvals / $totalEvals) * 100, 1) : 0,
@@ -708,6 +722,56 @@ class DashboardChartController extends Controller
         $companies = Job::distinct()->pluck('company_name')->filter()->values();
         $positions = Job::distinct()->pluck('job_title')->filter()->values();
 
+        // ==============================
+        // CONTRACT INVITATION STATISTICS
+        // ==============================
+        $invitationStats = [
+            // Total invitations sent (all time)
+            'total_sent' => ContractInvitation::count(),
+
+            // Invitations sent today
+            'sent_today' => ContractInvitation::whereDate('sent_at', now()->toDateString())->count(),
+
+            // Invitations sent this week
+            'sent_this_week' => ContractInvitation::whereBetween('sent_at', [
+                now()->startOfWeek(),
+                now()->endOfWeek()
+            ])->count(),
+
+            // Invitations sent this month
+            'sent_this_month' => ContractInvitation::whereMonth('sent_at', now()->month)
+                ->whereYear('sent_at', now()->year)
+                ->count(),
+
+            // Unique applicants with invitations
+            'unique_applicants' => ContractInvitation::distinct('application_id')->count('application_id'),
+
+            // Successful email deliveries
+            'emails_sent' => ContractInvitation::where('email_sent', true)->count(),
+
+            // Failed email deliveries
+            'emails_failed' => ContractInvitation::where('email_sent', false)->count(),
+
+            // Recent invitations (last 7 days)
+            'recent' => ContractInvitation::with(['application.user', 'application.job', 'sentBy'])
+                ->where('sent_at', '>=', now()->subDays(7))
+                ->orderBy('sent_at', 'desc')
+                ->limit(10)
+                ->get()
+                ->map(function($invitation) {
+                    return [
+                        'applicant_name' => $invitation->application->user->full_name ?? 'N/A',
+                        'position' => $invitation->application->job->job_title ?? 'N/A',
+                        'company' => $invitation->application->job->company_name ?? 'N/A',
+                        'scheduled_date' => $invitation->contract_date,
+                        'scheduled_time' => $invitation->contract_signing_time,
+                        'sent_at' => $invitation->sent_at->format('M d, Y H:i A'),
+                        'sent_by' => $invitation->sentBy->full_name ?? 'Unknown',
+                        'email_sent' => $invitation->email_sent
+                    ];
+                })
+        ];
+
         return view('admins.hrStaff.dashboard', compact(
             'interviewScheduleCount',
             'trainingScheduleCount',
@@ -717,6 +781,7 @@ class DashboardChartController extends Controller
             'promotionsThisMonth',
             'pipelineStats',
             'trainingStats',
+            'invitationStats',
             'years',
             'currentYear',
             'currentMonth',
@@ -842,15 +907,45 @@ class DashboardChartController extends Controller
     }
 
     /**
+     * Get positions by company (AJAX)
+     */
+    public function getPositionsByCompany(Request $request)
+    {
+        $company = $request->input('company');
+
+        if (!$company) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Company parameter is required',
+                'positions' => []
+            ], 400);
+        }
+
+        // Get distinct job positions for the selected company
+        $positions = Job::where('company_name', $company)
+            ->distinct()
+            ->pluck('job_title')
+            ->filter()
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'positions' => $positions
+        ]);
+    }
+
+    /**
      * Filter applications for HR Staff (AJAX)
      */
     public function filterApplications(Request $request)
     {
+        // Build filtered query
+        // NOTE: Include archived applications if they have evaluations (to show failed applicants)
         $query = Application::with(['job', 'user', 'evaluation'])
-            ->where('is_archived', false);
-
-        // Filter by report type (determines which applications to show)
-        $reportType = $request->input('report_type');
+            ->where(function($q) {
+                $q->where('is_archived', false)
+                  ->orWhereHas('evaluation'); // Include archived apps with evaluations (failed applicants)
+            });
 
         // Filter by company
         if ($request->filled('company')) {
@@ -870,11 +965,11 @@ class DashboardChartController extends Controller
         $evalStatus = $request->input('evaluation_status');
         if ($evalStatus === 'passed') {
             $query->whereHas('evaluation', function($q) {
-                $q->where('total_score', '>=', 70);
+                $q->where('result', 'Passed');
             });
         } elseif ($evalStatus === 'failed') {
             $query->whereHas('evaluation', function($q) {
-                $q->where('total_score', '<', 70);
+                $q->where('result', 'Failed');
             });
         } elseif ($evalStatus === 'pending') {
             $query->where('status', 'trained')->whereDoesntHave('evaluation');
@@ -900,8 +995,80 @@ class DashboardChartController extends Controller
             });
         }
 
-        // Execute query and format results
-        $applications = $query->get()->map(function($app) {
+        // Get filtered applications
+        $filteredApplications = $query->get();
+
+        // Calculate filtered pipeline stats
+        $filteredPipelineStats = [
+            'evaluated' => $filteredApplications->filter(function($app) {
+                return $app->evaluation !== null;
+            })->count(),
+            'passed' => $filteredApplications->filter(function($app) {
+                return $app->evaluation && $app->evaluation->result === 'Passed';
+            })->whereIn('status', ['trained', 'passed_evaluation'])->count(),
+            'invited' => $filteredApplications->where('status', 'invited')->count(),
+            'promoted' => $filteredApplications->where('status', 'hired')->count()
+        ];
+
+        // Get filtered evaluations for training stats
+        $filteredEvaluations = $filteredApplications->filter(function($app) {
+            return $app->evaluation !== null;
+        })->pluck('evaluation');
+
+        $totalFilteredEvals = $filteredEvaluations->count();
+        $passedFilteredEvals = $filteredEvaluations->where('result', 'Passed')->count();
+
+        // Calculate filtered training stats
+        $filteredTrainingStats = [
+            'passed' => $passedFilteredEvals,
+            'failed' => $filteredEvaluations->where('result', 'Failed')->count(),
+            'total_evaluations' => $totalFilteredEvals,
+            'avg_score' => $totalFilteredEvals > 0 ? round($filteredEvaluations->avg('total_score'), 1) : 0,
+            'pass_rate' => $totalFilteredEvals > 0 ? round(($passedFilteredEvals / $totalFilteredEvals) * 100, 1) : 0,
+            'avg_knowledge' => $totalFilteredEvals > 0 ? round($filteredEvaluations->avg('knowledge'), 1) : 0,
+            'avg_skill' => $totalFilteredEvals > 0 ? round($filteredEvaluations->avg('skill'), 1) : 0,
+            'avg_participation' => $totalFilteredEvals > 0 ? round($filteredEvaluations->avg('participation'), 1) : 0,
+            'avg_professionalism' => $totalFilteredEvals > 0 ? round($filteredEvaluations->avg('professionalism'), 1) : 0
+        ];
+
+        // Calculate OVERALL stats (all-time data for comparison)
+        // Include archived applications with evaluations (failed applicants are auto-archived)
+        $allApplications = Application::with(['evaluation'])
+            ->where(function($q) {
+                $q->where('is_archived', false)
+                  ->orWhereHas('evaluation');
+            })
+            ->get();
+
+        $overallPipelineStats = [
+            'evaluated' => $allApplications->filter(function($app) {
+                return $app->evaluation !== null;
+            })->count(),
+            'passed' => $allApplications->filter(function($app) {
+                return $app->evaluation && $app->evaluation->result === 'Passed';
+            })->whereIn('status', ['trained', 'passed_evaluation'])->count(),
+            'invited' => $allApplications->where('status', 'invited')->count(),
+            'promoted' => $allApplications->where('status', 'hired')->count()
+        ];
+
+        $allEvaluations = TrainingEvaluation::all();
+        $totalOverallEvals = $allEvaluations->count();
+        $passedOverallEvals = $allEvaluations->where('result', 'Passed')->count();
+
+        $overallTrainingStats = [
+            'passed' => $passedOverallEvals,
+            'failed' => $allEvaluations->where('result', 'Failed')->count(),
+            'total_evaluations' => $totalOverallEvals,
+            'avg_score' => $totalOverallEvals > 0 ? round($allEvaluations->avg('total_score'), 1) : 0,
+            'pass_rate' => $totalOverallEvals > 0 ? round(($passedOverallEvals / $totalOverallEvals) * 100, 1) : 0,
+            'avg_knowledge' => $totalOverallEvals > 0 ? round($allEvaluations->avg('knowledge'), 1) : 0,
+            'avg_skill' => $totalOverallEvals > 0 ? round($allEvaluations->avg('skill'), 1) : 0,
+            'avg_participation' => $totalOverallEvals > 0 ? round($allEvaluations->avg('participation'), 1) : 0,
+            'avg_professionalism' => $totalOverallEvals > 0 ? round($allEvaluations->avg('professionalism'), 1) : 0
+        ];
+
+        // Format application data for display
+        $applicationData = $filteredApplications->map(function($app) {
             return [
                 'id' => $app->id,
                 'applicant_name' => "{$app->user->first_name} {$app->user->last_name}",
@@ -916,19 +1083,34 @@ class DashboardChartController extends Controller
 
         return response()->json([
             'success' => true,
-            'count' => $applications->count(),
-            'data' => $applications
+            'count' => $filteredApplications->count(),
+            'filtered' => [
+                'pipelineStats' => $filteredPipelineStats,
+                'trainingStats' => $filteredTrainingStats
+            ],
+            'overall' => [
+                'pipelineStats' => $overallPipelineStats,
+                'trainingStats' => $overallTrainingStats
+            ],
+            'data' => $applicationData
         ]);
     }
 
     /**
      * Generate PDF report for HR Staff
+     * NOTE: By default, includes ALL evaluated applicants (both Passed and Failed)
+     * unless evaluation_status filter is specifically applied
      */
     public function generateReport(Request $request, $type)
     {
         // Build query based on filters (same logic as filterApplications)
+        // IMPORTANT: This query includes ALL applications (passed and failed) by default
+        // Include archived applications if they have evaluations (failed applicants are auto-archived)
         $query = Application::with(['job', 'user', 'evaluation', 'trainingSchedule'])
-            ->where('is_archived', false);
+            ->where(function($q) {
+                $q->where('is_archived', false)
+                  ->orWhereHas('evaluation'); // Include archived apps with evaluations (failed applicants)
+            });
 
         // Apply filters
         if ($request->filled('company')) {
@@ -943,15 +1125,17 @@ class DashboardChartController extends Controller
             });
         }
 
+        // Filter by evaluation status (optional)
+        // If not provided, includes ALL applicants with evaluations (Passed AND Failed)
         if ($request->filled('evaluation_status')) {
             $evalStatus = $request->input('evaluation_status');
             if ($evalStatus === 'passed') {
                 $query->whereHas('evaluation', function($q) {
-                    $q->where('total_score', '>=', 70);
+                    $q->where('result', 'Passed');
                 });
             } elseif ($evalStatus === 'failed') {
                 $query->whereHas('evaluation', function($q) {
-                    $q->where('total_score', '<', 70);
+                    $q->where('result', 'Failed');
                 });
             } elseif ($evalStatus === 'pending') {
                 $query->where('status', 'trained')->whereDoesntHave('evaluation');
@@ -989,18 +1173,28 @@ class DashboardChartController extends Controller
         // Generate statistics based on report type
         switch ($type) {
             case 'training-evaluation':
+                $evaluatedApps = $applications->filter(function($app) {
+                    return $app->evaluation !== null;
+                });
+
                 $reportData['stats'] = [
-                    'total_evaluations' => $applications->where('evaluation', '!=', null)->count(),
-                    'passed' => $applications->where('evaluation.result', 'passed')->count(),
-                    'failed' => $applications->where('evaluation.result', 'failed')->count(),
-                    'avg_score' => $applications->where('evaluation', '!=', null)->avg('evaluation.total_score')
+                    'total_evaluations' => $evaluatedApps->count(),
+                    'passed' => $evaluatedApps->filter(function($app) {
+                        return $app->evaluation && $app->evaluation->result === 'Passed';
+                    })->count(),
+                    'failed' => $evaluatedApps->filter(function($app) {
+                        return $app->evaluation && $app->evaluation->result === 'Failed';
+                    })->count(),
+                    'avg_score' => $evaluatedApps->count() > 0 ? $evaluatedApps->avg(function($app) {
+                        return $app->evaluation ? $app->evaluation->total_score : 0;
+                    }) : 0
                 ];
                 break;
 
             case 'employee-promotion':
                 $reportData['stats'] = [
                     'total_promoted' => $applications->where('status.value', 'hired')->count(),
-                    'pending_promotion' => $applications->whereIn('status.value', ['trained', 'passed'])->count()
+                    'pending_promotion' => $applications->whereIn('status.value', ['trained', 'passed_evaluation'])->count()
                 ];
                 break;
 

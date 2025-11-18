@@ -147,7 +147,7 @@
         <p>Personnel Management System - Vills</p>
     </div>
 
-    @if(!empty($filters) && (isset($filters['company']) || isset($filters['position']) || isset($filters['year']) || isset($filters['month'])))
+    @if(!empty($filters) && (isset($filters['company']) || isset($filters['position']) || isset($filters['year']) || isset($filters['month']) || isset($filters['evaluation_status'])))
     <div class="filters">
         <h3>Applied Filters:</h3>
         @if(isset($filters['company']) && $filters['company'])
@@ -155,6 +155,15 @@
         @endif
         @if(isset($filters['position']) && $filters['position'])
             <div class="filter-item"><span class="filter-label">Position:</span> {{ $filters['position'] }}</div>
+        @endif
+        @if(isset($filters['evaluation_status']) && $filters['evaluation_status'])
+            @php
+                $statusLabel = $filters['evaluation_status'] === 'passed' ? 'Passed (≥70)' :
+                              ($filters['evaluation_status'] === 'failed' ? 'Failed (<70)' : 'Pending Evaluation');
+            @endphp
+            <div class="filter-item"><span class="filter-label">Evaluation Status:</span> {{ $statusLabel }}</div>
+        @else
+            <div class="filter-item"><span class="filter-label">Evaluation Status:</span> All (Passed & Failed)</div>
         @endif
         @if(isset($filters['year']) && $filters['year'])
             <div class="filter-item"><span class="filter-label">Year:</span> {{ $filters['year'] }}</div>
@@ -172,6 +181,12 @@
         @if(isset($filters['max_score']) && $filters['max_score'])
             <div class="filter-item"><span class="filter-label">Max Score:</span> {{ $filters['max_score'] }}%</div>
         @endif
+    </div>
+    @else
+    <div class="filters">
+        <h3>Report Scope:</h3>
+        <div class="filter-item"><span class="filter-label">Evaluation Status:</span> All Applicants (Passed & Failed)</div>
+        <div class="filter-item"><span class="filter-label">Period:</span> All Time</div>
     </div>
     @endif
 
@@ -226,7 +241,7 @@
                         <span class="{{ $scoreClass }}">{{ number_format($score, 1) }}%</span>
                     </td>
                     <td>
-                        @if($application->evaluation->result === 'passed')
+                        @if($application->evaluation->result === 'Passed')
                             <span class="badge badge-passed">PASSED</span>
                         @else
                             <span class="badge badge-failed">FAILED</span>

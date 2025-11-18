@@ -54,7 +54,7 @@ public function performanceEvaluation(Request $request)
                   ->where(function ($q) {
                       $q->whereDoesntHave('evaluation') // no evaluation yet
                         ->orWhereHas('evaluation', function ($sub) {
-                            $sub->where('result', 'passed'); // passed evaluation
+                            $sub->where('result', 'Passed'); // passed evaluation
                         });
                   });
         })
@@ -66,7 +66,7 @@ public function performanceEvaluation(Request $request)
                   ->where(function ($q) {
                       $q->whereDoesntHave('evaluation')
                         ->orWhereHas('evaluation', function ($sub) {
-                            $sub->where('result', 'passed');
+                            $sub->where('result', 'Passed');
                         });
                   })
                   ->with(['user', 'evaluation']);
@@ -75,13 +75,14 @@ public function performanceEvaluation(Request $request)
 
     // Applicants: must have training schedule, not archived, correct status, and meet same eval conditions
     $applicants = Application::with(['user', 'job', 'evaluation', 'trainingSchedule'])
+        ->withCount('contractInvitations')
         ->whereHas('trainingSchedule')
         ->where('is_archived', false)
         ->whereIn('status', $evaluationStatusValues)
         ->where(function ($q) {
             $q->whereDoesntHave('evaluation')
               ->orWhereHas('evaluation', function ($sub) {
-                  $sub->where('result', 'passed');
+                  $sub->where('result', 'Passed');
               });
         })
         ->get();

@@ -26,7 +26,7 @@ class EvaluationController extends Controller
         'skill_score' => 'required|integer|min:0|max:30',
         'participation_score' => 'required|integer|min:0|max:20',
         'professionalism_score' => 'required|integer|min:0|max:20',
-        'result' => 'required|in:passed,failed',
+        'result' => 'required|in:Passed,Failed',
     ]);
 
     $application = Application::with('user', 'job')->findOrFail($applicationId);
@@ -60,7 +60,7 @@ class EvaluationController extends Controller
             ]
         );
 
-        if ($validated['result'] === 'passed') {
+        if ($validated['result'] === 'Passed') {
             // ✅ Update application status
             $application->setStatus(ApplicationStatus::PASSED_EVALUATION);
             $application->save();
@@ -88,7 +88,7 @@ class EvaluationController extends Controller
     });
 
     // ✅ Send email *after* transaction finishes
-    if ($validated['result'] === 'passed') {
+    if ($validated['result'] === 'Passed') {
         Mail::to($user->email)->send(
             new PassedEvaluationMail(
                 $user,

@@ -15,89 +15,194 @@
     <!-- Main Content Area (Left Side) -->
     <div class="flex-1 space-y-6">
 
-      <!-- Stat Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white shadow-md rounded-md p-4 text-center border border-gray-200 stat-card">
-          <div class="flex items-center justify-center mb-2">
-            <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+      <!-- Filter Status Indicator (hidden by default) -->
+      <div id="filter-status-indicator" class="bg-amber-50 border border-amber-200 rounded-lg p-4 hidden">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
             </svg>
+            <span class="text-sm font-medium text-amber-800">Filtered View Active:</span>
+            <span id="filter-status-text" class="text-sm text-amber-700"></span>
           </div>
-          <div class="text-3xl font-bold text-gray-800" id="pending-eval-count">{{ $pendingEvaluationCount ?? 0 }}</div>
-          <div class="text-sm mt-1 text-[#BD6F22] font-medium">Pending Evaluations</div>
-        </div>
-
-        <div class="bg-white shadow-md rounded-md p-4 text-center border border-gray-200 stat-card">
-          <div class="flex items-center justify-center mb-2">
-            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-          </div>
-          <div class="text-3xl font-bold text-gray-800" id="avg-eval-score">{{ $averageEvaluationScore ?? 0 }}</div>
-          <div class="text-sm mt-1 text-[#BD6F22] font-medium">Avg Evaluation Score</div>
-          <div class="text-xs text-gray-500 mt-1">This Month</div>
-        </div>
-
-        <div class="bg-white shadow-md rounded-md p-4 text-center border border-gray-200 stat-card">
-          <div class="flex items-center justify-center mb-2">
-            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-            </svg>
-          </div>
-          <div class="text-3xl font-bold text-gray-800" id="pass-rate-stat">{{ $passRateThisMonth ?? 0 }}<span class="text-xl">%</span></div>
-          <div class="text-sm mt-1 text-[#BD6F22] font-medium">Pass Rate</div>
-          <div class="text-xs text-gray-500 mt-1">This Month</div>
-        </div>
-
-        <div class="bg-white shadow-md rounded-md p-4 text-center border border-gray-200 stat-card">
-          <div class="flex items-center justify-center mb-2">
-            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-            </svg>
-          </div>
-          <div class="text-3xl font-bold text-gray-800" id="promotions-count">{{ $promotionsThisMonth ?? 0 }}</div>
-          <div class="text-sm mt-1 text-[#BD6F22] font-medium">Promotions</div>
-          <div class="text-xs text-gray-500 mt-1">This Month</div>
+          <button id="clear-filters-btn" class="text-sm text-amber-600 hover:text-amber-800 font-medium underline">
+            Clear Filters
+          </button>
         </div>
       </div>
 
-      <!-- Promotion Pipeline -->
+      <!-- Evaluation Pipeline -->
       <div class="bg-white p-6 rounded-md shadow-md border border-gray-200 mb-6">
         <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
           <svg class="w-5 h-5 mr-2 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          Promotion Pipeline
+          Evaluation Pipeline
         </h2>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <!-- Evaluated -->
           <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <div class="text-2xl font-bold text-blue-600" id="pipeline-evaluated">0</div>
+            <div class="flex items-baseline gap-2">
+              <div class="text-2xl font-bold text-blue-600" id="pipeline-evaluated">0</div>
+              <div class="text-xs text-gray-400 overall-value hidden">
+                (Overall: <span id="pipeline-evaluated-overall">0</span>)
+              </div>
+            </div>
             <div class="text-sm text-gray-600 mt-1">Evaluated</div>
             <div class="text-xs text-gray-500 mt-1">Total evaluated</div>
           </div>
 
           <!-- Passed -->
           <div class="bg-green-50 p-4 rounded-lg border border-green-200">
-            <div class="text-2xl font-bold text-green-600" id="pipeline-passed">0</div>
+            <div class="flex items-baseline gap-2">
+              <div class="text-2xl font-bold text-green-600" id="pipeline-passed">0</div>
+              <div class="text-xs text-gray-400 overall-value hidden">
+                (Overall: <span id="pipeline-passed-overall">0</span>)
+              </div>
+            </div>
             <div class="text-sm text-gray-600 mt-1">Passed</div>
             <div class="text-xs text-gray-500 mt-1">Ready for invitation</div>
           </div>
 
           <!-- Invited -->
           <div class="bg-amber-50 p-4 rounded-lg border border-amber-200">
-            <div class="text-2xl font-bold text-amber-600" id="pipeline-invited">0</div>
+            <div class="flex items-baseline gap-2">
+              <div class="text-2xl font-bold text-amber-600" id="pipeline-invited">0</div>
+              <div class="text-xs text-gray-400 overall-value hidden">
+                (Overall: <span id="pipeline-invited-overall">0</span>)
+              </div>
+            </div>
             <div class="text-sm text-gray-600 mt-1">Invited</div>
             <div class="text-xs text-gray-500 mt-1">Signing scheduled</div>
           </div>
 
           <!-- Promoted -->
           <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-            <div class="text-2xl font-bold text-purple-600" id="pipeline-promoted">0</div>
-            <div class="text-sm text-gray-600 mt-1">Promoted</div>
+            <div class="flex items-baseline gap-2">
+              <div class="text-2xl font-bold text-purple-600" id="pipeline-promoted">0</div>
+              <div class="text-xs text-gray-400 overall-value hidden">
+                (Overall: <span id="pipeline-promoted-overall">0</span>)
+              </div>
+            </div>
+            <div class="text-sm text-gray-600 mt-1">Hired</div>
             <div class="text-xs text-gray-500 mt-1">Now employees</div>
           </div>
+        </div>
+      </div>
+
+      <!-- Contract Invitation Statistics -->
+      <div class="bg-white p-6 rounded-md shadow-md border border-gray-200 mb-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+          <svg class="w-5 h-5 mr-2 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          Contract Signing Invitations
+        </h2>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+          <!-- Today -->
+          <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+            <div class="text-2xl font-bold text-green-600">{{ $invitationStats['sent_today'] ?? 0 }}</div>
+            <div class="text-sm text-gray-600 mt-1">Sent Today</div>
+            <div class="text-xs text-gray-500 mt-1">{{ now()->format('M d') }}</div>
+          </div>
+
+          <!-- This Week -->
+          <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <div class="text-2xl font-bold text-blue-600">{{ $invitationStats['sent_this_week'] ?? 0 }}</div>
+            <div class="text-sm text-gray-600 mt-1">This Week</div>
+            <div class="text-xs text-gray-500 mt-1">{{ now()->startOfWeek()->format('M d') }} - {{ now()->endOfWeek()->format('M d') }}</div>
+          </div>
+
+          <!-- This Month -->
+          <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+            <div class="text-2xl font-bold text-purple-600">{{ $invitationStats['sent_this_month'] ?? 0 }}</div>
+            <div class="text-sm text-gray-600 mt-1">This Month</div>
+            <div class="text-xs text-gray-500 mt-1">{{ now()->format('F Y') }}</div>
+          </div>
+
+          <!-- Total -->
+          <div class="bg-amber-50 p-4 rounded-lg border border-amber-200">
+            <div class="text-2xl font-bold text-amber-600">{{ $invitationStats['total_sent'] ?? 0 }}</div>
+            <div class="text-sm text-gray-600 mt-1">Total Sent</div>
+            <div class="text-xs text-gray-500 mt-1">All time</div>
+          </div>
+        </div>
+
+        <!-- Email Delivery Stats -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div class="bg-teal-50 p-3 rounded-lg border border-teal-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xl font-bold text-teal-600">{{ $invitationStats['emails_sent'] ?? 0 }}</div>
+                <div class="text-xs text-gray-600">Emails Delivered</div>
+              </div>
+              <svg class="w-8 h-8 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="bg-red-50 p-3 rounded-lg border border-red-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xl font-bold text-red-600">{{ $invitationStats['emails_failed'] ?? 0 }}</div>
+                <div class="text-xs text-gray-600">Email Failures</div>
+              </div>
+              <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Invitations -->
+        <div class="mt-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+            <svg class="w-4 h-4 mr-1 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Recent Invitations (Last 7 Days)
+          </h3>
+
+          @if(isset($invitationStats['recent']) && count($invitationStats['recent']) > 0)
+          <div class="bg-gray-50 rounded-lg p-3 max-h-64 overflow-y-auto">
+            <div class="space-y-2">
+              @foreach($invitationStats['recent'] as $invitation)
+              <div class="bg-white p-3 rounded border border-gray-200 hover:shadow-sm transition-shadow">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                      <span class="font-semibold text-sm text-gray-800">{{ $invitation['applicant_name'] }}</span>
+                      @if($invitation['email_sent'])
+                        <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">✓ Sent</span>
+                      @else
+                        <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">✗ Failed</span>
+                      @endif
+                    </div>
+                    <div class="text-xs text-gray-600 mt-1">{{ $invitation['position'] }} • {{ $invitation['company'] }}</div>
+                    <div class="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                      <span>📅 {{ $invitation['scheduled_date'] }} at {{ $invitation['scheduled_time'] }}</span>
+                    </div>
+                  </div>
+                  <div class="text-right ml-2">
+                    <div class="text-xs text-gray-500">{{ $invitation['sent_at'] }}</div>
+                    <div class="text-xs text-gray-400">by {{ $invitation['sent_by'] }}</div>
+                  </div>
+                </div>
+              </div>
+              @endforeach
+            </div>
+          </div>
+          @else
+          <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <svg class="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <p class="text-sm text-gray-500">No invitations sent in the last 7 days</p>
+          </div>
+          @endif
         </div>
       </div>
 
@@ -116,7 +221,12 @@
           <div class="mb-4">
             <div class="flex justify-between items-center mb-2">
               <span class="text-sm font-medium text-gray-700">Pass Rate</span>
-              <span class="text-lg font-bold text-green-600" id="training-pass-rate">0%</span>
+              <div class="flex items-baseline gap-2">
+                <span class="text-lg font-bold text-green-600" id="training-pass-rate">0%</span>
+                <span class="text-xs text-gray-400 overall-value hidden">
+                  (Overall: <span id="training-pass-rate-overall">0%</span>)
+                </span>
+              </div>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-3">
               <div class="bg-green-500 h-3 rounded-full transition-all duration-500" id="training-pass-bar" style="width: 0%"></div>
@@ -127,7 +237,12 @@
           <div class="mb-4">
             <div class="flex justify-between items-center mb-2">
               <span class="text-sm font-medium text-gray-700">Average Score</span>
-              <span class="text-lg font-bold text-[#BD6F22]" id="avg-score">0</span>
+              <div class="flex items-baseline gap-2">
+                <span class="text-lg font-bold text-[#BD6F22]" id="avg-score">0</span>
+                <span class="text-xs text-gray-400 overall-value hidden">
+                  (Overall: <span id="avg-score-overall">0</span>)
+                </span>
+              </div>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-3">
               <div class="bg-[#BD6F22] h-3 rounded-full transition-all duration-500" id="avg-score-bar" style="width: 0%"></div>
@@ -137,11 +252,21 @@
           <!-- Stats Grid -->
           <div class="grid grid-cols-2 gap-2 mt-4">
             <div class="bg-green-50 p-2 rounded text-center border border-green-200">
-              <div class="text-xl font-bold text-green-600" id="training-passed">0</div>
+              <div class="flex items-baseline justify-center gap-1">
+                <div class="text-xl font-bold text-green-600" id="training-passed">0</div>
+                <div class="text-xs text-gray-400 overall-value hidden">
+                  (<span id="training-passed-overall">0</span>)
+                </div>
+              </div>
               <div class="text-xs text-gray-600">Passed</div>
             </div>
             <div class="bg-red-50 p-2 rounded text-center border border-red-200">
-              <div class="text-xl font-bold text-red-600" id="training-failed">0</div>
+              <div class="flex items-baseline justify-center gap-1">
+                <div class="text-xl font-bold text-red-600" id="training-failed">0</div>
+                <div class="text-xs text-gray-400 overall-value hidden">
+                  (<span id="training-failed-overall">0</span>)
+                </div>
+              </div>
               <div class="text-xs text-gray-600">Failed</div>
             </div>
           </div>
@@ -162,7 +287,12 @@
             <div>
               <div class="flex justify-between items-center mb-1">
                 <span class="text-xs font-medium text-gray-700">Knowledge & Understanding</span>
-                <span class="text-sm font-bold text-blue-600"><span id="knowledge-score">0</span>/30</span>
+                <div class="flex items-baseline gap-1">
+                  <span class="text-sm font-bold text-blue-600"><span id="knowledge-score">0</span>/30</span>
+                  <span class="text-xs text-gray-400 overall-value hidden">
+                    (<span id="knowledge-score-overall">0</span>)
+                  </span>
+                </div>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
                 <div class="bg-blue-500 h-2 rounded-full transition-all duration-500" id="knowledge-bar" style="width: 0%"></div>
@@ -173,7 +303,12 @@
             <div>
               <div class="flex justify-between items-center mb-1">
                 <span class="text-xs font-medium text-gray-700">Skill Application</span>
-                <span class="text-sm font-bold text-indigo-600"><span id="skill-score">0</span>/30</span>
+                <div class="flex items-baseline gap-1">
+                  <span class="text-sm font-bold text-indigo-600"><span id="skill-score">0</span>/30</span>
+                  <span class="text-xs text-gray-400 overall-value hidden">
+                    (<span id="skill-score-overall">0</span>)
+                  </span>
+                </div>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
                 <div class="bg-indigo-500 h-2 rounded-full transition-all duration-500" id="skill-bar" style="width: 0%"></div>
@@ -184,7 +319,12 @@
             <div>
               <div class="flex justify-between items-center mb-1">
                 <span class="text-xs font-medium text-gray-700">Participation & Engagement</span>
-                <span class="text-sm font-bold text-purple-600"><span id="participation-score">0</span>/20</span>
+                <div class="flex items-baseline gap-1">
+                  <span class="text-sm font-bold text-purple-600"><span id="participation-score">0</span>/20</span>
+                  <span class="text-xs text-gray-400 overall-value hidden">
+                    (<span id="participation-score-overall">0</span>)
+                  </span>
+                </div>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
                 <div class="bg-purple-500 h-2 rounded-full transition-all duration-500" id="participation-bar" style="width: 0%"></div>
@@ -195,7 +335,12 @@
             <div>
               <div class="flex justify-between items-center mb-1">
                 <span class="text-xs font-medium text-gray-700">Professionalism & Attitude</span>
-                <span class="text-sm font-bold text-pink-600"><span id="professionalism-score">0</span>/20</span>
+                <div class="flex items-baseline gap-1">
+                  <span class="text-sm font-bold text-pink-600"><span id="professionalism-score">0</span>/20</span>
+                  <span class="text-xs text-gray-400 overall-value hidden">
+                    (<span id="professionalism-score-overall">0</span>)
+                  </span>
+                </div>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
                 <div class="bg-pink-500 h-2 rounded-full transition-all duration-500" id="professionalism-bar" style="width: 0%"></div>
@@ -207,7 +352,12 @@
           <div class="mt-4 p-3 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border border-orange-200">
             <div class="flex items-center justify-between">
               <span class="text-sm font-medium text-gray-700">Average Total</span>
-              <span class="text-2xl font-bold text-[#BD6F22]"><span id="total-score-display">0</span>/100</span>
+              <div class="flex items-baseline gap-1">
+                <span class="text-2xl font-bold text-[#BD6F22]"><span id="total-score-display">0</span>/100</span>
+                <span class="text-xs text-gray-400 overall-value hidden">
+                  (<span id="total-score-display-overall">0</span>)
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -272,24 +422,14 @@
                 </svg>
               </div>
               <div>
-                <h2 class="text-xl font-bold text-gray-900">Filter & Reports</h2>
-                <p class="text-sm text-gray-600">Generate insights</p>
+                <h2 class="text-xl font-bold text-gray-900">Training Evaluation Report</h2>
+                <p class="text-sm text-gray-600">Filter and generate report</p>
               </div>
             </div>
           </div>
 
           <div class="p-6">
             <form id="filterForm" class="space-y-4">
-              <!-- Report Type -->
-              <div>
-                <label for="report_type" class="block text-sm font-medium text-gray-700 mb-2">Report Type</label>
-                <select name="report_type" id="report_type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
-                  <option value="training_evaluation">Training Evaluation Report</option>
-                  <option value="employee_promotion">Employee Promotion Report</option>
-                  <option value="requirements_status">Requirements Status Report</option>
-                </select>
-              </div>
-
               <!-- Company Filter -->
               <div>
                 <label for="company" class="block text-sm font-medium text-gray-700 mb-2">Company</label>
@@ -425,72 +565,6 @@
     transform: translateY(-3px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   }
-
-  .calendar {
-    width: 100%;
-    max-width: 100%;
-    text-align: center;
-  }
-
-  .calendar-header {
-    font-weight: bold;
-    margin-bottom: 1rem;
-    color: #BD6F22;
-    font-size: 1rem;
-  }
-
-  .calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.3rem;
-    text-align: center;
-  }
-
-  .calendar-day,
-  .calendar-date {
-    font-size: 0.85rem;
-  }
-
-  .calendar-day {
-    font-weight: bold;
-    color: #555;
-    padding: 0.3rem;
-  }
-
-  .calendar-date {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
-    line-height: 2rem;
-    margin: auto;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-  }
-
-  .calendar-date:hover {
-    background-color: #f2f2f2;
-  }
-
-  .calendar-date.current-date.today-outline {
-    background-color: white;
-    color: #BD6F22;
-    border: 2px solid #BD6F22;
-    font-weight: bold;
-    animation: pulse-outline 2s infinite;
-  }
-
-  .current-date {
-    background-color: #BD6F22;
-    color: white;
-  }
-
-  .calendar-date.today-outline {
-    border: 2px solid #BD6F22;
-    color: #BD6F22;
-  }
 </style>
 
 
@@ -521,47 +595,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const notifications = @json($notifications ?? []);
 
     // ============================================
-    // CALENDAR GENERATION
-    // ============================================
-    const calendar = document.getElementById('calendar');
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    const currentDate = now.getDate();
-
-    const monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-
-    const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-
-    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-    const lastDate = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-    let html = `
-      <div class="calendar mx-auto">
-        <div class="calendar-header">${now.toLocaleDateString('en-US', { weekday: 'short' })}, ${monthNames[currentMonth]} ${currentDate}</div>
-        <div class="calendar-grid">
-          ${dayNames.map(day => `<div class="calendar-day">${day}</div>`).join('')}
-    `;
-
-    for (let i = 0; i < firstDay; i++) {
-      html += `<div></div>`;
-    }
-
-    for (let i = 1; i <= lastDate; i++) {
-      let classList = 'calendar-date';
-      if (i === currentDate) {
-        classList += ' current-date today-outline';
-      }
-      html += `<div class="${classList}">${i}</div>`;
-    }
-
-    html += '</div></div>';
-    calendar.innerHTML = html;
-
-    // ============================================
     // TRAINING & EVALUATION OVERVIEW
     // ============================================
     const passRate = trainingStats.pass_rate || 0;
@@ -580,28 +613,28 @@ document.addEventListener('DOMContentLoaded', function () {
     // ============================================
     // Knowledge & Understanding (out of 30)
     const knowledgePercent = trainingStats.avg_knowledge > 0
-        ? ((trainingStats.avg_knowledge / 30) * 100).toFixed(1)
+        ? Math.min(((trainingStats.avg_knowledge / 30) * 100), 100).toFixed(1)
         : 0;
     document.getElementById('knowledge-score').textContent = (trainingStats.avg_knowledge || 0).toFixed(1);
     document.getElementById('knowledge-bar').style.width = knowledgePercent + '%';
 
     // Skill Application (out of 30)
     const skillPercent = trainingStats.avg_skill > 0
-        ? ((trainingStats.avg_skill / 30) * 100).toFixed(1)
+        ? Math.min(((trainingStats.avg_skill / 30) * 100), 100).toFixed(1)
         : 0;
     document.getElementById('skill-score').textContent = (trainingStats.avg_skill || 0).toFixed(1);
     document.getElementById('skill-bar').style.width = skillPercent + '%';
 
     // Participation & Engagement (out of 20)
     const participationPercent = trainingStats.avg_participation > 0
-        ? ((trainingStats.avg_participation / 20) * 100).toFixed(1)
+        ? Math.min(((trainingStats.avg_participation / 20) * 100), 100).toFixed(1)
         : 0;
     document.getElementById('participation-score').textContent = (trainingStats.avg_participation || 0).toFixed(1);
     document.getElementById('participation-bar').style.width = participationPercent + '%';
 
     // Professionalism & Attitude (out of 20)
     const professionalismPercent = trainingStats.avg_professionalism > 0
-        ? ((trainingStats.avg_professionalism / 20) * 100).toFixed(1)
+        ? Math.min(((trainingStats.avg_professionalism / 20) * 100), 100).toFixed(1)
         : 0;
     document.getElementById('professionalism-score').textContent = (trainingStats.avg_professionalism || 0).toFixed(1);
     document.getElementById('professionalism-bar').style.width = professionalismPercent + '%';
@@ -666,6 +699,110 @@ document.addEventListener('DOMContentLoaded', function () {
     renderNotifications();
 
     // ============================================
+    // UPDATE DASHBOARD STATS FUNCTION
+    // ============================================
+    function updateDashboardStats(filteredStats, overallStats, filterActive = false) {
+        // Show/hide filter status indicator
+        const filterIndicator = document.getElementById('filter-status-indicator');
+        const filterStatusText = document.getElementById('filter-status-text');
+        const overallValues = document.querySelectorAll('.overall-value');
+
+        if (filterActive) {
+            // Build filter text
+            const company = document.getElementById('company')?.value;
+            const position = document.getElementById('position')?.value;
+            const evalStatus = document.getElementById('evaluation_status')?.value;
+            const year = document.getElementById('year')?.value;
+            const month = document.getElementById('month')?.value;
+
+            let filterText = [];
+            if (company) filterText.push(company);
+            if (position) filterText.push(position);
+            if (evalStatus) {
+                const statusLabel = evalStatus === 'passed' ? 'Passed' :
+                                  evalStatus === 'failed' ? 'Failed' : 'Pending';
+                filterText.push(statusLabel);
+            }
+            if (year && month) {
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                filterText.push(`${months[month - 1]} ${year}`);
+            } else if (year) {
+                filterText.push(year);
+            }
+
+            filterStatusText.textContent = filterText.join(' • ');
+            filterIndicator.classList.remove('hidden');
+            overallValues.forEach(el => el.classList.remove('hidden'));
+        } else {
+            filterIndicator.classList.add('hidden');
+            overallValues.forEach(el => el.classList.add('hidden'));
+        }
+
+        // Update Evaluation Pipeline
+        document.getElementById('pipeline-evaluated').textContent = filteredStats.pipelineStats.evaluated;
+        document.getElementById('pipeline-passed').textContent = filteredStats.pipelineStats.passed;
+        document.getElementById('pipeline-invited').textContent = filteredStats.pipelineStats.invited;
+        document.getElementById('pipeline-promoted').textContent = filteredStats.pipelineStats.promoted;
+
+        if (filterActive && overallStats) {
+            document.getElementById('pipeline-evaluated-overall').textContent = overallStats.pipelineStats.evaluated;
+            document.getElementById('pipeline-passed-overall').textContent = overallStats.pipelineStats.passed;
+            document.getElementById('pipeline-invited-overall').textContent = overallStats.pipelineStats.invited;
+            document.getElementById('pipeline-promoted-overall').textContent = overallStats.pipelineStats.promoted;
+        }
+
+        // Update Training & Evaluation Overview
+        document.getElementById('training-pass-rate').textContent = filteredStats.trainingStats.pass_rate + '%';
+        document.getElementById('training-pass-bar').style.width = filteredStats.trainingStats.pass_rate + '%';
+        document.getElementById('avg-score').textContent = filteredStats.trainingStats.avg_score;
+        document.getElementById('avg-score-bar').style.width = filteredStats.trainingStats.avg_score + '%';
+        document.getElementById('training-passed').textContent = filteredStats.trainingStats.passed;
+        document.getElementById('training-failed').textContent = filteredStats.trainingStats.failed;
+
+        if (filterActive && overallStats) {
+            document.getElementById('training-pass-rate-overall').textContent = overallStats.trainingStats.pass_rate + '%';
+            document.getElementById('avg-score-overall').textContent = overallStats.trainingStats.avg_score;
+            document.getElementById('training-passed-overall').textContent = overallStats.trainingStats.passed;
+            document.getElementById('training-failed-overall').textContent = overallStats.trainingStats.failed;
+        }
+
+        // Update Evaluation Score Breakdown
+        const knowledgePercent = filteredStats.trainingStats.avg_knowledge > 0
+            ? Math.min(((filteredStats.trainingStats.avg_knowledge / 30) * 100), 100).toFixed(1)
+            : 0;
+        document.getElementById('knowledge-score').textContent = (filteredStats.trainingStats.avg_knowledge || 0).toFixed(1);
+        document.getElementById('knowledge-bar').style.width = knowledgePercent + '%';
+
+        const skillPercent = filteredStats.trainingStats.avg_skill > 0
+            ? Math.min(((filteredStats.trainingStats.avg_skill / 30) * 100), 100).toFixed(1)
+            : 0;
+        document.getElementById('skill-score').textContent = (filteredStats.trainingStats.avg_skill || 0).toFixed(1);
+        document.getElementById('skill-bar').style.width = skillPercent + '%';
+
+        const participationPercent = filteredStats.trainingStats.avg_participation > 0
+            ? Math.min(((filteredStats.trainingStats.avg_participation / 20) * 100), 100).toFixed(1)
+            : 0;
+        document.getElementById('participation-score').textContent = (filteredStats.trainingStats.avg_participation || 0).toFixed(1);
+        document.getElementById('participation-bar').style.width = participationPercent + '%';
+
+        const professionalismPercent = filteredStats.trainingStats.avg_professionalism > 0
+            ? Math.min(((filteredStats.trainingStats.avg_professionalism / 20) * 100), 100).toFixed(1)
+            : 0;
+        document.getElementById('professionalism-score').textContent = (filteredStats.trainingStats.avg_professionalism || 0).toFixed(1);
+        document.getElementById('professionalism-bar').style.width = professionalismPercent + '%';
+
+        document.getElementById('total-score-display').textContent = (filteredStats.trainingStats.avg_score || 0).toFixed(1);
+
+        if (filterActive && overallStats) {
+            document.getElementById('knowledge-score-overall').textContent = (overallStats.trainingStats.avg_knowledge || 0).toFixed(1);
+            document.getElementById('skill-score-overall').textContent = (overallStats.trainingStats.avg_skill || 0).toFixed(1);
+            document.getElementById('participation-score-overall').textContent = (overallStats.trainingStats.avg_participation || 0).toFixed(1);
+            document.getElementById('professionalism-score-overall').textContent = (overallStats.trainingStats.avg_professionalism || 0).toFixed(1);
+            document.getElementById('total-score-display-overall').textContent = (overallStats.trainingStats.avg_score || 0).toFixed(1);
+        }
+    }
+
+    // ============================================
     // FILTER & REPORT FUNCTIONALITY
     // ============================================
 
@@ -685,8 +822,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 74 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            Loading...
+            Updating...
         `;
+
+        // Add loading state to dashboard sections
+        const dashboardSections = document.querySelectorAll('#pipeline-evaluated, #pipeline-passed, #pipeline-invited, #pipeline-promoted, #training-pass-rate, #avg-score, #training-passed, #training-failed, #knowledge-score, #skill-score, #participation-score, #professionalism-score, #total-score-display');
+        dashboardSections.forEach(el => el.style.opacity = '0.5');
 
         try {
             const formData = new FormData(this);
@@ -703,9 +844,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const result = await response.json();
 
             if (result.success) {
-                showNotification('success', `Found ${result.count} applications matching the filters`);
-                console.log('Filtered results:', result.data);
-                // You can display the results in a modal or update a section of the page here
+                // Update dashboard with filtered stats
+                updateDashboardStats(result.filtered, result.overall, true);
+
+                showNotification('success', `Showing ${result.count} applications`);
+                console.log('Filtered results:', result);
             } else {
                 showNotification('error', 'Failed to filter applications');
             }
@@ -715,43 +858,165 @@ document.addEventListener('DOMContentLoaded', function () {
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
+            dashboardSections.forEach(el => el.style.opacity = '1');
         }
     });
 
     // Generate PDF Report
     document.getElementById('generatePdfBtn')?.addEventListener('click', function() {
-        const reportType = document.getElementById('report_type').value;
-        const company = document.getElementById('company').value;
-        const position = document.getElementById('position').value;
-        const evaluationStatus = document.getElementById('evaluation_status').value;
-        const year = document.getElementById('year').value;
-        const month = document.getElementById('month').value;
-        const minScore = document.getElementById('min_score').value;
-        const maxScore = document.getElementById('max_score').value;
+        try {
+            console.log('=== PDF Report Generation Started ===');
 
-        const params = new URLSearchParams();
-        if (company) params.append('company', company);
-        if (position) params.append('position', position);
-        if (evaluationStatus) params.append('evaluation_status', evaluationStatus);
-        if (year) params.append('year', year);
-        if (month) params.append('month', month);
-        if (minScore) params.append('min_score', minScore);
-        if (maxScore) params.append('max_score', maxScore);
+            // Hardcoded to training-evaluation report only
+            const reportType = 'training-evaluation';
+            const company = document.getElementById('company').value;
+            const position = document.getElementById('position').value;
+            const evaluationStatus = document.getElementById('evaluation_status').value;
+            const year = document.getElementById('year').value;
+            const month = document.getElementById('month').value;
+            const minScore = document.getElementById('min_score').value;
+            const maxScore = document.getElementById('max_score').value;
 
-        // Convert report_type format: training_evaluation -> training-evaluation
-        const reportTypeFormatted = reportType.replace(/_/g, '-');
-        const url = `/hrStaff/reports/${reportTypeFormatted}/pdf?` + params.toString();
+            console.log('Report Type:', reportType);
+            console.log('Filters:', { company, position, evaluationStatus, year, month, minScore, maxScore });
 
-        // Show loading notification
-        showNotification('info', 'Generating PDF report...');
+            const params = new URLSearchParams();
+            if (company) params.append('company', company);
+            if (position) params.append('position', position);
+            if (evaluationStatus) params.append('evaluation_status', evaluationStatus);
+            if (year) params.append('year', year);
+            if (month) params.append('month', month);
+            if (minScore) params.append('min_score', minScore);
+            if (maxScore) params.append('max_score', maxScore);
 
-        // Open PDF in new window
-        window.open(url, '_blank');
+            // Report type is hardcoded as training-evaluation
+            const url = `/hrStaff/reports/${reportType}/pdf?` + params.toString();
+
+            console.log('Generated URL:', url);
+            console.log('Query Parameters:', params.toString());
+
+            // Show loading notification
+            showNotification('info', 'Generating PDF report...');
+
+            // Open PDF in new window and check if popup was blocked
+            const newWindow = window.open(url, '_blank');
+
+            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                // Popup was blocked
+                console.error('Popup blocked by browser');
+                showNotification('error', 'Popup blocked! Please allow popups for this site and try again.');
+
+                // Fallback: Try to open in same window
+                console.log('Attempting fallback: opening in same window');
+                window.location.href = url;
+            } else {
+                console.log('PDF window opened successfully');
+                console.log('=== PDF Report Generation Completed ===');
+            }
+        } catch (error) {
+            console.error('Error generating PDF report:', error);
+            console.error('Error stack:', error.stack);
+            showNotification('error', 'Failed to generate PDF report: ' + error.message);
+            console.log('=== PDF Report Generation Failed ===');
+        }
     });
 
-    // Reset Filters
-    document.getElementById('resetFilters')?.addEventListener('click', function() {
+    // Function to reset filters and restore overall stats
+    function resetToOverallStats() {
+        // Reset form
         document.getElementById('filterForm').reset();
+        // Reset position dropdown to show all positions
+        loadPositions('');
+
+        // Get overall stats (from initial page load)
+        const overallPipelineStats = {
+            evaluated: {{ $pipelineStats['evaluated'] ?? 0 }},
+            passed: {{ $pipelineStats['passed'] ?? 0 }},
+            invited: {{ $pipelineStats['invited'] ?? 0 }},
+            promoted: {{ $pipelineStats['promoted'] ?? 0 }}
+        };
+
+        const overallTrainingStats = {
+            passed: {{ $trainingStats['passed'] ?? 0 }},
+            failed: {{ $trainingStats['failed'] ?? 0 }},
+            total_evaluations: {{ $trainingStats['total_evaluations'] ?? 0 }},
+            avg_score: {{ $trainingStats['avg_score'] ?? 0 }},
+            pass_rate: {{ $trainingStats['pass_rate'] ?? 0 }},
+            avg_knowledge: {{ $trainingStats['avg_knowledge'] ?? 0 }},
+            avg_skill: {{ $trainingStats['avg_skill'] ?? 0 }},
+            avg_participation: {{ $trainingStats['avg_participation'] ?? 0 }},
+            avg_professionalism: {{ $trainingStats['avg_professionalism'] ?? 0 }}
+        };
+
+        // Update dashboard back to overall stats (no filter active)
+        updateDashboardStats(
+            { pipelineStats: overallPipelineStats, trainingStats: overallTrainingStats },
+            null,
+            false
+        );
+
+        showNotification('info', 'Filters cleared - showing all data');
+    }
+
+    // Reset Filters button
+    document.getElementById('resetFilters')?.addEventListener('click', resetToOverallStats);
+
+    // Clear Filters button in filter status indicator
+    document.getElementById('clear-filters-btn')?.addEventListener('click', resetToOverallStats);
+
+    // ============================================
+    // DYNAMIC POSITION DROPDOWN BASED ON COMPANY
+    // ============================================
+    const companySelect = document.getElementById('company');
+    const positionSelect = document.getElementById('position');
+
+    // Store all positions for reference
+    const allPositions = @json($positions ?? []);
+
+    // Function to load positions based on selected company
+    function loadPositions(company) {
+        // Clear current options except the "All Positions" option
+        positionSelect.innerHTML = '<option value="">All Positions</option>';
+
+        if (!company) {
+            // If no company selected, show all positions
+            allPositions.forEach(position => {
+                const option = document.createElement('option');
+                option.value = position;
+                option.textContent = position;
+                positionSelect.appendChild(option);
+            });
+        } else {
+            // Fetch positions for the selected company
+            fetch(`{{ route('hrStaff.getPositionsByCompany') }}?company=${encodeURIComponent(company)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.positions) {
+                        data.positions.forEach(position => {
+                            const option = document.createElement('option');
+                            option.value = position;
+                            option.textContent = position;
+                            positionSelect.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching positions:', error);
+                    // Fallback to all positions on error
+                    allPositions.forEach(position => {
+                        const option = document.createElement('option');
+                        option.value = position;
+                        option.textContent = position;
+                        positionSelect.appendChild(option);
+                    });
+                });
+        }
+    }
+
+    // Listen for company selection change
+    companySelect?.addEventListener('change', function() {
+        const selectedCompany = this.value;
+        loadPositions(selectedCompany);
     });
 
     // ============================================

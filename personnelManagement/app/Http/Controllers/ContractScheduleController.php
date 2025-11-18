@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Application;
+use App\Models\ContractInvitation;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
@@ -18,7 +19,13 @@ class ContractScheduleController extends Controller
         // Validate incoming fields separately
         $request->validate([
             'contract_date' => 'required|date|after_or_equal:tomorrow',
-            'contract_signing_time' => 'required|string',
+            'contract_signing_time' => [
+                'required',
+                'string',
+                'regex:/^(1[0-2]|[1-9]):[0-5][0-9] (AM|PM)$/' // Format: H:MM AM/PM
+            ],
+        ], [
+            'contract_signing_time.regex' => 'Invalid time format. Please use H:MM AM/PM format (e.g., 9:30 AM).'
         ]);
 
         // Combine date + time into one Carbon instance
@@ -28,9 +35,54 @@ class ContractScheduleController extends Controller
         // Parse into a single datetime
         $schedule = Carbon::parse("{$date} {$time}");
 
+        // Edge Case 1: Validate that the combined datetime is not in the past
+        if ($schedule->isPast()) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The scheduled date and time cannot be in the past.'
+                ], 400);
+            }
+            return redirect()->back()->with('error', 'The scheduled date and time cannot be in the past.');
+        }
+
+        // Edge Case 2: Validate business hours (6 AM - 5 PM)
+        $hour = $schedule->format('H');
+        if ($hour < 6 || $hour >= 17) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Contract signing must be scheduled during business hours (6:00 AM - 5:00 PM).'
+                ], 400);
+            }
+            return redirect()->back()->with('error', 'Contract signing must be scheduled during business hours (6:00 AM - 5:00 PM).');
+        }
+
         $application = Application::with('evaluation')->findOrFail($applicationId);
 
-        // Ensure applicant passed evaluation
+        // Edge Case 3: Check if applicant is already hired
+        if ($application->status->value === 'hired') {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This applicant has already been hired. Cannot send invitation.'
+                ], 400);
+            }
+            return redirect()->back()->with('error', 'This applicant has already been hired.');
+        }
+
+        // Edge Case 4: Check if applicant is archived
+        if ($application->status->value === 'archived') {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This applicant has been archived. Cannot send invitation.'
+                ], 400);
+            }
+            return redirect()->back()->with('error', 'This applicant has been archived.');
+        }
+
+        // Edge Case 5: Ensure applicant passed evaluation
         if (!$application->evaluation || $application->evaluation->result !== 'Passed') {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -39,6 +91,38 @@ class ContractScheduleController extends Controller
                 ], 400);
             }
             return redirect()->back()->with('error', 'Applicant must pass training evaluation before setting a contract signing schedule.');
+        }
+
+        // Edge Case 6: Check for spam - limit invitations sent in last 24 hours
+        $recentInvitationsCount = ContractInvitation::where('application_id', $application->id)
+            ->where('sent_at', '>=', now()->subDay())
+            ->count();
+
+        if ($recentInvitationsCount >= 5) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Too many invitations sent recently. Please wait before sending another invitation.'
+                ], 429);
+            }
+            return redirect()->back()->with('error', 'Too many invitations sent recently. Please wait before sending another invitation.');
+        }
+
+        // Edge Case 7: Check for duplicate invitation on the same exact date/time
+        $duplicateInvitation = ContractInvitation::where('application_id', $application->id)
+            ->where('contract_date', $date)
+            ->where('contract_signing_time', $time)
+            ->where('sent_at', '>=', now()->subHours(2))
+            ->exists();
+
+        if ($duplicateInvitation) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An invitation for this exact date and time was already sent recently.'
+                ], 400);
+            }
+            return redirect()->back()->with('error', 'An invitation for this exact date and time was already sent recently.');
         }
 
         // Save schedule (assuming contract_signing_schedule is a datetime column in DB)
@@ -54,6 +138,16 @@ class ContractScheduleController extends Controller
             \Log::error('Failed to send contract signing invitation email: ' . $e->getMessage());
             $emailSent = false;
         }
+
+        // Create invitation record to track this send
+        ContractInvitation::create([
+            'application_id' => $application->id,
+            'sent_by' => auth()->id(),
+            'contract_date' => $date,
+            'contract_signing_time' => $time,
+            'email_sent' => $emailSent,
+            'sent_at' => now(),
+        ]);
 
         // Check if it's an AJAX request
         if ($request->wantsJson() || $request->ajax()) {

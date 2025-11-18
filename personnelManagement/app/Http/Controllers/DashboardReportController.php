@@ -137,8 +137,8 @@ class DashboardReportController extends Controller
             'in_progress' => (clone $trainingQuery)->where('status', 'in_progress')->count(),
             'completed' => (clone $trainingQuery)->where('status', 'completed')->count(),
             'total_evaluations' => $totalEvaluations,
-            'passed' => (clone $evalQuery)->where('result', 'passed')->count(),
-            'failed' => (clone $evalQuery)->where('result', 'failed')->count(),
+            'passed' => (clone $evalQuery)->where('result', 'Passed')->count(),
+            'failed' => (clone $evalQuery)->where('result', 'Failed')->count(),
             'avg_score' => $totalEvaluations > 0 ? round((clone $evalQuery)->avg('total_score'), 1) : 0,
         ];
 

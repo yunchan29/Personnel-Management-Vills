@@ -215,6 +215,29 @@
 
     <!-- Passer Tab Content -->
     <div x-show="activeTab === 'passer'" class="bg-white rounded-b-lg shadow-lg p-6" x-data="{ selectedPassers: [] }">
+        <!-- Invitation Summary -->
+        @php
+            $passers = $applicants->filter(function($app) {
+                return $app->evaluation
+                    && $app->evaluation->result === 'Passed';
+            });
+            $totalInvitations = $applicants->sum('contract_invitations_count');
+            $passersWithInvitations = $applicants->filter(fn($app) => $app->evaluation && $app->evaluation->result === 'Passed' && $app->contract_invitations_count > 0)->count();
+        @endphp
+        <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="flex items-center justify-between text-sm">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span class="font-semibold text-blue-900">Total Invitations Sent: <span class="text-blue-700">{{ $totalInvitations }}</span></span>
+                </div>
+                <div class="text-blue-700">
+                    {{ $passersWithInvitations }} of {{ $passers->count() }} passers have received invitations
+                </div>
+            </div>
+        </div>
+
         <!-- Bulk Actions Bar for Passers -->
         <div x-show="selectedPassers.length > 0"
              x-transition
@@ -286,15 +309,6 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php
-                        $passers = $applicants->filter(function($app) {
-                            return in_array($app->status->value, ['passed_evaluation', 'trained', 'for_evaluation', 'scheduled_for_training'])
-                                && $app->trainingSchedule
-                                && $app->evaluation
-                                && ($app->evaluation->total_score ?? 0) >= 70;
-                        });
-                    @endphp
-
                     @forelse ($passers as $applicant)
                     <tr class="border-b hover:bg-gray-50">
                         <!-- Checkbox -->
@@ -357,12 +371,12 @@
 
                         <!-- Invitation Sent Status -->
                         <td class="py-3 px-4 align-middle whitespace-nowrap text-center">
-                            @if($applicant->contract_signing_schedule)
+                            @if($applicant->contract_invitations_count > 0)
                                 <span class="inline-flex items-center px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded">
                                     <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                     </svg>
-                                    Sent
+                                    Sent ({{ $applicant->contract_invitations_count }}x)
                                 </span>
                             @else
                                 <span class="inline-flex items-center px-2 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded">
@@ -1105,6 +1119,24 @@ function actionDropdown() {
                 return;
             }
 
+            // Edge Case: Check if any selected applicants already have recent invitations
+            const passersWithRecentInvitations = selectedPassers.filter(p => p.has_invitation);
+            if (passersWithRecentInvitations.length > 0) {
+                const result = await Swal.fire({
+                    title: 'Invitation Warning',
+                    html: `<p class="text-sm text-gray-700">${passersWithRecentInvitations.length} of the selected applicants already have invitations.</p>
+                           <p class="mt-2 text-sm text-gray-600">Do you want to send new invitations anyway?</p>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#BD6F22',
+                    cancelButtonColor: '#6B7280',
+                    confirmButtonText: 'Yes, send anyway',
+                    cancelButtonText: 'Cancel'
+                });
+
+                if (!result.isConfirmed) return;
+            }
+
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             const minDate = tomorrow.toISOString().split('T')[0];
@@ -1182,6 +1214,28 @@ function actionDropdown() {
                         return false;
                     }
 
+                    // Edge Case: Validate date/time is not in the past
+                    const selectedDateTime = new Date(`${contractDate} ${contractHour}:${contractMinute} ${contractPeriod}`);
+                    const now = new Date();
+
+                    if (selectedDateTime <= now) {
+                        Swal.showValidationMessage('The scheduled date and time cannot be in the past or current time');
+                        return false;
+                    }
+
+                    // Edge Case: Validate business hours (6 AM - 5 PM)
+                    let hour24 = parseInt(contractHour);
+                    if (contractPeriod === 'PM' && hour24 !== 12) {
+                        hour24 += 12;
+                    } else if (contractPeriod === 'AM' && hour24 === 12) {
+                        hour24 = 0;
+                    }
+
+                    if (hour24 < 6 || hour24 >= 17) {
+                        Swal.showValidationMessage('Contract signing must be scheduled during business hours (6:00 AM - 5:00 PM)');
+                        return false;
+                    }
+
                     const invitationData = {
                         contract_date: contractDate,
                         contract_signing_time: `${contractHour}:${contractMinute} ${contractPeriod}`
@@ -1189,6 +1243,7 @@ function actionDropdown() {
 
                     let successCount = 0;
                     let errorCount = 0;
+                    let errorMessages = [];
 
                     for (const applicant of selectedPassers) {
                         try {
@@ -1201,30 +1256,53 @@ function actionDropdown() {
                                 body: JSON.stringify(invitationData)
                             });
 
-                            if (!response.ok) throw new Error('Failed to send invitation');
+                            if (!response.ok) {
+                                const errorData = await response.json();
+                                throw new Error(errorData.message || 'Failed to send invitation');
+                            }
 
                             successCount++;
                         } catch (error) {
                             errorCount++;
+                            errorMessages.push(`${applicant.name}: ${error.message}`);
                             console.error(`Error sending invitation to ${applicant.name}:`, error);
                         }
                     }
 
                     return {
                         successCount: successCount,
-                        errorCount: errorCount
+                        errorCount: errorCount,
+                        errorMessages: errorMessages
                     };
                 }
             }).then((result) => {
                 if (result.isConfirmed && result.value) {
                     const finalResult = result.value;
+
+                    let htmlContent = `<p>Invitations sent successfully: <strong>${finalResult.successCount}</strong></p>`;
+
+                    if (finalResult.errorCount > 0) {
+                        htmlContent += `<p class="text-red-600 mt-2">Failed: <strong>${finalResult.errorCount}</strong></p>`;
+
+                        // Show detailed error messages if available
+                        if (finalResult.errorMessages && finalResult.errorMessages.length > 0) {
+                            htmlContent += `<div class="mt-3 text-left max-h-48 overflow-y-auto">
+                                <p class="text-sm font-semibold text-gray-700 mb-1">Error Details:</p>
+                                <ul class="text-xs text-gray-600 space-y-1">`;
+                            finalResult.errorMessages.forEach(msg => {
+                                htmlContent += `<li class="pl-2">• ${msg}</li>`;
+                            });
+                            htmlContent += `</ul></div>`;
+                        }
+                    }
+
                     Swal.fire({
                         title: 'Complete!',
-                        html: `<p>Invitations sent successfully: <strong>${finalResult.successCount}</strong></p>
-                               ${finalResult.errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${finalResult.errorCount}</strong></p>` : ''}`,
+                        html: htmlContent,
                         icon: finalResult.errorCount > 0 ? 'warning' : 'success',
                         confirmButtonColor: '#BD6F22',
-                        allowOutsideClick: false
+                        allowOutsideClick: false,
+                        width: '600px'
                     }).then(() => {
                         window.location.reload();
                     });
@@ -1647,7 +1725,7 @@ function evaluationModal(applicants) {
             this.result = this.totalScore >= 70 ? 'Passed' : 'Failed';
         },
 
-        async submitEvaluation() {
+        submitEvaluation() {
             this.computeResult();
             const passed = this.result === 'Passed';
 
@@ -1655,37 +1733,13 @@ function evaluationModal(applicants) {
                 title: 'Evaluation Submitted!',
                 html: `<p><strong>${this.selectedEmployee}</strong> has been evaluated.</p>
                        <p>Result: <strong>${this.result}</strong></p>
-                       <p>Total Score: <strong>${this.totalScore}</strong></p>`,
+                       <p>Total Score: <strong>${this.totalScore}</strong></p>
+                       ${passed ? '<p class="mt-2 text-sm text-gray-600">The applicant will now appear in the <strong>Passer</strong> tab.</p>' : ''}`,
                 icon: passed ? 'success' : 'error',
                 confirmButtonColor: '#BD6F22'
-            }).then(async () => {
-                // Submit the evaluation form
-                const formData = new FormData(this.$refs.evaluationForm);
-
-                try {
-                    const response = await fetch(this.$refs.evaluationForm.action, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (!response.ok) throw new Error('Failed to submit evaluation');
-
-                    // If passed, show contract signing invitation
-                    if (passed) {
-                        this.showModal = false;
-                        this.openContractSigningInvitation(this.selectedEmployee, this.selectedApplicationId);
-                    } else {
-                        // If failed, just reload
-                        window.location.reload();
-                    }
-                } catch (error) {
-                    Swal.fire({
-                        title: 'Error',
-                        text: 'Failed to submit evaluation',
-                        icon: 'error',
-                        confirmButtonColor: '#BD6F22'
-                    });
-                }
+            }).then(() => {
+                // Submit the form traditionally (server redirect will handle reload)
+                this.$refs.evaluationForm.submit();
             });
         },
 
@@ -1767,6 +1821,28 @@ function evaluationModal(applicants) {
                         return false;
                     }
 
+                    // Edge Case: Validate date/time is not in the past
+                    const selectedDateTime = new Date(`${contractDate} ${contractHour}:${contractMinute} ${contractPeriod}`);
+                    const now = new Date();
+
+                    if (selectedDateTime <= now) {
+                        Swal.showValidationMessage('The scheduled date and time cannot be in the past or current time');
+                        return false;
+                    }
+
+                    // Edge Case: Validate business hours (6 AM - 5 PM)
+                    let hour24 = parseInt(contractHour);
+                    if (contractPeriod === 'PM' && hour24 !== 12) {
+                        hour24 += 12;
+                    } else if (contractPeriod === 'AM' && hour24 === 12) {
+                        hour24 = 0;
+                    }
+
+                    if (hour24 < 6 || hour24 >= 17) {
+                        Swal.showValidationMessage('Contract signing must be scheduled during business hours (6:00 AM - 5:00 PM)');
+                        return false;
+                    }
+
                     return {
                         contract_date: contractDate,
                         contract_signing_time: `${contractHour}:${contractMinute} ${contractPeriod}`
@@ -1796,12 +1872,17 @@ function evaluationModal(applicants) {
                             body: JSON.stringify(result.value)
                         });
 
-                        if (!response.ok) throw new Error('Failed to send invitation');
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.message || 'Failed to send invitation');
+                        }
+
+                        const responseData = await response.json();
 
                         Swal.fire({
                             title: 'Success!',
-                            text: 'Contract signing invitation sent successfully.',
-                            icon: 'success',
+                            text: responseData.message || 'Contract signing invitation sent successfully.',
+                            icon: responseData.email_sent === false ? 'warning' : 'success',
                             confirmButtonColor: '#BD6F22',
                             allowOutsideClick: false
                         }).then(() => {
@@ -1810,7 +1891,7 @@ function evaluationModal(applicants) {
                     } catch (error) {
                         Swal.fire({
                             title: 'Error',
-                            text: error.message,
+                            html: `<p class="text-sm">${error.message}</p>`,
                             icon: 'error',
                             confirmButtonColor: '#BD6F22',
                             allowOutsideClick: false

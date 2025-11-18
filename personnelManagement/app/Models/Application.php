@@ -58,6 +58,11 @@ class Application extends Model
         return $this->hasOne(\App\Models\TrainingEvaluation::class);
     }
 
+    public function contractInvitations()
+    {
+        return $this->hasMany(\App\Models\ContractInvitation::class);
+    }
+
     /**
      * Set application status (accepts both enum and string)
      */

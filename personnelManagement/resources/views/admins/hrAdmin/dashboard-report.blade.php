@@ -5,15 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title }}</title>
     <style>
+        /* Page setup with proper print margins */
         @page {
-            margin: 1.5cm 1.5cm;
+            margin: 2cm 1.5cm;
             size: A4 portrait;
         }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
             font-family: 'DejaVu Sans', sans-serif;
             font-size: 10px;
@@ -21,13 +24,20 @@
             line-height: 1.4;
             margin: 0;
             padding: 0;
+            orphans: 3;
+            widows: 3;
         }
+
+        /* Header section - keep together on page */
         .header {
             text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
             border-bottom: 4px solid #BD6F22;
+            page-break-inside: avoid;
+            page-break-after: avoid;
         }
+
         .header h1 {
             color: #BD6F22;
             font-size: 22px;
@@ -35,61 +45,81 @@
             font-weight: bold;
             letter-spacing: 0.5px;
         }
+
         .header .subtitle {
             color: #666;
             font-size: 9px;
         }
+
+        /* Filter info - keep together */
         .filter-info {
             background-color: #F8F8F8;
             padding: 10px 12px;
-            margin-bottom: 18px;
+            margin-bottom: 15px;
             border: 1px solid #DDD;
             border-left: 5px solid #BD6F22;
+            page-break-inside: avoid;
+            page-break-after: avoid;
         }
+
         .filter-info h3 {
             font-size: 11px;
             color: #BD6F22;
             margin-bottom: 6px;
             font-weight: bold;
         }
+
         .filter-info p {
             font-size: 9px;
             margin: 3px 0;
             color: #444;
         }
+
+        /* Sections - prevent breaking inside */
         .section {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             page-break-inside: avoid;
         }
+
+        /* Section titles - keep with content */
         .section-title {
-            background: linear-gradient(135deg, #BD6F22 0%, #A55E1A 100%);
+            background: #BD6F22;
             color: white;
             padding: 9px 12px;
             font-size: 12px;
             font-weight: bold;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             border-radius: 2px;
             letter-spacing: 0.3px;
+            page-break-inside: avoid;
+            page-break-after: avoid;
         }
+
+        /* Stats grid - prevent breaking */
         .stats-grid {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            page-break-inside: avoid;
         }
+
         .stats-grid td {
             width: 33.33%;
-            padding: 15px 10px;
+            padding: 12px 8px;
             text-align: center;
             border: 2px solid #BD6F22;
-            background: linear-gradient(to bottom, #FFF9F0 0%, #FFFFFF 100%);
+            background-color: #FFF9F0;
+            word-wrap: break-word;
         }
+
         .stat-value {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: bold;
             color: #BD6F22;
             display: block;
             margin-bottom: 5px;
         }
+
         .stat-label {
             font-size: 9px;
             color: #666;
@@ -97,89 +127,160 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
+        /* Tables - with repeating headers and page break control */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             border: 1px solid #CCC;
+            page-break-inside: auto;
         }
+
+        table thead {
+            display: table-header-group;
+        }
+
+        table tbody {
+            display: table-row-group;
+        }
+
         table th {
-            background: linear-gradient(to bottom, #BD6F22 0%, #A55E1A 100%);
+            background-color: #BD6F22;
             color: white;
-            padding: 9px 10px;
+            padding: 8px 10px;
             text-align: left;
             font-size: 10px;
             font-weight: bold;
             border: 1px solid #A55E1A;
             letter-spacing: 0.3px;
+            page-break-inside: avoid;
+            page-break-after: avoid;
         }
+
         table td {
-            padding: 8px 10px;
+            padding: 7px 10px;
             border: 1px solid #DDD;
             font-size: 9px;
             background-color: white;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
+
+        table tr {
+            page-break-inside: avoid;
+        }
+
         table tr:nth-child(even) td {
             background-color: #FAFAFA;
         }
-        table tr:hover td {
-            background-color: #FFF9F0;
-        }
+
         table tbody tr:last-child td {
             border-bottom: 2px solid #BD6F22;
         }
+
+        /* Metric boxes - prevent breaking */
         .metric-box {
-            background: linear-gradient(to bottom, #FFFAF0 0%, #FFF 100%);
+            background-color: #FFFAF0;
             border: 2px solid #E0E0E0;
-            padding: 12px;
-            margin-bottom: 10px;
+            padding: 10px;
+            margin-bottom: 8px;
             border-left: 5px solid #BD6F22;
-            border-radius: 3px;
+            border-radius: 2px;
+            page-break-inside: avoid;
         }
+
         .metric-box .metric-title {
             font-size: 9px;
             color: #666;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
         .metric-box .metric-value {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
             color: #BD6F22;
         }
+
+        /* Two column layout */
         .two-column {
             width: 100%;
             border-collapse: collapse;
+            page-break-inside: avoid;
         }
+
         .column {
             width: 50%;
             vertical-align: top;
             padding: 0 5px;
         }
+
+        /* Footer */
         .footer {
-            margin-top: 25px;
-            padding-top: 12px;
+            margin-top: 20px;
+            padding-top: 10px;
             border-top: 3px solid #BD6F22;
             text-align: center;
             font-size: 8px;
             color: #999;
+            page-break-inside: avoid;
         }
+
+        /* Utility classes */
         .text-center {
             text-align: center;
         }
+
         .text-right {
             text-align: right;
         }
+
+        /* Bold rows */
         .bold-row {
             background-color: #F0F0F0 !important;
             font-weight: bold !important;
         }
+
         .bold-row td {
             font-weight: bold;
             border-top: 2px solid #BD6F22;
             background-color: #F5F5F5 !important;
+        }
+
+        /* Print-specific optimizations */
+        @media print {
+            body {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+
+            table {
+                page-break-inside: auto;
+            }
+
+            table tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            table thead {
+                display: table-header-group;
+            }
+
+            table tfoot {
+                display: table-footer-group;
+            }
+
+            .header, .filter-info, .metric-box, .stats-grid {
+                page-break-inside: avoid;
+            }
         }
     </style>
 </head>
