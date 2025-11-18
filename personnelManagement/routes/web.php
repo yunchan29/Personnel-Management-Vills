@@ -25,6 +25,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ArchiveController; 
 use App\Http\Controllers\StaffArchiveController;
 use App\Http\Controllers\ContractScheduleController; //for contract signing schedule
+use App\Http\Controllers\NotificationController;
 
 // Landing page route
 Route::get('/', [LandingPageController::class, 'index'])->name('welcome');
@@ -100,21 +101,7 @@ Route::prefix('applicant')->name('applicant.')->middleware(['auth', 'verified', 
 // ✅ Employee-related routes with auth middleware
 Route::prefix('employee')->name('employee.')->middleware(['auth', 'verified', 'role:employee'])->group(function () {
     // Dashboard route
-    Route::get('/dashboard', function () {
-        $user = auth()->user();
-
-        // Get pending leave forms for the employee
-        $leaveForms = \App\Models\LeaveForm::where('user_id', $user->id)
-            ->latest()
-            ->take(5)
-            ->get();
-
-        // Get requirements/notifications (you can customize this based on your requirements system)
-        // For now, I'll leave it as an empty collection - you can integrate with your actual requirements system
-        $requirements = collect([]);
-
-        return view('users.dashboard', compact('leaveForms', 'requirements'));
-    })->name('dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\EmployeeDashboardController::class, 'index'])->name('dashboard');
 
     // Profile routes to edit and update user profile
     Route::get('/profile', [UserController::class, 'showEmployee'])->name('profile');
@@ -248,6 +235,11 @@ Route::fallback(function () {return response()->view('errors.404', [], 404);});
 Route::middleware(['auth'])->group(function () {
     Route::post('/user/change-password', [UserController::class, 'changePassword'])->name('user.changePassword');
     Route::delete('/user/delete-account', [UserController::class, 'deleteAccount'])->name('user.deleteAccount');
+
+    // Notification routes
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unreadCount');
 
     // Employee Details API for modal (rate limited to prevent abuse)
     Route::get('/users/{id}/details', [UserController::class, 'getEmployeeDetails'])

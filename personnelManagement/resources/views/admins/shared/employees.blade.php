@@ -16,6 +16,18 @@
     searchQuery: '',
     filterCompany: 'all',
     filterContractStatus: 'all',
+    sendingEmail: false,
+    statusModal: {
+        show: false,
+        type: '',
+        message: ''
+    },
+    showStatusModal(type, message) {
+        this.statusModal = { show: true, type, message };
+        setTimeout(() => {
+            this.statusModal.show = false;
+        }, 3000);
+    },
     async openProfile(employeeId) {
         this.loading = true;
         try {
@@ -62,7 +74,8 @@
         return requiredDocs.some(doc => !this.requirementsOtherFiles.some(f => f.type === doc));
     },
     async sendEmailRequirements() {
-        if (!this.requirementsApplicantId) return;
+        if (!this.requirementsApplicantId || this.sendingEmail) return;
+        this.sendingEmail = true;
         try {
             const userRole = '{{ auth()->user()->role }}';
             const response = await fetch(`/${userRole}/applicants/${this.requirementsApplicantId}/send-missing-requirements`, {
@@ -73,10 +86,16 @@
                 }
             });
             const result = await response.json();
-            alert(result.message || 'Email sent successfully');
+            if (response.ok) {
+                this.showStatusModal('success', result.message || 'Email sent successfully');
+            } else {
+                this.showStatusModal('error', result.message || 'Failed to send email');
+            }
         } catch (error) {
             console.error('Error sending email:', error);
-            alert('Failed to send email');
+            this.showStatusModal('error', 'Failed to send email. Please try again.');
+        } finally {
+            this.sendingEmail = false;
         }
     }
 }">
@@ -538,11 +557,69 @@
             <button
                 type="button"
                 @click="sendEmailRequirements()"
-                class="px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-400 focus:outline-none transition"
+                :disabled="sendingEmail"
+                class="px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-400 focus:outline-none transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-                Email Requirements
+                <svg x-show="sendingEmail" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span x-text="sendingEmail ? 'Sending...' : 'Email Requirements'"></span>
             </button>
         </div>
+        </div>
+    </div>
+
+    {{-- Status Modal --}}
+    <div
+        x-show="statusModal.show"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-y-4"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 translate-y-4"
+        class="fixed top-4 right-4 z-[60] max-w-sm"
+        x-cloak
+    >
+        <div
+            class="rounded-lg shadow-lg p-4 flex items-start gap-3"
+            :class="{
+                'bg-green-50 border border-green-200': statusModal.type === 'success',
+                'bg-red-50 border border-red-200': statusModal.type === 'error'
+            }"
+        >
+            <!-- Icon -->
+            <div class="flex-shrink-0">
+                <svg x-show="statusModal.type === 'success'" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <svg x-show="statusModal.type === 'error'" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+
+            <!-- Message -->
+            <div class="flex-1">
+                <p
+                    class="text-sm font-medium"
+                    :class="{
+                        'text-green-800': statusModal.type === 'success',
+                        'text-red-800': statusModal.type === 'error'
+                    }"
+                    x-text="statusModal.message"
+                ></p>
+            </div>
+
+            <!-- Close Button -->
+            <button
+                @click="statusModal.show = false"
+                class="flex-shrink-0 text-gray-400 hover:text-gray-600"
+            >
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
         </div>
     </div>
 

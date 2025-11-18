@@ -1631,29 +1631,49 @@ function requirementsModal() {
         async sendEmailRequirements() {
             if (!this.requirementsApplicantId) return;
 
+            // Show loading indicator
+            Swal.fire({
+                title: 'Sending Email...',
+                html: 'Please wait while we send the requirements email.',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
             try {
                 const response = await fetch(`/hrStaff/applicants/${this.requirementsApplicantId}/send-missing-requirements`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
                     }
                 });
 
                 const data = await response.json();
 
+                // Close loading and show success
                 Swal.fire({
                     title: 'Success',
-                    text: data.message || 'Requirements email sent successfully!',
+                    html: `
+                        <p class="mb-2">${data.message || 'Requirements email sent successfully!'}</p>
+                        ${data.notified_at ? `<p class="text-sm text-gray-600">Sent at: ${data.notified_at}</p>` : ''}
+                        ${data.reminder_text ? `<p class="text-sm font-semibold text-orange-600 mt-1">This is the ${data.reminder_text}</p>` : ''}
+                        <p class="text-xs text-gray-500 mt-3">Previous notification replaced. You can send additional reminders if needed.</p>
+                    `,
                     icon: 'success',
                     confirmButtonColor: '#BD6F22'
                 });
 
             } catch (error) {
                 console.error(error);
+                // Close loading and show error
                 Swal.fire({
                     title: 'Error',
-                    text: 'Failed to send requirements email.',
+                    text: 'Failed to send requirements email. Please try again.',
                     icon: 'error',
                     confirmButtonColor: '#BD6F22'
                 });

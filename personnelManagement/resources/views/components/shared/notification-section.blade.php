@@ -1,24 +1,65 @@
-@props(['notifications' => [], 'userRole' => 'applicant'])
+@props(['notifications' => [], 'unreadCount' => 0, 'userRole' => 'applicant'])
 
 @if(count($notifications) > 0)
-<div class="bg-white rounded-xl shadow-lg overflow-hidden mb-6 border-l-4 border-amber-500" x-data="{ expanded: false }">
+<div class="bg-white rounded-xl shadow-lg overflow-hidden mb-6 border-l-4 border-amber-500"
+     x-data="{
+        expanded: false,
+        unreadCount: {{ $unreadCount }},
+        markingAllRead: false,
+        async markAllAsRead() {
+            if (this.markingAllRead) return;
+            this.markingAllRead = true;
+            try {
+                const response = await fetch('{{ route('notifications.markAllAsRead') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.unreadCount = 0;
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('Error marking notifications as read:', error);
+            } finally {
+                this.markingAllRead = false;
+            }
+        },
+        async handleExpand() {
+            if (!this.expanded && this.unreadCount > 0) {
+                this.expanded = true;
+                try {
+                    const response = await fetch('{{ route('notifications.markAllAsRead') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        this.unreadCount = 0;
+                    }
+                } catch (error) {
+                    console.error('Error marking notifications as read:', error);
+                }
+            } else {
+                this.expanded = !this.expanded;
+            }
+        }
+     }">
     <!-- Header - Clickable to Toggle -->
-    <button
-        @click="expanded = !expanded"
-        class="w-full bg-gradient-to-br from-amber-50 to-white px-6 py-4 hover:from-amber-100 hover:to-amber-50 transition-colors duration-200"
-        :class="expanded ? 'border-b border-amber-100' : ''"
-    >
+    <div class="w-full bg-gradient-to-br from-amber-50 to-white px-6 py-4" :class="expanded ? 'border-b border-amber-100' : ''">
         <div class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
+            <button @click="handleExpand" class="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity">
                 <div class="bg-amber-500 text-white rounded-lg p-3 relative">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                     </svg>
-                    @if(count($notifications) > 0)
-                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                        {{ count($notifications) }}
-                    </span>
-                    @endif
+                    <span x-show="unreadCount > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center" x-text="unreadCount"></span>
                 </div>
                 <div class="text-left flex-1">
                     <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
@@ -30,25 +71,41 @@
                     @endphp
                     <p class="text-sm text-gray-600">
                         <span x-show="!expanded">
-                            {{ $notificationCount }} pending {{ $actionText }}
+                            <span x-text="unreadCount"></span> unread · {{ $notificationCount }} total {{ $actionText }}
                         </span>
                         <span x-show="expanded" x-cloak>Click to collapse</span>
                     </p>
                 </div>
-            </div>
+            </button>
 
-            <!-- Chevron Icon -->
-            <svg
-                class="w-6 h-6 text-gray-600 transform transition-transform duration-200 flex-shrink-0"
-                :class="{ 'rotate-180': expanded }"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-            >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-            </svg>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <!-- Mark All as Read Button -->
+                <button
+                    x-show="unreadCount > 0 && expanded"
+                    @click="markAllAsRead"
+                    :disabled="markingAllRead"
+                    class="px-3 py-1.5 text-xs font-medium text-amber-700 hover:text-amber-800 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    x-cloak
+                >
+                    <span x-show="!markingAllRead">Mark All Read</span>
+                    <span x-show="markingAllRead">Marking...</span>
+                </button>
+
+                <!-- Chevron Icon -->
+                <button @click="handleExpand" class="p-1 hover:bg-amber-100 rounded-lg transition-colors">
+                    <svg
+                        class="w-6 h-6 text-gray-600 transform transition-transform duration-200"
+                        :class="{ 'rotate-180': expanded }"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
-    </button>
+    </div>
 
     <!-- Summary View - Shown when collapsed -->
     <div
@@ -155,12 +212,17 @@
                 $isUrgent = isset($notification['days_until']) && $notification['days_until'] <= 2;
                 $colorType = $isUrgent ? 'urgent' : $notifType;
                 $color = isset($typeColors[$colorType]) ? $typeColors[$colorType] : $typeColors['application'];
+                $isUnread = !isset($notification['read_at']) || $notification['read_at'] === null;
             @endphp
 
-            <div class="p-4 hover:bg-gray-50 transition-colors {{ $isUrgent ? 'animate-pulse-slow' : '' }}">
+            <div class="p-4 hover:bg-gray-50 transition-colors {{ $isUrgent ? 'animate-pulse-slow' : '' }} {{ $isUnread ? 'bg-blue-50 hover:bg-blue-100' : '' }}">
                 <!-- Header Row -->
                 <div class="flex items-start justify-between gap-2 mb-2">
                     <div class="flex items-center gap-2">
+                        <!-- Unread Indicator -->
+                        @if($isUnread)
+                            <div class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                        @endif
                         <!-- Smaller Icon -->
                         <div class="{{ $color['icon_bg'] }} {{ $color['icon_color'] }} rounded-lg p-2 flex-shrink-0">
                             @if($notifType == 'interview')
@@ -181,7 +243,7 @@
                                 </svg>
                             @endif
                         </div>
-                        <h3 class="font-semibold {{ $color['text'] }} text-sm">
+                        <h3 class="{{ $isUnread ? 'font-bold' : 'font-semibold' }} {{ $color['text'] }} text-sm">
                             {{ $notification['title'] }}
                         </h3>
                     </div>
@@ -205,7 +267,7 @@
                 </div>
 
                 <!-- Message -->
-                <p class="text-sm text-gray-700 mb-3">{{ $notification['message'] }}</p>
+                <p class="text-sm {{ $isUnread ? 'text-gray-900 font-medium' : 'text-gray-700' }} mb-3">{{ $notification['message'] }}</p>
 
                 <!-- Action Button -->
                 @if(!empty($notification['action_url']))

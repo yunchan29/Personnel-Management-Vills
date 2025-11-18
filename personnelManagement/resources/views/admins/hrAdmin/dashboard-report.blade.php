@@ -7,7 +7,7 @@
     <style>
         /* Page setup with proper print margins */
         @page {
-            margin: 2cm 1.5cm;
+            margin: 20px;
             size: A4 portrait;
         }
 
@@ -23,13 +23,13 @@
             color: #1a1a1a;
             line-height: 1.4;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             orphans: 3;
             widows: 3;
         }
 
         .page-wrapper {
-            padding: 2cm 1.5cm; /* same as your @page margin */
+            padding: 0; /* margin handled by body padding */
         }
 
         /* Header section - keep together on page */

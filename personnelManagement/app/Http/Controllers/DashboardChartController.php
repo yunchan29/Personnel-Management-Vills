@@ -399,6 +399,13 @@ class DashboardChartController extends Controller
         // Get notifications for admin
         $notifications = $this->getAdminNotifications();
 
+        // Get database notifications and unread count
+        $dbNotifications = $this->getFormattedNotifications();
+        $unreadCount = auth()->user()->unreadNotifications->count();
+
+        // Merge with dynamic notifications (for transition period)
+        $allNotifications = array_merge($dbNotifications, $notifications);
+
         return view('admins.hrAdmin.dashboard', compact(
             'chartData',
             'stats',
@@ -409,7 +416,9 @@ class DashboardChartController extends Controller
             'timeToHire',
             'jobMetrics',
             'topJobs',
-            'notifications'
+            'notifications',
+            'allNotifications',
+            'unreadCount'
         ));
     }
 
@@ -718,6 +727,13 @@ class DashboardChartController extends Controller
         // Get notifications for HR Staff
         $notifications = $this->getHrStaffNotifications();
 
+        // Get database notifications and unread count
+        $dbNotifications = $this->getFormattedNotifications();
+        $unreadCount = auth()->user()->unreadNotifications->count();
+
+        // Merge with dynamic notifications (for transition period)
+        $allNotifications = array_merge($dbNotifications, $notifications);
+
         // Get companies and positions for dropdowns
         $companies = Job::distinct()->pluck('company_name')->filter()->values();
         $positions = Job::distinct()->pluck('job_title')->filter()->values();
@@ -786,6 +802,8 @@ class DashboardChartController extends Controller
             'currentYear',
             'currentMonth',
             'notifications',
+            'allNotifications',
+            'unreadCount',
             'companies',
             'positions'
         ));
@@ -1212,5 +1230,25 @@ class DashboardChartController extends Controller
         $pdf = Pdf::loadView("admins.hrStaff.reports.{$type}", $reportData);
 
         return $pdf->download("{$type}-report-" . now()->format('Y-m-d') . ".pdf");
+    }
+
+    /**
+     * Get formatted notifications from database
+     */
+    private function getFormattedNotifications()
+    {
+        $notifications = auth()->user()->notifications()->latest()->take(20)->get();
+        $formattedNotifications = [];
+
+        foreach ($notifications as $notification) {
+            $data = $notification->data;
+            $formattedNotifications[] = array_merge($data, [
+                'read_at' => $notification->read_at,
+                'id' => $notification->id,
+                'created_at' => $notification->created_at,
+            ]);
+        }
+
+        return $formattedNotifications;
     }
 }

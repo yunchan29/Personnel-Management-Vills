@@ -730,6 +730,25 @@ document.getElementById('statusModal')?.addEventListener('click', function(e) {
         closeStatusModal();
     }
 });
+
+// Auto-open modal if application ID is in URL query parameter
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const applicationId = urlParams.get('application');
+
+    if (applicationId) {
+        // Convert to number and open modal
+        const appId = parseInt(applicationId);
+        if (!isNaN(appId)) {
+            openStatusModal(appId);
+
+            // Clean up URL by removing the query parameter (optional - keeps URL clean)
+            const url = new URL(window.location);
+            url.searchParams.delete('application');
+            window.history.replaceState({}, '', url);
+        }
+    }
+});
 </script>
 
 @if(session('success'))

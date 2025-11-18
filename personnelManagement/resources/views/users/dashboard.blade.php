@@ -12,7 +12,7 @@
         </div>
 
         <!-- Notification Section -->
-        <x-shared.notification-section :notifications="$notifications ?? []" userRole="applicant" />
+        <x-shared.notification-section :notifications="$allNotifications ?? []" :unreadCount="$unreadCount ?? 0" userRole="applicant" />
 
         <!-- Search and Filter Section -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
@@ -311,6 +311,9 @@
                 <h1 class="text-3xl font-bold mb-2">Welcome back, {{ auth()->user()->first_name }}!</h1>
                 <p class="text-orange-100">Here's what's happening with your account today</p>
             </div>
+
+            <!-- Notification Section -->
+            <x-shared.notification-section :notifications="$allNotifications ?? []" :unreadCount="$unreadCount ?? 0" userRole="employee" />
 
             {{-- Requirements Section - Temporarily Commented Out
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">

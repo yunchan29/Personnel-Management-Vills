@@ -181,7 +181,9 @@
 
       <!-- Notification Section -->
       <div class="sticky top-6">
-        <x-shared.notification-section :notifications="$notifications ?? []" userRole="admin" />
+        <div class="max-h-96 overflow-y-auto">
+          <x-shared.notification-section :notifications="$allNotifications ?? []" :unreadCount="$unreadCount ?? 0" userRole="admin" />
+        </div>
 
         <!-- Filter & Report Section -->
         <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 mt-6">

@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\LeaveForm;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Mail\LeaveApproveMail;
 use App\Mail\LeaveDeclineMail;
 use Illuminate\Support\Facades\Mail;
+use App\Notifications\NewLeaveRequestNotification;
+use App\Notifications\LeaveStatusNotification;
 
 class LeaveFormController extends Controller
 {
@@ -68,7 +71,7 @@ class LeaveFormController extends Controller
 
         $path = $request->file('attachment')->store('leave_forms', 'public');
 
-        LeaveForm::create([
+        $leaveForm = LeaveForm::create([
             'user_id'    => Auth::id(),
             'leave_type' => $request->leave_type,
             'date_range' => $request->date_range,
@@ -76,6 +79,14 @@ class LeaveFormController extends Controller
             'file_path'  => $path,
             'status'     => 'Pending',
         ]);
+
+        // Notify all HR Admins and HR Staff about the new leave request
+        $employee = Auth::user();
+        $hrUsers = User::whereIn('role', ['hrAdmin', 'hrStaff'])->get();
+
+        foreach ($hrUsers as $hrUser) {
+            $hrUser->notify(new NewLeaveRequestNotification($leaveForm, $employee));
+        }
 
         return back()->with('success', 'Leave form submitted successfully.');
     }
@@ -112,11 +123,13 @@ class LeaveFormController extends Controller
 
                 $form->status = 'Approved';
                 $form->save();
-          
 
-            // 🔔 Send email to employee
-            Mail::to($form->user->email)->send(new LeaveApproveMail($form));
-                });
+                // 🔔 Send email to employee
+                Mail::to($form->user->email)->send(new LeaveApproveMail($form));
+
+                // 🔔 Send in-app notification to employee
+                $form->user->notify(new LeaveStatusNotification($form, 'approved'));
+            });
 
              return back()->with('success', 'Leave request approved and email sent.');
             } catch (\Exception $e) {
@@ -142,8 +155,12 @@ class LeaveFormController extends Controller
 
                 $form->status = 'Declined';
                 $form->save();
-             // 🔔 Send email to employee
-            Mail::to($form->user->email)->send(new LeaveDeclineMail($form));
+
+                // 🔔 Send email to employee
+                Mail::to($form->user->email)->send(new LeaveDeclineMail($form));
+
+                // 🔔 Send in-app notification to employee
+                $form->user->notify(new LeaveStatusNotification($form, 'declined'));
         });
 
         return back()->with('success', 'Leave request declined and email sent.');

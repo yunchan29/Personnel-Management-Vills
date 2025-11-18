@@ -384,8 +384,11 @@
               <div class="flex-1">
                 <div class="flex items-center gap-2">
                   <h2 class="text-xl font-bold text-gray-900">Notifications</h2>
-                  @if(isset($notifications) && count($notifications) > 0)
-                    <span class="bg-[#BD6F22] text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ count($notifications) }}</span>
+                  @if(isset($unreadCount) && $unreadCount > 0)
+                    <span class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $unreadCount }}</span>
+                  @endif
+                  @if(isset($allNotifications) && count($allNotifications) > 0)
+                    <span class="bg-[#BD6F22] text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ count($allNotifications) }} total</span>
                   @endif
                 </div>
                 <p class="text-sm text-gray-600">Recent updates</p>
@@ -592,7 +595,7 @@ document.addEventListener('DOMContentLoaded', function () {
         'promoted' => 0
     ]) !!};
 
-    const notifications = @json($notifications ?? []);
+    const notifications = @json($allNotifications ?? []);
 
     // ============================================
     // TRAINING & EVALUATION OVERVIEW

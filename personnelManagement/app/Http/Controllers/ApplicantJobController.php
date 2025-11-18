@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\Interview;
 use App\Models\TrainingSchedule;
 use App\Enums\ApplicationStatus;
+use App\Services\RequirementsCheckService;
 use Carbon\Carbon;
 
 class ApplicantJobController extends Controller
@@ -57,13 +58,22 @@ class ApplicantJobController extends Controller
     // Get notifications for applicant
     $notifications = $this->getApplicantNotifications($user);
 
+    // Get database notifications and unread count
+    $dbNotifications = $this->getFormattedNotifications();
+    $unreadCount = $user->unreadNotifications->count();
+
+    // Merge with dynamic notifications (for transition period)
+    $allNotifications = array_merge($dbNotifications, $notifications);
+
     return view('users.dashboard', compact(
     'jobs',
     'resume',
     'appliedJobIds',
     'industry',
     'hasTrainingOrPassed',
-    'notifications'
+    'notifications',
+    'allNotifications',
+    'unreadCount'
 ));
 
 }
@@ -76,14 +86,17 @@ class ApplicantJobController extends Controller
         $notifications = [];
         $today = Carbon::today();
 
-        // Get user's applications with interviews and training schedules
+        // Get user's applications with interviews and training schedules (including all statuses)
         $applications = Application::with(['job', 'interview', 'trainingSchedule'])
             ->where('user_id', $user->id)
-            ->whereNotIn('status', ['declined', 'failed_interview', 'failed_evaluation', 'rejected'])
             ->get();
 
         foreach ($applications as $application) {
-            // Check for scheduled interviews
+            $jobTitle = $application->job->job_title;
+            $companyName = $application->job->company_name;
+            $hasTimeBasedNotification = false;
+
+            // Check for scheduled interviews (time-sensitive)
             if ($application->interview && in_array($application->interview->status, ['scheduled', 'rescheduled'])) {
                 $interviewDate = Carbon::parse($application->interview->scheduled_at);
                 $daysUntil = $today->diffInDays($interviewDate, false);
@@ -92,20 +105,21 @@ class ApplicantJobController extends Controller
                     $notifications[] = [
                         'type' => 'interview',
                         'title' => 'Interview Scheduled',
-                        'message' => "{$application->job->job_title} at {$application->job->company_name}",
+                        'message' => "{$jobTitle} at {$companyName}",
                         'days_until' => (int)$daysUntil,
                         'details' => [
                             'Date' => $interviewDate->format('M d, Y'),
                             'Time' => $interviewDate->format('h:i A'),
                         ],
-                        'action_url' => route('applicant.application'),
+                        'action_url' => route('applicant.application') . '?application=' . $application->id,
                         'action_text' => 'View Details'
                     ];
+                    $hasTimeBasedNotification = true;
                 }
             }
 
-            // Check for scheduled training
-            if ($application->trainingSchedule && $application->status === ApplicationStatus::SCHEDULED_FOR_TRAINING->value) {
+            // Check for scheduled training (time-sensitive)
+            if ($application->trainingSchedule && $application->status->value === ApplicationStatus::SCHEDULED_FOR_TRAINING->value) {
                 $trainingStartDate = Carbon::parse($application->trainingSchedule->start_date);
                 $daysUntil = $today->diffInDays($trainingStartDate, false);
 
@@ -113,44 +127,208 @@ class ApplicantJobController extends Controller
                     $notifications[] = [
                         'type' => 'training',
                         'title' => 'Training Scheduled',
-                        'message' => "{$application->job->job_title} at {$application->job->company_name}",
+                        'message' => "{$jobTitle} at {$companyName}",
                         'days_until' => (int)$daysUntil,
                         'details' => [
                             'Starts' => $trainingStartDate->format('M d, Y'),
                             'Duration' => $trainingStartDate->diffInDays(Carbon::parse($application->trainingSchedule->end_date)) . ' days',
                         ],
-                        'action_url' => route('applicant.application'),
+                        'action_url' => route('applicant.application') . '?application=' . $application->id,
                         'action_text' => 'View Details'
                     ];
+                    $hasTimeBasedNotification = true;
                 }
             }
 
-            // Check for pending evaluation
-            if ($application->status === 'for_evaluation') {
-                $notifications[] = [
-                    'type' => 'evaluation',
-                    'title' => 'Under Evaluation',
-                    'message' => "{$application->job->job_title} at {$application->job->company_name}",
-                    'details' => [
-                        'Status' => 'Training completed',
-                    ],
-                    'action_url' => route('applicant.application'),
-                    'action_text' => 'Check Status'
-                ];
-            }
+            // Add status-based notifications (only if no time-based notification exists for this application)
+            if (!$hasTimeBasedNotification) {
+                switch ($application->status->value) {
+                    case ApplicationStatus::PENDING->value:
+                        $notifications[] = [
+                            'type' => 'application',
+                            'title' => 'Application Submitted',
+                            'message' => "{$jobTitle} at {$companyName}",
+                            'details' => [
+                                'Status' => 'Under review by HR',
+                            ],
+                            'action_url' => route('applicant.application') . '?application=' . $application->id,
+                            'action_text' => 'View Application'
+                        ];
+                        break;
 
-            // Check for approved applications pending interview
-            if ($application->status === 'approved' && !$application->interview) {
+                    case ApplicationStatus::APPROVED->value:
+                        $notifications[] = [
+                            'type' => 'application',
+                            'title' => 'Application Approved',
+                            'message' => "{$jobTitle} at {$companyName}",
+                            'details' => [
+                                'Status' => 'Awaiting interview schedule',
+                            ],
+                            'action_url' => route('applicant.application') . '?application=' . $application->id,
+                            'action_text' => 'View Details'
+                        ];
+                        break;
+
+                    case ApplicationStatus::INTERVIEWED->value:
+                        $notifications[] = [
+                            'type' => 'application',
+                            'title' => 'Interview Passed',
+                            'message' => "{$jobTitle} at {$companyName}",
+                            'details' => [
+                                'Status' => 'Awaiting training schedule',
+                            ],
+                            'action_url' => route('applicant.application') . '?application=' . $application->id,
+                            'action_text' => 'View Status'
+                        ];
+                        break;
+
+                    case ApplicationStatus::TRAINED->value:
+                        $notifications[] = [
+                            'type' => 'application',
+                            'title' => 'Training Completed',
+                            'message' => "{$jobTitle} at {$companyName}",
+                            'details' => [
+                                'Status' => 'Awaiting evaluation',
+                            ],
+                            'action_url' => route('applicant.application') . '?application=' . $application->id,
+                            'action_text' => 'View Status'
+                        ];
+                        break;
+
+                    case ApplicationStatus::FOR_EVALUATION->value:
+                        $notifications[] = [
+                            'type' => 'evaluation',
+                            'title' => 'Under Evaluation',
+                            'message' => "{$jobTitle} at {$companyName}",
+                            'details' => [
+                                'Status' => 'Training evaluation in progress',
+                            ],
+                            'action_url' => route('applicant.application') . '?application=' . $application->id,
+                            'action_text' => 'Check Status'
+                        ];
+                        break;
+
+                    case ApplicationStatus::PASSED_EVALUATION->value:
+                        $notifications[] = [
+                            'type' => 'application',
+                            'title' => 'Evaluation Passed',
+                            'message' => "{$jobTitle} at {$companyName}",
+                            'details' => [
+                                'Status' => 'Congratulations! Awaiting final hiring process',
+                            ],
+                            'action_url' => route('applicant.application') . '?application=' . $application->id,
+                            'action_text' => 'View Details'
+                        ];
+                        break;
+
+                    case ApplicationStatus::HIRED->value:
+                        $notifications[] = [
+                            'type' => 'application',
+                            'title' => 'You\'ve Been Hired!',
+                            'message' => "{$jobTitle} at {$companyName}",
+                            'details' => [
+                                'Status' => 'Welcome aboard!',
+                            ],
+                            'action_url' => route('applicant.application') . '?application=' . $application->id,
+                            'action_text' => 'View Contract Details'
+                        ];
+                        break;
+
+                    // Failed statuses
+                    case ApplicationStatus::DECLINED->value:
+                        $notifications[] = [
+                            'type' => 'application',
+                            'title' => 'Application Declined',
+                            'message' => "{$jobTitle} at {$companyName}",
+                            'details' => [
+                                'Status' => 'Unfortunately, your application was not approved',
+                            ],
+                            'action_url' => route('applicant.application') . '?application=' . $application->id,
+                            'action_text' => 'View Details'
+                        ];
+                        break;
+
+                    case ApplicationStatus::FAILED_INTERVIEW->value:
+                        $notifications[] = [
+                            'type' => 'application',
+                            'title' => 'Interview Not Passed',
+                            'message' => "{$jobTitle} at {$companyName}",
+                            'details' => [
+                                'Status' => 'Better luck next time',
+                            ],
+                            'action_url' => route('applicant.application') . '?application=' . $application->id,
+                            'action_text' => 'View Details'
+                        ];
+                        break;
+
+                    case ApplicationStatus::FAILED_EVALUATION->value:
+                        $notifications[] = [
+                            'type' => 'application',
+                            'title' => 'Evaluation Not Passed',
+                            'message' => "{$jobTitle} at {$companyName}",
+                            'details' => [
+                                'Status' => 'Training evaluation was not successful',
+                            ],
+                            'action_url' => route('applicant.application') . '?application=' . $application->id,
+                            'action_text' => 'View Details'
+                        ];
+                        break;
+
+                    case ApplicationStatus::REJECTED->value:
+                        $notifications[] = [
+                            'type' => 'application',
+                            'title' => 'Application Rejected',
+                            'message' => "{$jobTitle} at {$companyName}",
+                            'details' => [
+                                'Status' => 'This application has been closed',
+                            ],
+                            'action_url' => route('applicant.application') . '?application=' . $application->id,
+                            'action_text' => 'View Details'
+                        ];
+                        break;
+                }
+            }
+        }
+
+        // Check for missing requirements (government IDs and documents)
+        // Only show notification if HR Staff has emailed them about missing requirements
+        if ($user->requirements_notified_at) {
+            $requirementsCheck = RequirementsCheckService::checkMissingRequirements($user->id);
+
+            // Show notification only if they still have missing requirements
+            if ($requirementsCheck['has_missing']) {
+                $notifiedDate = Carbon::parse($user->requirements_notified_at);
+                $reminderCount = $user->requirements_reminder_count ?? 1;
+
+                // Build reminder text
+                $reminderText = $reminderCount === 1
+                    ? 'Initial notification'
+                    : ($reminderCount === 2 ? '2nd reminder' : $reminderCount . 'th reminder');
+
+                // Build message with list of missing requirements
+                $missingList = implode(', ', $requirementsCheck['missing']);
+                $message = 'Please submit: ' . $missingList;
+
+                // Build details array
+                $details = [
+                    'Status' => $reminderText . ' from HR',
+                    'Last Sent' => $notifiedDate->format('M d, Y \a\t h:i A'),
+                    'Count' => $requirementsCheck['missing_count'] . ' item(s) needed',
+                ];
+
                 $notifications[] = [
                     'type' => 'application',
-                    'title' => 'Application Approved',
-                    'message' => "{$application->job->job_title} at {$application->job->company_name}",
-                    'details' => [
-                        'Status' => 'Awaiting interview schedule',
-                    ],
-                    'action_url' => route('applicant.application'),
-                    'action_text' => 'View Details'
+                    'title' => 'Missing Requirements (' . $requirementsCheck['missing_count'] . ')',
+                    'message' => $message,
+                    'details' => $details,
+                    'action_url' => route('applicant.files') . '#additional-files',
+                    'action_text' => 'Submit Requirements'
                 ];
+            } else {
+                // If requirements are now complete, clear the notification flags
+                $user->requirements_notified_at = null;
+                $user->requirements_reminder_count = 0;
+                $user->save();
             }
         }
 
@@ -305,5 +483,25 @@ class ApplicantJobController extends Controller
         $resume = $user->resume ?? null;
 
         return view('applicant.applications', compact('applications', 'resume'));
+    }
+
+    /**
+     * Get formatted notifications from database
+     */
+    private function getFormattedNotifications()
+    {
+        $notifications = auth()->user()->notifications()->latest()->take(20)->get();
+        $formattedNotifications = [];
+
+        foreach ($notifications as $notification) {
+            $data = $notification->data;
+            $formattedNotifications[] = array_merge($data, [
+                'read_at' => $notification->read_at,
+                'id' => $notification->id,
+                'created_at' => $notification->created_at,
+            ]);
+        }
+
+        return $formattedNotifications;
     }
 }

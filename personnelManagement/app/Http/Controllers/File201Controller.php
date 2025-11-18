@@ -115,7 +115,23 @@ class File201Controller extends Controller
 
        try {
         Mail::to($user->email)->send(new RequirementsLetterMail($user, $missingRequirements));
-        return response()->json(['message' => 'Requirements email sent successfully.'], 200);
+
+        // Update notification timestamp and increment reminder count
+        // Each send replaces the previous notification with updated info
+        $user->requirements_notified_at = now();
+        $user->requirements_reminder_count = ($user->requirements_reminder_count ?? 0) + 1;
+        $user->save();
+
+        $reminderText = $user->requirements_reminder_count === 1
+            ? '1st notification'
+            : ($user->requirements_reminder_count === 2 ? '2nd reminder' : $user->requirements_reminder_count . 'th reminder');
+
+        return response()->json([
+            'message' => 'Requirements email sent successfully.',
+            'notified_at' => $user->requirements_notified_at->format('M d, Y h:i A'),
+            'reminder_count' => $user->requirements_reminder_count,
+            'reminder_text' => $reminderText
+        ], 200);
     } catch (\Throwable $e) {
         // Log full error and return message for debugging
         Log::error('sendMissingRequirements error: '.$e->getMessage(), [
