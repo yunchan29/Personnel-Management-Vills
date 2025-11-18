@@ -28,6 +28,10 @@
             widows: 3;
         }
 
+        .page-wrapper {
+            padding: 2cm 1.5cm; /* same as your @page margin */
+        }
+
         /* Header section - keep together on page */
         .header {
             text-align: center;
@@ -257,6 +261,11 @@
                 -webkit-print-color-adjust: exact;
             }
 
+            @page {
+                margin: 2cm 1.5cm !important;
+                size: A4 portrait;
+            }
+    
             .section {
                 page-break-inside: avoid;
             }
@@ -285,6 +294,7 @@
     </style>
 </head>
 <body>
+    <div class="page-wrapper">
     <!-- Header -->
     <div class="header">
         <h1>{{ $title }}</h1>
@@ -569,5 +579,6 @@
         <p>This report was generated automatically by the HR Management System.</p>
         <p>&copy; {{ date('Y') }} Personnel Management System. All rights reserved.</p>
     </div>
+</div>
 </body>
 </html>
