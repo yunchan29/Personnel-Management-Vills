@@ -88,6 +88,14 @@ class LeaveFormController extends Controller
             $hrUser->notify(new NewLeaveRequestNotification($leaveForm, $employee));
         }
 
+        // Return JSON for AJAX requests, redirect for normal form submissions
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Leave form submitted successfully.'
+            ]);
+        }
+
         return back()->with('success', 'Leave form submitted successfully.');
     }
 

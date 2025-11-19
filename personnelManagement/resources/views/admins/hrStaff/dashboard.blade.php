@@ -13,10 +13,10 @@
   <div class="flex flex-col lg:flex-row gap-6">
 
     <!-- Main Content Area (Left Side) -->
-    <div class="flex-1 space-y-6">
+    <div class="flex-1">
 
       <!-- Filter Status Indicator (hidden by default) -->
-      <div id="filter-status-indicator" class="bg-amber-50 border border-amber-200 rounded-lg p-4 hidden">
+      <div id="filter-status-indicator" class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 hidden">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -373,46 +373,8 @@
 
       <div class="sticky top-6">
         <!-- Notification Section -->
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-          <div class="bg-gradient-to-br from-orange-50 to-white px-6 py-4 border-b border-gray-100">
-            <div class="flex items-center gap-3">
-              <div class="bg-[#BD6F22] text-white rounded-lg p-3">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                </svg>
-              </div>
-              <div class="flex-1">
-                <div class="flex items-center gap-2">
-                  <h2 class="text-xl font-bold text-gray-900">Notifications</h2>
-                  @if(isset($unreadCount) && $unreadCount > 0)
-                    <span class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $unreadCount }}</span>
-                  @endif
-                  @if(isset($allNotifications) && count($allNotifications) > 0)
-                    <span class="bg-[#BD6F22] text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ count($allNotifications) }} total</span>
-                  @endif
-                </div>
-                <p class="text-sm text-gray-600">Recent updates</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="p-6 max-h-96 overflow-y-auto">
-            <div class="space-y-3" id="notifications-container">
-              <!--
-                Notifications will be dynamically loaded here:
-                - Urgent (Red): Training ended >7 days ago, not evaluated
-                - Important (Orange): Training ending within 3 days
-                - Info (Blue): Passed applicants awaiting invitation
-              -->
-              <div id="no-notifications" class="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center">
-                <svg class="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <p class="text-sm text-gray-500 font-medium">All caught up!</p>
-                <p class="text-xs text-gray-400 mt-1">No pending notifications at this time</p>
-              </div>
-            </div>
-          </div>
+        <div class="max-h-96 overflow-y-auto">
+          <x-shared.notification-section :notifications="$allNotifications ?? []" :unreadCount="$unreadCount ?? 0" userRole="admin" />
         </div>
 
         <!-- Filter & Report Section -->
@@ -653,53 +615,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('pipeline-invited').textContent = pipelineStats.invited || 0;
     document.getElementById('pipeline-promoted').textContent = pipelineStats.promoted || 0;
 
-    // ============================================
-    // NOTIFICATIONS (Dynamic)
-    // ============================================
-    function renderNotifications() {
-        const container = document.getElementById('notifications-container');
-        const noNotif = document.getElementById('no-notifications');
-
-        if (notifications.length === 0) {
-            noNotif.style.display = 'block';
-            return;
-        }
-
-        noNotif.style.display = 'none';
-        let html = '';
-
-        notifications.forEach(notif => {
-            let badgeColor = 'bg-blue-100 text-blue-800';
-            let borderColor = 'border-blue-200';
-            let typeLabel = notif.type.replace(/_/g, ' ').toUpperCase();
-
-            if (notif.priority === 'urgent') {
-                badgeColor = 'bg-red-100 text-red-800';
-                borderColor = 'border-red-300';
-            } else if (notif.priority === 'important') {
-                badgeColor = 'bg-amber-100 text-amber-800';
-                borderColor = 'border-amber-300';
-            }
-
-            html += `
-                <div class="p-3 bg-gray-50 rounded-lg border ${borderColor} hover:shadow-md transition-shadow cursor-pointer" onclick="window.location.href='${notif.action_url}'">
-                    <div class="flex items-start gap-2">
-                        <span class="${badgeColor} text-xs px-2 py-1 rounded font-medium">${typeLabel}</span>
-                        <div class="flex-1">
-                            <p class="text-sm font-semibold text-gray-800">${notif.applicant_name} - ${notif.position}</p>
-                            <p class="text-xs text-gray-500">${notif.company}</p>
-                            <p class="text-xs text-gray-600 mt-1">${notif.message}</p>
-                            ${notif.action_text ? `<button class="text-xs text-[#BD6F22] hover:underline mt-1 font-medium">${notif.action_text}</button>` : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-
-        container.innerHTML = html;
-    }
-
-    renderNotifications();
+    // Notifications are now handled by the shared notification component
 
     // ============================================
     // UPDATE DASHBOARD STATS FUNCTION

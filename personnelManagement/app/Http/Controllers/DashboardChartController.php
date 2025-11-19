@@ -496,33 +496,9 @@ class DashboardChartController extends Controller
                     }
                 }
 
-                // 4. Upcoming training (within 7 days)
-                if ($application->trainingSchedule &&
-                    $application->trainingSchedule->status === 'scheduled' &&
-                    Carbon::parse($application->trainingSchedule->start_date)->between($today, $today->copy()->addDays(7))) {
-
+                // 4. Needs training schedule (interviewed but no training scheduled)
+                if ($application->status->value === 'scheduled_for_training' && !$application->trainingSchedule) {
                     $upcomingTrainingCount++;
-                    $startDate = Carbon::parse($application->trainingSchedule->start_date);
-                    $daysUntil = $today->diffInDays($startDate, false);
-
-                    // Check if urgent (≤2 days)
-                    if ($daysUntil <= 2) {
-                        $hasUrgentAction = true;
-                        $minDaysUntil = min($minDaysUntil, $daysUntil);
-
-                        $dateInfo = $daysUntil == 0 ? 'Starts Today' : ($daysUntil == 1 ? 'Starts Tomorrow' : 'Starts ' . $startDate->format('M d'));
-                        $duration = $startDate->diffInDays(Carbon::parse($application->trainingSchedule->end_date));
-                        if ($duration > 0) {
-                            $dateInfo .= " ({$duration} " . ($duration == 1 ? 'day' : 'days') . ")";
-                        }
-
-                        $urgentDetails[] = [
-                            'type' => 'training',
-                            'applicant' => "{$application->user->first_name} {$application->user->last_name}",
-                            'time' => $dateInfo,
-                            'days_until' => $daysUntil
-                        ];
-                    }
                 }
 
                 // 5. Pending evaluations
@@ -575,7 +551,7 @@ class DashboardChartController extends Controller
                     }
 
                     if ($upcomingTrainingCount > 0) {
-                        $messageParts[] = "{$upcomingTrainingCount} training scheduled";
+                        $messageParts[] = "{$upcomingTrainingCount} need training schedule";
                         if (in_array($priorityTab, ['applicants', 'interview'])) {
                             $priorityTab = 'training';
                         }
@@ -1242,6 +1218,12 @@ class DashboardChartController extends Controller
 
         foreach ($notifications as $notification) {
             $data = $notification->data;
+
+            // Skip leave notifications that are no longer pending
+            if ($this->isLeaveNotification($data) && !$this->isLeavePending($data)) {
+                continue;
+            }
+
             $formattedNotifications[] = array_merge($data, [
                 'read_at' => $notification->read_at,
                 'id' => $notification->id,
@@ -1250,5 +1232,35 @@ class DashboardChartController extends Controller
         }
 
         return $formattedNotifications;
+    }
+
+    /**
+     * Check if notification is a leave request notification
+     */
+    private function isLeaveNotification($notificationData)
+    {
+        return isset($notificationData['leave_form_id']);
+    }
+
+    /**
+     * Check if leave form is still pending (not yet processed)
+     */
+    private function isLeavePending($notificationData)
+    {
+        if (!isset($notificationData['leave_form_id'])) {
+            return true; // Not a leave notification, consider it valid
+        }
+
+        $leaveFormId = $notificationData['leave_form_id'];
+
+        // Check if leave form exists and is still pending
+        $leaveForm = LeaveForm::find($leaveFormId);
+
+        // If leave form doesn't exist (deleted) or status is not Pending, filter it out
+        if (!$leaveForm || $leaveForm->status !== 'Pending') {
+            return false;
+        }
+
+        return true;
     }
 }

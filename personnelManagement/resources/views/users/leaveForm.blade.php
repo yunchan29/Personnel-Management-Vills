@@ -277,11 +277,12 @@
     </div>
 
     <!-- Success Modal -->
-    <div class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
+    <div class="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none"
          x-show="showSuccessModal"
          x-transition
          x-cloak>
-        <div class="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+        <div class="bg-white rounded-lg max-w-md w-full p-6 shadow-2xl pointer-events-auto"
+             @click.away="closeSuccessModal">
             <div class="text-center">
                 <!-- Success Icon -->
                 <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
@@ -387,43 +388,51 @@ function leaveFormApp() {
             }
         },
 
-        submitForm(event) {
-            // Show loading spinner
-            this.isSubmitting = true;
-
+        async submitForm(event) {
             const form = event.target;
             const formData = new FormData(form);
 
-            // Submit form via AJAX to ensure data is sent before reload
-            fetch(form.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.text().then(text => ({ status: response.status, body: text })))
-            .then(({ status, body }) => {
-                // Check if response contains validation errors
-                const hasErrors = body.includes('Please fix the following errors:') ||
-                                 body.includes('bg-red-500') ||
-                                 status === 422;
+            // Show loading spinner
+            this.isSubmitting = true;
 
-                if (hasErrors) {
-                    // Validation errors - reload page to show them
+            try {
+                // Submit form via AJAX
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                // Parse response as JSON
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    // If JSON parse fails, it might be validation errors - reload
                     window.location.reload();
-                } else {
-                    // Success - show success modal
+                    return;
+                }
+
+                // Check if successful
+                if (response.ok && data.success) {
+                    // Success! Hide loading and submit modal
                     this.isSubmitting = false;
                     this.showSubmitModal = false;
+
+                    // Show success modal
                     this.showSuccessModal = true;
+                } else {
+                    // Validation errors or other errors - reload page
+                    window.location.reload();
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Submission error:', error);
                 // Reload on error to show any messages
                 window.location.reload();
-            });
+            }
         },
 
         closeSuccessModal() {

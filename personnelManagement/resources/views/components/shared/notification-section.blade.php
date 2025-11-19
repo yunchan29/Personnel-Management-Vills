@@ -1,10 +1,16 @@
 @props(['notifications' => [], 'unreadCount' => 0, 'userRole' => 'applicant'])
 
 @if(count($notifications) > 0)
-<div class="bg-white rounded-xl shadow-lg overflow-hidden mb-6 border-l-4 border-amber-500"
+@php
+    // Calculate actual unread count from visible notifications
+    $actualUnreadCount = collect($notifications)->filter(function($notification) {
+        return !isset($notification['read_at']) || $notification['read_at'] === null;
+    })->count();
+@endphp
+<div class="bg-white rounded-xl shadow-lg overflow-visible {{ $userRole === 'applicant' ? 'relative' : 'mb-6 border-l-4 border-amber-500' }}"
      x-data="{
         expanded: false,
-        unreadCount: {{ $unreadCount }},
+        unreadCount: {{ $actualUnreadCount }},
         markingAllRead: false,
         async markAllAsRead() {
             if (this.markingAllRead) return;
@@ -52,17 +58,17 @@
         }
      }">
     <!-- Header - Clickable to Toggle -->
-    <div class="w-full bg-gradient-to-br from-amber-50 to-white px-6 py-4" :class="expanded ? 'border-b border-amber-100' : ''">
+    <div class="w-full {{ in_array($userRole, ['applicant', 'admin']) ? 'bg-white' : 'bg-gradient-to-br from-amber-50 to-white' }} px-6 py-4 {{ in_array($userRole, ['applicant', 'admin']) ? 'rounded-xl' : '' }}" :class="expanded && '{{ $userRole === 'employee' }}' ? 'border-b border-amber-100' : ''">
         <div class="flex items-center justify-between gap-3">
             <button @click="handleExpand" class="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity">
-                <div class="bg-amber-500 text-white rounded-lg p-3 relative">
+                <div class="{{ $userRole === 'applicant' ? 'bg-gray-100 text-gray-700' : 'bg-[#BD6F22] text-white' }} rounded-lg p-3 relative">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                     </svg>
                     <span x-show="unreadCount > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center" x-text="unreadCount"></span>
                 </div>
                 <div class="text-left flex-1">
-                    <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <h2 class="{{ $userRole === 'applicant' ? 'text-lg' : 'text-xl' }} font-bold text-gray-900 flex items-center gap-2">
                         <span>Notifications</span>
                     </h2>
                     @php
@@ -84,7 +90,7 @@
                     x-show="unreadCount > 0 && expanded"
                     @click="markAllAsRead"
                     :disabled="markingAllRead"
-                    class="px-3 py-1.5 text-xs font-medium text-amber-700 hover:text-amber-800 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="px-3 py-1.5 text-xs font-medium {{ $userRole === 'applicant' ? 'text-gray-700 hover:text-gray-800 bg-gray-100 hover:bg-gray-200' : 'text-amber-700 hover:text-amber-800 bg-amber-100 hover:bg-amber-200' }} rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     x-cloak
                 >
                     <span x-show="!markingAllRead">Mark All Read</span>
@@ -92,7 +98,7 @@
                 </button>
 
                 <!-- Chevron Icon -->
-                <button @click="handleExpand" class="p-1 hover:bg-amber-100 rounded-lg transition-colors">
+                <button @click="handleExpand" class="p-1 {{ $userRole === 'applicant' ? 'hover:bg-gray-100' : 'hover:bg-amber-100' }} rounded-lg transition-colors">
                     <svg
                         class="w-6 h-6 text-gray-600 transform transition-transform duration-200"
                         :class="{ 'rotate-180': expanded }"
@@ -107,12 +113,14 @@
         </div>
     </div>
 
-    <!-- Summary View - Shown when collapsed -->
-    <div
-        x-show="!expanded"
-        class="px-6 py-3 bg-amber-50 border-t border-amber-100"
-    >
-        <div class="flex flex-wrap gap-2">
+    <!-- Summary View - Always shown (keeps consistent height) -->
+    <div class="{{ $userRole === 'applicant' ? 'relative' : '' }}">
+        <div
+            x-show="!expanded"
+            class="px-6 py-3 {{ $userRole === 'applicant' ? 'bg-gray-50 border-t border-gray-200 rounded-b-xl' : ($userRole === 'admin' ? 'bg-white border-t border-gray-200 rounded-b-xl' : 'bg-amber-50 border-t border-amber-100') }}"
+            x-cloak
+        >
+            <div class="flex flex-wrap gap-2">
             @php
                 $summaryItems = [];
                 $urgentCount = 0;
@@ -182,20 +190,30 @@
                     {{ $typeCount['application'] }} Application
                 </span>
             @endif
+            </div>
         </div>
-    </div>
 
-    <!-- Notifications List - Collapsible -->
-    <div
-        x-show="expanded"
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0 transform -translate-y-2"
-        x-transition:enter-end="opacity-100 transform translate-y-0"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100 transform translate-y-0"
-        x-transition:leave-end="opacity-0 transform -translate-y-2"
-        class="divide-y divide-gray-100"
-    >
+        <!-- Spacer to maintain height when expanded (applicants only) -->
+        @if($userRole === 'applicant')
+        <div x-show="expanded" class="px-6 py-3 bg-gray-50 border-t border-gray-200 rounded-b-xl" x-cloak>
+            <div class="flex flex-wrap gap-2">
+                <span class="inline-flex items-center gap-1 px-3 py-1 bg-transparent text-transparent rounded-full text-xs font-semibold select-none pointer-events-none">Placeholder</span>
+            </div>
+        </div>
+        @endif
+
+        <!-- Notifications List - Collapsible (Overlays on top for applicants) -->
+        <div
+            x-show="expanded"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 transform -translate-y-2"
+            x-transition:enter-end="opacity-100 transform translate-y-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 transform translate-y-0"
+            x-transition:leave-end="opacity-0 transform -translate-y-2"
+            class="divide-y divide-gray-100 {{ $userRole === 'applicant' ? 'absolute left-0 right-0 top-0 bg-white border-t border-gray-200 rounded-b-xl shadow-2xl z-50 max-h-96 overflow-y-auto' : '' }}"
+            x-cloak
+        >
         @php
             $typeColors = [
                 'interview' => ['icon_bg' => 'bg-blue-100', 'icon_color' => 'text-blue-600', 'text' => 'text-blue-900'],
@@ -248,8 +266,8 @@
                         </h3>
                     </div>
 
-                    <!-- Time Badge -->
-                    @if(isset($notification['days_until']))
+                    <!-- Time Badge (hidden for application/leave requests) -->
+                    @if(isset($notification['days_until']) && $notifType !== 'application')
                         @if($notification['days_until'] == 0)
                             <span class="px-2 py-0.5 bg-red-500 text-white rounded-full text-xs font-bold flex-shrink-0 animate-pulse">
                                 TODAY
@@ -283,6 +301,7 @@
                 @endif
             </div>
         @endforeach
+        </div>
     </div>
 </div>
 

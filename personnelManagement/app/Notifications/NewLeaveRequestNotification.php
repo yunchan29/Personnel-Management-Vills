@@ -60,14 +60,6 @@ class NewLeaveRequestNotification extends Notification
             'type' => 'application',
             'title' => 'New Leave Request',
             'message' => $this->employee->first_name . ' ' . $this->employee->last_name . ' has filed for ' . $this->leaveForm->leave_type,
-            'days_until' => max(0, $daysUntil),
-            'details' => [
-                'Employee' => $this->employee->first_name . ' ' . $this->employee->last_name,
-                'Leave Type' => $this->leaveForm->leave_type,
-                'Start Date' => $startDate ? $startDate->format('M d, Y') : 'N/A',
-                'End Date' => $endDate ? $endDate->format('M d, Y') : 'N/A',
-                'Status' => 'Pending',
-            ],
             'action_url' => $actionUrl,
             'action_text' => 'Review Request',
         ];
