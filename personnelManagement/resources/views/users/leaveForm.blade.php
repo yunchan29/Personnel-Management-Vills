@@ -229,8 +229,16 @@
                         <option value="Emergency Leave" {{ old('leave_type') == 'Emergency Leave' ? 'selected' : '' }}>Emergency Leave</option>
                         <option value="Maternity Leave" {{ old('leave_type') == 'Maternity Leave' ? 'selected' : '' }}>Maternity Leave</option>
                         <option value="Paternity Leave" {{ old('leave_type') == 'Paternity Leave' ? 'selected' : '' }}>Paternity Leave</option>
-                        <option value="Special Leave" {{ old('leave_type') == 'Special Leave' ? 'selected' : '' }}>Special Leave</option>
+                        <option value="Special Leave"
+                                {{ old('leave_type') == 'Special Leave' ? 'selected' : '' }}
+                                :disabled="!isEligibleForSpecialLeave()"
+                                x-bind:class="!isEligibleForSpecialLeave() ? 'text-gray-400' : ''">
+                            Special Leave (Requires 1 year contract)
+                        </option>
                     </select>
+                    <p class="text-xs text-gray-500 mt-1" x-show="!isEligibleForSpecialLeave()">
+                        <span class="text-orange-600 font-medium">⚠</span> You are not eligible for Special Leave. Special Leave requires a contract duration of at least 1 year (12 months).
+                    </p>
                 </div>
 
                 <div class="mb-4">
@@ -310,6 +318,8 @@
 function leaveFormApp() {
     return {
         leaveForms: @json($leaveForms->items()),
+        contractStart: @json($contractStart),
+        contractEnd: @json($contractEnd),
         selectedStatus: 'Pending',
         selectedForm: null,
         showSubmitModal: false,
@@ -439,6 +449,34 @@ function leaveFormApp() {
             this.showSuccessModal = false;
             // Reload page to show the new leave request
             window.location.reload();
+        },
+
+        isEligibleForSpecialLeave() {
+            if (!this.contractStart || !this.contractEnd) {
+                return false;
+            }
+
+            // Calculate contract duration in months
+            const startDate = new Date(this.contractStart);
+            const endDate = new Date(this.contractEnd);
+
+            const monthsDiff = (endDate.getFullYear() - startDate.getFullYear()) * 12 +
+                             (endDate.getMonth() - startDate.getMonth());
+
+            // Contract duration must be at least 12 months (1 year)
+            return monthsDiff >= 12;
+        },
+
+        getContractDurationInMonths() {
+            if (!this.contractStart || !this.contractEnd) {
+                return 0;
+            }
+
+            const startDate = new Date(this.contractStart);
+            const endDate = new Date(this.contractEnd);
+
+            return (endDate.getFullYear() - startDate.getFullYear()) * 12 +
+                   (endDate.getMonth() - startDate.getMonth());
         }
     };
 }

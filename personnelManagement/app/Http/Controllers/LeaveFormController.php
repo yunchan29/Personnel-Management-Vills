@@ -28,7 +28,19 @@ class LeaveFormController extends Controller
 
     // Regular employee view with pagination
     $leaveForms = LeaveForm::where('user_id', $user->id)->latest()->paginate(15);
-    return view('users.leaveForm', compact('leaveForms'));
+
+    // Get the employee's contract dates from their latest application with contract dates
+    // We check for applications that have both contract_start and contract_end
+    $latestApplication = $user->applications()
+        ->whereNotNull('contract_start')
+        ->whereNotNull('contract_end')
+        ->latest()
+        ->first(['contract_start', 'contract_end']);
+
+    $contractStart = $latestApplication?->contract_start;
+    $contractEnd = $latestApplication?->contract_end;
+
+    return view('users.leaveForm', compact('leaveForms', 'contractStart', 'contractEnd'));
 }
 
 
@@ -36,7 +48,33 @@ class LeaveFormController extends Controller
     {
         $request->validate([
             'attachment' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
-            'leave_type' => 'required|string',
+            'leave_type' => ['required', 'string', function ($attribute, $value, $fail) {
+                // Validate Special Leave eligibility - employee must have a 1-year contract duration
+                if ($value === 'Special Leave') {
+                    $user = Auth::user();
+                    $latestApplication = $user->applications()
+                        ->whereNotNull('contract_start')
+                        ->whereNotNull('contract_end')
+                        ->latest()
+                        ->first(['contract_start', 'contract_end']);
+
+                    if (!$latestApplication || !$latestApplication->contract_start || !$latestApplication->contract_end) {
+                        $fail('You are not eligible for Special Leave. No valid contract found.');
+                        return;
+                    }
+
+                    // Calculate contract duration in months
+                    $contractStart = \Carbon\Carbon::parse($latestApplication->contract_start);
+                    $contractEnd = \Carbon\Carbon::parse($latestApplication->contract_end);
+                    $contractDurationInMonths = $contractStart->diffInMonths($contractEnd);
+
+                    // Special Leave requires at least 12 months contract duration
+                    if ($contractDurationInMonths < 12) {
+                        $fail('You are not eligible for Special Leave. Special Leave is only available to employees with a contract duration of at least 1 year (12 months). Your contract duration is ' . $contractDurationInMonths . ' months.');
+                        return;
+                    }
+                }
+            }],
             'date_range' => ['required', 'string', function ($attribute, $value, $fail) {
                 // Validate date range format and logic
                 // Expected format: "MM/DD/YYYY - MM/DD/YYYY" or similar

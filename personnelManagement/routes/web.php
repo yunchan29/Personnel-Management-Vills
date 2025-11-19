@@ -43,7 +43,9 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Registration routes (with rate limiting for security)
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:3,1'); // 3 attempts per minute
+// ⚠️ TEMPORARILY DISABLED FOR DUMMY DATA GENERATION - RESTORE THIS AFTER! ⚠️
+Route::post('/register', [RegisterController::class, 'register']); // ->middleware('throttle:3,1'); // 3 attempts per minute
+// ⚠️ END OF TEMPORARY DISABLE ⚠️
 
 // Email Verification routes (no auth required - user not logged in yet)
 Route::get('/email/verify', [VerifyEmailController::class, 'notice'])->name('verification.notice');
