@@ -4,7 +4,9 @@
       "Bash(php artisan:*)",
       "Bash(find:*)",
       "Bash(tree:*)",
-      "Bash(mysql:*)"
+      "Bash(mysql:*)",
+      "Bash(npm run build:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []
