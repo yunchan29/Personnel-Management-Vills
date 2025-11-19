@@ -713,7 +713,8 @@ function actionDropdown() {
 
                     for (const applicant of this.selectedApplicants) {
                         try {
-                            const response = await fetch(`/hrStaff/evaluation/archive/${applicant.application_id}`, {
+                            const response = await fetch(`/hrStaff/archive/${applicant.application_id}`, {
+
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -1513,7 +1514,7 @@ function actionDropdown() {
 
                     for (const applicant of selectedPassers) {
                         try {
-                            const response = await fetch(`/hrStaff/evaluation/archive/${applicant.application_id}`, {
+                            const response = await fetch(`/hrStaff/archive/${applicant.application_id}`, {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
