@@ -166,7 +166,7 @@
                     @else
                     <!-- Evaluate Icon (for not evaluated or failed applicants) -->
                     <button
-                        @click="openModal('{{ $applicant->user->full_name }}', {{ $applicant->id }}, {{ $applicant->evaluation ? 'true' : 'false' }}, null)"
+                        @click="checkAndOpenModal('{{ $applicant->user->full_name }}', {{ $applicant->id }}, {{ $applicant->evaluation ? 'true' : 'false' }})"
                         class="p-2 text-gray-700 hover:text-[#BD6F22] hover:bg-gray-100 rounded transition-colors"
                         title="Evaluate"
                     >
@@ -918,131 +918,233 @@ function actionDropdown() {
         },
 
         async promptPromote(applicant, progress) {
-            const today = new Date();
-            const minDate = today.toISOString().split('T')[0];
+            try {
+                // Step 1: Check vacancy status
+                const vacancyCheckResponse = await fetch(`/hrStaff/vacancy-check/${applicant.application_id}`);
+                if (!vacancyCheckResponse.ok) throw new Error('Failed to check vacancy status');
 
-            Swal.fire({
-                title: `Promote to Employee ${progress}`,
-                html: `
-                    <div class="text-left space-y-4">
-                        <p class="text-sm text-gray-600 mb-4">
-                            Set the employment contract period for <strong>${applicant.name}</strong>.
-                        </p>
+                const vacancyData = await vacancyCheckResponse.json();
 
-                        <div>
-                            <label class="block text-sm text-gray-700 mb-1">Contract Start Date</label>
-                            <input type="date" id="promote_contract_start"
-                                   class="w-full px-3 py-2 border rounded"
-                                   min="${minDate}" required>
+                // Check if there are no vacancies available
+                if (!vacancyData.has_vacancies) {
+                    Swal.fire({
+                        title: 'No Vacancies Available',
+                        text: 'This position has no available vacancies. Cannot promote applicant.',
+                        icon: 'error',
+                        confirmButtonColor: '#BD6F22'
+                    });
+                    return;
+                }
 
-                            <label class="block text-sm text-gray-700 mb-1 mt-2">Contract Period</label>
-                            <select id="promote_contract_period" class="w-full px-3 py-2 border rounded">
-                                <option value="6m" selected>6 Months</option>
-                                <option value="1y">1 Year</option>
-                            </select>
+                const today = new Date();
+                const minDate = today.toISOString().split('T')[0];
 
-                            <label class="block text-sm text-gray-700 mb-1 mt-2">Contract End Date (Auto-calculated)</label>
-                            <input type="text" id="promote_contract_end"
-                                   class="w-full px-3 py-2 border rounded bg-gray-100"
-                                   readonly placeholder="Will be calculated">
+                // Step 2: Show contract modal with vacancy warning
+                let vacancyWarning = '';
+                if (vacancyData.is_last_vacancy && vacancyData.remaining_applicants_count > 0) {
+                    vacancyWarning = `
+                        <div class="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
+                            <p class="text-sm text-yellow-800 font-semibold">⚠️ Warning: Last Vacancy</p>
+                            <p class="text-sm text-yellow-700 mt-1">
+                                This is the last available vacancy. There are <strong>${vacancyData.remaining_applicants_count}</strong> other applicant(s) still in the pipeline.
+                            </p>
                         </div>
-                    </div>
-                `,
-                showDenyButton: true,
-                showCancelButton: true,
-                confirmButtonColor: '#BD6F22',
-                denyButtonColor: '#6B7280',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Promote & Set Contract',
-                denyButtonText: 'Skip',
-                cancelButtonText: 'Stop',
-                didOpen: () => {
-                    // Auto-calculate end date
-                    const startInput = document.getElementById('promote_contract_start');
-                    const periodSelect = document.getElementById('promote_contract_period');
-                    const endInput = document.getElementById('promote_contract_end');
+                    `;
+                }
 
-                    const calculateEnd = () => {
-                        if (!startInput.value) return;
-                        const start = new Date(startInput.value);
-                        const period = periodSelect.value;
+                Swal.fire({
+                    title: `Promote to Employee ${progress}`,
+                    html: `
+                        <div class="text-left space-y-4">
+                            ${vacancyWarning}
+                            <p class="text-sm text-gray-600 mb-4">
+                                Set the employment contract period for <strong>${applicant.name}</strong>.
+                            </p>
+                            <p class="text-xs text-gray-500">
+                                Remaining vacancies: <strong>${vacancyData.remaining_vacancies}</strong>
+                            </p>
 
-                        if (period === '6m') {
-                            start.setMonth(start.getMonth() + 6);
-                        } else if (period === '1y') {
-                            start.setFullYear(start.getFullYear() + 1);
+                            <div>
+                                <label class="block text-sm text-gray-700 mb-1">Contract Start Date</label>
+                                <input type="date" id="promote_contract_start"
+                                       class="w-full px-3 py-2 border rounded"
+                                       min="${minDate}" required>
+
+                                <label class="block text-sm text-gray-700 mb-1 mt-2">Contract Period</label>
+                                <select id="promote_contract_period" class="w-full px-3 py-2 border rounded">
+                                    <option value="6m" selected>6 Months</option>
+                                    <option value="1y">1 Year</option>
+                                </select>
+
+                                <label class="block text-sm text-gray-700 mb-1 mt-2">Contract End Date (Auto-calculated)</label>
+                                <input type="text" id="promote_contract_end"
+                                       class="w-full px-3 py-2 border rounded bg-gray-100"
+                                       readonly placeholder="Will be calculated">
+                            </div>
+                        </div>
+                    `,
+                    showDenyButton: true,
+                    showCancelButton: true,
+                    confirmButtonColor: '#BD6F22',
+                    denyButtonColor: '#6B7280',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Promote & Set Contract',
+                    denyButtonText: 'Skip',
+                    cancelButtonText: 'Stop',
+                    didOpen: () => {
+                        const startInput = document.getElementById('promote_contract_start');
+                        const periodSelect = document.getElementById('promote_contract_period');
+                        const endInput = document.getElementById('promote_contract_end');
+
+                        const calculateEnd = () => {
+                            if (!startInput.value) return;
+                            const start = new Date(startInput.value);
+                            const period = periodSelect.value;
+
+                            if (period === '6m') {
+                                start.setMonth(start.getMonth() + 6);
+                            } else if (period === '1y') {
+                                start.setFullYear(start.getFullYear() + 1);
+                            }
+
+                            endInput.value = start.toISOString().split('T')[0];
+                        };
+
+                        startInput.addEventListener('change', calculateEnd);
+                        periodSelect.addEventListener('change', calculateEnd);
+                    },
+                    preConfirm: () => {
+                        const contractStart = document.getElementById('promote_contract_start').value;
+                        const contractPeriod = document.getElementById('promote_contract_period').value;
+
+                        if (!contractStart) {
+                            Swal.showValidationMessage('Please fill in the contract start date');
+                            return false;
                         }
 
-                        endInput.value = start.toISOString().split('T')[0];
-                    };
-
-                    startInput.addEventListener('change', calculateEnd);
-                    periodSelect.addEventListener('change', calculateEnd);
-                },
-                preConfirm: () => {
-                    const contractStart = document.getElementById('promote_contract_start').value;
-                    const contractPeriod = document.getElementById('promote_contract_period').value;
-
-                    if (!contractStart) {
-                        Swal.showValidationMessage('Please fill in the contract start date');
-                        return false;
+                        return {
+                            contract_start: contractStart,
+                            period: contractPeriod
+                        };
                     }
+                }).then(async (result) => {
+                    if (result.isConfirmed && result.value) {
+                        try {
+                            // Set contract dates
+                            const contractResponse = await fetch(`/hrStaff/contract-dates/${applicant.application_id}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                },
+                                body: JSON.stringify({
+                                    contract_start: result.value.contract_start,
+                                    period: result.value.period
+                                })
+                            });
 
-                    return {
-                        contract_start: contractStart,
-                        period: contractPeriod
-                    };
-                }
-            }).then(async (result) => {
-                if (result.isConfirmed && result.value) {
-                    try {
-                        // First, set contract dates
-                        const contractResponse = await fetch(`/hrStaff/contract-dates/${applicant.application_id}`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                            },
-                            body: JSON.stringify({
-                                contract_start: result.value.contract_start,
-                                period: result.value.period
-                            })
-                        });
+                            if (!contractResponse.ok) throw new Error('Failed to set contract dates');
 
-                        if (!contractResponse.ok) throw new Error('Failed to set contract dates');
+                            // Promote to employee
+                            const promoteResponse = await fetch(`/hrStaff/evaluation/promote/${applicant.application_id}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                }
+                            });
 
-                        // Then, promote to employee
-                        const promoteResponse = await fetch(`/hrStaff/evaluation/promote/${applicant.application_id}`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            if (!promoteResponse.ok) throw new Error('Failed to promote applicant');
+
+                            const promoteData = await promoteResponse.json();
+
+                            // Step 3: Ask about remaining applicants if this was the last vacancy
+                            if (vacancyData.is_last_vacancy && vacancyData.remaining_applicants_count > 0) {
+                                const handleResult = await Swal.fire({
+                                    title: 'Position Filled',
+                                    html: `
+                                        <p class="text-sm text-gray-700 mb-3">
+                                            ${applicant.name} has been promoted successfully. All vacancies for this position are now filled.
+                                        </p>
+                                        <p class="text-sm text-gray-700 mb-3">
+                                            There are <strong>${vacancyData.remaining_applicants_count}</strong> other applicant(s) still in the pipeline for this position.
+                                        </p>
+                                        <p class="text-sm text-gray-700 font-semibold">
+                                            What would you like to do with the remaining applicants?
+                                        </p>
+                                    `,
+                                    icon: 'question',
+                                    showDenyButton: true,
+                                    confirmButtonColor: '#BD6F22',
+                                    denyButtonColor: '#6B7280',
+                                    confirmButtonText: 'Auto-reject them',
+                                    denyButtonText: 'Keep them pending'
+                                });
+
+                                if (handleResult.isConfirmed) {
+                                    // Auto-reject remaining applicants
+                                    const handleResponse = await fetch(`/hrStaff/handle-remaining-applicants/${applicant.application_id}`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                        },
+                                        body: JSON.stringify({ action: 'reject_all' })
+                                    });
+
+                                    const handleData = await handleResponse.json();
+
+                                    Swal.fire({
+                                        title: 'Complete!',
+                                        html: `
+                                            <p>${applicant.name} has been promoted to employee.</p>
+                                            <p class="mt-2 text-sm text-gray-600">${handleData.rejected_count} applicant(s) have been auto-rejected and notified.</p>
+                                        `,
+                                        icon: 'success',
+                                        timer: 2000,
+                                        showConfirmButton: false
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: 'Success!',
+                                        text: `${applicant.name} has been promoted to employee.`,
+                                        icon: 'success',
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    });
+                                }
+                            } else {
+                                Swal.fire({
+                                    title: 'Success!',
+                                    text: `${applicant.name} has been promoted to employee.`,
+                                    icon: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
                             }
-                        });
 
-                        if (!promoteResponse.ok) throw new Error('Failed to promote applicant');
-
-                        Swal.fire({
-                            title: 'Success!',
-                            text: `${applicant.name} has been promoted to employee with contract set.`,
-                            icon: 'success',
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
-
+                            this.continueToNext();
+                        } catch (error) {
+                            Swal.fire({
+                                title: 'Error',
+                                text: error.message,
+                                icon: 'error',
+                                confirmButtonColor: '#BD6F22'
+                            });
+                        }
+                    } else if (result.isDenied) {
                         this.continueToNext();
-                    } catch (error) {
-                        Swal.fire({
-                            title: 'Error',
-                            text: error.message,
-                            icon: 'error',
-                            confirmButtonColor: '#BD6F22'
-                        });
                     }
-                } else if (result.isDenied) {
-                    this.continueToNext();
-                }
-            });
+                });
+            } catch (error) {
+                Swal.fire({
+                    title: 'Error',
+                    text: error.message,
+                    icon: 'error',
+                    confirmButtonColor: '#BD6F22'
+                });
+            }
         },
 
         async promptArchive(applicant, progress) {
@@ -1335,133 +1437,317 @@ function actionDropdown() {
                 return;
             }
 
-            const today = new Date();
-            const minDate = today.toISOString().split('T')[0];
-
-            Swal.fire({
-                title: `Promote ${selectedPassers.length} Applicant(s) to Employee`,
-                html: `
-                    <div class="text-left space-y-4">
-                        <p class="text-sm text-gray-600 mb-4">
-                            Set the employment contract period for all selected applicants.
-                        </p>
-
-                        <div>
-                            <label class="block text-sm text-gray-700 mb-1">Contract Start Date</label>
-                            <input type="date" id="bulk_passer_promote_contract_start"
-                                   class="w-full px-3 py-2 border rounded"
-                                   min="${minDate}" required>
-
-                            <label class="block text-sm text-gray-700 mb-1 mt-2">Contract Period</label>
-                            <select id="bulk_passer_promote_contract_period" class="w-full px-3 py-2 border rounded">
-                                <option value="6m" selected>6 Months</option>
-                                <option value="1y">1 Year</option>
-                            </select>
-
-                            <label class="block text-sm text-gray-700 mb-1 mt-2">Contract End Date (Auto-calculated)</label>
-                            <input type="text" id="bulk_passer_promote_contract_end"
-                                   class="w-full px-3 py-2 border rounded bg-gray-100"
-                                   readonly placeholder="Will be calculated">
-                        </div>
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonColor: '#BD6F22',
-                cancelButtonColor: '#6B7280',
-                confirmButtonText: 'Promote All',
-                cancelButtonText: 'Cancel',
-                didOpen: () => {
-                    const startInput = document.getElementById('bulk_passer_promote_contract_start');
-                    const periodSelect = document.getElementById('bulk_passer_promote_contract_period');
-                    const endInput = document.getElementById('bulk_passer_promote_contract_end');
-
-                    const calculateEnd = () => {
-                        if (!startInput.value) return;
-                        const start = new Date(startInput.value);
-                        const period = periodSelect.value;
-
-                        if (period === '6m') {
-                            start.setMonth(start.getMonth() + 6);
-                        } else if (period === '1y') {
-                            start.setFullYear(start.getFullYear() + 1);
-                        }
-
-                        endInput.value = start.toISOString().split('T')[0];
-                    };
-
-                    startInput.addEventListener('change', calculateEnd);
-                    periodSelect.addEventListener('change', calculateEnd);
-                },
-                showLoaderOnConfirm: true,
-                preConfirm: async () => {
-                    const contractStart = document.getElementById('bulk_passer_promote_contract_start').value;
-                    const contractPeriod = document.getElementById('bulk_passer_promote_contract_period').value;
-
-                    if (!contractStart) {
-                        Swal.showValidationMessage('Please fill in the contract start date');
-                        return false;
-                    }
-
-                    const contractData = {
-                        contract_start: contractStart,
-                        period: contractPeriod
-                    };
-
-                    let successCount = 0;
-                    let errorCount = 0;
-
-                    for (const applicant of selectedPassers) {
+            try {
+                // Step 1: Check vacancy status for all selected applicants
+                const vacancyChecks = await Promise.all(
+                    selectedPassers.map(async applicant => {
                         try {
-                            // Set contract dates
-                            const contractResponse = await fetch(`/hrStaff/contract-dates/${applicant.application_id}`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                                },
-                                body: JSON.stringify(contractData)
-                            });
-
-                            if (!contractResponse.ok) throw new Error('Failed to set contract');
-
-                            // Promote to employee
-                            const promoteResponse = await fetch(`/hrStaff/evaluation/promote/${applicant.application_id}`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                                }
-                            });
-
-                            if (!promoteResponse.ok) throw new Error('Failed to promote');
-
-                            successCount++;
+                            const response = await fetch(`/hrStaff/vacancy-check/${applicant.application_id}`);
+                            const data = await response.json();
+                            return { applicant, vacancyData: data };
                         } catch (error) {
-                            errorCount++;
-                            console.error(`Error promoting ${applicant.name}:`, error);
+                            return { applicant, vacancyData: null };
+                        }
+                    })
+                );
+
+                // Check if any applicant has no vacancies available
+                const noVacancyApplicants = vacancyChecks.filter(check =>
+                    check.vacancyData && !check.vacancyData.has_vacancies
+                );
+
+                if (noVacancyApplicants.length > 0) {
+                    const names = noVacancyApplicants.map(check => check.applicant.name).join(', ');
+                    Swal.fire({
+                        title: 'No Vacancies Available',
+                        html: `<p class="text-sm text-gray-700">The following applicant(s) cannot be promoted because their positions have no available vacancies:</p>
+                               <p class="mt-2 font-semibold text-gray-900">${names}</p>`,
+                        icon: 'error',
+                        confirmButtonColor: '#BD6F22'
+                    });
+                    return;
+                }
+
+                // Check if any position will be filled
+                const willFillPositions = vacancyChecks.some(check =>
+                    check.vacancyData && check.vacancyData.is_last_vacancy && check.vacancyData.remaining_applicants_count > 0
+                );
+
+                const today = new Date();
+                const minDate = today.toISOString().split('T')[0];
+
+                let vacancyWarning = '';
+                if (willFillPositions) {
+                    vacancyWarning = `
+                        <div class="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
+                            <p class="text-sm text-yellow-800 font-semibold">⚠️ Warning</p>
+                            <p class="text-sm text-yellow-700 mt-1">
+                                Some positions will be completely filled after this promotion. You will be asked to handle remaining applicants for those positions.
+                            </p>
+                        </div>
+                    `;
+                }
+
+                // Step 2: Show contract modal
+                Swal.fire({
+                    title: `Promote ${selectedPassers.length} Applicant(s) to Employee`,
+                    html: `
+                        <div class="text-left space-y-4">
+                            ${vacancyWarning}
+                            <p class="text-sm text-gray-600 mb-4">
+                                Set the employment contract period for all selected applicants.
+                            </p>
+
+                            <div>
+                                <label class="block text-sm text-gray-700 mb-1">Contract Start Date</label>
+                                <input type="date" id="bulk_passer_promote_contract_start"
+                                       class="w-full px-3 py-2 border rounded"
+                                       min="${minDate}" required>
+
+                                <label class="block text-sm text-gray-700 mb-1 mt-2">Contract Period</label>
+                                <select id="bulk_passer_promote_contract_period" class="w-full px-3 py-2 border rounded">
+                                    <option value="6m" selected>6 Months</option>
+                                    <option value="1y">1 Year</option>
+                                </select>
+
+                                <label class="block text-sm text-gray-700 mb-1 mt-2">Contract End Date (Auto-calculated)</label>
+                                <input type="text" id="bulk_passer_promote_contract_end"
+                                       class="w-full px-3 py-2 border rounded bg-gray-100"
+                                       readonly placeholder="Will be calculated">
+                            </div>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonColor: '#BD6F22',
+                    cancelButtonColor: '#6B7280',
+                    confirmButtonText: 'Promote All',
+                    cancelButtonText: 'Cancel',
+                    didOpen: () => {
+                        const startInput = document.getElementById('bulk_passer_promote_contract_start');
+                        const periodSelect = document.getElementById('bulk_passer_promote_contract_period');
+                        const endInput = document.getElementById('bulk_passer_promote_contract_end');
+
+                        const calculateEnd = () => {
+                            if (!startInput.value) return;
+                            const start = new Date(startInput.value);
+                            const period = periodSelect.value;
+
+                            if (period === '6m') {
+                                start.setMonth(start.getMonth() + 6);
+                            } else if (period === '1y') {
+                                start.setFullYear(start.getFullYear() + 1);
+                            }
+
+                            endInput.value = start.toISOString().split('T')[0];
+                        };
+
+                        startInput.addEventListener('change', calculateEnd);
+                        periodSelect.addEventListener('change', calculateEnd);
+                    },
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        const contractStart = document.getElementById('bulk_passer_promote_contract_start').value;
+                        const contractPeriod = document.getElementById('bulk_passer_promote_contract_period').value;
+
+                        if (!contractStart) {
+                            Swal.showValidationMessage('Please fill in the contract start date');
+                            return false;
+                        }
+
+                        const contractData = {
+                            contract_start: contractStart,
+                            period: contractPeriod
+                        };
+
+                        let successCount = 0;
+                        let errorCount = 0;
+                        const filledPositions = [];
+
+                        for (const applicant of selectedPassers) {
+                            try {
+                                // Set contract dates
+                                console.log(`Setting contract for ${applicant.name}...`);
+                                const contractResponse = await fetch(`/hrStaff/contract-dates/${applicant.application_id}`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                    },
+                                    body: JSON.stringify(contractData)
+                                });
+
+                                if (!contractResponse.ok) {
+                                    const contractError = await contractResponse.text();
+                                    console.error(`Contract dates failed for ${applicant.name}:`, contractError);
+                                    throw new Error(`Failed to set contract: ${contractError.substring(0, 100)}`);
+                                }
+
+                                console.log(`Contract set successfully for ${applicant.name}`);
+
+                                // Promote to employee
+                                console.log(`Promoting ${applicant.name}...`);
+                                const promoteResponse = await fetch(`/hrStaff/evaluation/promote/${applicant.application_id}`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                    }
+                                });
+
+                                if (!promoteResponse.ok) {
+                                    const errorText = await promoteResponse.text();
+                                    console.error(`Promotion failed for ${applicant.name}:`, errorText);
+                                    throw new Error(`Failed to promote (${promoteResponse.status})`);
+                                }
+
+                                // Check if response is JSON before parsing
+                                const contentType = promoteResponse.headers.get('content-type');
+                                let promoteData;
+                                if (contentType && contentType.includes('application/json')) {
+                                    promoteData = await promoteResponse.json();
+                                } else {
+                                    console.error('Expected JSON response but got:', contentType);
+                                    throw new Error('Server returned non-JSON response');
+                                }
+
+                                console.log(`Successfully promoted ${applicant.name}`);
+
+                                // Track if this promotion filled a position
+                                if (promoteData.vacancy_info && promoteData.vacancy_info.job_filled) {
+                                    filledPositions.push({
+                                        applicant: applicant,
+                                        application_id: applicant.application_id,
+                                        remaining_count: promoteData.vacancy_info.remaining_applicants_count
+                                    });
+                                }
+
+                                successCount++;
+                            } catch (error) {
+                                errorCount++;
+                                console.error(`Error processing ${applicant.name}:`, error.message);
+                            }
+                        }
+
+                        return {
+                            successCount: successCount,
+                            errorCount: errorCount,
+                            filledPositions: filledPositions
+                        };
+                    }
+                }).then(async (result) => {
+                    if (result.isConfirmed && result.value) {
+                        const finalResult = result.value;
+
+                        // Step 3: Handle remaining applicants if positions were filled
+                        if (finalResult.filledPositions.length > 0) {
+                            const totalRemaining = finalResult.filledPositions.reduce((sum, pos) => sum + pos.remaining_count, 0);
+
+                            if (totalRemaining > 0) {
+                                const handleResult = await Swal.fire({
+                                    title: 'Positions Filled',
+                                    html: `
+                                        <p class="text-sm text-gray-700 mb-3">
+                                            Successfully promoted <strong>${finalResult.successCount}</strong> applicant(s).
+                                        </p>
+                                        <p class="text-sm text-gray-700 mb-3">
+                                            <strong>${finalResult.filledPositions.length}</strong> position(s) are now completely filled.
+                                        </p>
+                                        <p class="text-sm text-gray-700 mb-3">
+                                            There are <strong>${totalRemaining}</strong> other applicant(s) still in the pipeline for these filled positions.
+                                        </p>
+                                        <p class="text-sm text-gray-700 font-semibold">
+                                            What would you like to do with the remaining applicants?
+                                        </p>
+                                    `,
+                                    icon: 'question',
+                                    showDenyButton: true,
+                                    confirmButtonColor: '#BD6F22',
+                                    denyButtonColor: '#6B7280',
+                                    confirmButtonText: 'Auto-reject them',
+                                    denyButtonText: 'Keep them pending'
+                                });
+
+                                if (handleResult.isConfirmed) {
+                                    // Auto-reject remaining applicants for all filled positions
+                                    let totalRejected = 0;
+                                    for (const position of finalResult.filledPositions) {
+                                        try {
+                                            const handleResponse = await fetch(`/hrStaff/handle-remaining-applicants/${position.application_id}`, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                                },
+                                                body: JSON.stringify({ action: 'reject_all' })
+                                            });
+
+                                            const handleData = await handleResponse.json();
+                                            totalRejected += handleData.rejected_count;
+                                        } catch (error) {
+                                            console.error('Error handling remaining applicants:', error);
+                                        }
+                                    }
+
+                                    Swal.fire({
+                                        title: 'Complete!',
+                                        html: `
+                                            <p>Successfully promoted: <strong>${finalResult.successCount}</strong></p>
+                                            ${finalResult.errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${finalResult.errorCount}</strong></p>` : ''}
+                                            <p class="mt-2 text-sm text-gray-600">${totalRejected} applicant(s) have been auto-rejected and notified.</p>
+                                        `,
+                                        icon: finalResult.errorCount > 0 ? 'warning' : 'success',
+                                        confirmButtonColor: '#BD6F22',
+                                        allowOutsideClick: false
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: 'Complete!',
+                                        html: `<p>Successfully promoted: <strong>${finalResult.successCount}</strong></p>
+                                               ${finalResult.errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${finalResult.errorCount}</strong></p>` : ''}`,
+                                        icon: finalResult.errorCount > 0 ? 'warning' : 'success',
+                                        confirmButtonColor: '#BD6F22',
+                                        allowOutsideClick: false
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                }
+                            } else {
+                                Swal.fire({
+                                    title: 'Complete!',
+                                    html: `<p>Successfully promoted: <strong>${finalResult.successCount}</strong></p>
+                                           ${finalResult.errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${finalResult.errorCount}</strong></p>` : ''}`,
+                                    icon: finalResult.errorCount > 0 ? 'warning' : 'success',
+                                    confirmButtonColor: '#BD6F22',
+                                    allowOutsideClick: false
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            }
+                        } else {
+                            Swal.fire({
+                                title: 'Complete!',
+                                html: `<p>Successfully promoted: <strong>${finalResult.successCount}</strong></p>
+                                       ${finalResult.errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${finalResult.errorCount}</strong></p>` : ''}`,
+                                icon: finalResult.errorCount > 0 ? 'warning' : 'success',
+                                confirmButtonColor: '#BD6F22',
+                                allowOutsideClick: false
+                            }).then(() => {
+                                window.location.reload();
+                            });
                         }
                     }
-
-                    return {
-                        successCount: successCount,
-                        errorCount: errorCount
-                    };
-                }
-            }).then((result) => {
-                if (result.isConfirmed && result.value) {
-                    const finalResult = result.value;
-                    Swal.fire({
-                        title: 'Complete!',
-                        html: `<p>Successfully promoted: <strong>${finalResult.successCount}</strong></p>
-                               ${finalResult.errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${finalResult.errorCount}</strong></p>` : ''}`,
-                        icon: finalResult.errorCount > 0 ? 'warning' : 'success',
-                        confirmButtonColor: '#BD6F22',
-                        allowOutsideClick: false
-                    }).then(() => {
-                        window.location.reload();
-                    });
-                }
-            });
+                });
+            } catch (error) {
+                Swal.fire({
+                    title: 'Error',
+                    text: error.message,
+                    icon: 'error',
+                    confirmButtonColor: '#BD6F22'
+                });
+            }
         },
 
         async bulkArchivePassers() {
@@ -1723,6 +2009,25 @@ function evaluationModal(applicants) {
             }
 
             this.computeResult();
+        },
+
+        checkAndOpenModal(employeeName, applicationId, evaluated = false) {
+            // Check if multiple applicants are selected
+            if (this.selectedApplicants && this.selectedApplicants.length > 1) {
+                Swal.fire({
+                    title: 'Multiple Applicants Selected',
+                    html: `<p class="text-sm text-gray-700 mb-3">You have <strong>${this.selectedApplicants.length}</strong> applicants selected.</p>
+                           <p class="text-sm text-gray-700">Each applicant must be evaluated individually with their own scores.</p>
+                           <p class="text-sm text-gray-700 mt-3 font-semibold">Please unselect the checkboxes and evaluate one applicant at a time.</p>`,
+                    icon: 'warning',
+                    confirmButtonColor: '#BD6F22',
+                    confirmButtonText: 'Understood'
+                });
+                return;
+            }
+
+            // If no multiple selection, proceed with evaluation
+            this.openModal(employeeName, applicationId, evaluated, null);
         },
 
         validateScore(key) {

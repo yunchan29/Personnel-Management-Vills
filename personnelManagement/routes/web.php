@@ -338,6 +338,14 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware(['auth', 'verified', 'rol
     Route::post('/evaluation/promote/{application}', [EvaluationController::class, 'promoteApplicant'])
         ->name('evaluation.promote');
 
+    // Vacancy check before promotion
+    Route::get('/vacancy-check/{application}', [EvaluationController::class, 'checkVacancy'])
+        ->name('evaluation.checkVacancy');
+
+    // Handle remaining applicants when position is filled
+    Route::post('/handle-remaining-applicants/{application}', [EvaluationController::class, 'handleRemainingApplicants'])
+        ->name('evaluation.handleRemainingApplicants');
+
     // Archive
     Route::get('/archive', [StaffArchiveController::class, 'index'])->name('archive.index');
     Route::put('/archive/bulk-restore', [StaffArchiveController::class, 'bulkRestore'])->name('archive.bulkRestore');

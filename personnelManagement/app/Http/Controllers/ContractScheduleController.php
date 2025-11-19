@@ -184,16 +184,8 @@ public function storeDates(Request $request, $applicationId)
 
     $application = Application::findOrFail($applicationId);
 
-    // Ensure contract signing schedule exists before saving dates
-    if (!$application->contract_signing_schedule) {
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You must set a contract signing schedule before assigning contract dates.'
-            ], 400);
-        }
-        return redirect()->back()->with('error', 'You must set a contract signing schedule before assigning contract dates.');
-    }
+    // Note: contract_signing_schedule is now optional
+    // HR can set contract dates for direct promotions without requiring a signing ceremony
 
     // Calculate end date from start + period
     $startDate = \Carbon\Carbon::parse($request->contract_start);

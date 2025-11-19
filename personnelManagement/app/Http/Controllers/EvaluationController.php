@@ -65,21 +65,6 @@ class EvaluationController extends Controller
             $application->setStatus(ApplicationStatus::PASSED_EVALUATION);
             $application->save();
 
-            // 🔽 Decrement job vacancies (atomic operation to prevent race conditions)
-            if ($job && $job->vacancies > 0) {
-                // Use atomic decrement to prevent concurrent updates
-                $job->decrement('vacancies');
-
-                // Reload the model to get updated vacancy count
-                $job->refresh();
-
-                if ($job->vacancies <= 0) {
-                    // Mark job as filled when all vacancies are taken
-                    $job->status = 'filled';
-                    $job->save();
-                }
-            }
-
         } else {
             // 1️⃣ Update status to failed (observer handles auto-archiving)
             $application->setStatus(ApplicationStatus::FAILED_EVALUATION);
@@ -122,28 +107,162 @@ class EvaluationController extends Controller
      */
     public function promoteApplicant(Request $request, $applicationId)
     {
-        $application = Application::with('user', 'job')->findOrFail($applicationId);
-        $user = $application->user;
+        try {
+            $application = Application::with('user', 'job')->findOrFail($applicationId);
+            $user = $application->user;
+            $job = $application->job;
 
-        // Only promote if not already an employee
-        if ($user->role !== 'employee') {
-            $user->role = 'employee';
-            $user->job_id = $application->job_id;
-            $user->save();
+            // Validate that the job has available vacancies
+            if (!$job->hasAvailableVacancies()) {
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No vacancies available for this position.'
+                    ], 400);
+                }
+                return redirect()->back()->withErrors(['vacancy' => 'No vacancies available for this position.']);
+            }
+
+            // Execute promotion in a transaction
+            $result = DB::transaction(function () use ($application, $user, $job) {
+                // Only promote if not already an employee
+                if ($user->role !== 'employee') {
+                    $user->role = 'employee';
+                    $user->job_id = $application->job_id;
+                    $user->save();
+                }
+
+                // Mark application as hired
+                $application->setStatus(ApplicationStatus::HIRED);
+                $application->save();
+
+                // Decrement vacancy (atomic operation to prevent race conditions)
+                $job->decrement('vacancies');
+                $job->refresh();
+
+                // Mark job as filled if no vacancies remain
+                if ($job->vacancies <= 0) {
+                    $job->status = 'filled';
+                    $job->save();
+                }
+
+                // Get remaining active applicants for the same job
+                $remainingApplicants = $job->getActiveApplications()
+                    ->where('id', '!=', $application->id)
+                    ->get();
+
+                return [
+                    'remaining_vacancies' => $job->vacancies,
+                    'remaining_applicants_count' => $remainingApplicants->count(),
+                    'remaining_applicants' => $remainingApplicants,
+                    'job_filled' => $job->status === 'filled'
+                ];
+            });
+
+            // Check if it's an AJAX request
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "{$user->full_name} has been promoted to employee.",
+                    'vacancy_info' => $result
+                ], 200);
+            }
+
+            return redirect()->back()->with('success', "{$user->full_name} has been promoted to employee.");
+        } catch (\Exception $e) {
+            \Log::error('Error promoting applicant: ' . $e->getMessage(), [
+                'application_id' => $applicationId,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to promote applicant: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->back()->withErrors(['promotion' => 'Failed to promote applicant: ' . $e->getMessage()]);
         }
+    }
 
-        // Mark application as hired
-        $application->setStatus(ApplicationStatus::HIRED);
-        $application->save();
+    /**
+     * Check vacancy status for a job before promotion
+     */
+    public function checkVacancy(Request $request, $applicationId)
+    {
+        $application = Application::with('job')->findOrFail($applicationId);
+        $job = $application->job;
 
-        // Check if it's an AJAX request
-        if ($request->wantsJson() || $request->ajax()) {
+        // Get remaining active applicants (excluding current application)
+        $remainingApplicants = $job->getActiveApplications()
+            ->where('id', '!=', $application->id)
+            ->with('user')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'job_title' => $job->job_title,
+            'remaining_vacancies' => $job->getRemainingVacancies(),
+            'has_vacancies' => $job->hasAvailableVacancies(),
+            'remaining_applicants_count' => $remainingApplicants->count(),
+            'remaining_applicants' => $remainingApplicants->map(function($app) {
+                return [
+                    'id' => $app->id,
+                    'name' => $app->user->full_name,
+                    'status' => $app->status->label()
+                ];
+            }),
+            'is_last_vacancy' => $job->vacancies === 1
+        ], 200);
+    }
+
+    /**
+     * Handle remaining applicants when a position is filled
+     */
+    public function handleRemainingApplicants(Request $request, $applicationId)
+    {
+        $validated = $request->validate([
+            'action' => 'required|in:reject_all,keep_pending'
+        ]);
+
+        $application = Application::with('job')->findOrFail($applicationId);
+        $job = $application->job;
+
+        if ($validated['action'] === 'reject_all') {
+            // Get active applicants before rejecting them
+            $activeApplicants = $job->getActiveApplications()
+                ->where('id', '!=', $application->id)
+                ->with('user')
+                ->get();
+
+            // Reject all remaining active applicants
+            $rejectedCount = $job->rejectRemainingApplicants('Position has been filled');
+
+            // Send emails to rejected applicants
+            foreach ($activeApplicants as $rejectedApp) {
+                try {
+                    Mail::to($rejectedApp->user->email)->send(
+                        new \App\Mail\PositionFilledMail($rejectedApp->user, $job)
+                    );
+                } catch (\Exception $e) {
+                    // Log email failure but don't stop the process
+                    \Log::error("Failed to send position filled email to {$rejectedApp->user->email}: " . $e->getMessage());
+                }
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => "{$user->full_name} has been promoted to employee."
+                'message' => "{$rejectedCount} applicant(s) have been auto-rejected.",
+                'rejected_count' => $rejectedCount
             ], 200);
         }
 
-        return redirect()->back()->with('success', "{$user->full_name} has been promoted to employee.");
+        // If action is 'keep_pending', do nothing
+        return response()->json([
+            'success' => true,
+            'message' => 'Remaining applicants will be kept pending.',
+            'rejected_count' => 0
+        ], 200);
     }
 }
