@@ -114,6 +114,7 @@ Route::prefix('employee')->name('employee.')->middleware(['auth', 'verified', 'r
     Route::get('/application', [ResumeController::class, 'show'])->name('application');
     Route::post('/application', [ResumeController::class, 'store'])->name('application.store');
     Route::delete('/application', [ResumeController::class, 'destroy'])->name('application.destroy');
+    Route::delete('/application/{id}/delete', [ResumeController::class, 'deleteApplication'])->name('application.delete');
 
     // Change password route
     Route::get('/settings', function () {return view('users.settings');})->name('settings');

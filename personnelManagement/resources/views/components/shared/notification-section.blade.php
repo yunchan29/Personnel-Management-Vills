@@ -1,6 +1,5 @@
 @props(['notifications' => [], 'unreadCount' => 0, 'userRole' => 'applicant'])
 
-@if(count($notifications) > 0)
 @php
     // Calculate actual unread count from visible notifications
     $actualUnreadCount = collect($notifications)->filter(function($notification) {
@@ -48,12 +47,25 @@
                     const data = await response.json();
                     if (data.success) {
                         this.unreadCount = 0;
+                        // Store in sessionStorage to persist across page refreshes
+                        sessionStorage.setItem('notifications_marked_read', Date.now().toString());
                     }
                 } catch (error) {
                     console.error('Error marking notifications as read:', error);
                 }
             } else {
                 this.expanded = !this.expanded;
+            }
+        },
+        init() {
+            // Check if notifications were already marked as read in this session
+            const markedReadTime = sessionStorage.getItem('notifications_marked_read');
+            if (markedReadTime) {
+                // If marked as read in the last 5 minutes, keep unreadCount at 0
+                const timeDiff = Date.now() - parseInt(markedReadTime);
+                if (timeDiff < 300000) { // 5 minutes
+                    this.unreadCount = 0;
+                }
             }
         }
      }">
@@ -120,30 +132,31 @@
             class="px-6 py-3 {{ $userRole === 'applicant' ? 'bg-gray-50 border-t border-gray-200 rounded-b-xl' : ($userRole === 'admin' ? 'bg-white border-t border-gray-200 rounded-b-xl' : 'bg-amber-50 border-t border-amber-100') }}"
             x-cloak
         >
-            <div class="flex flex-wrap gap-2">
-            @php
-                $summaryItems = [];
-                $urgentCount = 0;
-                $typeCount = [
-                    'interview' => 0,
-                    'training' => 0,
-                    'evaluation' => 0,
-                    'application' => 0,
-                ];
+            @if(count($notifications) > 0)
+                <div class="flex flex-wrap gap-2">
+                @php
+                    $summaryItems = [];
+                    $urgentCount = 0;
+                    $typeCount = [
+                        'interview' => 0,
+                        'training' => 0,
+                        'evaluation' => 0,
+                        'application' => 0,
+                    ];
 
-                foreach($notifications as $notification) {
-                    $type = isset($notification['type']) ? $notification['type'] : 'application';
-                    if (isset($typeCount[$type])) {
-                        $typeCount[$type]++;
+                    foreach($notifications as $notification) {
+                        $type = isset($notification['type']) ? $notification['type'] : 'application';
+                        if (isset($typeCount[$type])) {
+                            $typeCount[$type]++;
+                        }
+
+                        if (isset($notification['days_until']) && $notification['days_until'] <= 2) {
+                            $urgentCount++;
+                        }
                     }
+                @endphp
 
-                    if (isset($notification['days_until']) && $notification['days_until'] <= 2) {
-                        $urgentCount++;
-                    }
-                }
-            @endphp
-
-            @if($urgentCount > 0)
+                @if($urgentCount > 0)
                 <span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
                     <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
@@ -190,7 +203,16 @@
                     {{ $typeCount['application'] }} Application
                 </span>
             @endif
-            </div>
+                </div>
+            @else
+                <!-- Empty state summary -->
+                <div class="text-center text-sm text-gray-500">
+                    <svg class="w-5 h-5 inline-block text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p>All clear - no pending notifications</p>
+                </div>
+            @endif
         </div>
 
         <!-- Spacer to maintain height when expanded (applicants only) -->
@@ -224,16 +246,17 @@
             ];
         @endphp
 
-        @foreach($notifications as $notification)
-            @php
-                $notifType = isset($notification['type']) ? $notification['type'] : 'application';
-                $isUrgent = isset($notification['days_until']) && $notification['days_until'] <= 2;
-                $colorType = $isUrgent ? 'urgent' : $notifType;
-                $color = isset($typeColors[$colorType]) ? $typeColors[$colorType] : $typeColors['application'];
-                $isUnread = !isset($notification['read_at']) || $notification['read_at'] === null;
-            @endphp
+        @if(count($notifications) > 0)
+            @foreach($notifications as $notification)
+                @php
+                    $notifType = isset($notification['type']) ? $notification['type'] : 'application';
+                    $isUrgent = isset($notification['days_until']) && $notification['days_until'] <= 2;
+                    $colorType = $isUrgent ? 'urgent' : $notifType;
+                    $color = isset($typeColors[$colorType]) ? $typeColors[$colorType] : $typeColors['application'];
+                    $isUnread = !isset($notification['read_at']) || $notification['read_at'] === null;
+                @endphp
 
-            <div class="p-4 hover:bg-gray-50 transition-colors {{ $isUrgent ? 'animate-pulse-slow' : '' }} {{ $isUnread ? 'bg-blue-50 hover:bg-blue-100' : '' }}">
+                <div class="p-4 hover:bg-gray-50 transition-colors {{ $isUrgent ? 'animate-pulse-slow' : '' }} {{ $isUnread ? 'bg-blue-50 hover:bg-blue-100' : '' }}">
                 <!-- Header Row -->
                 <div class="flex items-start justify-between gap-2 mb-2">
                     <div class="flex items-center gap-2">
@@ -299,8 +322,20 @@
                     </svg>
                 </a>
                 @endif
+                </div>
+            @endforeach
+        @else
+            <!-- Empty State when no notifications -->
+            <div class="p-8 text-center">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">No Notifications</h3>
+                <p class="text-sm text-gray-500">You're all caught up! Check back later for updates.</p>
             </div>
-        @endforeach
+        @endif
         </div>
     </div>
 </div>
@@ -319,4 +354,3 @@
     animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 </style>
-@endif

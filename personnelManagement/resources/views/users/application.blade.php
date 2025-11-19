@@ -331,7 +331,6 @@
                     Track Status
                 </button>
 
-                @if(auth()->user()->role === 'applicant')
                 {{-- Only allow delete if not in advanced stages or terminal --}}
                 @if($application->status && !$application->isTerminal() && !in_array($application->status, [
                     ApplicationStatus::FOR_INTERVIEW,
@@ -341,7 +340,7 @@
                     ApplicationStatus::FOR_EVALUATION,
                     ApplicationStatus::PASSED_EVALUATION
                 ]))
-                    <form action="{{ route('applicant.application.delete', $application->id) }}" method="POST" class="delete-application-form">
+                    <form action="{{ auth()->user()->role === 'applicant' ? route('applicant.application.delete', $application->id) : route('employee.application.delete', $application->id) }}" method="POST" class="delete-application-form">
                         @csrf
                         @method('DELETE')
                         <button type="button" class="deleteApplicationBtn confirm-delete flex items-center gap-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-200"
@@ -356,7 +355,6 @@
                             <span class="text-sm font-medium">Delete</span>
                         </button>
                     </form>
-                @endif
                 @endif
             </div>
         </div>

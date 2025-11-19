@@ -62,8 +62,11 @@ class ResumeController extends Controller
         ]);
     }
 
+    // Redirect to appropriate route based on user role
+    $route = auth()->user()->role === 'applicant' ? 'applicant.application' : 'employee.application';
+
     return redirect()
-        ->route('applicant.application')
+        ->route($route)
         ->with('success', 'Resume uploaded successfully!');
 }
 
@@ -82,8 +85,11 @@ class ResumeController extends Controller
             $resume->delete();
         }
 
+        // Redirect to appropriate route based on user role
+        $route = auth()->user()->role === 'applicant' ? 'applicant.application' : 'employee.application';
+
         return redirect()
-            ->route('applicant.application')
+            ->route($route)
             ->with('success', 'Resume deleted successfully!');
     }
 
