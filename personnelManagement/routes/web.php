@@ -38,7 +38,9 @@ Route::get('/', [LandingPageController::class, 'index'])->name('welcome');
 
 // Authentication routes Login & Logout (with rate limiting for security)
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:5,1'); // 5 attempts per minute
+// ⚠️ TEMPORARILY DISABLED RATE LIMITING FOR TESTING - RESTORE AFTER! ⚠️
+Route::post('/login', [LoginController::class, 'login']); // ->middleware('throttle:5,1'); // 5 attempts per minute
+// ⚠️ END OF TEMPORARY DISABLE ⚠️
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Registration routes (with rate limiting for security)
@@ -49,12 +51,14 @@ Route::post('/register', [RegisterController::class, 'register']); // ->middlewa
 
 // Email Verification routes (no auth required - user not logged in yet)
 Route::get('/email/verify', [VerifyEmailController::class, 'notice'])->name('verification.notice');
+// ⚠️ TEMPORARILY DISABLED RATE LIMITING FOR TESTING - RESTORE AFTER! ⚠️
 Route::post('/email/verify', [VerifyEmailController::class, 'verify'])
-    ->middleware('throttle:6,1')
+    // ->middleware('throttle:6,1')
     ->name('verification.verify');
 Route::post('/email/resend', [VerifyEmailController::class, 'resend'])
-    ->middleware('throttle:3,1')
+    // ->middleware('throttle:3,1')
     ->name('verification.resend');
+// ⚠️ END OF TEMPORARY DISABLE ⚠️
 
 // Job listing route (public)
 Route::get('/job/{id}', [JobController::class, 'show'])->name('job.show');

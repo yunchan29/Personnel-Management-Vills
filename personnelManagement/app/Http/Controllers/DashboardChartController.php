@@ -820,11 +820,12 @@ class DashboardChartController extends Controller
                     $notifications[] = [
                         'priority' => 'urgent',
                         'type' => 'evaluation_overdue',
+                        'title' => 'Evaluation Overdue',
                         'applicant_name' => $applicantName,
                         'position' => $position,
                         'company' => $company,
                         'message' => "Training completed {$daysOverdue} days ago - Evaluation overdue",
-                        'action_url' => route('hrStaff.applicants.training', ['id' => $application->job_id]),
+                        'action_url' => route('hrStaff.perfEval'),
                         'action_text' => 'Evaluate Now',
                         'days_metric' => $daysOverdue
                     ];
@@ -846,11 +847,12 @@ class DashboardChartController extends Controller
                     $notifications[] = [
                         'priority' => 'important',
                         'type' => 'training_ending_soon',
+                        'title' => 'Training Ending Soon',
                         'applicant_name' => $applicantName,
                         'position' => $position,
                         'company' => $company,
                         'message' => "{$timeText} - Prepare evaluation",
-                        'action_url' => route('hrStaff.applicants.training', ['id' => $application->job_id]),
+                        'action_url' => route('hrStaff.perfEval'),
                         'action_text' => 'View Training',
                         'days_metric' => $daysUntilEnd
                     ];
@@ -865,11 +867,12 @@ class DashboardChartController extends Controller
                 $notifications[] = [
                     'priority' => 'info',
                     'type' => 'passed_awaiting_invitation',
+                    'title' => 'Ready for Invitation',
                     'applicant_name' => $applicantName,
                     'position' => $position,
                     'company' => $company,
                     'message' => "Evaluation passed ({$application->evaluation->total_score}%) - Ready for invitation",
-                    'action_url' => route('hrStaff.applicants.evaluation', ['id' => $application->job_id]),
+                    'action_url' => route('hrStaff.perfEval'),
                     'action_text' => 'Send Invitation',
                     'days_metric' => null
                 ];
