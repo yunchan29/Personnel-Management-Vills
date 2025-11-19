@@ -467,15 +467,6 @@
                 </div>
               </div>
 
-              <!-- Score Range -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Score Range</label>
-                <div class="grid grid-cols-2 gap-2">
-                  <input type="number" name="min_score" id="min_score" min="0" max="100" placeholder="Min" class="w-full px-2 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
-                  <input type="number" name="max_score" id="max_score" min="0" max="100" placeholder="Max" class="w-full px-2 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
-                </div>
-              </div>
-
               <!-- Apply Filters Button -->
               <button type="submit" class="w-full bg-[#BD6F22] hover:bg-[#A55E1A] text-white font-semibold py-2.5 px-4 rounded-md transition-colors duration-200 flex items-center justify-center">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -793,11 +784,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const evaluationStatus = document.getElementById('evaluation_status').value;
             const year = document.getElementById('year').value;
             const month = document.getElementById('month').value;
-            const minScore = document.getElementById('min_score').value;
-            const maxScore = document.getElementById('max_score').value;
 
             console.log('Report Type:', reportType);
-            console.log('Filters:', { company, position, evaluationStatus, year, month, minScore, maxScore });
+            console.log('Filters:', { company, position, evaluationStatus, year, month });
 
             const params = new URLSearchParams();
             if (company) params.append('company', company);
@@ -805,8 +794,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (evaluationStatus) params.append('evaluation_status', evaluationStatus);
             if (year) params.append('year', year);
             if (month) params.append('month', month);
-            if (minScore) params.append('min_score', minScore);
-            if (maxScore) params.append('max_score', maxScore);
 
             // Report type is hardcoded as training-evaluation
             const url = `/hrStaff/reports/${reportType}/pdf?` + params.toString();

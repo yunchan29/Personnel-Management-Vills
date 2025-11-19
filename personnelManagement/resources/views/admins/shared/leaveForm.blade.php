@@ -3,9 +3,95 @@
 @section('content')
 <div class="max-w-7xl mx-auto px-6 py-8"
      x-data="draggableModal()"
-     x-init="initDrag(); checkFlashMessage()"
+     x-init="initDrag(); checkFlashMessage(); updateFilteredCount();
+             $watch('filterCompany', () => updateFilteredCount());
+             $watch('filterYear', () => updateFilteredCount());
+             $watch('filterMonth', () => updateFilteredCount());
+             $watch('selectedStatus', () => updateFilteredCount());"
 >
     <h1 class="text-2xl font-semibold text-[#BD6F22] mb-6">Leave Form</h1>
+
+    <!-- Filter Section -->
+    <div class="bg-white rounded-lg shadow-md border border-gray-200 p-4 mb-6">
+        <div class="flex items-center gap-3 mb-3">
+            <svg class="w-5 h-5 text-[#BD6F22]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+            </svg>
+            <h2 class="text-lg font-semibold text-gray-800">Filter Leave Forms</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Company Filter -->
+            <div>
+                <label for="filter-company" class="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                <select id="filter-company" x-model="filterCompany"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
+                    <option value="">All Companies</option>
+                    @php
+                        $companies = $leaveForms->pluck('user.applications.*.job.company_name')->flatten()->unique()->filter()->sort()->values();
+                    @endphp
+                    @foreach($companies as $company)
+                        <option value="{{ $company }}">{{ $company }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Year Filter -->
+            <div>
+                <label for="filter-year" class="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                <select id="filter-year" x-model="filterYear"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
+                    <option value="">All Years</option>
+                    @php
+                        $years = $leaveForms->pluck('created_at')->map(fn($date) => \Carbon\Carbon::parse($date)->year)->unique()->sort()->reverse()->values();
+                    @endphp
+                    @foreach($years as $year)
+                        <option value="{{ $year }}">{{ $year }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Month Filter -->
+            <div>
+                <label for="filter-month" class="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                <select id="filter-month" x-model="filterMonth"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#BD6F22] focus:border-transparent">
+                    <option value="">All Months</option>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+            </div>
+
+            <!-- Clear Filter Button -->
+            <div class="flex items-end">
+                <button @click="clearFilters"
+                        class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors duration-200">
+                    Clear Filters
+                </button>
+            </div>
+        </div>
+
+        <!-- Filter Status Indicator -->
+        <div x-show="filterCompany || filterYear || filterMonth" x-transition
+             class="mt-3 p-2 bg-amber-50 border border-amber-200 rounded text-sm text-amber-800">
+            <span class="font-medium">Active Filters:</span>
+            <span x-show="filterCompany" class="ml-2">Company: <strong x-text="filterCompany"></strong></span>
+            <span x-show="filterYear" class="ml-2">Year: <strong x-text="filterYear"></strong></span>
+            <span x-show="filterMonth" class="ml-2">Month: <strong x-text="getMonthName(filterMonth)"></strong></span>
+            <span class="ml-2">•</span>
+            <span class="ml-1">Showing <strong x-text="filteredFormsCount"></strong> leave form(s)</span>
+        </div>
+    </div>
 
     <!-- Tabs -->
     <div class="flex border-b mb-6">
@@ -27,9 +113,10 @@
         <div class="md:col-span-2 space-y-4 max-h-[600px] overflow-y-auto pr-2">
             @foreach ($leaveForms as $form)
                 <div
-                    x-show="selectedStatus === '{{ $form->status }}'"
+                    x-show="selectedStatus === '{{ $form->status }}' && shouldShowForm(@js($form))"
                     @click="selectForm($event)"
                     data-form='@json($form)'
+                    data-created-at="{{ $form->created_at }}"
                     class="cursor-pointer bg-white shadow-sm rounded-md p-4 border relative hover:shadow-md transition"
                 >
                     <div class="text-sm text-gray-500 absolute top-2 right-3">
@@ -50,6 +137,16 @@
                     </div>
                 </div>
             @endforeach
+
+            <!-- No Results Message -->
+            <div x-show="filteredFormsCount === 0" x-transition
+                 class="bg-gray-50 rounded-lg p-8 text-center border-2 border-dashed border-gray-300">
+                <svg class="w-16 h-16 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <p class="text-gray-600 font-medium text-lg mb-1">No leave forms found</p>
+                <p class="text-gray-500 text-sm">Try adjusting your filters or clear them to see all leave forms.</p>
+            </div>
         </div>
 
         <!-- Right Panel -->
@@ -228,6 +325,10 @@ function draggableModal() {
         dragging: false,
         offsetX: 0,
         offsetY: 0,
+        filterCompany: '',
+        filterYear: '',
+        filterMonth: '',
+        filteredFormsCount: 0,
 
         selectForm(event) {
             const formData = event.currentTarget.dataset.form;
@@ -312,6 +413,57 @@ function draggableModal() {
             this.dragging = false;
             document.removeEventListener('mousemove', this.doDrag);
             document.removeEventListener('mouseup', this.stopDrag);
+        },
+        shouldShowForm(form) {
+            // Extract company from user's applications
+            let formCompany = 'N/A';
+            if (form.user && form.user.applications) {
+                const latestApp = form.user.applications
+                    .filter(app => app.job)
+                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+
+                if (latestApp && latestApp.job) {
+                    formCompany = latestApp.job.company_name || 'N/A';
+                }
+            }
+
+            // Check company filter
+            if (this.filterCompany && formCompany !== this.filterCompany) {
+                return false;
+            }
+
+            // Check year and month filter
+            const createdAt = new Date(form.created_at);
+            const formYear = createdAt.getFullYear();
+            const formMonth = createdAt.getMonth() + 1; // JavaScript months are 0-indexed
+
+            if (this.filterYear && formYear !== parseInt(this.filterYear)) {
+                return false;
+            }
+
+            if (this.filterMonth && formMonth !== parseInt(this.filterMonth)) {
+                return false;
+            }
+
+            return true;
+        },
+        clearFilters() {
+            this.filterCompany = '';
+            this.filterYear = '';
+            this.filterMonth = '';
+            this.updateFilteredCount();
+        },
+        getMonthName(monthNum) {
+            const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+            return monthNum ? months[parseInt(monthNum) - 1] : '';
+        },
+        updateFilteredCount() {
+            // Count visible forms
+            const allForms = @json($leaveForms);
+            this.filteredFormsCount = allForms.filter(form =>
+                form.status === this.selectedStatus && this.shouldShowForm(form)
+            ).length;
         },
         async confirmApprove(event, formId) {
             const result = await Swal.fire({
