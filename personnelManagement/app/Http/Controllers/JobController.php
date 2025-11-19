@@ -209,8 +209,8 @@ class JobController extends Controller
 
         $job = Job::findOrFail($id);
 
-        $newDeadline = \Carbon\Carbon::parse($job->apply_until)->addDays($validated['days']);
-        $job->update(['apply_until' => $newDeadline]);
+        $newDeadline = \Carbon\Carbon::parse($job->apply_until)->addDays((int) $validated['days']);
+        $job->update(['apply_until' => $newDeadline->format('Y-m-d')]);
 
         return redirect()->route('hrAdmin.jobPosting')
             ->with('success', "Job deadline extended by {$validated['days']} days. New deadline: {$newDeadline->format('F d, Y')}");
@@ -221,6 +221,13 @@ class JobController extends Controller
      */
     public function bulkExtend(Request $request)
     {
+        // Decode job_ids if it's a JSON string
+        $jobIds = $request->input('job_ids');
+        if (is_string($jobIds)) {
+            $jobIds = json_decode($jobIds, true);
+        }
+        $request->merge(['job_ids' => $jobIds]);
+
         $validated = $request->validate([
             'job_ids' => 'required|array',
             'job_ids.*' => 'exists:jobs,id',
@@ -231,7 +238,7 @@ class JobController extends Controller
         foreach ($validated['job_ids'] as $jobId) {
             $job = Job::find($jobId);
             if ($job) {
-                $newDeadline = \Carbon\Carbon::parse($job->apply_until)->addDays($validated['days']);
+                $newDeadline = \Carbon\Carbon::parse($job->apply_until)->addDays((int) $validated['days'])->format('Y-m-d');
                 $job->update(['apply_until' => $newDeadline]);
                 $count++;
             }
@@ -246,6 +253,13 @@ class JobController extends Controller
      */
     public function bulkDelete(Request $request)
     {
+        // Decode job_ids if it's a JSON string
+        $jobIds = $request->input('job_ids');
+        if (is_string($jobIds)) {
+            $jobIds = json_decode($jobIds, true);
+        }
+        $request->merge(['job_ids' => $jobIds]);
+
         $validated = $request->validate([
             'job_ids' => 'required|array',
             'job_ids.*' => 'exists:jobs,id',
@@ -287,16 +301,40 @@ class JobController extends Controller
      */
     public function bulkUpdateStatus(Request $request)
     {
-        $validated = $request->validate([
-            'job_ids' => 'required|array',
-            'job_ids.*' => 'exists:jobs,id',
-            'status' => 'required|in:active,expired,filled',
-        ]);
+        try {
+            // Decode job_ids if it's a JSON string
+            $jobIds = $request->input('job_ids');
+            if (is_string($jobIds)) {
+                $jobIds = json_decode($jobIds, true);
+            }
 
-        $count = Job::whereIn('id', $validated['job_ids'])
-            ->update(['status' => $validated['status']]);
+            // Check if JSON decode failed or result is empty
+            if (empty($jobIds) || !is_array($jobIds)) {
+                return redirect()->route('hrAdmin.jobPosting')
+                    ->with('error', 'No jobs selected. Please select at least one job.');
+            }
 
-        return redirect()->route('hrAdmin.jobPosting')
-            ->with('success', "Successfully updated status for {$count} job(s) to '{$validated['status']}'.");
+            $request->merge(['job_ids' => $jobIds]);
+
+            $validated = $request->validate([
+                'job_ids' => 'required|array|min:1',
+                'job_ids.*' => 'exists:jobs,id',
+                'status' => 'required|in:active,expired,filled',
+            ]);
+
+            $count = Job::whereIn('id', $validated['job_ids'])
+                ->update(['status' => $validated['status']]);
+
+            if ($count === 0) {
+                return redirect()->route('hrAdmin.jobPosting')
+                    ->with('warning', 'No jobs were updated. Please try again.');
+            }
+
+            return redirect()->route('hrAdmin.jobPosting')
+                ->with('success', "Successfully updated status for {$count} job(s) to '{$validated['status']}'.");
+        } catch (\Exception $e) {
+            return redirect()->route('hrAdmin.jobPosting')
+                ->with('error', 'Failed to update job status: ' . $e->getMessage());
+        }
     }
 }

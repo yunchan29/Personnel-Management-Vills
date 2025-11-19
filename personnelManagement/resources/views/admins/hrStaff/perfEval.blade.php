@@ -527,9 +527,8 @@ function actionDropdown() {
                 return;
             }
 
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const minDate = tomorrow.toISOString().split('T')[0];
+            const today = new Date();
+            const minDate = today.toISOString().split('T')[0];
 
             Swal.fire({
                 title: `Promote ${this.selectedApplicants.length} Applicant(s) to Employee`,
@@ -789,9 +788,8 @@ function actionDropdown() {
         },
 
         openContractModal(applicant, progress) {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const minDate = tomorrow.toISOString().split('T')[0];
+            const today = new Date();
+            const minDate = today.toISOString().split('T')[0];
 
             Swal.fire({
                 title: `Set Contract Dates for ${applicant.name} ${progress}`,
@@ -920,9 +918,8 @@ function actionDropdown() {
         },
 
         async promptPromote(applicant, progress) {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const minDate = tomorrow.toISOString().split('T')[0];
+            const today = new Date();
+            const minDate = today.toISOString().split('T')[0];
 
             Swal.fire({
                 title: `Promote to Employee ${progress}`,
@@ -1338,9 +1335,8 @@ function actionDropdown() {
                 return;
             }
 
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const minDate = tomorrow.toISOString().split('T')[0];
+            const today = new Date();
+            const minDate = today.toISOString().split('T')[0];
 
             Swal.fire({
                 title: `Promote ${selectedPassers.length} Applicant(s) to Employee`,

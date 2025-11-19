@@ -170,7 +170,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         Swal.fire({
             title: 'Success!',
-            text: '{{ session('success') }}',
+            text: {!! json_encode(session('success')) !!},
             icon: 'success',
             confirmButtonColor: '#BD6F22'
         });
@@ -183,7 +183,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         Swal.fire({
             title: 'Error!',
-            text: '{{ session('error') }}',
+            text: {!! json_encode(session('error')) !!},
             icon: 'error',
             confirmButtonColor: '#BD6F22'
         });
@@ -196,7 +196,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         Swal.fire({
             title: 'Warning!',
-            text: '{{ session('warning') }}',
+            text: {!! json_encode(session('warning')) !!},
             icon: 'warning',
             confirmButtonColor: '#BD6F22'
         });

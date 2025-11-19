@@ -108,7 +108,7 @@
     <div class="grid gap-6 sm:grid-cols-1 md:grid-cols-2 items-start">
     @forelse($jobs as $job)
         @php
-            $isExpired = \Carbon\Carbon::now()->gt(\Carbon\Carbon::parse($job->apply_until));
+            $isExpired = \Carbon\Carbon::now()->gt(\Carbon\Carbon::parse($job->apply_until)) || $job->status === 'expired';
         @endphp
         <div
             class="bg-white border rounded-lg shadow-sm p-6 flex flex-col justify-between transition-all duration-300 relative {{ $isExpired ? 'opacity-50' : '' }}"
