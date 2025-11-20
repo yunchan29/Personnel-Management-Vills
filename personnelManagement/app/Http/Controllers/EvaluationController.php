@@ -189,55 +189,94 @@ class EvaluationController extends Controller
     /**
      * Check vacancy status for a job before promotion/invitation
      */
-    public function checkVacancy(Request $request, $applicationId)
+    public function checkVacancy(Request $request, $id)
     {
-        $application = Application::with('job')->findOrFail($applicationId);
-        $job = $application->job;
+        try {
+            \Log::info('checkVacancy START', [
+                'application_id' => $id,
+                'selected_count' => $request->input('selected_count')
+            ]);
 
-        // Get the number of selected applicants from the request (for bulk promotion/invitation)
-        $selectedCount = $request->input('selected_count', 1);
+            $application = Application::with('job')->findOrFail($id);
+            \Log::info('checkVacancy: Application found', ['app_id' => $application->id]);
 
-        // Count applicants who already have invitations for this job
-        // (contract_signing_schedule is not null = invitation sent)
-        $applicantsWithInvitations = $job->applications()
-            ->whereNotNull('contract_signing_schedule')
-            ->where('is_archived', false)
-            ->count();
+            $job = $application->job;
 
-        // Calculate ACTUAL available vacancies
-        // = Total vacancies - Already invited applicants
-        $actualAvailableVacancies = $job->vacancies - $applicantsWithInvitations;
-        $actualAvailableVacancies = max(0, $actualAvailableVacancies); // Never negative
+            if (!$job) {
+                \Log::error('checkVacancy: Job not found for application', ['app_id' => $application->id]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Job not found for this application'
+                ], 404);
+            }
 
-        // Check if selected count exceeds actual available slots
-        $exceeds = $selectedCount > $actualAvailableVacancies;
+            \Log::info('checkVacancy: Job found', ['job_id' => $job->id]);
 
-        // Get remaining active applicants (excluding current application)
-        $remainingApplicants = $job->getActiveApplications()
-            ->where('id', '!=', $application->id)
-            ->with('user')
-            ->get();
+            // Get the number of selected applicants from the request (for bulk promotion/invitation)
+            $selectedCount = $request->input('selected_count', 1);
+            \Log::info('checkVacancy: Selected count', ['count' => $selectedCount]);
 
-        return response()->json([
-            'success' => true,
-            'job_title' => $job->job_title,
-            'total_vacancies' => $job->vacancies,
-            'invited_count' => $applicantsWithInvitations,
-            'remaining_vacancies' => $actualAvailableVacancies,
-            'has_vacancies' => $actualAvailableVacancies > 0,
-            'remaining_applicants_count' => $remainingApplicants->count(),
-            'remaining_applicants' => $remainingApplicants->map(function($app) {
-                return [
-                    'id' => $app->id,
-                    'name' => $app->user->full_name,
-                    'status' => $app->status->label()
-                ];
-            }),
-            'is_last_vacancy' => $actualAvailableVacancies === 1,
-            'selected_count' => $selectedCount,
-            'exceeds_vacancies' => $exceeds,
-            'shortage' => $exceeds ? ($selectedCount - $actualAvailableVacancies) : 0
-        ], 200);
+            // Count applicants who already have invitations for this job
+            // (contract_signing_schedule is not null = invitation sent)
+            $applicantsWithInvitations = $job->applications()
+                ->whereNotNull('contract_signing_schedule')
+                ->where('is_archived', false)
+                ->count();
+            \Log::info('checkVacancy: Applicants with invitations', ['count' => $applicantsWithInvitations]);
+
+            // Calculate ACTUAL available vacancies
+            // = Total vacancies - Already invited applicants
+            $actualAvailableVacancies = $job->vacancies - $applicantsWithInvitations;
+            $actualAvailableVacancies = max(0, $actualAvailableVacancies); // Never negative
+            \Log::info('checkVacancy: Available vacancies', ['count' => $actualAvailableVacancies]);
+
+            // Check if selected count exceeds actual available slots
+            $exceeds = $selectedCount > $actualAvailableVacancies;
+
+            // Get remaining active applicants (excluding current application)
+            \Log::info('checkVacancy: About to get active applications');
+            $remainingApplicants = $job->getActiveApplications()
+                ->where('id', '!=', $application->id)
+                ->with('user')
+                ->get();
+            \Log::info('checkVacancy: Got remaining applicants', ['count' => $remainingApplicants->count()]);
+
+            \Log::info('checkVacancy: Building response');
+            $response = [
+                'success' => true,
+                'job_title' => $job->job_title,
+                'total_vacancies' => $job->vacancies,
+                'invited_count' => $applicantsWithInvitations,
+                'remaining_vacancies' => $actualAvailableVacancies,
+                'has_vacancies' => $actualAvailableVacancies > 0,
+                'remaining_applicants_count' => $remainingApplicants->count(),
+                'remaining_applicants' => $remainingApplicants->map(function($app) {
+                    return [
+                        'id' => $app->id,
+                        'name' => $app->user ? $app->user->full_name : 'Unknown',
+                        'status' => $app->status ? $app->status->label() : 'N/A'
+                    ];
+                }),
+                'is_last_vacancy' => $actualAvailableVacancies === 1,
+                'selected_count' => $selectedCount,
+                'exceeds_vacancies' => $exceeds,
+                'shortage' => $exceeds ? ($selectedCount - $actualAvailableVacancies) : 0
+            ];
+
+            \Log::info('checkVacancy: Returning response', ['response' => $response]);
+            return response()->json($response, 200);
+        } catch (\Exception $e) {
+            \Log::error('Error in checkVacancy', [
+                'application_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to check vacancy: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

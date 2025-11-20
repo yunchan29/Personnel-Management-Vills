@@ -339,7 +339,7 @@ Route::prefix('hrStaff')->name('hrStaff.')->middleware(['auth', 'verified', 'rol
         ->name('evaluation.promote');
 
     // Vacancy check before promotion
-    Route::get('/vacancy-check/{application}', [EvaluationController::class, 'checkVacancy'])
+    Route::get('/vacancy-check/{id}', [EvaluationController::class, 'checkVacancy'])
         ->name('evaluation.checkVacancy');
 
     // Handle remaining applicants when position is filled
