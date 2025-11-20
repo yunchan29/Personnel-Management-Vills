@@ -730,10 +730,14 @@ function actionDropdown() {
                         }
                     }
 
+                    let resultHtml = `<p>Successfully archived: <strong>${successCount}</strong></p>`;
+                    if (errorCount > 0) {
+                        resultHtml += `<p class="text-red-600">Failed: <strong>${errorCount}</strong></p>`;
+                    }
+
                     Swal.fire({
                         title: 'Complete!',
-                        html: `<p>Successfully archived: <strong>${successCount}</strong></p>
-                               ${errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${errorCount}</strong></p>` : ''}`,
+                        html: resultHtml,
                         icon: errorCount > 0 ? 'warning' : 'success',
                         confirmButtonColor: '#BD6F22'
                     }).then(() => {
@@ -1219,18 +1223,103 @@ function actionDropdown() {
                 return;
             }
 
-            // Edge Case: Check if any selected applicants already have recent invitations
-            const passersWithRecentInvitations = selectedPassers.filter(p => p.has_invitation);
-            if (passersWithRecentInvitations.length > 0) {
+            // Edge Case: Separate applicants by invitation status
+            const passersWithInvitations = selectedPassers.filter(p => p.has_invitation);
+            const passersWithoutInvitations = selectedPassers.filter(p => !p.has_invitation);
+
+            // ✅ VACANCY CHECK: Only count applicants WITHOUT invitations
+            // (Resending to already-invited applicants doesn't consume additional vacancies)
+            // Skip vacancy check if ALL are resends (no new invitations)
+            if (passersWithoutInvitations.length > 0) {
+                try {
+                    const firstPasser = selectedPassers[0];
+                    const vacancyCheckResponse = await fetch(`/hrStaff/vacancy-check/${firstPasser.application_id}?selected_count=${passersWithoutInvitations.length}`);
+
+                    if (!vacancyCheckResponse.ok) {
+                        throw new Error('Failed to check vacancy status');
+                    }
+
+                    const vacancyData = await vacancyCheckResponse.json();
+
+                    // Block if no vacancies available or exceeds
+                    if (!vacancyData.has_vacancies || vacancyData.exceeds_vacancies) {
+                    Swal.fire({
+                        title: 'Cannot Send Invitations',
+                        html: `
+                            <div class="text-left">
+                                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                                    <div class="flex items-start">
+                                        <svg class="w-6 h-6 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-semibold text-red-800 mb-3">${!vacancyData.has_vacancies ? 'No vacancies available!' : 'Selected applicants exceed available vacancies!'}</p>
+                                            <div class="bg-white border border-red-100 rounded p-3 mb-3">
+                                                <p class="text-xs font-semibold text-gray-700 mb-2">📋 Vacancy Status for "${vacancyData.job_title}"</p>
+                                                <div class="text-sm text-gray-700 space-y-1">
+                                                    <p>• Total vacancies needed: <strong class="text-blue-600">${vacancyData.total_vacancies}</strong></p>
+                                                    <p>• Invitations already sent: <strong class="text-orange-600">${vacancyData.invited_count}</strong></p>
+                                                    <p>• Available slots: <strong class="text-green-600">${vacancyData.remaining_vacancies}</strong></p>
+                                                </div>
+                                            </div>
+                                            <div class="text-sm text-red-700 space-y-1">
+                                                <p>• You selected: <strong>${selectedPassers.length}</strong> applicant(s)</p>
+                                                ${vacancyData.exceeds_vacancies ? `<p>• Excess: <strong>${vacancyData.shortage}</strong> applicant(s)</p>` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-700 mt-3">
+                                    ${vacancyData.exceeds_vacancies
+                                        ? `Please unselect <strong>${vacancyData.shortage}</strong> applicant(s), or reject/archive the excess applicants before sending invitations.`
+                                        : 'All vacancy slots have been filled. Please archive/reject applicants with invitations if you need to send new ones.'}
+                                </p>
+                            </div>
+                        `,
+                        icon: 'error',
+                        confirmButtonColor: '#BD6F22',
+                        confirmButtonText: 'OK, I\'ll adjust selection'
+                    });
+                    return;
+                }
+                } catch (error) {
+                    console.error('Error checking vacancies:', error);
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Failed to check vacancy status. Please try again.',
+                        icon: 'error',
+                        confirmButtonColor: '#BD6F22'
+                    });
+                    return;
+                }
+            }
+
+            // Warn about resending invitations (but allow it)
+            if (passersWithInvitations.length > 0) {
+                const names = passersWithInvitations.map(p => p.name).join(', ');
                 const result = await Swal.fire({
-                    title: 'Invitation Warning',
-                    html: `<p class="text-sm text-gray-700">${passersWithRecentInvitations.length} of the selected applicants already have invitations.</p>
-                           <p class="mt-2 text-sm text-gray-600">Do you want to send new invitations anyway?</p>`,
-                    icon: 'warning',
+                    title: 'Resend Invitations?',
+                    html: `
+                        <div class="text-left">
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-3">
+                                <p class="text-sm font-semibold text-blue-800 mb-2">ℹ️ ${passersWithInvitations.length} applicant(s) already have invitations:</p>
+                                <p class="text-xs text-blue-700 font-mono bg-white p-2 rounded">${names}</p>
+                            </div>
+                            <p class="text-sm text-gray-700 mb-2">
+                                ${passersWithoutInvitations.length > 0
+                                    ? `You're sending invitations to <strong>${passersWithoutInvitations.length}</strong> new applicant(s) and resending to <strong>${passersWithInvitations.length}</strong> existing one(s).`
+                                    : `You're resending invitations to <strong>${passersWithInvitations.length}</strong> applicant(s).`}
+                            </p>
+                            <p class="text-xs text-green-600 font-semibold">
+                                ✓ Resending won't consume additional vacancy slots
+                            </p>
+                        </div>
+                    `,
+                    icon: 'info',
                     showCancelButton: true,
                     confirmButtonColor: '#BD6F22',
                     cancelButtonColor: '#6B7280',
-                    confirmButtonText: 'Yes, send anyway',
+                    confirmButtonText: 'Yes, proceed',
                     cancelButtonText: 'Cancel'
                 });
 
@@ -1437,63 +1526,58 @@ function actionDropdown() {
                 return;
             }
 
+            // Strict vacancy validation at promotion stage
+            // Check if there are enough vacancies for selected applicants
             try {
-                // Step 1: Check vacancy status for all selected applicants
-                const vacancyChecks = await Promise.all(
-                    selectedPassers.map(async applicant => {
-                        try {
-                            const response = await fetch(`/hrStaff/vacancy-check/${applicant.application_id}`);
-                            const data = await response.json();
-                            return { applicant, vacancyData: data };
-                        } catch (error) {
-                            return { applicant, vacancyData: null };
-                        }
-                    })
-                );
+                const firstPasser = selectedPassers[0];
+                const vacancyCheckResponse = await fetch(`/hrStaff/vacancy-check/${firstPasser.application_id}?selected_count=${selectedPassers.length}`);
+                const vacancyData = await vacancyCheckResponse.json();
 
-                // Check if any applicant has no vacancies available
-                const noVacancyApplicants = vacancyChecks.filter(check =>
-                    check.vacancyData && !check.vacancyData.has_vacancies
-                );
-
-                if (noVacancyApplicants.length > 0) {
-                    const names = noVacancyApplicants.map(check => check.applicant.name).join(', ');
+                // Block if selected count exceeds available vacancies
+                if (vacancyData.total_vacancies < selectedPassers.length) {
                     Swal.fire({
-                        title: 'No Vacancies Available',
-                        html: `<p class="text-sm text-gray-700">The following applicant(s) cannot be promoted because their positions have no available vacancies:</p>
-                               <p class="mt-2 font-semibold text-gray-900">${names}</p>`,
+                        title: 'Insufficient Vacancies',
+                        html: `
+                            <div class="text-left">
+                                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                                    <div class="bg-white border border-red-100 rounded p-3 mb-3">
+                                        <p class="text-xs font-semibold text-gray-700 mb-2">📋 Vacancy Status for "${vacancyData.job_title}"</p>
+                                        <div class="text-sm text-gray-700 space-y-1">
+                                            <p>• Total vacancies: <strong class="text-blue-600">${vacancyData.total_vacancies}</strong></p>
+                                            <p>• Selected applicants: <strong class="text-orange-600">${selectedPassers.length}</strong></p>
+                                            <p>• Shortage: <strong class="text-red-600">${selectedPassers.length - vacancyData.total_vacancies}</strong></p>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-red-700">⚠️ Cannot promote: You selected more applicants than available vacancies.</p>
+                                    <p class="text-sm text-red-700 mt-2">Please unselect <strong>${selectedPassers.length - vacancyData.total_vacancies}</strong> applicant(s) to proceed.</p>
+                                </div>
+                            </div>
+                        `,
                         icon: 'error',
                         confirmButtonColor: '#BD6F22'
                     });
                     return;
                 }
+            } catch (error) {
+                console.error('Error checking vacancies:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to verify vacancy availability. Please try again.',
+                    icon: 'error',
+                    confirmButtonColor: '#BD6F22'
+                });
+                return;
+            }
 
-                // Check if any position will be filled
-                const willFillPositions = vacancyChecks.some(check =>
-                    check.vacancyData && check.vacancyData.is_last_vacancy && check.vacancyData.remaining_applicants_count > 0
-                );
+            const today = new Date();
+            const minDate = today.toISOString().split('T')[0];
 
-                const today = new Date();
-                const minDate = today.toISOString().split('T')[0];
-
-                let vacancyWarning = '';
-                if (willFillPositions) {
-                    vacancyWarning = `
-                        <div class="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
-                            <p class="text-sm text-yellow-800 font-semibold">⚠️ Warning</p>
-                            <p class="text-sm text-yellow-700 mt-1">
-                                Some positions will be completely filled after this promotion. You will be asked to handle remaining applicants for those positions.
-                            </p>
-                        </div>
-                    `;
-                }
-
-                // Step 2: Show contract modal
+            try {
+                // Show contract modal
                 Swal.fire({
                     title: `Promote ${selectedPassers.length} Applicant(s) to Employee`,
                     html: `
                         <div class="text-left space-y-4">
-                            ${vacancyWarning}
                             <p class="text-sm text-gray-600 mb-4">
                                 Set the employment contract period for all selected applicants.
                             </p>
@@ -1813,10 +1897,14 @@ function actionDropdown() {
                         }
                     }
 
+                    let resultHtml = `<p>Successfully archived: <strong>${successCount}</strong></p>`;
+                    if (errorCount > 0) {
+                        resultHtml += `<p class="text-red-600">Failed: <strong>${errorCount}</strong></p>`;
+                    }
+
                     Swal.fire({
                         title: 'Complete!',
-                        html: `<p>Successfully archived: <strong>${successCount}</strong></p>
-                               ${errorCount > 0 ? `<p class="text-red-600">Failed: <strong>${errorCount}</strong></p>` : ''}`,
+                        html: resultHtml,
                         icon: errorCount > 0 ? 'warning' : 'success',
                         confirmButtonColor: '#BD6F22'
                     }).then(() => {

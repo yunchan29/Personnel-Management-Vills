@@ -108,7 +108,12 @@ class StaffArchiveController extends Controller
             abort(403, 'Unauthorized. Only HR Staff can archive applications.');
         }
 
-        $application = Application::findOrFail($id);
+        $application = Application::with('job')->findOrFail($id);
+
+        // Change status to REJECTED if archiving a PASSED_EVALUATION applicant
+        if ($application->status === ApplicationStatus::PASSED_EVALUATION) {
+            $application->status = ApplicationStatus::REJECTED;
+        }
 
         // Use direct assignment since is_archived is guarded
         $application->is_archived = true;
@@ -138,7 +143,11 @@ class StaffArchiveController extends Controller
             abort(403, 'Unauthorized. Only HR Staff can restore applications.');
         }
 
-        $application = Application::findOrFail($id);
+        $application = Application::with('job')->findOrFail($id);
+        $job = $application->job;
+
+        // Check if applicant had invitation before archiving
+        $hadInvitation = $application->contract_signing_schedule !== null;
 
         \Log::info('Application found', [
             'app_id' => $application->id,
@@ -236,6 +245,19 @@ class StaffArchiveController extends Controller
                 : 'Application restored and set to Scheduled for Training status.';
         }
 
+        // Clear invitation status if applicant had invitation
+        // This prevents double-counting in vacancy calculations
+        if ($hadInvitation) {
+            $application->contract_signing_schedule = null;
+
+            \Log::info('Cleared invitation status for restored applicant', [
+                'app_id' => $application->id,
+                'reason' => 'Invitation must be resent after restoration'
+            ]);
+
+            $message .= ' Previous invitation cleared - applicant must be re-invited.';
+        }
+
         // Update both archived status and application status
         // Use direct assignment instead of mass assignment since these fields are guarded
         $application->is_archived = false;
@@ -247,7 +269,8 @@ class StaffArchiveController extends Controller
 
         \Log::info('Application updated successfully', [
             'after_update_status' => $application->status,
-            'after_update_is_archived' => $application->is_archived
+            'after_update_is_archived' => $application->is_archived,
+            'invitation_cleared' => $hadInvitation
         ]);
 
         return redirect()->route('hrStaff.archive.index')
@@ -292,6 +315,11 @@ class StaffArchiveController extends Controller
         $restoredCount = 0;
 
         foreach ($applications as $application) {
+            // Clear invitation if present (prevents double-counting)
+            if ($application->contract_signing_schedule !== null) {
+                $application->contract_signing_schedule = null;
+            }
+
             // Handle restoration based on status
             if ($application->status === ApplicationStatus::DECLINED) {
                 // Auto-restore DECLINED to PENDING

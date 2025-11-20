@@ -460,7 +460,7 @@ function draggableModal() {
         },
         updateFilteredCount() {
             // Count visible forms
-            const allForms = @json($leaveForms);
+            const allForms = @json($leaveForms->values());
             this.filteredFormsCount = allForms.filter(form =>
                 form.status === this.selectedStatus && this.shouldShowForm(form)
             ).length;

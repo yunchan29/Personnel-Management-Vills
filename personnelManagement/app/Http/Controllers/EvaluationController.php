@@ -112,15 +112,15 @@ class EvaluationController extends Controller
             $user = $application->user;
             $job = $application->job;
 
-            // Validate that the job has available vacancies
-            if (!$job->hasAvailableVacancies()) {
+            // Strict vacancy enforcement - block promotion if no vacancies available
+            if ($job->vacancies <= 0) {
                 if ($request->wantsJson() || $request->ajax()) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'No vacancies available for this position.'
-                    ], 400);
+                        'message' => 'Cannot promote: No vacancies available for this job position.'
+                    ], 422);
                 }
-                return redirect()->back()->withErrors(['vacancy' => 'No vacancies available for this position.']);
+                return redirect()->back()->withErrors(['promotion' => 'Cannot promote: No vacancies available for this job position.']);
             }
 
             // Execute promotion in a transaction
@@ -187,12 +187,30 @@ class EvaluationController extends Controller
     }
 
     /**
-     * Check vacancy status for a job before promotion
+     * Check vacancy status for a job before promotion/invitation
      */
     public function checkVacancy(Request $request, $applicationId)
     {
         $application = Application::with('job')->findOrFail($applicationId);
         $job = $application->job;
+
+        // Get the number of selected applicants from the request (for bulk promotion/invitation)
+        $selectedCount = $request->input('selected_count', 1);
+
+        // Count applicants who already have invitations for this job
+        // (contract_signing_schedule is not null = invitation sent)
+        $applicantsWithInvitations = $job->applications()
+            ->whereNotNull('contract_signing_schedule')
+            ->where('is_archived', false)
+            ->count();
+
+        // Calculate ACTUAL available vacancies
+        // = Total vacancies - Already invited applicants
+        $actualAvailableVacancies = $job->vacancies - $applicantsWithInvitations;
+        $actualAvailableVacancies = max(0, $actualAvailableVacancies); // Never negative
+
+        // Check if selected count exceeds actual available slots
+        $exceeds = $selectedCount > $actualAvailableVacancies;
 
         // Get remaining active applicants (excluding current application)
         $remainingApplicants = $job->getActiveApplications()
@@ -203,8 +221,10 @@ class EvaluationController extends Controller
         return response()->json([
             'success' => true,
             'job_title' => $job->job_title,
-            'remaining_vacancies' => $job->getRemainingVacancies(),
-            'has_vacancies' => $job->hasAvailableVacancies(),
+            'total_vacancies' => $job->vacancies,
+            'invited_count' => $applicantsWithInvitations,
+            'remaining_vacancies' => $actualAvailableVacancies,
+            'has_vacancies' => $actualAvailableVacancies > 0,
             'remaining_applicants_count' => $remainingApplicants->count(),
             'remaining_applicants' => $remainingApplicants->map(function($app) {
                 return [
@@ -213,7 +233,10 @@ class EvaluationController extends Controller
                     'status' => $app->status->label()
                 ];
             }),
-            'is_last_vacancy' => $job->vacancies === 1
+            'is_last_vacancy' => $actualAvailableVacancies === 1,
+            'selected_count' => $selectedCount,
+            'exceeds_vacancies' => $exceeds,
+            'shortage' => $exceeds ? ($selectedCount - $actualAvailableVacancies) : 0
         ], 200);
     }
 
