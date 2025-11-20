@@ -925,7 +925,10 @@ function actionDropdown() {
             try {
                 // Step 1: Check vacancy status
                 const vacancyCheckResponse = await fetch(`/hrStaff/vacancy-check/${applicant.application_id}`);
-                if (!vacancyCheckResponse.ok) throw new Error('Failed to check vacancy status');
+                if (!vacancyCheckResponse.ok) {
+                    console.error('Vacancy check failed:', vacancyCheckResponse.status, vacancyCheckResponse.statusText);
+                    throw new Error(`Failed to check vacancy status: ${vacancyCheckResponse.status} ${vacancyCheckResponse.statusText}`);
+                }
 
                 const vacancyData = await vacancyCheckResponse.json();
 
@@ -1142,6 +1145,7 @@ function actionDropdown() {
                     }
                 });
             } catch (error) {
+                console.error('Error in promptPromote:', error);
                 Swal.fire({
                     title: 'Error',
                     text: error.message,
@@ -1236,7 +1240,8 @@ function actionDropdown() {
                     const vacancyCheckResponse = await fetch(`/hrStaff/vacancy-check/${firstPasser.application_id}?selected_count=${passersWithoutInvitations.length}`);
 
                     if (!vacancyCheckResponse.ok) {
-                        throw new Error('Failed to check vacancy status');
+                        console.error('Vacancy check failed:', vacancyCheckResponse.status, vacancyCheckResponse.statusText);
+                        throw new Error(`Failed to check vacancy status: ${vacancyCheckResponse.status} ${vacancyCheckResponse.statusText}`);
                     }
 
                     const vacancyData = await vacancyCheckResponse.json();
@@ -1286,7 +1291,7 @@ function actionDropdown() {
                     console.error('Error checking vacancies:', error);
                     Swal.fire({
                         title: 'Error',
-                        text: 'Failed to check vacancy status. Please try again.',
+                        text: `Failed to check vacancy status: ${error.message}`,
                         icon: 'error',
                         confirmButtonColor: '#BD6F22'
                     });
@@ -1531,6 +1536,12 @@ function actionDropdown() {
             try {
                 const firstPasser = selectedPassers[0];
                 const vacancyCheckResponse = await fetch(`/hrStaff/vacancy-check/${firstPasser.application_id}?selected_count=${selectedPassers.length}`);
+
+                if (!vacancyCheckResponse.ok) {
+                    console.error('Vacancy check failed:', vacancyCheckResponse.status, vacancyCheckResponse.statusText);
+                    throw new Error(`Failed to check vacancy status: ${vacancyCheckResponse.status} ${vacancyCheckResponse.statusText}`);
+                }
+
                 const vacancyData = await vacancyCheckResponse.json();
 
                 // Block if selected count exceeds available vacancies
@@ -1562,7 +1573,7 @@ function actionDropdown() {
                 console.error('Error checking vacancies:', error);
                 Swal.fire({
                     title: 'Error',
-                    text: 'Failed to verify vacancy availability. Please try again.',
+                    text: `Failed to verify vacancy availability: ${error.message}`,
                     icon: 'error',
                     confirmButtonColor: '#BD6F22'
                 });
