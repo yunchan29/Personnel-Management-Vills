@@ -1,5 +1,83 @@
 <div x-data="applicantsHandler()" x-init="init(); pageContext = 'interview'; showAll = true" class="relative">
   <div x-data="interviewHandler($data)">
+
+    <!-- Search and Filter Section -->
+    <div class="mb-4 bg-white border border-gray-200 rounded-lg shadow-sm p-4" x-data="{ showFilters: false, searchTerm: '', sortBy: 'name_asc' }">
+        <div class="space-y-4">
+            <!-- Search Bar with Filter Toggle -->
+            <div class="flex items-center gap-2 border border-gray-300 rounded-md px-3 py-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                    type="text"
+                    x-model="searchTerm"
+                    class="flex-1 border-0 focus:ring-0 text-sm p-0"
+                    placeholder="Search by name, position, or company..."
+                    @input="filterInterviews()"
+                >
+
+                <!-- Filter Toggle Button -->
+                <button
+                    type="button"
+                    @click="showFilters = !showFilters"
+                    class="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition whitespace-nowrap"
+                    :class="showFilters ? 'bg-[#BD6F22] text-white' : 'text-gray-500 hover:text-[#BD6F22] hover:bg-gray-50'"
+                    title="Toggle sort options"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                    <span>Sort</span>
+                </button>
+            </div>
+
+            <!-- Filter Options (Collapsible) -->
+            <div
+                x-show="showFilters"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 -translate-y-2"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 translate-y-0"
+                x-transition:leave-end="opacity-0 -translate-y-2"
+                class="pt-3 border-t border-gray-200"
+            >
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Sort By -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Sort By</label>
+                        <select
+                            x-model="sortBy"
+                            @change="sortInterviews()"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-[#BD6F22] focus:border-[#BD6F22]"
+                        >
+                            <option value="name_asc">Name (A-Z)</option>
+                            <option value="name_desc">Name (Z-A)</option>
+                            <option value="position_asc">Position (A-Z)</option>
+                            <option value="position_desc">Position (Z-A)</option>
+                            <option value="company_asc">Company (A-Z)</option>
+                            <option value="company_desc">Company (Z-A)</option>
+                            <option value="interview_newest">Interview Date (Newest)</option>
+                            <option value="interview_oldest">Interview Date (Oldest)</option>
+                        </select>
+                    </div>
+
+                    <!-- Clear Button -->
+                    <div class="flex items-end">
+                        <button
+                            type="button"
+                            @click="searchTerm = ''; sortBy = 'name_asc'; resetInterviews();"
+                            class="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 transition"
+                        >
+                            Clear Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Applicants Table -->
     <div class="overflow-x-auto relative bg-white p-6 rounded-lg shadow-lg w-full">
       
@@ -98,12 +176,16 @@
             {{-- Controller already filters by approved/for_interview statuses --}}
             <tr
               data-applicant-id="{{ $application->id }}"
+              data-name="{{ $application->user->first_name }} {{ $application->user->last_name }}"
+              data-position="{{ $application->job->job_title ?? 'N/A' }}"
+              data-company="{{ $application->job->company_name ?? 'N/A' }}"
               data-interview-start="{{ optional($application->interview)?->start_date ? \Carbon\Carbon::parse($application->interview->start_date)->format('Y-m-d H:i') : '' }}"
               data-interview-end="{{ optional($application->interview)?->end_date ? \Carbon\Carbon::parse($application->interview->end_date)->format('Y-m-d H:i') : '' }}"
+              data-interview-date="{{ optional($application->interview)?->scheduled_at ? \Carbon\Carbon::parse($application->interview->scheduled_at)->format('Y-m-d') : '' }}"
               data-status="{{ $application->status->value }}"
               x-show="(showAll || '{{ optional($application->interview)?->scheduled_at }}' === '')
                       && !removedApplicants.includes({{ $application->id }})"
-              class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out">
+              class="border-b hover:bg-gray-50 transition-opacity duration-300 ease-in-out interview-row">
 
              
           <td class="py-3 px-4">
@@ -233,6 +315,82 @@
     </div>
   </div>
 </div>
+
+<script>
+    // Search and filter functions for interviews
+    function filterInterviews() {
+        const searchTerm = document.querySelector('[x-model="searchTerm"]').value.toLowerCase();
+        const rows = document.querySelectorAll('.interview-row');
+
+        rows.forEach(row => {
+            const name = row.dataset.name?.toLowerCase() || '';
+            const position = row.dataset.position?.toLowerCase() || '';
+            const company = row.dataset.company?.toLowerCase() || '';
+
+            const matches = name.includes(searchTerm) ||
+                          position.includes(searchTerm) ||
+                          company.includes(searchTerm);
+
+            row.style.display = matches ? '' : 'none';
+        });
+    }
+
+    function sortInterviews() {
+        const sortBy = document.querySelector('[x-model="sortBy"]').value;
+        const tbody = document.querySelector('.interview-row')?.parentElement;
+        if (!tbody) return;
+
+        const rows = Array.from(tbody.querySelectorAll('.interview-row'));
+
+        rows.sort((a, b) => {
+            let aVal, bVal;
+
+            switch(sortBy) {
+                case 'name_asc':
+                    aVal = a.dataset.name || '';
+                    bVal = b.dataset.name || '';
+                    return aVal.localeCompare(bVal);
+                case 'name_desc':
+                    aVal = a.dataset.name || '';
+                    bVal = b.dataset.name || '';
+                    return bVal.localeCompare(aVal);
+                case 'position_asc':
+                    aVal = a.dataset.position || '';
+                    bVal = b.dataset.position || '';
+                    return aVal.localeCompare(bVal);
+                case 'position_desc':
+                    aVal = a.dataset.position || '';
+                    bVal = b.dataset.position || '';
+                    return bVal.localeCompare(aVal);
+                case 'company_asc':
+                    aVal = a.dataset.company || '';
+                    bVal = b.dataset.company || '';
+                    return aVal.localeCompare(bVal);
+                case 'company_desc':
+                    aVal = a.dataset.company || '';
+                    bVal = b.dataset.company || '';
+                    return bVal.localeCompare(aVal);
+                case 'interview_newest':
+                    aVal = new Date(a.dataset.interviewDate || 0);
+                    bVal = new Date(b.dataset.interviewDate || 0);
+                    return bVal - aVal;
+                case 'interview_oldest':
+                    aVal = new Date(a.dataset.interviewDate || 0);
+                    bVal = new Date(b.dataset.interviewDate || 0);
+                    return aVal - bVal;
+                default:
+                    return 0;
+            }
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    function resetInterviews() {
+        const rows = document.querySelectorAll('.interview-row');
+        rows.forEach(row => row.style.display = '');
+    }
+</script>
 
 <!-- Handlers -->
 <script src="{{ asset('js/utils/checkboxUtils.js') }}"></script>
