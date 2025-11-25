@@ -45,97 +45,137 @@ class LeaveFormController extends Controller
 
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'attachment' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
-            'leave_type' => ['required', 'string', function ($attribute, $value, $fail) {
-                // Validate Special Leave eligibility - employee must have a 1-year contract duration
-                if ($value === 'Special Leave') {
-                    $user = Auth::user();
-                    $latestApplication = $user->applications()
-                        ->whereNotNull('contract_start')
-                        ->whereNotNull('contract_end')
-                        ->latest()
-                        ->first(['contract_start', 'contract_end']);
+{
+    $request->validate([
+        'attachment' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
+        'leave_type' => ['required', 'string', function ($attribute, $value, $fail) {
 
-                    if (!$latestApplication || !$latestApplication->contract_start || !$latestApplication->contract_end) {
-                        $fail('You are not eligible for Special Leave. No valid contract found.');
-                        return;
-                    }
+            $user = Auth::user();
 
-                    // Calculate contract duration in months
-                    $contractStart = \Carbon\Carbon::parse($latestApplication->contract_start);
-                    $contractEnd = \Carbon\Carbon::parse($latestApplication->contract_end);
-                    $contractDurationInMonths = $contractStart->diffInMonths($contractEnd);
+            // Fetch latest contract
+            $latestApplication = $user->applications()
+                ->whereNotNull('contract_start')
+                ->whereNotNull('contract_end')
+                ->latest()
+                ->first(['contract_start', 'contract_end']);
 
-                    // Special Leave requires at least 12 months contract duration
-                    if ($contractDurationInMonths < 12) {
-                        $fail('You are not eligible for Special Leave. Special Leave is only available to employees with a contract duration of at least 1 year (12 months). Your contract duration is ' . $contractDurationInMonths . ' months.');
-                        return;
-                    }
+            // If no contract found, block all benefit leaves
+            if (!$latestApplication) {
+                if (in_array($value, [
+                    'Vacation Leave',
+                    'Emergency Leave',
+                    'Maternity Leave',
+                    'Paternity Leave',
+                    'Special Leave'
+                ])) {
+                    $fail('You are not eligible for this leave. No valid contract found.');
                 }
-            }],
-            'date_range' => ['required', 'string', function ($attribute, $value, $fail) {
-                // Validate date range format and logic
-                // Expected format: "MM/DD/YYYY - MM/DD/YYYY" or similar
-                $dates = explode(' - ', $value);
+                return;
+            }
 
-                if (count($dates) !== 2) {
-                    $fail('The date range must contain a start and end date separated by " - ".');
-                    return;
+            // Calculate contract duration
+            $contractStart = \Carbon\Carbon::parse($latestApplication->contract_start);
+            $contractEnd   = \Carbon\Carbon::parse($latestApplication->contract_end);
+            $contractDurationInMonths = $contractStart->diffInMonths($contractEnd);
+
+            /* -----------------------------------------
+               SPECIAL LEAVE VALIDATION (Existing Logic)
+            ------------------------------------------*/
+            if ($value === 'Special Leave') {
+
+                if ($contractDurationInMonths < 12) {
+                    $fail('You are not eligible for Special Leave. It requires a contract duration of at least 1 year (12 months). Your contract duration is '
+                        . $contractDurationInMonths . ' months.');
                 }
+                return;
+            }
 
-                try {
-                    $startDate = \Carbon\Carbon::parse(trim($dates[0]));
-                    $endDate = \Carbon\Carbon::parse(trim($dates[1]));
+            /* ------------------------------------------------------
+               🔶 BENEFIT LEAVES VALIDATION (NEW)
+               Applies to: Vacation, Emergency, Maternity, Paternity
+            -------------------------------------------------------*/
+            $benefitLeaves = [
+                'Vacation Leave',
+                'Emergency Leave',
+                'Maternity Leave',
+                'Paternity Leave',
+            ];
 
-                    // Validate start date is not in the past (allow today)
-                    if ($startDate->lt(\Carbon\Carbon::today())) {
-                        $fail('The leave start date cannot be in the past.');
+            if (in_array($value, $benefitLeaves)) {
+
+                if ($contractDurationInMonths < 12) {
+                    $fail('Your contract is only ' . $contractDurationInMonths . ' months. This leave type requires at least 1 year contract duration to access these benefit leaves.');
+                }
+            }
+
+        }],
+
+                'date_range' => ['required', 'string', function ($attribute, $value, $fail) {
+
+                    // Validate date range format
+                    $dates = explode(' - ', $value);
+
+                    if (count($dates) !== 2) {
+                        $fail('The date range must contain a start and end date separated by " - ".');
                         return;
                     }
 
-                    // Validate end date is after or equal to start date
-                    if ($endDate->lt($startDate)) {
-                        $fail('The leave end date must be after or equal to the start date.');
-                        return;
+                    try {
+                        $startDate = \Carbon\Carbon::parse(trim($dates[0]));
+                        $endDate   = \Carbon\Carbon::parse(trim($dates[1]));
+
+                        // Start date cannot be in the past
+                        if ($startDate->lt(\Carbon\Carbon::today())) {
+                            $fail('The leave start date cannot be in the past.');
+                            return;
+                        }
+
+                        // End date must be >= start
+                        if ($endDate->lt($startDate)) {
+                            $fail('The leave end date must be after or equal to the start date.');
+                            return;
+                        }
+
+                    } catch (\Exception $e) {
+                        $fail('The date range contains invalid dates.');
                     }
-                } catch (\Exception $e) {
-                    $fail('The date range contains invalid dates.');
-                }
-            }],
-            'about'      => 'nullable|string',
-        ]);
 
-        $path = $request->file('attachment')->store('leave_forms', 'public');
+                }],
 
-        $leaveForm = LeaveForm::create([
-            'user_id'    => Auth::id(),
-            'leave_type' => $request->leave_type,
-            'date_range' => $request->date_range,
-            'about'      => $request->about,
-            'file_path'  => $path,
-            'status'     => 'Pending',
-        ]);
-
-        // Notify all HR Admins and HR Staff about the new leave request
-        $employee = Auth::user();
-        $hrUsers = User::whereIn('role', ['hrAdmin', 'hrStaff'])->get();
-
-        foreach ($hrUsers as $hrUser) {
-            $hrUser->notify(new NewLeaveRequestNotification($leaveForm, $employee));
-        }
-
-        // Return JSON for AJAX requests, redirect for normal form submissions
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Leave form submitted successfully.'
+                'about' => 'nullable|string',
             ]);
-        }
 
-        return back()->with('success', 'Leave form submitted successfully.');
-    }
+            // Store file
+            $path = $request->file('attachment')->store('leave_forms', 'public');
+
+            // Insert leave form record
+            $leaveForm = LeaveForm::create([
+                'user_id'    => Auth::id(),
+                'leave_type' => $request->leave_type,
+                'date_range' => $request->date_range,
+                'about'      => $request->about,
+                'file_path'  => $path,
+                'status'     => 'Pending',
+            ]);
+
+            // Notify HR
+            $employee = Auth::user();
+            $hrUsers = User::whereIn('role', ['hrAdmin', 'hrStaff'])->get();
+
+            foreach ($hrUsers as $hrUser) {
+                $hrUser->notify(new NewLeaveRequestNotification($leaveForm, $employee));
+            }
+
+            // Return JSON for Ajax
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Leave form submitted successfully.'
+                ]);
+            }
+
+            return back()->with('success', 'Leave form submitted successfully.');
+        }
 
     public function destroy($id)
     {

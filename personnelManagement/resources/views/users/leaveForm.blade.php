@@ -220,26 +220,63 @@
                 @csrf
 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Leave Type <span class="text-red-500">*</span></label>
-                    <select name="leave_type" required :disabled="isSubmitting"
-                            class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#BD6F22] disabled:bg-gray-100 disabled:cursor-not-allowed">
-                        <option value="">Select Leave Type</option>
-                        <option value="Sick Leave" {{ old('leave_type') == 'Sick Leave' ? 'selected' : '' }}>Sick Leave</option>
-                        <option value="Vacation Leave" {{ old('leave_type') == 'Vacation Leave' ? 'selected' : '' }}>Vacation Leave</option>
-                        <option value="Emergency Leave" {{ old('leave_type') == 'Emergency Leave' ? 'selected' : '' }}>Emergency Leave</option>
-                        <option value="Maternity Leave" {{ old('leave_type') == 'Maternity Leave' ? 'selected' : '' }}>Maternity Leave</option>
-                        <option value="Paternity Leave" {{ old('leave_type') == 'Paternity Leave' ? 'selected' : '' }}>Paternity Leave</option>
-                        <option value="Special Leave"
-                                {{ old('leave_type') == 'Special Leave' ? 'selected' : '' }}
-                                :disabled="!isEligibleForSpecialLeave()"
-                                x-bind:class="!isEligibleForSpecialLeave() ? 'text-gray-400' : ''">
-                            Special Leave (Requires 1 year contract)
-                        </option>
-                    </select>
-                    <p class="text-xs text-gray-500 mt-1" x-show="!isEligibleForSpecialLeave()">
-                        <span class="text-orange-600 font-medium">⚠</span> You are not eligible for Special Leave. Special Leave requires a contract duration of at least 1 year (12 months).
-                    </p>
-                </div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Leave Type <span class="text-red-500">*</span></label>
+                <select name="leave_type" required :disabled="isSubmitting"
+                        class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#BD6F22] disabled:bg-gray-100 disabled:cursor-not-allowed">
+
+                    <option value="">Select Leave Type</option>
+
+                    <!-- Always Available -->
+                    <option value="Sick Leave" {{ old('leave_type') == 'Sick Leave' ? 'selected' : '' }}>
+                        Sick Leave
+                    </option>
+
+                    <!-- Disabled if contract < 12 months -->
+                    <option value="Vacation Leave"
+                        {{ old('leave_type') == 'Vacation Leave' ? 'selected' : '' }}
+                        :disabled="!isEligibleForBenefitLeave()"
+                        x-bind:class="!isEligibleForBenefitLeave() ? 'text-gray-400' : ''">
+                        Vacation Leave
+                    </option>
+
+                    <option value="Emergency Leave"
+                        {{ old('leave_type') == 'Emergency Leave' ? 'selected' : '' }}
+                        :disabled="!isEligibleForBenefitLeave()"
+                        x-bind:class="!isEligibleForBenefitLeave() ? 'text-gray-400' : ''">
+                        Emergency Leave
+                    </option>
+
+                    <option value="Maternity Leave"
+                        {{ old('leave_type') == 'Maternity Leave' ? 'selected' : '' }}
+                        :disabled="!isEligibleForBenefitLeave()"
+                        x-bind:class="!isEligibleForBenefitLeave() ? 'text-gray-400' : ''">
+                        Maternity Leave
+                    </option>
+
+                    <option value="Paternity Leave"
+                        {{ old('leave_type') == 'Paternity Leave' ? 'selected' : '' }}
+                        :disabled="!isEligibleForBenefitLeave()"
+                        x-bind:class="!isEligibleForBenefitLeave() ? 'text-gray-400' : ''">
+                        Paternity Leave
+                    </option>
+
+                    <!-- Special Leave (already has its own rule) -->
+                    <option value="Special Leave"
+                        {{ old('leave_type') == 'Special Leave' ? 'selected' : '' }}
+                        :disabled="!isEligibleForSpecialLeave()"
+                        x-bind:class="!isEligibleForSpecialLeave() ? 'text-gray-400' : ''">
+                        Special Leave (Requires 1 year contract)
+                    </option>
+
+                </select>
+
+                <!-- Unified Warning Message -->
+                <p class="text-xs text-gray-500 mt-1" x-show="!isEligibleForBenefitLeave()">
+                    <span class="text-orange-600 font-medium">⚠</span>
+                    Your contract is only 6 months. Other benefit leaves require at least 1 year of contract duration.
+                </p>
+            </div>
+
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Date Range <span class="text-red-500">*</span></label>
@@ -451,7 +488,7 @@ function leaveFormApp() {
             window.location.reload();
         },
 
-        isEligibleForSpecialLeave() {
+                isEligibleForSpecialLeave() {
             if (!this.contractStart || !this.contractEnd) {
                 return false;
             }
@@ -461,7 +498,7 @@ function leaveFormApp() {
             const endDate = new Date(this.contractEnd);
 
             const monthsDiff = (endDate.getFullYear() - startDate.getFullYear()) * 12 +
-                             (endDate.getMonth() - startDate.getMonth());
+                            (endDate.getMonth() - startDate.getMonth());
 
             // Contract duration must be at least 12 months (1 year)
             return monthsDiff >= 12;
@@ -476,8 +513,18 @@ function leaveFormApp() {
             const endDate = new Date(this.contractEnd);
 
             return (endDate.getFullYear() - startDate.getFullYear()) * 12 +
-                   (endDate.getMonth() - startDate.getMonth());
+                (endDate.getMonth() - startDate.getMonth());
+        },
+
+        // ⭐ NEW FUNCTION FOR VACATION, EMERGENCY, MATERNITY, PATERNITY LEAVE
+        isEligibleForBenefitLeave() {
+            // Uses the same contract duration months
+            const months = this.getContractDurationInMonths();
+
+            // Benefit leave requires at least 12 months
+            return months >= 12;
         }
+
     };
 }
 </script>
