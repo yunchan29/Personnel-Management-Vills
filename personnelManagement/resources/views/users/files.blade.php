@@ -59,25 +59,65 @@ x-data="{
 <div class="border-t border-gray-300 pt-4 mb-6">
     <h3 class="text-lg font-semibold text-[#BD6F22] mb-3">Government Documents</h3>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        @foreach(['sss_number' => 9, 'philhealth_number' => 12, 'pagibig_number' => 12, 'tin_id_number' => 12] as $field => $max)
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    {{ ucwords(str_replace('_', ' ', $field)) }}:
-                </label>
+        @php
+        $governmentDocs = [
+            'sss_number' => ['max' => 9, 'file' => 'sss_file_path'],
+            'philhealth_number' => ['max' => 12, 'file' => 'philhealth_file_path'],
+            'pagibig_number' => ['max' => 12, 'file' => 'pagibig_file_path'],
+            'tin_id_number' => ['max' => 12, 'file' => 'tin_file_path'],
+        ];
+
+        @endphp
+
+        @foreach($governmentDocs as $field => $data)
+        <div class="relative">
+            <!-- Number Input -->
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+                {{ ucwords(str_replace('_', ' ', $field)) }}:
+            </label>
+
+            <input
+                type="text"
+                name="{{ $field }}"
+                value="{{ old($field, $file201->$field ?? '') }}"
+                maxlength="{{ $data['max'] }}"
+                inputmode="numeric"
+                oninput="this.value = this.value.replace(/\D/g, '').slice(0,{{ $data['max'] }});"
+                class="w-full border border-gray-300 rounded-md px-3 py-2
+                    focus:outline-none focus:ring-2 focus:ring-[#BD6F22]"
+            >
+
+            <!-- Subtle Upload Button -->
+            <label class="text-xs text-gray-500 mt-2 inline-flex items-center cursor-pointer hover:text-[#BD6F22] transition">
                 <input
-                    type="text"
-                    name="{{ $field }}"
-                    value="{{ old($field, $file201->$field ?? '') }}"
-                    maxlength="{{ $max }}"
-                    @if(auth()->user()->role === 'employee') pattern="\d{9,{{ $max }}}" @endif
-                    inputmode="numeric"
-                    oninput="this.value = this.value.replace(/\D/g, '').slice(0,{{ $max }});"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2
-                           focus:outline-none focus:ring-2 focus:ring-[#BD6F22]">
+                    type="file"
+                    name="{{ str_replace('_path','',$data['file']) }}"
+                    accept="image/*,application/pdf"
+                    class="hidden"
+                    onchange="handleGovFileUpload(this)"
+                >
+
+                <span class="underline">Upload file</span>
+            </label>
+
+            <!-- Uploaded File Status -->
+            @php $existing = $file201->{$data['file']} ?? null; @endphp
+
+            <div class="mt-1 file-status text-xs flex items-center">
+                @if($existing)
+                    <button type="button"
+                        onclick="previewGovFile('{{ asset('storage/'.$existing) }}')"
+                        class="text-green-600 font-medium flex items-center hover:underline">
+                        <i data-lucide="check-circle" class="w-4 h-4 mr-1"></i>
+                        {{ basename($existing) }}
+                    </button>
+                @endif
             </div>
+
+        </div>
         @endforeach
     </div>
-</div>
+</div>  
 
 
     <!-- Tabs -->
@@ -111,6 +151,36 @@ x-data="{
         </button>
     </div>
 </form>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<script>
+function handleGovFileUpload(input) {
+    const wrapper = input.closest('div');
+    const statusDiv = wrapper.querySelector('.file-status');
+
+    const file = input.files[0];
+    if (!file) return;
+
+    statusDiv.innerHTML = `
+    <button type="button"
+        onclick="previewGovFile(URL.createObjectURL(file))"
+        class="text-green-600 text-xs font-medium flex items-center hover:underline">
+        <i data-lucide="check-circle" class="w-4 h-4 mr-1"></i>
+        ${file.name}
+    </button>
+`;
+
+    lucide.createIcons();
+}
+</script>
+
+<script>
+function previewGovFile(url) {
+    // Open PDF/image in a new tab
+    window.open(url, '_blank');
+}
+</script>
 
 <!-- Alpine Script -->
 <script>

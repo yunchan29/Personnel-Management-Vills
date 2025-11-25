@@ -149,80 +149,118 @@ class File201Controller extends Controller
      * Store or update the 201 file for logged-in user.
      */
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'sss_number' => 'nullable|string|max:50',
-            'philhealth_number' => 'nullable|string|max:50',
-            'pagibig_number' => 'nullable|string|max:50',
-            'tin_id_number' => 'nullable|string|max:50',
-            'licenses' => 'nullable|array',
-            'licenses.*.name' => 'nullable|string|max:255',
-            'licenses.*.number' => 'nullable|string|max:255',
-            'licenses.*.date' => 'nullable|date',
-            'additional_documents' => 'nullable|array',
-            'additional_documents.*.type' => 'nullable|string|max:255',
-            'additional_documents.*.file' => 'nullable|file|mimes:pdf|max:2048',
-        ]);
+{
+    $validated = $request->validate([
+        'sss_number' => 'nullable|string|max:50',
+        'philhealth_number' => 'nullable|string|max:50',
+        'pagibig_number' => 'nullable|string|max:50',
+        'tin_id_number' => 'nullable|string|max:50',
+        'licenses' => 'nullable|array',
+        'licenses.*.name' => 'nullable|string|max:255',
+        'licenses.*.number' => 'nullable|string|max:255',
+        'licenses.*.date' => 'nullable|date',
 
-        File201::updateOrCreate(
-            ['user_id' => auth()->id()],
-            [
-                'sss_number' => $validated['sss_number'] ?? null,
-                'philhealth_number' => $validated['philhealth_number'] ?? null,
-                'pagibig_number' => $validated['pagibig_number'] ?? null,
-                'tin_id_number' => $validated['tin_id_number'] ?? null,
-                'licenses' => $validated['licenses'] ?? [],
-            ]
-        );
+        // Government ID uploads
+        'sss_file' => 'nullable|file|mimes:pdf,png,jpg,jpeg|max:4096',
+        'philhealth_file' => 'nullable|file|mimes:pdf,png,jpg,jpeg|max:4096',
+        'pagibig_file' => 'nullable|file|mimes:pdf,png,jpg,jpeg|max:4096',
+        'tin_file' => 'nullable|file|mimes:pdf,png,jpg,jpeg|max:4096',
 
-        if ($request->has('additional_documents')) {
-            foreach ($request->additional_documents as $index => $doc) {
-                if (isset($doc['file']) && $request->file("additional_documents.$index.file")) {
-                    $uploadedFile = $request->file("additional_documents.$index.file");
+        // Additional documents
+        'additional_documents' => 'nullable|array',
+        'additional_documents.*.type' => 'nullable|string|max:255',
+        'additional_documents.*.file' => 'nullable|file|mimes:pdf|max:2048',
+    ]);
 
-                    // ✅ SECURITY FIX: Verify file is actually a PDF by checking magic bytes
-                    $uploadResult = $this->validateAndStoreFile(
-                        $uploadedFile,
-                        'other_documents',
-                        ['pdf'],
-                        'public'
-                    );
+    // Create or update File201 record
+    $file201 = File201::updateOrCreate(
+        ['user_id' => auth()->id()],
+        [
+            'sss_number' => $validated['sss_number'] ?? null,
+            'philhealth_number' => $validated['philhealth_number'] ?? null,
+            'pagibig_number' => $validated['pagibig_number'] ?? null,
+            'tin_id_number' => $validated['tin_id_number'] ?? null,
+            'licenses' => $validated['licenses'] ?? [],
+        ]
+    );
 
-                    if (!$uploadResult['success']) {
-                        return redirect()->back()->withErrors(['file' => $uploadResult['error']]);
+    // === GOVERNMENT ID FILE UPLOADS === //
+    $govFiles = [
+        'sss_file' => 'sss_file_path',
+        'philhealth_file' => 'philhealth_file_path',
+        'pagibig_file' => 'pagibig_file_path',
+        'tin_file' => 'tin_file_path',
+    ];
+
+    foreach ($govFiles as $inputName => $columnName) {
+        if ($request->hasFile($inputName)) {
+
+            $uploadedFile = $request->file($inputName);
+
+            $uploadResult = $this->validateAndStoreFile(
+                $uploadedFile,
+                "file201/$inputName",
+                ['pdf', 'png', 'jpg', 'jpeg'],
+                'public'
+            );
+
+            if (!$uploadResult['success']) {
+                return redirect()->back()->withErrors([$inputName => $uploadResult['error']]);
+            }
+
+            if ($file201->$columnName && \Storage::disk('public')->exists($file201->$columnName)) {
+                \Storage::disk('public')->delete($file201->$columnName);
+            }
+
+            $file201->update([
+                $columnName => $uploadResult['path']
+            ]);
+        }
+    }
+
+    // Additional documents logic (unchanged)
+    if ($request->has('additional_documents')) {
+        foreach ($request->additional_documents as $index => $doc) {
+            if (isset($doc['file']) && $request->file("additional_documents.$index.file")) {
+                $uploadedFile = $request->file("additional_documents.$index.file");
+
+                $uploadResult = $this->validateAndStoreFile(
+                    $uploadedFile,
+                    'other_documents',
+                    ['pdf'],
+                    'public'
+                );
+
+                if (!$uploadResult['success']) {
+                    return redirect()->back()->withErrors(['file' => $uploadResult['error']]);
+                }
+
+                $existingFile = OtherFile::where('user_id', auth()->id())
+                    ->where('type', $doc['type'])
+                    ->first();
+
+                if ($existingFile) {
+                    if ($existingFile->file_path && \Storage::disk('public')->exists($existingFile->file_path)) {
+                        \Storage::disk('public')->delete($existingFile->file_path);
                     }
 
-                    // ✅ Handle duplicate type uploads: Replace existing file
-                    $existingFile = OtherFile::where('user_id', auth()->id())
-                        ->where('type', $doc['type'])
-                        ->first();
-
-                    if ($existingFile) {
-                        // Delete old file from storage
-                        if ($existingFile->file_path && \Storage::disk('public')->exists($existingFile->file_path)) {
-                            \Storage::disk('public')->delete($existingFile->file_path);
-                        }
-
-                        // Update with new file path
-                        $existingFile->update([
-                            'file_path' => $uploadResult['path'],
-                        ]);
-                    } else {
-                        // Create new entry
-                        OtherFile::create([
-                            'user_id'   => auth()->id(),
-                            'type'      => $doc['type'],
-                            'file_path' => $uploadResult['path'],
-                        ]);
-                    }
+                    $existingFile->update([
+                        'file_path' => $uploadResult['path'],
+                    ]);
+                } else {
+                    OtherFile::create([
+                        'user_id'   => auth()->id(),
+                        'type'      => $doc['type'],
+                        'file_path' => $uploadResult['path'],
+                    ]);
                 }
             }
         }
-
-        return redirect()->back()->with('success', '201 file saved successfully!');
     }
 
-    /**
+    return redirect()->back()->with('success', '201 file saved successfully!');
+}
+    /** 
      * Delete an uploaded document.
      */
     public function destroy($id)

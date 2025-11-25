@@ -17,6 +17,10 @@ class File201 extends Model
         'pagibig_number',
         'tin_id_number',
         'licenses',
+        'sss_file_path',
+        'philhealth_file_path',
+        'pagibig_file_path',
+        'tin_file_path',
     ];
 
     protected $casts = [

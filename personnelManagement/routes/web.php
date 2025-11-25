@@ -202,6 +202,7 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware(['auth', 'verified', 'rol
     // 201 Files: Government IDs and Licenses
     Route::get('/files', fn() => view('users.files'))->name('files');
 
+    // Archive Routes
   Route::get('/archive', [ArchiveController::class, 'index'])->name('archive.index');
   Route::delete('/archive/bulk-destroy', [ArchiveController::class, 'bulkDestroy'])->name('archive.bulkDestroy');
   Route::put('/archive/bulk-restore', [ArchiveController::class, 'bulkRestore'])->name('archive.bulkRestore');
