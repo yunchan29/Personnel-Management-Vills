@@ -623,9 +623,6 @@
         </div>
     </div>
 
-    <!-- Employee Report Modal Component -->
-    <x-shared.modals.employeeReport :companies="$companies" />
-
 </section>
 
 <!-- Optional Alpine Cloak -->

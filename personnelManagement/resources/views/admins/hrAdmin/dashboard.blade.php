@@ -15,10 +15,9 @@
     <!-- Main Content Area (Left Side) -->
     <div class="flex-1 space-y-6">
 
-    <!-- Floating Applicants Report Modal Component -->
-      <x-shared.modals.floatingReport 
-          :companies="$companies" 
-          :selectedJob="$selectedJob" 
+    <!-- Floating Combined Reports Modal Component -->
+      <x-shared.modals.combinedReports
+          :companies="$companies"
       />
 
   <!-- Quick Stats Section -->
