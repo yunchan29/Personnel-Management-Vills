@@ -55,7 +55,7 @@
         <div class="flex gap-2 mb-4">
             <!-- Hours -->
             <select x-model.number="interviewTime" class="flex-1 p-2 border rounded">
-                <template x-for="h in [8,9,10,11,12,1,2,3,4,]" :key="h">
+                <template x-for="h in [8,9,10,11,]" :key="h">
                     <option :value="h" x-text="h"></option>
                 </template>
             </select>

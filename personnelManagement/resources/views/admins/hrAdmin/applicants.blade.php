@@ -1,8 +1,5 @@
 <div x-data="applicantsHandler()" x-init="init(); pageContext = 'applicants'" class="relative">
 
-
-<div x-data="applicantsHandler()" x-init="init(); pageContext = 'applicants'" class="relative">
-
     <!-- Floating Report component (floatingReport.blade.php) -->
     <x-shared.modals.floatingReport 
         :companies="$companies" 
