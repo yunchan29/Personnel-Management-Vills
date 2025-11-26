@@ -406,6 +406,10 @@ class DashboardChartController extends Controller
         // Merge with dynamic notifications (for transition period)
         $allNotifications = array_merge($dbNotifications, $notifications);
 
+        $companies = DB::table('jobs')->distinct()->pluck('company_name');
+        $selectedJob = null; // or some default job if needed
+
+
         return view('admins.hrAdmin.dashboard', compact(
             'chartData',
             'stats',
@@ -418,7 +422,9 @@ class DashboardChartController extends Controller
             'topJobs',
             'notifications',
             'allNotifications',
-            'unreadCount'
+            'unreadCount',
+            'companies',
+            'selectedJob'
         ));
     }
 

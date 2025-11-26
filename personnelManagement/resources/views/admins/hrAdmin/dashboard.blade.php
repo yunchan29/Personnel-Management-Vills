@@ -15,6 +15,12 @@
     <!-- Main Content Area (Left Side) -->
     <div class="flex-1 space-y-6">
 
+    <!-- Floating Applicants Report Modal Component -->
+      <x-shared.modals.floatingReport 
+          :companies="$companies" 
+          :selectedJob="$selectedJob" 
+      />
+
   <!-- Quick Stats Section -->
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
     <div class="bg-white shadow-md rounded-md p-4 text-center border border-gray-200 stat-card">
@@ -30,6 +36,7 @@
       <div class="text-sm mt-1 text-[#BD6F22]">Employees</div>
     </div>
   </div>
+  
 
   <!-- Charts Section -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
