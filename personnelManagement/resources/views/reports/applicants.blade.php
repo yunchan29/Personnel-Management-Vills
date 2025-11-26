@@ -15,10 +15,28 @@
         th { background: #F3F4F6; color: #374151; font-size: 13px; font-weight: 600; padding: 10px; border: 1px solid #D1D5DB; text-align: left; }
         td { padding: 10px; border: 1px solid #E5E7EB; font-size: 12px; vertical-align: middle; }
 
-        /* Status badges */
-        .status-approved { background: #DCFCE7; color: #166534; font-weight: 600; text-align: center; padding: 6px; border-radius: 6px; display: inline-block; }
-        .status-declined { background: #FEE2E2; color: #991B1B; font-weight: 600; text-align: center; padding: 6px; border-radius: 6px; display: inline-block; }
-        .status-default { background: #DBEAFE; color: #1E3A8A; font-weight: 600; text-align: center; padding: 6px; border-radius: 6px; display: inline-block; }
+        /* Status badges (PDF safe colors; classes used dynamically) */
+        .bg-gray-100 { background: #F3F4F6; }
+        .bg-green-100 { background: #DCFCE7; }
+        .bg-red-100 { background: #FEE2E2; }
+        .bg-yellow-100 { background: #FEF9C3; }
+        .bg-blue-100 { background: #DBEAFE; }
+        .bg-purple-100 { background: #EDE9FE; }
+
+        .text-gray-800 { color: #374151; }
+        .text-green-800 { color: #166534; }
+        .text-red-800 { color: #991B1B; }
+        .text-yellow-800 { color: #B45309; }
+        .text-blue-800 { color: #1E3A8A; }
+        .text-purple-800 { color: #5B21B6; }
+
+        .badge {
+            font-weight: 600;
+            text-align: center;
+            padding: 6px;
+            border-radius: 6px;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
@@ -28,6 +46,7 @@
         <p class="meta">Status: <strong>{{ ucfirst($status) }}</strong></p>
         <p class="meta">Range: <strong>{{ ucfirst($range) }}</strong></p>
         <p class="meta">Date & Time Generated: <strong>{{ now()->format('F d, Y h:i A') }}</strong></p>
+        <p class="meta"> Company: <strong>{{ $filterCompany === 'all' ? 'All Companies' : $filterCompany }} </strong> </p>
     </div>
 
     <!-- Table -->
@@ -51,15 +70,14 @@
                     <td>{{ $app->user->email ?? '' }}</td>
                     <td>{{ $app->job->job_title ?? '' }}</td>
                     <td>{{ $app->job->company_name ?? '' }}</td>
+
+                    <!-- FIXED STATUS SECTION -->
                     <td>
-                        @if ($app->status === 'approved')
-                            <span class="status-approved">Approved</span>
-                        @elseif ($app->status === 'declined' || $app->status === 'disapproved')
-                            <span class="status-declined">Declined</span>
-                        @else
-                            <span class="status-default">{{ ucfirst($app->status) }}</span>
-                        @endif
+                        <span class="badge {{ $app->status->badgeClass() }}">
+                            {{ $app->status->label() }}
+                        </span>
                     </td>
+
                     <td>{{ $app->created_at->format('F d, Y') }}</td>
                 </tr>
             @empty
