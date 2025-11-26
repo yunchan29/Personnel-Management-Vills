@@ -49,37 +49,46 @@
             />
         </div>
 
-        <!-- Time Range Input -->
-        <div class="mb-5">
-            <label class="block font-medium text-sm text-gray-700">Training Time</label>
-            <div class="flex items-center gap-2">
-                <!-- Start -->
-                <div class="flex items-center gap-2 w-full">
-                    <select x-model="trainingStartHour" class="form-select rounded-md shadow-sm w-full">
-                        <option value="" disabled selected hidden>Hour</option>
-                        <template x-for="h in 12" :key="h"><option :value="String(h)" x-text="h"></option></template>
-                    </select>
-                    <select x-model="trainingStartPeriod" class="form-select rounded-md shadow-sm">
-                        <option value="" disabled selected hidden>AM/PM</option>
-                        <option>AM</option>
-                        <option>PM</option>
-                    </select>
-                </div>
-                <span class="text-gray-500">to</span>
-                <!-- End -->
-                <div class="flex items-center gap-2 w-full">
-                    <select x-model="trainingEndHour" class="form-select rounded-md shadow-sm w-full">
-                        <option value="" disabled selected hidden>Hour</option>
-                        <template x-for="h in 12" :key="h"><option :value="String(h)" x-text="h"></option></template>
-                    </select>
-                    <select x-model="trainingEndPeriod" class="form-select rounded-md shadow-sm">
-                        <option value="" disabled selected hidden>AM/PM</option>
-                        <option>AM</option>
-                        <option>PM</option>
-                    </select>
-                </div>
-            </div>
+      <!-- Time Range Input -->
+<div class="mb-5">
+    <label class="block font-medium text-sm text-gray-700">Training Time</label>
+
+    <div class="flex items-center gap-2">
+
+        <!-- Start Time (AM only) -->
+        <div class="flex items-center gap-2 w-full">
+
+            <!-- Hours 5–8 -->
+            <select x-model="trainingStartHour" class="form-select rounded-md shadow-sm w-full">
+                <option value="" disabled selected hidden>Hour</option>
+                <template x-for="h in [5,6,7,8]" :key="h">
+                    <option :value="String(h)" x-text="h"></option>
+                </template>
+            </select>
+
+            <!-- Fixed AM -->
+            <span class="font-semibold text-gray-700">AM</span>
         </div>
+
+        <span class="text-gray-500">to</span>
+
+        <!-- End Time (PM only) -->
+        <div class="flex items-center gap-2 w-full">
+
+            <!-- Hours 3–5 PM -->
+            <select x-model="trainingEndHour" class="form-select rounded-md shadow-sm w-full">
+                <option value="" disabled selected hidden>Hour</option>
+                <template x-for="h in [1,3,4,5]" :key="h">
+                    <option :value="String(h)" x-text="h"></option>
+                </template>
+            </select>
+
+            <!-- Fixed PM -->
+            <span class="font-semibold text-gray-700">PM</span>
+        </div>
+    </div>
+</div>
+
 
         <!-- Buttons -->
         <div class="flex justify-end gap-2 mt-6">

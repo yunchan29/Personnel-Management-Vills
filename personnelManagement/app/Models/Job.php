@@ -38,11 +38,6 @@ public function applications()
     return $this->hasMany(Application::class, 'job_id');
 }
 
-public function job()
-{
-    return $this->belongsTo(Job::class);
-}
-
 public function employees()
 {
     return $this->hasMany(User::class);

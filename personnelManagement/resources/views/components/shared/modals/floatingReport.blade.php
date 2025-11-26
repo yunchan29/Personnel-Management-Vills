@@ -1,8 +1,12 @@
 @props(['companies', 'selectedJob'])
 
-<div x-data="{ openReportModal: false, reportType: 'all', dateRange: 'monthly', company: 'all' }">
-
-    <!-- Floating Button -->
+<div x-data="{ 
+    openReportModal: false,
+    reportType: '{{ request('status', 'all') }}',
+    dateRange: '{{ request('range', 'monthly') }}',
+    company: '{{ request('company', 'all') }}'
+}"
+    >
     <button @click="openReportModal = true"
         class="fixed bottom-6 right-6 bg-[#BD6F22] hover:bg-[#a95e1d] text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium z-40">
         Generate Applicants Report
@@ -43,14 +47,15 @@
                 <!-- Company -->
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Company</label>
-                    <select x-model="company"
-                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-[#BD6F22] focus:border-[#BD6F22]">
-                        <option value="all">All Companies</option>
+                   <select name="company" x-model="company"
+                    class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-[#BD6F22] focus:border-[#BD6F22]">
+                    <option value="all">All Companies</option>
 
-                        @foreach ($companies as $company_name)
-                            <option value="{{ $company_name }}">{{ $company_name }}</option>
-                        @endforeach
-                    </select>
+                    @foreach ($companies as $company_name)
+                        <option value="{{ $company_name }}">{{ $company_name }}</option>
+                    @endforeach
+                </select>
+
                 </div>
 
                 <!-- Date Range -->
@@ -88,16 +93,6 @@
                         Download PDF
                     </button>
                 </form>
-
-                <!-- Excel -->
-                <form method="GET"
-                      x-bind:action="`{{ route('hrAdmin.reports.applicants', 'excel') }}?job_id={{ $selectedJob?->id }}&company=${company}&status=${reportType}&range=${dateRange}`">
-                    <button type="submit"
-                        class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow-md text-sm font-medium transition">
-                        Download Excel
-                    </button>
-                </form>
-
             </div>
 
         </div>
