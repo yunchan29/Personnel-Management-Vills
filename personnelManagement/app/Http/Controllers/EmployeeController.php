@@ -7,6 +7,7 @@ use App\Models\Job;
 use App\Models\Application;
 use App\Enums\ApplicationStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class EmployeeController extends Controller
 {
@@ -33,10 +34,16 @@ class EmployeeController extends Controller
         // Group employees by job_id
         $groupedEmployees = $employees->groupBy('job_id');
 
+        // Get distinct companies for the report filter
+        $companies = DB::table('jobs')
+            ->distinct()
+            ->pluck('company_name');
+
         return view('admins.shared.employees', [
             'jobs' => $jobs,
             'employees' => $employees,
             'groupedEmployees' => $groupedEmployees,
+            'companies' => $companies,
         ]);
     }
     // Performance Evaluation view

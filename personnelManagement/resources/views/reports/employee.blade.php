@@ -4,15 +4,24 @@
     <meta charset="UTF-8">
     <title>Employee Report</title>
     <style>
-        body { font-family: DejaVu Sans, sans-serif; font-size: 13px; color: #374151; margin: 30px; line-height: 1.6; }
-        h2 { font-size: 22px; font-weight: bold; color: #1e40af; margin-bottom: 8px; }
+        body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #374151; margin: 20px; line-height: 1.4; }
+        h2 { font-size: 20px; font-weight: bold; color: #1e40af; margin-bottom: 8px; }
 
-        .header { border-bottom: 3px solid #1e40af; padding-bottom: 10px; margin-bottom: 20px; }
-        .meta { font-size: 13px; color: #4B5563; margin: 4px 0; }
+        .header { border-bottom: 3px solid #1e40af; padding-bottom: 8px; margin-bottom: 15px; }
+        .meta { font-size: 11px; color: #4B5563; margin: 3px 0; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background: #F3F4F6; color: #374151; font-size: 13px; font-weight: 600; padding: 10px; border: 1px solid #D1D5DB; text-align: left; }
-        td { padding: 10px; border: 1px solid #E5E7EB; font-size: 12px; vertical-align: middle; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; table-layout: fixed; }
+        th { background: #F3F4F6; color: #374151; font-size: 10px; font-weight: 600; padding: 6px 4px; border: 1px solid #D1D5DB; text-align: left; }
+        td { padding: 6px 4px; border: 1px solid #E5E7EB; font-size: 9px; vertical-align: top; word-wrap: break-word; }
+
+        /* Column widths */
+        th:nth-child(1), td:nth-child(1) { width: 4%; text-align: center; } /* # */
+        th:nth-child(2), td:nth-child(2) { width: 14%; } /* Employee Name */
+        th:nth-child(3), td:nth-child(3) { width: 20%; font-size: 8px; } /* Email */
+        th:nth-child(4), td:nth-child(4) { width: 16%; } /* Company */
+        th:nth-child(5), td:nth-child(5) { width: 16%; } /* Position */
+        th:nth-child(6), td:nth-child(6) { width: 15%; } /* Start Date */
+        th:nth-child(7), td:nth-child(7) { width: 15%; } /* End Date */
     </style>
 </head>
 <body>
@@ -61,16 +70,16 @@
                     <td>{{ $emp->user->full_name ?? '' }}</td>
                     <td>{{ $emp->user->email ?? '' }}</td>
 
-                    <td>{{ $emp->company_name ?? '' }}</td>
-                    <td>{{ $emp->position_title ?? '' }}</td>
+                    <td>{{ $emp->job->company_name ?? '' }}</td>
+                    <td>{{ $emp->job->job_title ?? '' }}</td>
 
                     <td>
-                        {{ $emp->start_date ? \Carbon\Carbon::parse($emp->start_date)->format('F d, Y') : '—' }}
+                        {{ $emp->contract_start ? \Carbon\Carbon::parse($emp->contract_start)->format('M d, Y') : '—' }}
                     </td>
 
                     <td>
-                        {{ $emp->end_date
-                            ? \Carbon\Carbon::parse($emp->end_date)->format('F d, Y')
+                        {{ $emp->contract_end
+                            ? \Carbon\Carbon::parse($emp->contract_end)->format('M d, Y')
                             : 'Present'
                         }}
                     </td>

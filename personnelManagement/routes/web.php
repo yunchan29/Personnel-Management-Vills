@@ -163,6 +163,11 @@ Route::prefix('hrAdmin')->name('hrAdmin.')->middleware(['auth', 'verified', 'rol
     Route::get('/reports/applicants/{format}', [ReportController::class, 'applicants'])
     ->name('reports.applicants');
 
+    // User Reports - New controller with fixed filtering
+    Route::get('/user-reports/applicants/{format}', [App\Http\Controllers\UserReportController::class, 'generateApplicantReport'])
+        ->name('userReports.applicants');
+    Route::get('/user-reports/employees/{format}', [App\Http\Controllers\UserReportController::class, 'generateEmployeeReport'])
+        ->name('userReports.employees');
 
     // Interview Scheduling 
     Route::get('/interviews', [InterviewController::class, 'index'])->name('interviews.index');

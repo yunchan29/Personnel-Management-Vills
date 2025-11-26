@@ -1,10 +1,12 @@
 @props(['companies', 'selectedJob'])
 
-<div x-data="{ 
+<div x-data="{
     openReportModal: false,
     reportType: '{{ request('status', 'all') }}',
     dateRange: '{{ request('range', 'monthly') }}',
-    company: '{{ request('company', 'all') }}'
+    company: '{{ request('company', 'all') }}',
+    startDate: '',
+    endDate: ''
 }"
     >
     <button @click="openReportModal = true"
@@ -40,7 +42,7 @@
                         class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-[#BD6F22] focus:border-[#BD6F22]">
                         <option value="all">All Applicants</option>
                         <option value="approved">Approved Applicants</option>
-                        <option value="disapproved">Declined Applicants</option>
+                        <option value="declined">Declined Applicants</option>
                     </select>
                 </div>
 
@@ -74,10 +76,10 @@
             <!-- Custom Range -->
             <template x-if="dateRange === 'custom'">
                 <div class="mt-4 flex items-center gap-2">
-                    <input type="date" name="start"
+                    <input type="date" name="start" x-model="startDate"
                         class="w-1/2 border-gray-300 rounded-lg shadow-sm focus:ring-[#BD6F22] focus:border-[#BD6F22]">
                     <span class="text-gray-500">to</span>
-                    <input type="date" name="end"
+                    <input type="date" name="end" x-model="endDate"
                         class="w-1/2 border-gray-300 rounded-lg shadow-sm focus:ring-[#BD6F22] focus:border-[#BD6F22]">
                 </div>
             </template>
@@ -86,8 +88,14 @@
             <div class="mt-6 flex justify-end gap-3">
 
                 <!-- PDF -->
-                <form method="GET"
-                      x-bind:action="`{{ route('hrAdmin.reports.applicants', 'pdf') }}?job_id={{ $selectedJob?->id }}&company=${company}&status=${reportType}&range=${dateRange}`">
+                <form method="GET" action="{{ route('hrAdmin.userReports.applicants', 'pdf') }}">
+                    <!-- Hidden inputs to pass filter values -->
+                    <input type="hidden" name="company" x-bind:value="company">
+                    <input type="hidden" name="status" x-bind:value="reportType">
+                    <input type="hidden" name="range" x-bind:value="dateRange">
+                    <input type="hidden" name="start" x-bind:value="startDate">
+                    <input type="hidden" name="end" x-bind:value="endDate">
+
                     <button type="submit"
                         class="bg-[#BD6F22] hover:bg-[#a95e1d] text-white px-5 py-2 rounded-lg shadow-md text-sm font-medium transition">
                         Download PDF
