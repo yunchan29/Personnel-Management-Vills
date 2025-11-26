@@ -407,4 +407,17 @@
     from { width: 100%; }
     to { width: 0%; }
 }
+
+/* Litepicker - Style for locked/disabled days (holidays and weekends) */
+.litepicker .day-item.is-locked {
+    color: #ccc !important;
+    text-decoration: line-through;
+    cursor: not-allowed !important;
+    background-color: #f5f5f5 !important;
+}
+
+.litepicker .day-item.is-locked:hover {
+    background-color: #f5f5f5 !important;
+    color: #ccc !important;
+}
 </style>
