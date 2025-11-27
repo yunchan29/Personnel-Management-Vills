@@ -8,5 +8,5 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
 
-// Schedule archive cleanup to run daily at 2:00 AM
-Schedule::command('archive:cleanup')->dailyAt('02:00');
+// Schedule archive cleanup to run daily at 12:00 midnight
+Schedule::command('archive:cleanup')->dailyAt('00:00');
