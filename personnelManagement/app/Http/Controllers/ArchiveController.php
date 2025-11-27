@@ -95,6 +95,7 @@ class ArchiveController extends Controller
         ]);
     }
 
+    
     public function destroy($id)
     {
         // Authorization: Only HR Admin can permanently delete archived applications

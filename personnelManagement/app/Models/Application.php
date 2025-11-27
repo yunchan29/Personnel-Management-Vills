@@ -23,6 +23,7 @@ class Application extends Model
         'interview_schedule' => 'datetime',
         'reviewed_at' => 'datetime',
         'is_archived' => 'boolean', // ✅ for archiving
+        'archived_at' => 'datetime', // ✅ timestamp when archived
         'contract_signing_schedule' => 'datetime',
         'contract_start' => 'date',
         'contract_end' => 'date',

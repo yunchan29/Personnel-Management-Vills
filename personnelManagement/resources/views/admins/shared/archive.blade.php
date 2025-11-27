@@ -51,11 +51,13 @@
     <td class="py-3 px-4">{{ $application->job->job_title ?? 'N/A' }}</td>
     <td class="py-3 px-4">{{ $application->job->company_name ?? 'N/A' }}</td>
 
-   @php
-    $archivedDate = \Carbon\Carbon::parse($application->updated_at);
+    @php
+    // Use archived_at for accurate countdown (fallback to updated_at for old records)
+    $archivedDate = $application->archived_at
+        ? \Carbon\Carbon::parse($application->archived_at)
+        : \Carbon\Carbon::parse($application->updated_at);
     $deletionDate = $archivedDate->copy()->addDays(30);
     $remainingDays = (int) now()->diffInDays($deletionDate, false) + 1;
-
 @endphp
 
 <td class="py-3 px-4 italic">
@@ -79,9 +81,6 @@
     </div>
 
 </td>
-
-
-
 
     <td class="py-3 px-4 flex gap-3">
       <button type="button" onclick="openArchiveDetailsModal({{ $application->id }})"
