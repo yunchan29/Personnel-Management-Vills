@@ -9,16 +9,21 @@ use Illuminate\Support\Facades\Auth;
 
 class ArchiveController extends Controller
 {
-    public function index()
-    {
-        // Get archived applications
-        // Note: Expired archives are automatically deleted by the scheduled command (archive:cleanup)
-        $applications = Application::with(['user', 'job'])
-            ->where('is_archived', true)
-            ->get();
+   public function index()
+{
+    // Auto-delete archived applications older than 30 days
+    Application::where('is_archived', true)
+        ->where('updated_at', '<=', now()->subDays(30))
+        ->delete();
 
-        return view('admins.shared.archive', compact('applications'));
-    }
+    // Get remaining archived applications
+    $applications = Application::with(['user', 'job'])
+        ->where('is_archived', true)
+        ->get();
+
+    return view('admins.shared.archive', compact('applications'));
+}
+
 
     public function show($id)
     {
@@ -91,4 +96,20 @@ class ArchiveController extends Controller
     }
 
     
+    public function destroy($id)
+    {
+        // Authorization: Only HR Admin can permanently delete archived applications
+        if (auth()->user()->role !== 'hrAdmin') {
+            abort(403, 'Unauthorized. Only HR administrators can permanently delete applications.');
+        }
+
+        $application = Application::findOrFail($id);
+
+        $application->delete(); // permanently delete application only
+
+        return redirect()->route('hrAdmin.archive.index')
+            ->with('success', 'Application permanently deleted.');
+    
+    }
+
 }
