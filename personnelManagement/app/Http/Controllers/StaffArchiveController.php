@@ -117,6 +117,7 @@ class StaffArchiveController extends Controller
 
         // Use direct assignment since is_archived is guarded
         $application->is_archived = true;
+        $application->archived_at = now();
         $application->save();
 
         // Check if it's an AJAX request
@@ -261,6 +262,7 @@ class StaffArchiveController extends Controller
         // Update both archived status and application status
         // Use direct assignment instead of mass assignment since these fields are guarded
         $application->is_archived = false;
+        $application->archived_at = null;
         $application->status = ApplicationStatus::from($newStatus);
         $application->save();
 
@@ -324,6 +326,7 @@ class StaffArchiveController extends Controller
             if ($application->status === ApplicationStatus::DECLINED) {
                 // Auto-restore DECLINED to PENDING
                 $application->is_archived = false;
+                $application->archived_at = null;
                 $application->status = ApplicationStatus::PENDING;
                 $application->save();
                 $restoredCount++;
@@ -331,6 +334,7 @@ class StaffArchiveController extends Controller
             } elseif ($application->status === ApplicationStatus::FAILED_INTERVIEW) {
                 // Auto-restore FAILED_INTERVIEW to FOR_INTERVIEW
                 $application->is_archived = false;
+                $application->archived_at = null;
                 $application->status = ApplicationStatus::FOR_INTERVIEW;
                 $application->save();
                 $restoredCount++;
@@ -343,6 +347,7 @@ class StaffArchiveController extends Controller
 
                 // Restore to FOR_EVALUATION status by default
                 $application->is_archived = false;
+                $application->archived_at = null;
                 $application->status = ApplicationStatus::FOR_EVALUATION;
                 $application->save();
                 $restoredCount++;

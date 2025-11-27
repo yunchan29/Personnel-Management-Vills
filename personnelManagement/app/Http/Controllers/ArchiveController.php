@@ -11,7 +11,8 @@ class ArchiveController extends Controller
 {
     public function index()
     {
-        // Get archived applications (not users)
+        // Get archived applications
+        // Note: Expired archives are automatically deleted by the scheduled command (archive:cleanup)
         $applications = Application::with(['user', 'job'])
             ->where('is_archived', true)
             ->get();
@@ -89,116 +90,5 @@ class ArchiveController extends Controller
         ]);
     }
 
-    public function destroy($id)
-    {
-        // Authorization: Only HR Admin can permanently delete archived applications
-        if (auth()->user()->role !== 'hrAdmin') {
-            abort(403, 'Unauthorized. Only HR administrators can permanently delete applications.');
-        }
-
-        $application = Application::findOrFail($id);
-
-        $application->delete(); // permanently delete application only
-
-        return redirect()->route('hrAdmin.archive.index')
-            ->with('success', 'Application permanently deleted.');
-    }
-
-    public function bulkDestroy(Request $request)
-    {
-        // Authorization: Only HR Admin can permanently delete archived applications
-        if (auth()->user()->role !== 'hrAdmin') {
-            abort(403, 'Unauthorized. Only HR administrators can permanently delete applications.');
-        }
-
-        $request->validate([
-            'ids' => 'required|json'
-        ]);
-
-        $ids = json_decode($request->ids, true);
-
-        if (!is_array($ids) || empty($ids)) {
-            return redirect()->route('hrAdmin.archive.index')
-                ->with('error', 'No items selected for deletion.');
-        }
-
-        // Delete all selected archived applications
-        $deletedCount = Application::whereIn('id', $ids)
-            ->where('is_archived', true)
-            ->delete();
-
-        return redirect()->route('hrAdmin.archive.index')
-            ->with('success', "Successfully deleted {$deletedCount} archived application(s).");
-    }
-
-    public function bulkRestore(Request $request)
-    {
-        // Authorization: Only HR Admin can restore archived applications
-        if (auth()->user()->role !== 'hrAdmin') {
-            abort(403, 'Unauthorized. Only HR administrators can restore applications.');
-        }
-
-        $request->validate([
-            'ids' => 'required|json'
-        ]);
-
-        $ids = json_decode($request->ids, true);
-
-        if (!is_array($ids) || empty($ids)) {
-            return redirect()->route('hrAdmin.archive.index')
-                ->with('error', 'No items selected for restoration.');
-        }
-
-        // Get all applications that can be restored (all restorable statuses)
-        $restorableStatuses = [
-            ApplicationStatus::DECLINED,
-            ApplicationStatus::FAILED_INTERVIEW,
-            ApplicationStatus::FAILED_EVALUATION
-        ];
-
-        $applications = Application::whereIn('id', $ids)
-            ->where('is_archived', true)
-            ->whereIn('status', $restorableStatuses)
-            ->get();
-
-        if ($applications->isEmpty()) {
-            return redirect()->route('hrAdmin.archive.index')
-                ->with('error', 'No valid applications found for restoration. Only Declined, Failed Interview, and Failed Evaluation applications can be restored.');
-        }
-
-        $restoredCount = 0;
-
-        foreach ($applications as $application) {
-            // Handle restoration based on status
-            if ($application->status === ApplicationStatus::DECLINED) {
-                // Auto-restore DECLINED to PENDING
-                $application->is_archived = false;
-                $application->status = ApplicationStatus::PENDING;
-                $application->save();
-                $restoredCount++;
-
-            } elseif ($application->status === ApplicationStatus::FAILED_INTERVIEW) {
-                // Auto-restore FAILED_INTERVIEW to FOR_INTERVIEW
-                $application->is_archived = false;
-                $application->status = ApplicationStatus::FOR_INTERVIEW;
-                $application->save();
-                $restoredCount++;
-
-            } elseif ($application->status === ApplicationStatus::FAILED_EVALUATION) {
-                // Delete old evaluation (for re-evaluation scenario)
-                if ($application->evaluation) {
-                    $application->evaluation->delete();
-                }
-
-                // Restore to FOR_EVALUATION status by default
-                $application->is_archived = false;
-                $application->status = ApplicationStatus::FOR_EVALUATION;
-                $application->save();
-                $restoredCount++;
-            }
-        }
-
-        return redirect()->route('hrAdmin.archive.index')
-            ->with('success', "Successfully restored {$restoredCount} application(s).");
-    }
+    
 }
