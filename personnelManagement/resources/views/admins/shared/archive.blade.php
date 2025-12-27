@@ -23,7 +23,7 @@
           <th class="py-3 px-4">Email</th>
           <th class="py-3 px-4">Job Title</th>
           <th class="py-3 px-4">Company</th>
-          <th class="py-3 px-4">Archived On</th>
+          <th class="py-3 px-4">Deletion</th>
           <th class="py-3 px-4">Actions</th>
         </tr>
       </thead>
@@ -51,9 +51,37 @@
     <td class="py-3 px-4">{{ $application->job->job_title ?? 'N/A' }}</td>
     <td class="py-3 px-4">{{ $application->job->company_name ?? 'N/A' }}</td>
 
-    <td class="py-3 px-4 italic">
-      {{ \Carbon\Carbon::parse($application->updated_at)->format('F d, Y') }}
-    </td>
+   @php
+    $archivedDate = \Carbon\Carbon::parse($application->updated_at);
+    $deletionDate = $archivedDate->copy()->addDays(30);
+    $remainingDays = (int) now()->diffInDays($deletionDate, false) + 1;
+
+@endphp
+
+<td class="py-3 px-4 italic">
+
+    @if($remainingDays < 0)
+        <span class="text-red-600 font-semibold">Pending deletion</span>
+
+    @elseif($remainingDays <= 5)
+        <span class="text-red-500 font-semibold">
+            {{ $remainingDays }} day{{ $remainingDays == 1 ? '' : 's' }} left
+        </span>
+
+    @else
+        <span class="text-gray-700">
+            {{ $remainingDays }} days left
+        </span>
+    @endif
+
+    <div class="text-xs text-gray-400">
+        (Archived: {{ $archivedDate->format('F d, Y') }})
+    </div>
+
+</td>
+
+
+
 
     <td class="py-3 px-4 flex gap-3">
       <button type="button" onclick="openArchiveDetailsModal({{ $application->id }})"
